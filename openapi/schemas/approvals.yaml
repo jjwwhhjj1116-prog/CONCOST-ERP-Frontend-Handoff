@@ -1,0 +1,620 @@
+{
+  "components": {
+    "schemas": {
+      "ApprovalFormDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "companyId",
+          "name",
+          "category",
+          "schemaVersion",
+          "fieldSchema",
+          "isActive"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "companyId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "category": {
+            "type": "string",
+            "minLength": 1
+          },
+          "schemaVersion": {
+            "type": "string",
+            "minLength": 1
+          },
+          "fieldSchema": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "isActive": {
+            "type": "boolean"
+          }
+        }
+      },
+      "ApprovalPolicyDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "companyId",
+          "formId",
+          "organizationId",
+          "projectId",
+          "stepRules",
+          "revision",
+          "executionMode",
+          "completionRule",
+          "parallelAnyEnabled"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "companyId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "formId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "organizationId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "projectId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "stepRules": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "order",
+                "decisionMode",
+                "resolverType",
+                "resolverValue"
+              ],
+              "properties": {
+                "order": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "decisionMode": {
+                  "type": "string",
+                  "enum": [
+                    "SERIAL",
+                    "PARALLEL_ANY",
+                    "PARALLEL_ALL"
+                  ]
+                },
+                "resolverType": {
+                  "type": "string",
+                  "enum": [
+                    "ROLE",
+                    "ORGANIZATION_MANAGER",
+                    "EXPLICIT_PERSON"
+                  ]
+                },
+                "resolverValue": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              }
+            }
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "executionMode": {
+            "type": "string",
+            "enum": [
+              "SEQUENTIAL",
+              "PARALLEL_ALL",
+              "REFERENCE_ONLY",
+              "PARALLEL_ANY"
+            ]
+          },
+          "completionRule": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Server-owned completion rule; PARALLEL_ALL requires every designated approver."
+          },
+          "parallelAnyEnabled": {
+            "type": "boolean",
+            "const": false,
+            "description": "v1 default; a later capability may explicitly enable it."
+          }
+        }
+      },
+      "ApprovalStepDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "order",
+          "label",
+          "approverPersonnelCardId",
+          "status",
+          "decisionId",
+          "delegatedFromPersonnelCardId"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "order": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "label": {
+            "type": "string",
+            "minLength": 1
+          },
+          "approverPersonnelCardId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "IN_PROGRESS",
+              "APPROVED",
+              "REJECTED",
+              "CHANGES_REQUESTED",
+              "DELEGATED",
+              "SKIPPED_BY_POLICY",
+              "CANCELLED"
+            ]
+          },
+          "decisionId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "delegatedFromPersonnelCardId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "ApprovalDecisionDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "approvalId",
+          "stepId",
+          "actorPersonnelCardId",
+          "decision",
+          "comment",
+          "decidedAt",
+          "revision"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "approvalId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "stepId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "actorPersonnelCardId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "decision": {
+            "type": "string",
+            "enum": [
+              "APPROVE",
+              "REJECT",
+              "RETURN"
+            ]
+          },
+          "comment": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "decidedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      },
+      "ApprovalDraftDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "companyId",
+          "formId",
+          "policyId",
+          "state",
+          "title",
+          "body",
+          "projectId",
+          "fileRefs",
+          "steps",
+          "revision",
+          "updatedAt",
+          "immutable"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "companyId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "formId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "policyId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "DRAFT",
+              "SUBMITTED",
+              "IN_REVIEW",
+              "CHANGES_REQUESTED",
+              "APPROVED",
+              "REJECTED",
+              "RECALLED",
+              "CANCELLED",
+              "EXPIRED",
+              "ARCHIVED"
+            ]
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1
+          },
+          "body": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "projectId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "fileRefs": {
+            "type": "array",
+            "items": {
+              "$ref": "./collaboration-common.yaml#/components/schemas/CollaborationFileReference"
+            }
+          },
+          "steps": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ApprovalStepDto"
+            }
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "immutable": {
+            "type": "boolean"
+          }
+        }
+      },
+      "SaveApprovalDraftRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "formId",
+          "title",
+          "body"
+        ],
+        "properties": {
+          "formId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1
+          },
+          "body": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "projectId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "fileIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "uniqueItems": true
+          }
+        }
+      },
+      "SubmitApprovalRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "expectedRevision",
+          "policyId"
+        ],
+        "properties": {
+          "expectedRevision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "policyId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          }
+        }
+      },
+      "ApprovalDecisionRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "expectedRevision",
+          "stepId",
+          "decision",
+          "comment"
+        ],
+        "properties": {
+          "expectedRevision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "stepId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "decision": {
+            "type": "string",
+            "enum": [
+              "APPROVE",
+              "REJECT",
+              "REQUEST_CHANGES"
+            ]
+          },
+          "comment": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "ApprovalDelegationDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "companyId",
+          "delegatorPersonnelCardId",
+          "delegatePersonnelCardId",
+          "scope",
+          "validFrom",
+          "validTo",
+          "reason",
+          "approvedByPersonnelCardId",
+          "approvedAt",
+          "status",
+          "revision"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "companyId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "delegatorPersonnelCardId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "delegatePersonnelCardId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "scope": {
+            "$ref": "./collaboration-common.yaml#/components/schemas/CollaborationScope"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "SCHEDULED",
+              "ACTIVE",
+              "EXPIRED",
+              "REVOKED"
+            ]
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "validFrom": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "validTo": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Default maximum interval is 30 days."
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1
+          },
+          "approvedByPersonnelCardId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "approvedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "CreateDelegationRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "delegatePersonnelCardId",
+          "scope",
+          "validFrom",
+          "validTo",
+          "reason"
+        ],
+        "properties": {
+          "delegatePersonnelCardId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "scope": {
+            "$ref": "./collaboration-common.yaml#/components/schemas/CollaborationScope"
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1
+          },
+          "validFrom": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "validTo": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "ApprovalRecallRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "expectedRevision",
+          "reason"
+        ],
+        "properties": {
+          "expectedRevision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "description": "Direct recall is accepted only before the first recorded Decision."
+      },
+      "ApprovalRetentionPolicyDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "finalRecordImmutable",
+          "draftStaleDays",
+          "regularUserHardDeleteAllowed"
+        ],
+        "properties": {
+          "finalRecordImmutable": {
+            "type": "boolean",
+            "const": true
+          },
+          "draftStaleDays": {
+            "type": "integer",
+            "const": 90
+          },
+          "regularUserHardDeleteAllowed": {
+            "type": "boolean",
+            "const": false
+          }
+        }
+      }
+    }
+  },
+  "x-final-contract": {
+    "decisions": [
+      "COLLAB-DEC-05",
+      "COLLAB-DEC-06",
+      "COLLAB-DEC-07",
+      "COLLAB-DEC-08"
+    ],
+    "hardcodedApproverNamesAllowed": false
+  }
+}

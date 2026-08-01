@@ -1,0 +1,411 @@
+{
+  "components": {
+    "schemas": {
+      "CustomerSummaryDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "companyId",
+          "status",
+          "revision",
+          "displayName"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "companyId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "type": "string",
+            "minLength": 1
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "displayName": {
+            "type": "string",
+            "description": ""
+          },
+          "contactCount": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "description": "CustomerSummaryDto contract DTO. ORM models are never exposed directly."
+      },
+      "CustomerDetailDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "companyId",
+          "status",
+          "revision",
+          "displayName"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "companyId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "type": "string",
+            "minLength": 1
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "displayName": {
+            "type": "string",
+            "description": ""
+          },
+          "contactIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "uniqueItems": true
+          },
+          "timelineCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "financeSummaryVisible": {
+            "type": "boolean"
+          }
+        },
+        "description": "CustomerDetailDto contract DTO. ORM models are never exposed directly."
+      },
+      "LeadDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "companyId",
+          "status",
+          "revision"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "companyId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "type": "string",
+            "minLength": 1,
+            "enum": [
+              "NEW",
+              "CONTACT_ATTEMPTED",
+              "QUALIFYING",
+              "QUALIFIED",
+              "DISQUALIFIED",
+              "CONVERTED",
+              "ARCHIVED"
+            ]
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "customerId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": ""
+          },
+          "contactId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": ""
+          },
+          "ownerPersonnelId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": ""
+          },
+          "pipelineStageId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": ""
+          }
+        },
+        "description": "LeadDto contract DTO. ORM models are never exposed directly."
+      },
+      "OpportunitySummaryDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "companyId",
+          "status",
+          "revision",
+          "title",
+          "customerId"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "companyId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "type": "string",
+            "minLength": 1
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "title": {
+            "type": "string",
+            "description": ""
+          },
+          "customerId": {
+            "type": "string",
+            "description": ""
+          },
+          "probabilityPercent": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100
+          }
+        },
+        "description": "OpportunitySummaryDto contract DTO. ORM models are never exposed directly."
+      },
+      "OpportunityDetailDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "companyId",
+          "status",
+          "revision",
+          "title",
+          "customerId"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "companyId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "type": "string",
+            "minLength": 1,
+            "enum": [
+              "OPEN",
+              "ON_HOLD",
+              "WON",
+              "LOST",
+              "CANCELLED"
+            ]
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "title": {
+            "type": "string",
+            "description": ""
+          },
+          "customerId": {
+            "type": "string",
+            "description": ""
+          },
+          "contactIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "uniqueItems": true
+          },
+          "estimateRequestId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": ""
+          },
+          "projectId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": ""
+          }
+        },
+        "description": "OpportunityDetailDto contract DTO. ORM models are never exposed directly."
+      },
+      "PipelineStageDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "companyId",
+          "status",
+          "revision",
+          "label"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "companyId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "type": "string",
+            "minLength": 1
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "label": {
+            "type": "string",
+            "description": ""
+          },
+          "probabilityPercent": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "order": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "description": "PipelineStageDto contract DTO. ORM models are never exposed directly."
+      },
+      "SalesActivityDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "companyId",
+          "status",
+          "revision",
+          "activityType"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "companyId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "type": "string",
+            "minLength": 1
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "activityType": {
+            "type": "string",
+            "enum": [
+              "CALL",
+              "EMAIL",
+              "MEETING",
+              "NOTE",
+              "TASK",
+              "SITE_VISIT",
+              "PROPOSAL",
+              "OTHER"
+            ]
+          },
+          "customerId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": ""
+          },
+          "contactId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": ""
+          },
+          "projectId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": ""
+          },
+          "referenceId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": ""
+          }
+        },
+        "description": "SalesActivityDto contract DTO. ORM models are never exposed directly."
+      },
+      "SalesPipelinePolicyDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "companyId",
+          "version",
+          "stages",
+          "frontendHardcoded"
+        ],
+        "properties": {
+          "companyId": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          },
+          "stages": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "frontendHardcoded": {
+            "type": "boolean",
+            "const": false
+          }
+        }
+      }
+    }
+  }
+}

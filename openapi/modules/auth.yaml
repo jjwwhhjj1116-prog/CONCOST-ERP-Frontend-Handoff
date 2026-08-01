@@ -1,0 +1,278 @@
+{
+  "components": {
+    "schemas": {
+      "LoginRequest": {
+        "type": "object",
+        "required": [
+          "email",
+          "password"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "maxLength": 320
+          },
+          "password": {
+            "type": "string",
+            "minLength": 8,
+            "writeOnly": true
+          }
+        }
+      },
+      "SessionUser": {
+        "type": "object",
+        "required": [
+          "id",
+          "displayName",
+          "allowedCompanyIds"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "allowedCompanyIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1
+          },
+          "permissionsVersion": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "SessionData": {
+        "type": "object",
+        "required": [
+          "user",
+          "currentCompanyId",
+          "locale",
+          "idleExpiresAt",
+          "absoluteExpiresAt",
+          "maxApprovedDevices"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "user": {
+            "$ref": "#/components/schemas/SessionUser"
+          },
+          "currentCompanyId": {
+            "type": "string"
+          },
+          "locale": {
+            "$ref": "../common/schemas.yaml#/components/schemas/Locale"
+          },
+          "idleExpiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "absoluteExpiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "maxApprovedDevices": {
+            "type": "integer",
+            "const": 3
+          }
+        }
+      },
+      "SessionResponse": {
+        "type": "object",
+        "required": [
+          "data",
+          "meta"
+        ],
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/SessionData"
+          },
+          "meta": {
+            "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+          }
+        }
+      },
+      "LogoutResponse": {
+        "type": "object",
+        "required": [
+          "data",
+          "meta"
+        ],
+        "properties": {
+          "data": {
+            "type": "object",
+            "required": [
+              "loggedOut"
+            ],
+            "properties": {
+              "loggedOut": {
+                "type": "boolean",
+                "const": true
+              }
+            }
+          },
+          "meta": {
+            "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+          }
+        }
+      },
+      "LogoutRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "allDevices": {
+            "type": "boolean",
+            "default": false,
+            "description": "Terminate all approved device sessions."
+          }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/api/v1/auth/login": {
+      "post": {
+        "operationId": "login",
+        "summary": "Create an authenticated server session",
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "../common/errors.yaml#/components/responses/Unauthorized"
+          },
+          "422": {
+            "$ref": "../common/errors.yaml#/components/responses/Unprocessable"
+          },
+          "429": {
+            "$ref": "../common/errors.yaml#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "../common/errors.yaml#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/api/v1/auth/session": {
+      "get": {
+        "operationId": "getSession",
+        "summary": "Read the current session",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Current session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "../common/errors.yaml#/components/responses/Unauthorized"
+          },
+          "500": {
+            "$ref": "../common/errors.yaml#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/api/v1/auth/logout": {
+      "post": {
+        "operationId": "logout",
+        "summary": "Terminate the current session",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Logged out",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LogoutResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "../common/errors.yaml#/components/responses/Unauthorized"
+          },
+          "500": {
+            "$ref": "../common/errors.yaml#/components/responses/InternalError"
+          }
+        },
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LogoutRequest"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,770 @@
+{
+  "components": {
+    "schemas": {
+      "EstimateRequestSummaryDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "$ref": "../common/schemas.yaml#/components/schemas/OpaqueId"
+          },
+          "companyId": {
+            "$ref": "../common/schemas.yaml#/components/schemas/OpaqueId"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "DRAFT",
+              "INQUIRY_RECEIVED",
+              "QUOTE_PREPARING",
+              "QUOTE_SENT",
+              "NEGOTIATING",
+              "WON",
+              "LOST",
+              "ON_HOLD",
+              "CANCELLED"
+            ]
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "createdAt": {
+            "$ref": "../common/schemas.yaml#/components/schemas/UtcTimestamp"
+          },
+          "updatedAt": {
+            "$ref": "../common/schemas.yaml#/components/schemas/UtcTimestamp"
+          },
+          "permissions": {
+            "$ref": "../common/schemas.yaml#/components/schemas/PermissionCapabilities"
+          },
+          "projectName": {
+            "type": "string"
+          },
+          "clientDisplayName": {
+            "type": "string"
+          },
+          "ownerPersonnelCardId": {
+            "oneOf": [
+              {
+                "$ref": "../common/schemas.yaml#/components/schemas/OpaqueId"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "receivedAt": {
+            "oneOf": [
+              {
+                "$ref": "../common/schemas.yaml#/components/schemas/UtcTimestamp"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "companyId",
+          "status",
+          "revision",
+          "projectName",
+          "clientDisplayName",
+          "permissions"
+        ]
+      },
+      "EstimateRequestDetailDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "$ref": "../common/schemas.yaml#/components/schemas/OpaqueId"
+          },
+          "companyId": {
+            "$ref": "../common/schemas.yaml#/components/schemas/OpaqueId"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "DRAFT",
+              "INQUIRY_RECEIVED",
+              "QUOTE_PREPARING",
+              "QUOTE_SENT",
+              "NEGOTIATING",
+              "WON",
+              "LOST",
+              "ON_HOLD",
+              "CANCELLED"
+            ]
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "createdAt": {
+            "$ref": "../common/schemas.yaml#/components/schemas/UtcTimestamp"
+          },
+          "updatedAt": {
+            "$ref": "../common/schemas.yaml#/components/schemas/UtcTimestamp"
+          },
+          "permissions": {
+            "$ref": "../common/schemas.yaml#/components/schemas/PermissionCapabilities"
+          },
+          "projectName": {
+            "type": "string"
+          },
+          "clientDisplayName": {
+            "type": "string"
+          },
+          "ownerPersonnelCardId": {
+            "oneOf": [
+              {
+                "$ref": "../common/schemas.yaml#/components/schemas/OpaqueId"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "receivedAt": {
+            "oneOf": [
+              {
+                "$ref": "../common/schemas.yaml#/components/schemas/UtcTimestamp"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "inquiryMemo": {
+            "type": "string"
+          },
+          "contacts": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "id": {
+                  "$ref": "../common/schemas.yaml#/components/schemas/OpaqueId"
+                },
+                "displayName": {
+                  "type": "string"
+                },
+                "email": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "phone": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "required": [
+                "id",
+                "displayName"
+              ]
+            }
+          },
+          "activities": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "id": {
+                  "$ref": "../common/schemas.yaml#/components/schemas/OpaqueId"
+                },
+                "kind": {
+                  "type": "string"
+                },
+                "content": {
+                  "type": "string"
+                },
+                "occurredAt": {
+                  "$ref": "../common/schemas.yaml#/components/schemas/UtcTimestamp"
+                }
+              },
+              "required": [
+                "id",
+                "kind",
+                "content",
+                "occurredAt"
+              ]
+            }
+          },
+          "files": {
+            "type": "array",
+            "items": {
+              "$ref": "../common/files.yaml#/components/schemas/FileDto"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "companyId",
+          "status",
+          "revision",
+          "projectName",
+          "clientDisplayName",
+          "permissions",
+          "inquiryMemo",
+          "contacts",
+          "activities",
+          "files"
+        ]
+      },
+      "EstimateSheetDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "$ref": "../common/schemas.yaml#/components/schemas/OpaqueId"
+          },
+          "companyId": {
+            "$ref": "../common/schemas.yaml#/components/schemas/OpaqueId"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "DRAFT",
+              "INTERNAL_REVIEW",
+              "APPROVED",
+              "ISSUED",
+              "SUPERSEDED",
+              "CANCELLED"
+            ]
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "createdAt": {
+            "$ref": "../common/schemas.yaml#/components/schemas/UtcTimestamp"
+          },
+          "updatedAt": {
+            "$ref": "../common/schemas.yaml#/components/schemas/UtcTimestamp"
+          },
+          "permissions": {
+            "$ref": "../common/schemas.yaml#/components/schemas/PermissionCapabilities"
+          },
+          "estimateRequestId": {
+            "$ref": "../common/schemas.yaml#/components/schemas/OpaqueId"
+          },
+          "templateType": {
+            "type": "string",
+            "enum": [
+              "PRELIMINARY",
+              "BOQ",
+              "DESIGN_BUDGET",
+              "COST_VERIFICATION"
+            ]
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "workbookState": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "immutable": {
+            "type": "boolean",
+            "description": "True after issue. An issued version is never overwritten."
+          },
+          "documentHash": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "pattern": "^[A-Fa-f0-9]{64}$"
+          },
+          "issuedAt": {
+            "oneOf": [
+              {
+                "$ref": "../common/schemas.yaml#/components/schemas/UtcTimestamp"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "supersedesEstimateSheetId": {
+            "oneOf": [
+              {
+                "$ref": "../common/schemas.yaml#/components/schemas/OpaqueId"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "companyId",
+          "estimateRequestId",
+          "status",
+          "revision",
+          "templateType",
+          "version",
+          "workbookState",
+          "permissions",
+          "immutable"
+        ]
+      },
+      "EstimateSubmissionDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "$ref": "../common/schemas.yaml#/components/schemas/OpaqueId"
+          },
+          "companyId": {
+            "$ref": "../common/schemas.yaml#/components/schemas/OpaqueId"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "SUBMITTED",
+              "ISSUED",
+              "DELIVERED",
+              "FAILED",
+              "CANCELLED"
+            ]
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "createdAt": {
+            "$ref": "../common/schemas.yaml#/components/schemas/UtcTimestamp"
+          },
+          "updatedAt": {
+            "$ref": "../common/schemas.yaml#/components/schemas/UtcTimestamp"
+          },
+          "permissions": {
+            "$ref": "../common/schemas.yaml#/components/schemas/PermissionCapabilities"
+          },
+          "estimateSheetId": {
+            "$ref": "../common/schemas.yaml#/components/schemas/OpaqueId"
+          },
+          "version": {
+            "type": "integer"
+          },
+          "recipientDisplay": {
+            "type": "string"
+          },
+          "channel": {
+            "type": "string"
+          },
+          "documentFileId": {
+            "oneOf": [
+              {
+                "$ref": "../common/schemas.yaml#/components/schemas/OpaqueId"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "sentAt": {
+            "oneOf": [
+              {
+                "$ref": "../common/schemas.yaml#/components/schemas/UtcTimestamp"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "companyId",
+          "estimateSheetId",
+          "status",
+          "revision",
+          "version",
+          "recipientDisplay",
+          "channel",
+          "permissions"
+        ]
+      },
+      "CommercialDecisionDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "$ref": "../common/schemas.yaml#/components/schemas/OpaqueId"
+          },
+          "companyId": {
+            "$ref": "../common/schemas.yaml#/components/schemas/OpaqueId"
+          },
+          "estimateRequestId": {
+            "$ref": "../common/schemas.yaml#/components/schemas/OpaqueId"
+          },
+          "estimateSubmissionId": {
+            "oneOf": [
+              {
+                "$ref": "../common/schemas.yaml#/components/schemas/OpaqueId"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "decision": {
+            "type": "string",
+            "enum": [
+              "WON",
+              "LOST",
+              "ON_HOLD",
+              "CANCELLED"
+            ]
+          },
+          "reason": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "agreedAmount": {
+            "oneOf": [
+              {
+                "$ref": "../common/schemas.yaml#/components/schemas/Money"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "decidedAt": {
+            "$ref": "../common/schemas.yaml#/components/schemas/UtcTimestamp"
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "workflowPhase": {
+            "type": "string",
+            "enum": [
+              "PRE_EXECUTION_PLAN",
+              "POST_EXECUTION_PLAN",
+              "ACTIVE_PROJECT"
+            ]
+          },
+          "correctionOfDecisionId": {
+            "oneOf": [
+              {
+                "$ref": "../common/schemas.yaml#/components/schemas/OpaqueId"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "correctionReason": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "sourceLineagePreserved": {
+            "type": "boolean",
+            "const": true
+          }
+        },
+        "required": [
+          "id",
+          "companyId",
+          "estimateRequestId",
+          "decision",
+          "decidedAt",
+          "revision",
+          "workflowPhase",
+          "sourceLineagePreserved"
+        ]
+      },
+      "EstimateRequestWriteRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "projectName": {
+            "type": "string",
+            "minLength": 1
+          },
+          "clientDisplayName": {
+            "type": "string",
+            "minLength": 1
+          },
+          "inquiryMemo": {
+            "type": "string"
+          },
+          "ownerPersonnelCardId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "projectName",
+          "clientDisplayName"
+        ]
+      },
+      "EstimateSheetWriteRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "templateType": {
+            "type": "string"
+          },
+          "workbookState": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "reason": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "templateType",
+          "workbookState"
+        ]
+      },
+      "EstimateBusinessRecordDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "$ref": "../common/schemas.yaml#/components/schemas/OpaqueId"
+          },
+          "companyId": {
+            "$ref": "../common/schemas.yaml#/components/schemas/OpaqueId"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "ARCHIVED"
+            ]
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "createdAt": {
+            "$ref": "../common/schemas.yaml#/components/schemas/UtcTimestamp"
+          },
+          "updatedAt": {
+            "$ref": "../common/schemas.yaml#/components/schemas/UtcTimestamp"
+          },
+          "permissions": {
+            "$ref": "../common/schemas.yaml#/components/schemas/PermissionCapabilities"
+          },
+          "recordType": {
+            "type": "string",
+            "enum": [
+              "PJ_LEDGER",
+              "BILLING",
+              "VENDOR",
+              "CONTACT",
+              "TARGET",
+              "SALES",
+              "RECEIPT",
+              "PERFORMANCE_REPORT"
+            ]
+          },
+          "projectId": {
+            "oneOf": [
+              {
+                "$ref": "../common/schemas.yaml#/components/schemas/OpaqueId"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "periodKey": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "amount": {
+            "oneOf": [
+              {
+                "$ref": "../common/schemas.yaml#/components/schemas/Money"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "payload": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        },
+        "required": [
+          "id",
+          "companyId",
+          "status",
+          "revision",
+          "recordType",
+          "displayName",
+          "payload",
+          "permissions"
+        ]
+      },
+      "EstimateBusinessRecordWriteRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "recordType": {
+            "type": "string",
+            "enum": [
+              "PJ_LEDGER",
+              "BILLING",
+              "VENDOR",
+              "CONTACT",
+              "TARGET",
+              "SALES",
+              "RECEIPT",
+              "PERFORMANCE_REPORT"
+            ]
+          },
+          "projectId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "periodKey": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "displayName": {
+            "type": "string",
+            "minLength": 1
+          },
+          "amount": {
+            "oneOf": [
+              {
+                "$ref": "../common/schemas.yaml#/components/schemas/Money"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "payload": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        },
+        "required": [
+          "recordType",
+          "displayName",
+          "payload"
+        ]
+      },
+      "EstimateBusinessReportDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "companyId": {
+            "$ref": "../common/schemas.yaml#/components/schemas/OpaqueId"
+          },
+          "reportType": {
+            "type": "string",
+            "enum": [
+              "TARGET",
+              "SALES",
+              "RECEIPT",
+              "PERFORMANCE"
+            ]
+          },
+          "periodKey": {
+            "type": "string"
+          },
+          "generatedAt": {
+            "$ref": "../common/schemas.yaml#/components/schemas/UtcTimestamp"
+          },
+          "rows": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          },
+          "permissions": {
+            "$ref": "../common/schemas.yaml#/components/schemas/PermissionCapabilities"
+          }
+        },
+        "required": [
+          "companyId",
+          "reportType",
+          "periodKey",
+          "generatedAt",
+          "rows",
+          "permissions"
+        ]
+      },
+      "EstimateBusinessExportRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "reportType": {
+            "type": "string",
+            "enum": [
+              "PJ_LEDGER",
+              "VENDOR",
+              "TARGET",
+              "SALES",
+              "RECEIPT",
+              "PERFORMANCE"
+            ]
+          },
+          "periodKey": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "format": {
+            "type": "string",
+            "enum": [
+              "XLSX",
+              "JSON"
+            ]
+          },
+          "filters": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        },
+        "required": [
+          "reportType",
+          "format",
+          "filters"
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Regression Gate"
+  short_description: "변경 후 자동검사와 브라우저 회귀검사로 완료 여부 판정"
+  default_prompt: "$regression-gate를 사용해 현재 변경의 자동검사와 브라우저 회귀검사를 수행하고 판정하라."

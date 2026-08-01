@@ -1,0 +1,911 @@
+{
+  "paths": {
+    "/api/v1/business-card-captures": {
+      "post": {
+        "operationId": "createBusinessCardCapture",
+        "summary": "Create capture from READY file",
+        "tags": [
+          "business-cards"
+        ],
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "data"
+                ],
+                "properties": {
+                  "data": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "description": "Command payload for createBusinessCardCapture; fields are defined in BUSINESS_DTO_DICTIONARY.md and module contract."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful company-scoped response",
+            "headers": {
+              "ETag": {
+                "description": "Quoted resource revision where applicable",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/contacts.yaml#/components/schemas/BusinessCardCaptureDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessBadRequest"
+          },
+          "401": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnauthorized"
+          },
+          "403": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessForbidden"
+          },
+          "404": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessNotFound"
+          },
+          "409": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessConflict"
+          },
+          "422": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnprocessable"
+          },
+          "503": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnavailable"
+          }
+        },
+        "x-contract": {
+          "evidence": "FRONTEND_VERIFIED_AND_PROPOSAL",
+          "executionModes": [
+            "DEMO_LOCAL",
+            "API_SANDBOX",
+            "PRODUCTION_SERVER"
+          ],
+          "permission": "CREATE_CONTACT",
+          "companyScope": "X-Company-Id required; server validates allowedCompanyIds and resource.companyId; no fallback",
+          "organizationScope": "Explicit organization IDs only; server filters before projection",
+          "projectScope": "Canonical projectId only; project-name joins forbidden",
+          "revision": "not required",
+          "idempotency": "Idempotency-Key required; same key with different payload is 409",
+          "fileReference": "Frozen Common File Reference contract",
+          "fileReadyGuard": "READY_REQUIRED",
+          "providerCapability": "PROVIDER_REQUIRED",
+          "notificationEvent": "none",
+          "gouCoexistence": "No dual write; GOU state explicitly returned when relevant",
+          "dataOwnership": "SERVER_PERSISTENCE_REQUIRED",
+          "productionMockFallback": false
+        }
+      }
+    },
+    "/api/v1/business-card-captures/{captureId}": {
+      "get": {
+        "operationId": "getBusinessCardCapture",
+        "summary": "Get capture",
+        "tags": [
+          "business-cards"
+        ],
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "captureId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful company-scoped response",
+            "headers": {
+              "ETag": {
+                "description": "Quoted resource revision where applicable",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/contacts.yaml#/components/schemas/BusinessCardCaptureDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessBadRequest"
+          },
+          "401": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnauthorized"
+          },
+          "403": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessForbidden"
+          },
+          "404": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessNotFound"
+          },
+          "409": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessConflict"
+          },
+          "422": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnprocessable"
+          },
+          "503": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnavailable"
+          }
+        },
+        "x-contract": {
+          "evidence": "FRONTEND_VERIFIED_AND_PROPOSAL",
+          "executionModes": [
+            "DEMO_LOCAL",
+            "API_SANDBOX",
+            "PRODUCTION_SERVER"
+          ],
+          "permission": "CREATE_CONTACT",
+          "companyScope": "X-Company-Id required; server validates allowedCompanyIds and resource.companyId; no fallback",
+          "organizationScope": "Explicit organization IDs only; server filters before projection",
+          "projectScope": "Canonical projectId only; project-name joins forbidden",
+          "revision": "not required",
+          "idempotency": "not required",
+          "fileReference": "Frozen Common File Reference contract",
+          "fileReadyGuard": "NOT_APPLICABLE_OR_DRAFT",
+          "providerCapability": "PROVIDER_REQUIRED",
+          "notificationEvent": "none",
+          "gouCoexistence": "No dual write; GOU state explicitly returned when relevant",
+          "dataOwnership": "SERVER_PERSISTENCE_REQUIRED",
+          "productionMockFallback": false
+        }
+      }
+    },
+    "/api/v1/business-card-captures/{captureId}/start-ocr": {
+      "post": {
+        "operationId": "startBusinessCardOcr",
+        "summary": "Start OCR provider job",
+        "tags": [
+          "business-cards"
+        ],
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "captureId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "data"
+                ],
+                "properties": {
+                  "data": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "description": "Command payload for startBusinessCardOcr; fields are defined in BUSINESS_DTO_DICTIONARY.md and module contract."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful company-scoped response",
+            "headers": {
+              "ETag": {
+                "description": "Quoted resource revision where applicable",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/contacts.yaml#/components/schemas/BusinessCardCaptureDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessBadRequest"
+          },
+          "401": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnauthorized"
+          },
+          "403": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessForbidden"
+          },
+          "404": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessNotFound"
+          },
+          "409": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessConflict"
+          },
+          "422": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnprocessable"
+          },
+          "503": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnavailable"
+          }
+        },
+        "x-contract": {
+          "evidence": "FRONTEND_VERIFIED_AND_PROPOSAL",
+          "executionModes": [
+            "DEMO_LOCAL",
+            "API_SANDBOX",
+            "PRODUCTION_SERVER"
+          ],
+          "permission": "CREATE_CONTACT",
+          "companyScope": "X-Company-Id required; server validates allowedCompanyIds and resource.companyId; no fallback",
+          "organizationScope": "Explicit organization IDs only; server filters before projection",
+          "projectScope": "Canonical projectId only; project-name joins forbidden",
+          "revision": "If-Match required; mismatch is 409",
+          "idempotency": "Idempotency-Key required; same key with different payload is 409",
+          "fileReference": "Frozen Common File Reference contract",
+          "fileReadyGuard": "READY_REQUIRED",
+          "providerCapability": "PROVIDER_REQUIRED",
+          "notificationEvent": "none",
+          "gouCoexistence": "No dual write; GOU state explicitly returned when relevant",
+          "dataOwnership": "SERVER_PERSISTENCE_REQUIRED",
+          "productionMockFallback": false
+        }
+      }
+    },
+    "/api/v1/business-card-captures/{captureId}/review": {
+      "patch": {
+        "operationId": "reviewBusinessCardOcr",
+        "summary": "Human review OCR fields",
+        "tags": [
+          "business-cards"
+        ],
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "captureId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "data"
+                ],
+                "properties": {
+                  "data": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "description": "Command payload for reviewBusinessCardOcr; fields are defined in BUSINESS_DTO_DICTIONARY.md and module contract."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful company-scoped response",
+            "headers": {
+              "ETag": {
+                "description": "Quoted resource revision where applicable",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/contacts.yaml#/components/schemas/BusinessCardOcrResultDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessBadRequest"
+          },
+          "401": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnauthorized"
+          },
+          "403": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessForbidden"
+          },
+          "404": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessNotFound"
+          },
+          "409": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessConflict"
+          },
+          "422": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnprocessable"
+          },
+          "503": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnavailable"
+          }
+        },
+        "x-contract": {
+          "evidence": "FRONTEND_VERIFIED_AND_PROPOSAL",
+          "executionModes": [
+            "DEMO_LOCAL",
+            "API_SANDBOX",
+            "PRODUCTION_SERVER"
+          ],
+          "permission": "CREATE_CONTACT",
+          "companyScope": "X-Company-Id required; server validates allowedCompanyIds and resource.companyId; no fallback",
+          "organizationScope": "Explicit organization IDs only; server filters before projection",
+          "projectScope": "Canonical projectId only; project-name joins forbidden",
+          "revision": "If-Match required; mismatch is 409",
+          "idempotency": "not required",
+          "fileReference": "Frozen Common File Reference contract",
+          "fileReadyGuard": "NOT_APPLICABLE_OR_DRAFT",
+          "providerCapability": "PROVIDER_REQUIRED",
+          "notificationEvent": "none",
+          "gouCoexistence": "No dual write; GOU state explicitly returned when relevant",
+          "dataOwnership": "SERVER_PERSISTENCE_REQUIRED",
+          "productionMockFallback": false
+        }
+      }
+    },
+    "/api/v1/business-card-captures/{captureId}/duplicates": {
+      "get": {
+        "operationId": "listBusinessCardDuplicates",
+        "summary": "List duplicate candidates",
+        "tags": [
+          "business-cards"
+        ],
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "captureId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful company-scoped response",
+            "headers": {
+              "ETag": {
+                "description": "Quoted resource revision where applicable",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "../schemas/contacts.yaml#/components/schemas/ContactDuplicateCandidateDto"
+                      }
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessBadRequest"
+          },
+          "401": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnauthorized"
+          },
+          "403": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessForbidden"
+          },
+          "404": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessNotFound"
+          },
+          "409": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessConflict"
+          },
+          "422": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnprocessable"
+          },
+          "503": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnavailable"
+          }
+        },
+        "x-contract": {
+          "evidence": "FRONTEND_VERIFIED_AND_PROPOSAL",
+          "executionModes": [
+            "DEMO_LOCAL",
+            "API_SANDBOX",
+            "PRODUCTION_SERVER"
+          ],
+          "permission": "CREATE_CONTACT",
+          "companyScope": "X-Company-Id required; server validates allowedCompanyIds and resource.companyId; no fallback",
+          "organizationScope": "Explicit organization IDs only; server filters before projection",
+          "projectScope": "Canonical projectId only; project-name joins forbidden",
+          "revision": "not required",
+          "idempotency": "not required",
+          "fileReference": "Frozen Common File Reference contract",
+          "fileReadyGuard": "NOT_APPLICABLE_OR_DRAFT",
+          "providerCapability": "PROVIDER_REQUIRED",
+          "notificationEvent": "none",
+          "gouCoexistence": "No dual write; GOU state explicitly returned when relevant",
+          "dataOwnership": "SERVER_PERSISTENCE_REQUIRED",
+          "productionMockFallback": false
+        }
+      }
+    },
+    "/api/v1/business-card-captures/{captureId}/create-contact": {
+      "post": {
+        "operationId": "createContactFromBusinessCard",
+        "summary": "Create contact after review",
+        "tags": [
+          "business-cards"
+        ],
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "captureId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "data"
+                ],
+                "properties": {
+                  "data": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "description": "Command payload for createContactFromBusinessCard; fields are defined in BUSINESS_DTO_DICTIONARY.md and module contract."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful company-scoped response",
+            "headers": {
+              "ETag": {
+                "description": "Quoted resource revision where applicable",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/contacts.yaml#/components/schemas/ContactDetailDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessBadRequest"
+          },
+          "401": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnauthorized"
+          },
+          "403": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessForbidden"
+          },
+          "404": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessNotFound"
+          },
+          "409": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessConflict"
+          },
+          "422": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnprocessable"
+          },
+          "503": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnavailable"
+          }
+        },
+        "x-contract": {
+          "evidence": "FRONTEND_VERIFIED_AND_PROPOSAL",
+          "executionModes": [
+            "DEMO_LOCAL",
+            "API_SANDBOX",
+            "PRODUCTION_SERVER"
+          ],
+          "permission": "CREATE_CONTACT",
+          "companyScope": "X-Company-Id required; server validates allowedCompanyIds and resource.companyId; no fallback",
+          "organizationScope": "Explicit organization IDs only; server filters before projection",
+          "projectScope": "Canonical projectId only; project-name joins forbidden",
+          "revision": "If-Match required; mismatch is 409",
+          "idempotency": "Idempotency-Key required; same key with different payload is 409",
+          "fileReference": "Frozen Common File Reference contract",
+          "fileReadyGuard": "NOT_APPLICABLE_OR_DRAFT",
+          "providerCapability": "PROVIDER_REQUIRED",
+          "notificationEvent": "none",
+          "gouCoexistence": "No dual write; GOU state explicitly returned when relevant",
+          "dataOwnership": "SERVER_PERSISTENCE_REQUIRED",
+          "productionMockFallback": false
+        }
+      }
+    },
+    "/api/v1/business-card-captures/{captureId}/merge-contact": {
+      "post": {
+        "operationId": "mergeBusinessCardContact",
+        "summary": "Merge capture into approved contact",
+        "tags": [
+          "business-cards"
+        ],
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "captureId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "data"
+                ],
+                "properties": {
+                  "data": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "description": "Command payload for mergeBusinessCardContact; fields are defined in BUSINESS_DTO_DICTIONARY.md and module contract."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful company-scoped response",
+            "headers": {
+              "ETag": {
+                "description": "Quoted resource revision where applicable",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/contacts.yaml#/components/schemas/ContactDetailDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessBadRequest"
+          },
+          "401": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnauthorized"
+          },
+          "403": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessForbidden"
+          },
+          "404": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessNotFound"
+          },
+          "409": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessConflict"
+          },
+          "422": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnprocessable"
+          },
+          "503": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnavailable"
+          }
+        },
+        "x-contract": {
+          "evidence": "FRONTEND_VERIFIED_AND_PROPOSAL",
+          "executionModes": [
+            "DEMO_LOCAL",
+            "API_SANDBOX",
+            "PRODUCTION_SERVER"
+          ],
+          "permission": "MERGE_CONTACT",
+          "companyScope": "X-Company-Id required; server validates allowedCompanyIds and resource.companyId; no fallback",
+          "organizationScope": "Explicit organization IDs only; server filters before projection",
+          "projectScope": "Canonical projectId only; project-name joins forbidden",
+          "revision": "If-Match required; mismatch is 409",
+          "idempotency": "Idempotency-Key required; same key with different payload is 409",
+          "fileReference": "Frozen Common File Reference contract",
+          "fileReadyGuard": "NOT_APPLICABLE_OR_DRAFT",
+          "providerCapability": "PROVIDER_REQUIRED",
+          "notificationEvent": "none",
+          "gouCoexistence": "No dual write; GOU state explicitly returned when relevant",
+          "dataOwnership": "SERVER_PERSISTENCE_REQUIRED",
+          "productionMockFallback": false
+        }
+      }
+    }
+  },
+  "x-business-final-policy": {
+    "status": "BUSINESS_CONTRACT_FROZEN_V1",
+    "provider": "PROVIDER_TBD_CONTRACT_COMPLETE",
+    "humanReviewRequired": true,
+    "autoCreateContact": false
+  }
+}

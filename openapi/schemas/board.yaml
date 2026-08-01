@@ -1,0 +1,318 @@
+{
+  "components": {
+    "schemas": {
+      "BoardSpaceDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "companyId",
+          "name",
+          "type",
+          "scope",
+          "publishPolicy",
+          "revision",
+          "canPublishDirectly",
+          "approvalRequired",
+          "canPin",
+          "mandatoryReadAllowed",
+          "moderationEnabled"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "companyId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "NOTICE",
+              "DEPARTMENT",
+              "PROJECT",
+              "LIBRARY"
+            ]
+          },
+          "scope": {
+            "$ref": "./collaboration-common.yaml#/components/schemas/CollaborationScope"
+          },
+          "publishPolicy": {
+            "type": "string",
+            "enum": [
+              "DIRECT",
+              "APPROVAL_REQUIRED"
+            ]
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "canPublishDirectly": {
+            "type": "boolean"
+          },
+          "approvalRequired": {
+            "type": "boolean"
+          },
+          "canPin": {
+            "type": "boolean"
+          },
+          "mandatoryReadAllowed": {
+            "type": "boolean"
+          },
+          "moderationEnabled": {
+            "type": "boolean"
+          }
+        }
+      },
+      "BoardPostDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "companyId",
+          "boardSpaceId",
+          "title",
+          "body",
+          "status",
+          "mandatoryRead",
+          "publishAt",
+          "expireAt",
+          "projectId",
+          "fileRefs",
+          "revision",
+          "mandatoryReadReason",
+          "acknowledgementDueAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "companyId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "boardSpaceId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1
+          },
+          "body": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "DRAFT",
+              "IN_REVIEW",
+              "APPROVED",
+              "PUBLISHED",
+              "SCHEDULED",
+              "ARCHIVED",
+              "WITHDRAWN"
+            ]
+          },
+          "mandatoryRead": {
+            "type": "boolean"
+          },
+          "publishAt": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "expireAt": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "projectId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "fileRefs": {
+            "type": "array",
+            "items": {
+              "$ref": "./collaboration-common.yaml#/components/schemas/CollaborationFileReference"
+            }
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "mandatoryReadReason": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "COMPANY_IMPORTANT",
+              "SECURITY",
+              "POLICY_CHANGE",
+              "MANDATORY_TRAINING",
+              "EMERGENCY_SAFETY",
+              "MANAGEMENT_APPROVED",
+              null
+            ]
+          },
+          "acknowledgementDueAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          }
+        }
+      },
+      "SaveBoardPostRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "boardSpaceId",
+          "title",
+          "body",
+          "mandatoryRead"
+        ],
+        "properties": {
+          "boardSpaceId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1
+          },
+          "body": {
+            "type": "string"
+          },
+          "mandatoryRead": {
+            "type": "boolean"
+          },
+          "publishAt": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "expireAt": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "projectId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "fileIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "uniqueItems": true
+          }
+        }
+      },
+      "BoardPublishRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "expectedRevision",
+          "action",
+          "comment"
+        ],
+        "properties": {
+          "expectedRevision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "action": {
+            "type": "string",
+            "enum": [
+              "SUBMIT_FOR_REVIEW",
+              "PUBLISH",
+              "REJECT"
+            ]
+          },
+          "comment": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "BoardReadReceiptDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "postId",
+          "personnelCardId",
+          "readAt",
+          "acknowledgedAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "postId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "personnelCardId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "readAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "acknowledgedAt": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      }
+    }
+  },
+  "x-final-contract": {
+    "decisions": [
+      "COLLAB-DEC-12",
+      "COLLAB-DEC-13"
+    ],
+    "officialNoticeWorkflow": [
+      "DRAFT",
+      "IN_REVIEW",
+      "APPROVED",
+      "PUBLISHED"
+    ]
+  }
+}

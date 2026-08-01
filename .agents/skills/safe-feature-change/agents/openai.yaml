@@ -1,0 +1,4 @@
+interface:
+  display_name: "Safe Feature Change"
+  short_description: "기존 기능을 보존하며 승인된 한 기능만 제한 범위로 수정"
+  default_prompt: "$safe-feature-change를 사용해 기존 기능을 보존하며 승인된 한 기능만 안전하게 수정하라."

@@ -1,0 +1,1325 @@
+# WORKSPACE PLAN 17 — 수주 프로젝트/개발팀 업무 리스트 분리, 프로젝트 보드 흐름, PM 업무 하달, 작업자 일정 조정 워크플로우 정밀 구현 프롬프트
+
+이 프롬프트는 기존 `workspace plan1.txt`부터 `workspace plan16.txt` 이후에 추가되는 열일곱 번째 보강 지시사항이다.
+
+Plan 17의 목적은 단순 문구 변경이 아니다. 현재 화면에서 확인된 수주 프로젝트 관리, 개발팀 내부 업무 관리, 프로젝트 보드 컬럼 순서, 신규 항목의 착수 전 자동 진입, PM의 작업 하달, 작업자의 일정 요청/세부일정 조정까지 이어지는 **운영 가능한 업무 흐름**을 실제 코드와 데이터 구조에 연결하는 것이다.
+
+현재 별도 흐름에서 디자인 개선이 진행 중일 수 있다. 따라서 Plan 17은 시각 디자인 개선이 아니라 **기능, 상태 전이, 데이터 정합성, 권한, 승인, 일정, 알림, JSON handoff, QA 증빙**을 중심으로 진행한다. 단, 사용자가 지정한 탭 이름, 탭 순서, 컬럼 순서처럼 기능 이해에 직접 영향을 주는 UI 문구/배치는 Plan 17 범위에 포함한다.
+
+---
+
+## 0. 현재 스크린샷 기준 문제
+
+사용자가 제공한 2026-07-08 화면 기준으로 다음 문제가 확인된다.
+
+1. `/projects/intake` 화면의 제목과 관리 범위가 `수주 프로젝트 관리` 하나로만 보인다.
+2. 이 화면에는 내부 개발팀 업무를 별도 리스트로 생성/관리하는 탭이 없다.
+3. 프로젝트 보드의 상단 탭 순서가 `외부 수주 프로젝트` 다음 `개발팀 작업`이다.
+4. 사용자는 `개발팀 작업` 탭이 `외부 수주 프로젝트`보다 앞에 오기를 원한다.
+5. 프로젝트 보드 컬럼이 `착수 전`, `진행 중`, `수정(Revision)`, `완료` 순서로 보인다.
+6. 사용자는 `수정` 컬럼이 `완료` 카드 우측에 배치되기를 원한다.
+7. 신규 수주 프로젝트 또는 신규 개발팀 업무 리스트가 생성되면 자동으로 `착수 전` 컬럼에 추가되어야 한다.
+8. `착수 전` 항목을 `진행 중`으로 드래그하면 단순 status 변경이 아니라, PM이 작업자를 지정하고 개별 업무를 하달하며 일정을 조정할 수 있는 workflow가 시작되어야 한다.
+9. 작업자는 일정 하달을 받은 뒤 추가 일정 요청, 일정 연장 요청, 세부 작업일정 조정을 할 수 있어야 한다.
+10. 현재 문서상 Plan 15/16에는 개발팀 작업, 수정 컬럼, JSON handoff, 인사카드/조직 구조가 언급되어 있으나, 실제 화면/코드 반영 여부는 항목별로 다시 검증해야 한다.
+
+---
+
+## 1. Plan 17 핵심 목표
+
+Antigravity는 Plan 17에서 다음 목표를 달성해야 한다.
+
+1. `/projects/intake`에 두 개의 상위 관리 탭을 만든다.
+   - `수주 프로젝트 관리`
+   - `개발팀 업무 리스트 관리`
+2. `수주 프로젝트 관리`는 외부 수주 프로젝트(`CLIENT_ORDER`)만 생성/관리한다.
+3. `개발팀 업무 리스트 관리`는 내부 개발팀 업무(`INTERNAL_DEVELOPMENT`)만 생성/관리한다.
+4. 두 유형 모두 생성 직후 프로젝트 보드의 `착수 전` 컬럼에 자동으로 보인다.
+5. 프로젝트 보드 상단 탭 순서를 다음과 같이 변경한다.
+   - `개발팀 작업`
+   - `외부 수주 프로젝트`
+6. 프로젝트 보드 컬럼 순서를 다음과 같이 변경한다.
+   - `착수 전`
+   - `진행 중`
+   - `완료`
+   - `수정`
+7. `수정`은 완료된 외부 수주 프로젝트 또는 완료된 내부 개발 업무에 후속 수정/재작업 요청이 있을 때만 진입하는 별도 workflow로 유지한다.
+8. `착수 전`에서 `진행 중`으로 이동할 때 PM 업무 하달 workflow를 강제한다.
+9. PM은 프로젝트/개발업무 단위에서 작업자를 지정하고 TaskCard를 생성하며 작업 기간을 조정할 수 있어야 한다.
+10. 작업자는 하달받은 업무에 대해 추가 일정 요청, 일정 연장 요청, 세부 작업일정 조정을 신청할 수 있어야 한다.
+11. PM/부서장 승인 전에는 원본 일정과 업무가 임의로 변경되지 않아야 한다.
+12. 승인/반려/하달/일정변경/수정요청은 AuditLog와 Notification에 기록되어야 한다.
+13. JSON export/import와 `/json` handoff에 신규 데이터 구조를 포함해야 한다.
+14. QA Evidence Matrix와 Master Report를 실제 결과에 맞게 정정해야 한다.
+
+---
+
+## 2. Plan 1~16과의 연결성
+
+### 2-1. Plan 1 기본 흐름 유지
+
+기존 수주 프로젝트 흐름은 유지한다.
+
+```text
+수주 등록
+-> PM 배정
+-> 일정 초안 작성
+-> 승인/반려
+-> 작업 진행
+-> 완료
+```
+
+Plan 17은 이 흐름 중 `수주 등록`, `착수 전`, `진행 중 전환`, `PM 작업 하달`, `작업자 일정 조정`을 더 정확하게 연결한다.
+
+### 2-2. Plan 15/16 개발팀 작업과의 연결
+
+Plan 15/16의 `개발팀 작업`은 외부 수주 프로젝트가 아니다.
+
+```text
+외부 수주 프로젝트 = CLIENT_ORDER
+개발팀 업무 리스트 = INTERNAL_DEVELOPMENT
+```
+
+두 유형은 같은 보드/일정/결재 엔진을 사용할 수 있지만, 수주 실적과 납품일 계산은 섞지 않는다.
+
+### 2-3. Plan 14 수정/사후 추가업무와의 연결
+
+다음 둘은 반드시 구분한다.
+
+```text
+RevisionRequest:
+- 완료된 작업물에 대한 수정/재작업 요청
+- 외부 클라이언트 요청 또는 내부 검수 후 수정 요청
+- 보드의 수정 컬럼으로 이동
+
+PostDeliveryWorkRequest:
+- 납품 후 내부 판단 또는 작업자/PM 판단으로 추가 업무 필요
+- 사후 추가업무 및 재오픈 workflow
+```
+
+Plan 17에서 `수정` 컬럼은 `완료` 오른쪽에 둔다. 의미상 완료 이후 발생하는 후속 재작업 흐름이기 때문이다.
+
+### 2-4. Plan 11 일정/충돌/작업자 요청과의 연결
+
+작업자가 하달받은 일정에 대해 추가 일정 또는 세부일정 조정을 요청하는 흐름은 Plan 11의 일정 연장, 야근, 충돌 관리, 승인 workflow와 연결해야 한다.
+
+### 2-5. Plan 13/15/16 JSON handoff와의 연결
+
+신규 수주 프로젝트, 개발팀 업무, PM 업무 하달, TaskCard, TaskWorkSegment, ScheduleAdjustmentRequest, RevisionRequest, ApprovalRequest는 JSON export/import 대상에 포함되어야 한다.
+
+정적 GitHub Pages 환경에서는 브라우저가 repo 파일을 직접 수정할 수 없으므로, 저장은 JSON 다운로드/수동 반영/handoff 구조로 안내한다.
+
+---
+
+## 3. 용어와 화면 명칭 기준
+
+Antigravity는 아래 명칭을 정확히 사용한다.
+
+### `/projects/intake` 상위 탭
+
+```text
+수주 프로젝트 관리
+개발팀 업무 리스트 관리
+```
+
+### `/projects` 프로젝트 보드 상단 source 탭
+
+```text
+개발팀 작업
+외부 수주 프로젝트
+```
+
+순서는 반드시 `개발팀 작업`이 먼저다.
+
+### 프로젝트 보드 상태 컬럼
+
+```text
+착수 전
+진행 중
+완료
+수정
+```
+
+순서는 반드시 위와 같다.
+
+`작수 전`, `수주/대기`, `수정(Revision)`처럼 혼동되는 문구가 화면에 남아 있으면 미완료로 본다. 내부 개발자가 필요한 enum 이름으로 `PRE_WORK`, `REVISION`을 쓰는 것은 허용하지만, 화면 문구는 위 기준을 따른다.
+
+---
+
+## 4. 권장 데이터 모델
+
+기존 타입을 훼손하지 말고 확장한다.
+
+### 4-1. ProjectSourceType
+
+```ts
+type ProjectSourceType = "CLIENT_ORDER" | "INTERNAL_DEVELOPMENT";
+```
+
+규칙:
+
+```text
+CLIENT_ORDER:
+- 수주 프로젝트 관리 탭에서 생성
+- deliveryDate 기준
+- 수주 실적에 포함
+
+INTERNAL_DEVELOPMENT:
+- 개발팀 업무 리스트 관리 탭에서 생성
+- targetDate 또는 targetReleaseDate 기준
+- 수주 실적에서 제외
+- 개발팀 내부 backlog/work item 성격
+```
+
+### 4-2. Project status와 board column 분리
+
+Project.status를 무조건 보드 컬럼으로 오해하지 않는다.
+
+```ts
+type ProjectBoardColumn =
+  | "PRE_WORK"
+  | "IN_PROGRESS"
+  | "COMPLETED"
+  | "REVISION";
+```
+
+권장 selector:
+
+```ts
+getProjectBoardColumn(project, revisionRequests, today)
+```
+
+규칙:
+
+```text
+신규 생성:
+- status: INTAKE_RECEIVED 또는 PM_ASSIGNED
+- board column: PRE_WORK
+
+PM 업무 하달 완료 후 진행 시작:
+- status: IN_PROGRESS
+- board column: IN_PROGRESS
+
+완료:
+- status: COMPLETED
+- board column: COMPLETED
+
+활성 RevisionRequest 존재:
+- board column: REVISION
+- 단, 완료 컬럼 오른쪽에 표시
+```
+
+### 4-3. PM 업무 하달 데이터
+
+기존 TaskCard를 우선 사용한다. 필요하면 lightweight dispatch metadata를 추가한다.
+
+```ts
+interface WorkDispatchPlan {
+  id: string
+  projectId: string
+  sourceType: "CLIENT_ORDER" | "INTERNAL_DEVELOPMENT"
+  pmId: string
+  status: "DRAFT" | "DISPATCHED" | "PARTIALLY_DISPATCHED" | "CANCELLED"
+  taskIds: string[]
+  createdAt: string
+  updatedAt: string
+}
+```
+
+TaskCard 생성 시 최소 필드:
+
+```ts
+TaskCard {
+  projectId
+  title
+  description
+  scopeName?
+  status: "TODO" | "READY" | "IN_PROGRESS"
+  assigneeId
+  pmId
+  managerId
+  departmentId
+  startDate
+  dueDate
+  priority
+  orderIndex
+  approvalStatus
+  sourceType: "PM_DISPATCH" | "INTERNAL_DEVELOPMENT_DISPATCH" | "CLIENT_ORDER_DISPATCH"
+}
+```
+
+### 4-4. 작업자 일정 조정 요청
+
+기존 ApprovalRequest를 최대한 활용하되, 세부 일정 조정 payload가 부족하면 아래 구조를 추가한다.
+
+```ts
+type ScheduleAdjustmentType =
+  | "ADDITIONAL_TIME"
+  | "DEADLINE_EXTENSION"
+  | "WORK_SEGMENT_CHANGE"
+  | "REASSIGNMENT_REQUEST"
+  | "MANPOWER_SUPPORT";
+
+interface ScheduleAdjustmentRequest {
+  id: string
+  projectId: string
+  taskId: string
+  requestedBy: string
+  pmId?: string
+  managerId?: string
+  type: ScheduleAdjustmentType
+  reason: string
+  currentStartDate?: string
+  currentDueDate?: string
+  requestedStartDate?: string
+  requestedDueDate?: string
+  requestedSegments?: Array<{
+    startDate: string
+    endDate: string
+    description: string
+    estimatedHours?: number
+  }>
+  status: "PENDING_PM" | "PENDING_MANAGER" | "APPROVED" | "REJECTED" | "CANCELLED" | "APPLIED"
+  approvalRequestId?: string
+  createdAt: string
+  updatedAt: string
+}
+```
+
+승인 전에는 TaskCard와 TaskWorkSegment 원본을 변경하지 않는다. 승인 후에만 적용한다.
+
+---
+
+## 5. 기능 완료의 정의
+
+Plan 17에서 완료는 단순 렌더링이 아니다. 아래가 모두 되어야 한다.
+
+1. 신규 수주 프로젝트 생성 시 `/projects`의 외부 수주 보드 `착수 전`에 나타난다.
+2. 신규 개발팀 업무 생성 시 `/projects`의 개발팀 작업 보드 `착수 전`에 나타난다.
+3. 보드 탭 순서는 `개발팀 작업`, `외부 수주 프로젝트`다.
+4. 보드 컬럼 순서는 `착수 전`, `진행 중`, `완료`, `수정`이다.
+5. PM 또는 권한자가 `착수 전` 카드를 `진행 중`으로 드래그하면 PM 업무 하달 workflow가 열린다.
+6. PM 미배정 상태에서는 진행 중 이동이 차단되거나 PM 배정 workflow로 안내된다.
+7. PM은 하나 이상의 TaskCard를 만들고 작업자를 지정해야 진행 전환을 완료할 수 있다.
+8. 작업자에게 할당된 TaskCard와 일정이 작업자 화면/일정표에 보인다.
+9. 작업자는 할당된 업무에서 추가 일정/일정 연장/세부일정 조정 요청을 만들 수 있다.
+10. 요청 승인 전에는 원본 일정이 변경되지 않는다.
+11. 승인 후 TaskCard/TaskWorkSegment/PersonalSchedule 또는 관련 schedule data가 반영된다.
+12. 주요 action은 Notification과 AuditLog를 남긴다.
+13. JSON export/import에 신규 데이터가 포함된다.
+14. lint/build가 통과한다.
+15. QA Evidence Matrix와 Master Report가 실제 결과에 맞게 갱신된다.
+
+---
+
+## 6. 전역 작업 규칙
+
+각 Phase는 반드시 다음 순서로 진행한다.
+
+```text
+분석
+-> 구현
+-> 자체검수
+-> npm.cmd run lint
+-> npm.cmd run build
+-> 완료보고
+-> 사용자 승인 요청
+```
+
+사용자가 승인하기 전까지 다음 Phase를 시작하지 마라.
+
+완료 보고에는 반드시 다음을 포함한다.
+
+```text
+1. 수정한 파일
+2. 구현/수정한 기능
+3. 실제 확인한 사용자 시나리오
+4. lint/build 결과
+5. 남은 리스크
+6. Git 상태
+7. 다음 Phase 승인 요청
+```
+
+원격 GitHub push는 사용자 승인 전까지 절대 하지 마라.
+
+---
+
+# Phase 123 — Plan 17 정밀 분석 및 범위 잠금
+
+## 목표
+
+Plan 1~16, 현재 화면, 실제 코드 사이의 연결성을 검토하고 Plan 17 구현 범위를 잠근다.
+
+## 작업
+
+- `docs/workspace plan1.txt`부터 `docs/workspace plan16.txt`까지 읽는다.
+- `docs/workspace_master_report_v2.md`, `docs/integrated-workspace-report.md`, `docs/qa-evidence-matrix.md`, `docs/test-matrix.md`, `docs/workspace-data-dictionary.md`를 읽는다.
+- `docs/workspace_functional_recovery_prompt_001.md`가 있으면 기능 복구 참고 문서로 읽는다.
+- 실제 코드에서 다음 파일을 확인한다.
+  - `src/app/projects/intake/page.tsx`
+  - `src/app/projects/page.tsx`
+  - `src/components/board/ProjectBoard.tsx`
+  - `src/components/board/ProjectSummaryCard.tsx`
+  - `src/store/projectStore.ts`
+  - `src/store/taskStore.ts`
+  - `src/store/approvalStore.ts`
+  - `src/store/scheduleStore.ts`
+  - `src/store/notificationStore.ts`
+  - `src/types/models.ts`
+  - `src/lib/selectors.ts`
+  - `src/lib/permissions.ts`
+  - `src/lib/jsonHandoff.ts`
+- 현재 화면에서 다음을 재확인한다.
+  - `/projects/intake` 상위 탭 부재
+  - 보드 source 탭 순서
+  - 보드 컬럼 순서
+  - 신규 생성 항목의 보드 반영 여부
+  - 드래그 가능 여부
+  - PM 업무 하달 workflow 존재 여부
+  - 작업자 일정 조정 workflow 존재 여부
+
+## 완료 조건
+
+- 실제 완료/부분구현/mock/미구현 항목을 분류한다.
+- Plan 17에서 수정할 파일 범위를 확정한다.
+- 디자인 작업과 충돌할 수 있는 파일을 별도로 표시한다.
+- 사용자에게 Phase 124 진행 승인을 요청한다.
+
+## Git 커밋
+
+분석 Phase이므로 코드 변경이 없다면 커밋하지 않는다.
+
+```text
+phase-123: analyze plan17 project and development workflow gaps
+```
+
+## 완료 보고 형식
+
+```text
+[Phase 123 완료 보고]
+
+1. 검토한 문서
+2. 확인한 화면/route
+3. 실제 코드 확인 범위
+4. 기능별 완료/부분구현/mock/미구현 분류
+5. Plan 17 수정 대상 파일
+6. 디자인 작업과 충돌 가능한 파일
+7. lint/build 기준선
+8. Git 상태
+9. 다음 단계: Phase 124 진행 승인 요청
+
+Phase 124를 진행해도 될까요?
+```
+
+사용자가 승인하기 전까지 Phase 124를 시작하지 마라.
+
+---
+
+# Phase 124 — lint/build 기준선 정리
+
+## 목표
+
+Plan 17 기능 구현 전 `npm.cmd run lint` error를 0으로 만들어 이후 변경 검증의 신뢰도를 높인다.
+
+## 작업
+
+- `npm.cmd run lint`를 실행한다.
+- lint error만 우선 수정한다.
+- 디자인 스타일 변경은 하지 않는다.
+- CommonJS script lint error, `any` error, unused import 중 error 수준 항목을 정리한다.
+- warning은 기능 구현을 방해하지 않는다면 남겨도 되지만 완료 보고에 수량과 이유를 적는다.
+- `npm.cmd run build`를 실행한다.
+
+## 완료 조건
+
+- `npm.cmd run lint` error 0
+- `npm.cmd run build` PASS
+- 기능 동작 변경 없이 타입/정적분석 기준선만 안정화
+
+## Git 커밋
+
+```text
+phase-124: clear lint errors before plan17 workflow work
+```
+
+## 완료 보고 형식
+
+```text
+[Phase 124 완료 보고]
+
+1. 수정한 lint error 목록
+2. 수정한 파일
+3. 남은 warning 수와 사유
+4. lint 결과
+5. build 결과
+6. Git 상태
+7. 다음 단계: Phase 125 진행 승인 요청
+
+Phase 125를 진행해도 될까요?
+```
+
+---
+
+# Phase 125 — 수주 프로젝트 관리 / 개발팀 업무 리스트 관리 탭 구현
+
+## 목표
+
+`/projects/intake`에서 외부 수주 프로젝트와 내부 개발팀 업무를 명확히 구분하여 생성/관리할 수 있게 한다.
+
+## 작업
+
+- `/projects/intake` 화면에 상위 탭을 추가한다.
+  - `수주 프로젝트 관리`
+  - `개발팀 업무 리스트 관리`
+- `수주 프로젝트 관리` 탭은 `CLIENT_ORDER`만 표시한다.
+- `개발팀 업무 리스트 관리` 탭은 `INTERNAL_DEVELOPMENT`만 표시한다.
+- 탭별 버튼 문구를 분리한다.
+  - 수주: `새 프로젝트 등록`
+  - 개발팀: `새 개발팀 업무 등록`
+- 탭별 빈 상태 문구를 분리한다.
+  - 수주: `대기 중인 수주 프로젝트가 없습니다.`
+  - 개발팀: `대기 중인 개발팀 업무가 없습니다.`
+- 수주 입력 필드:
+  - 프로젝트명
+  - 설명
+  - 우선순위
+  - 시작일
+  - 납품 예정일
+  - PM 배정
+- 개발팀 업무 입력 필드:
+  - 업무명
+  - 설명
+  - 우선순위
+  - 요청자 또는 담당 부서
+  - 시작 예정일
+  - 목표일
+  - PM 또는 개발 책임자 배정
+- 생성 시 `projectSourceType`을 정확히 설정한다.
+  - 수주: `CLIENT_ORDER`
+  - 개발팀: `INTERNAL_DEVELOPMENT`
+- 개발팀 업무는 수주 실적 집계에 포함되지 않도록 selector 또는 field 기준을 남긴다.
+
+## 완료 조건
+
+- `/projects/intake`에 두 탭이 보인다.
+- 각 탭에서 해당 유형만 보인다.
+- 각 탭에서 신규 항목을 생성할 수 있다.
+- 생성된 항목은 올바른 `projectSourceType`을 가진다.
+- `npm.cmd run lint` error 0
+- `npm.cmd run build` PASS
+
+## 자체검수 항목
+
+- 수주 탭에서 개발팀 업무가 보이지 않는가?
+- 개발팀 탭에서 외부 수주 프로젝트가 보이지 않는가?
+- 개발팀 업무 생성 시 `deliveryDate`를 강제하지 않는가?
+- 수주 프로젝트 생성 시 `targetDate`만으로 처리하지 않는가?
+- PM 배정 전/후 status가 기존 Plan 1 흐름과 충돌하지 않는가?
+
+## Git 커밋
+
+```text
+phase-125: split intake management tabs for client and development work
+```
+
+## 완료 보고 형식
+
+```text
+[Phase 125 완료 보고]
+
+1. 추가한 `/projects/intake` 탭 구조
+2. 수주 프로젝트 생성/관리 방식
+3. 개발팀 업무 리스트 생성/관리 방식
+4. ProjectSourceType 저장 검증
+5. 자체검수 결과
+6. lint/build 결과
+7. 다음 단계: Phase 126 진행 승인 요청
+
+Phase 126을 진행해도 될까요?
+```
+
+---
+
+# Phase 126 — 신규 항목의 착수 전 자동 진입 및 board selector 정합성
+
+## 목표
+
+신규 수주 프로젝트와 신규 개발팀 업무가 생성 직후 프로젝트 보드의 `착수 전` 컬럼에 자동으로 나타나게 한다.
+
+## 작업
+
+- `getProjectBoardColumn` selector를 점검한다.
+- 신규 생성 status와 board column mapping을 명확히 한다.
+- 생성 직후 status 권장:
+  - PM 미배정: `INTAKE_RECEIVED`
+  - PM 배정 완료: `PM_ASSIGNED`
+  - 둘 다 board column은 `PRE_WORK`
+- `PRE_WORK` 화면 라벨은 `착수 전`으로 통일한다.
+- `작수 전`, `작업 착수 전`, `수주/대기` 등 혼재 문구를 제거한다.
+- `/projects`에서 source tab별로 신규 생성 항목이 자동 표시되는지 검증한다.
+- 신규 생성 후 별도 refresh 없이 Zustand state에 즉시 반영되는지 확인한다.
+- JSON export/import로 불러온 신규 항목도 같은 selector를 타게 한다.
+
+## 완료 조건
+
+- 수주 프로젝트 생성 후 외부 수주 프로젝트 보드 `착수 전`에 표시된다.
+- 개발팀 업무 생성 후 개발팀 작업 보드 `착수 전`에 표시된다.
+- 화면에 `작수 전` 오탈자가 남지 않는다.
+- 화면에 `수주/대기` 문구가 남지 않는다.
+- `npm.cmd run lint` error 0
+- `npm.cmd run build` PASS
+
+## Git 커밋
+
+```text
+phase-126: route new client and development items into prework column
+```
+
+## 완료 보고 형식
+
+```text
+[Phase 126 완료 보고]
+
+1. 신규 생성 status/column mapping
+2. 착수 전 표시 검증 결과
+3. 제거한 혼동 문구
+4. JSON import 항목 selector 검증
+5. lint/build 결과
+6. 다음 단계: Phase 127 진행 승인 요청
+
+Phase 127을 진행해도 될까요?
+```
+
+---
+
+# Phase 127 — 프로젝트 보드 탭 순서 및 컬럼 순서 정정
+
+## 목표
+
+프로젝트 보드의 source 탭과 상태 컬럼 순서를 사용자 요구대로 정정한다.
+
+## 작업
+
+- `/projects` 보드 source 탭 순서를 다음으로 변경한다.
+  1. `개발팀 작업`
+  2. `외부 수주 프로젝트`
+- 기본 활성 탭은 `개발팀 작업`으로 둔다. 단, URL query나 사용자의 마지막 선택 상태를 유지하는 로직이 이미 있다면 기존 사용성을 해치지 않도록 검토한다.
+- 프로젝트 보드 status 컬럼 순서를 다음으로 변경한다.
+  1. `착수 전`
+  2. `진행 중`
+  3. `완료`
+  4. `수정`
+- `수정` 컬럼은 `완료` 오른쪽에 배치한다.
+- 내부 enum 순서와 화면 표시 순서가 다를 경우, 화면 표시 순서를 별도 constant로 명확히 둔다.
+- 우선순위/납품일 기준 grouping은 기존 기능을 유지하되, sourceType에 따라 `목표일`/`납품일` 라벨을 구분한다.
+
+## 완료 조건
+
+- `개발팀 작업` 탭이 `외부 수주 프로젝트`보다 앞에 보인다.
+- `수정` 컬럼이 `완료` 오른쪽에 보인다.
+- `착수 전` 문구가 정확히 표시된다.
+- 기존 project click/detail 진입이 깨지지 않는다.
+- `npm.cmd run lint` error 0
+- `npm.cmd run build` PASS
+
+## Git 커밋
+
+```text
+phase-127: reorder project board source tabs and status columns
+```
+
+## 완료 보고 형식
+
+```text
+[Phase 127 완료 보고]
+
+1. 변경한 source 탭 순서
+2. 변경한 board 컬럼 순서
+3. 완료 오른쪽 수정 컬럼 검증
+4. 기존 보드 동작 회귀 검증
+5. lint/build 결과
+6. 다음 단계: Phase 128 진행 승인 요청
+
+Phase 128을 진행해도 될까요?
+```
+
+---
+
+# Phase 128 — 프로젝트 카드 드래그와 진행 중 전환 Gate 구현
+
+## 목표
+
+프로젝트 보드에서 `착수 전` 카드를 `진행 중`으로 드래그할 때 단순 status 변경이 아니라 PM 업무 하달 workflow로 진입하게 한다.
+
+## 작업
+
+- ProjectBoard에 프로젝트 카드 drag/drop을 구현한다.
+- Drag 가능한 대상:
+  - `착수 전` -> `진행 중`
+  - `진행 중` -> `완료`는 기존 완료 workflow와 충돌하므로 이번 Phase에서는 분석 후 허용/차단을 명확히 한다.
+  - `완료` -> `수정`은 RevisionRequest workflow를 통해서만 허용한다.
+- `착수 전` -> `진행 중` drop 시 gate를 실행한다.
+- Gate 조건:
+  1. 현재 사용자는 SUPER_ADMIN, DEPARTMENT_MANAGER, 담당 PM 중 하나여야 한다.
+  2. PM이 배정되어 있어야 한다.
+  3. 담당 PM이 아닌 PM은 진행 전환할 수 없다.
+  4. 최소 1개 이상의 TaskCard 하달 계획이 있어야 한다.
+  5. TaskCard에는 assigneeId, startDate, dueDate가 있어야 한다.
+- 조건 미충족 시 status를 바꾸지 않고 안내한다.
+- 조건 충족 시 PM Dispatch modal 또는 dedicated workflow 화면을 연다.
+- 사용자가 취소하면 프로젝트는 `착수 전`에 남아야 한다.
+
+## 완료 조건
+
+- `착수 전` -> `진행 중` 드래그가 감지된다.
+- PM 미배정이면 진행 전환이 차단된다.
+- Task 하달 없이 진행 전환이 완료되지 않는다.
+- 취소 시 원래 컬럼으로 돌아간다.
+- `npm.cmd run lint` error 0
+- `npm.cmd run build` PASS
+
+## Git 커밋
+
+```text
+phase-128: add project drag gate before in-progress transition
+```
+
+## 완료 보고 형식
+
+```text
+[Phase 128 완료 보고]
+
+1. 구현한 ProjectBoard drag/drop 구조
+2. 진행 중 전환 gate 조건
+3. PM 미배정 차단 검증
+4. 취소 시 rollback 검증
+5. lint/build 결과
+6. 다음 단계: Phase 129 진행 승인 요청
+
+Phase 129를 진행해도 될까요?
+```
+
+---
+
+# Phase 129 — PM 업무 하달 workflow 및 TaskCard 생성
+
+## 목표
+
+PM이 프로젝트 또는 개발팀 업무를 진행하기 전 작업자별 TaskCard를 생성하고 일정/우선순위를 지정할 수 있게 한다.
+
+## 작업
+
+- PM Dispatch modal 또는 workflow component를 구현한다.
+- 표시 대상:
+  - 프로젝트/개발업무 제목
+  - sourceType: 외부 수주 / 개발팀 작업
+  - PM
+  - 시작일/납품일 또는 목표일
+  - 현재 생성된 TaskCard 목록
+- PM이 추가할 수 있는 TaskCard 필드:
+  - 업무명
+  - 설명
+  - scopeName 또는 업무 구분
+  - 담당 작업자
+  - 시작일
+  - 마감일
+  - 우선순위
+  - 예상 작업시간 또는 메모
+- validation:
+  - 담당자는 ACTIVE 또는 ON_LEAVE가 아닌 실제 작업 가능자여야 한다.
+  - 시작일은 마감일보다 늦을 수 없다.
+  - 수주 프로젝트의 task dueDate는 deliveryDate를 넘으면 경고 또는 승인 요청이 필요하다.
+  - 개발팀 업무의 task dueDate는 targetDate를 넘으면 경고 또는 승인 요청이 필요하다.
+  - PM 본인이 담당 PM이 아닌 프로젝트에는 하달할 수 없다. SUPER_ADMIN/DEPARTMENT_MANAGER는 예외 권한 가능.
+- 저장 시:
+  - TaskCard 생성
+  - 필요하면 WorkDispatchPlan 생성 또는 업데이트
+  - 프로젝트 status를 `IN_PROGRESS`로 변경
+  - 진행률 초기값 유지 또는 0으로 설정
+  - 작업자에게 Notification 생성
+  - AuditLog 생성
+- 저장 실패 시:
+  - 프로젝트 status 변경 금지
+  - 생성 중이던 draft task를 임의로 확정하지 않음
+
+## 완료 조건
+
+- PM이 하나 이상의 TaskCard를 생성할 수 있다.
+- TaskCard가 담당 작업자에게 연결된다.
+- 저장 후 프로젝트가 `진행 중` 컬럼으로 이동한다.
+- 작업자에게 알림이 생성된다.
+- AuditLog가 생성된다.
+- `npm.cmd run lint` error 0
+- `npm.cmd run build` PASS
+
+## Git 커밋
+
+```text
+phase-129: implement pm dispatch workflow for project tasks
+```
+
+## 완료 보고 형식
+
+```text
+[Phase 129 완료 보고]
+
+1. 구현한 PM Dispatch UI/flow
+2. TaskCard 생성 필드
+3. validation 규칙
+4. 프로젝트 진행 중 전환 방식
+5. Notification/AuditLog 결과
+6. lint/build 결과
+7. 다음 단계: Phase 130 진행 승인 요청
+
+Phase 130을 진행해도 될까요?
+```
+
+---
+
+# Phase 130 — 작업자 업무 수신 및 추가 일정 요청 workflow
+
+## 목표
+
+작업자가 PM에게 하달받은 업무를 확인하고, 추가 일정/일정 연장/인력 지원/세부일정 조정을 요청할 수 있게 한다.
+
+## 작업
+
+- 작업자 My Tasks 또는 TaskDetailModal에서 하달받은 TaskCard를 확인할 수 있는지 점검한다.
+- 작업자에게 다음 action을 제공한다.
+  - 일정 연장 요청
+  - 추가 작업시간 요청
+  - 인력 지원 요청
+  - 세부 작업일정 조정 요청
+- 기존 ApprovalRequest를 재사용할 수 있으면 재사용한다.
+  - `DEADLINE_EXTENSION`
+  - `OVERTIME_REQUEST`
+  - `MANPOWER_SUPPORT`
+  - `SCHEDULE_REPLAN`
+- 부족하면 `ScheduleAdjustmentRequest` store/type을 추가한다.
+- 요청 생성 시:
+  - 원본 TaskCard startDate/dueDate는 변경하지 않는다.
+  - 요청 payload에 원하는 일정/사유를 저장한다.
+  - PM 또는 부서장에게 Notification 생성
+  - AuditLog 생성
+- 작업자는 자신의 task에 대해서만 요청할 수 있다.
+- PM/관리자는 요청을 승인/반려할 수 있다.
+
+## 완료 조건
+
+- 작업자가 자신의 업무에서 일정 관련 요청을 생성할 수 있다.
+- 요청은 승인 전 원본 task를 변경하지 않는다.
+- PM/부서장에게 알림이 생성된다.
+- 요청 내역이 결재함 또는 task detail에서 추적 가능하다.
+- `npm.cmd run lint` error 0
+- `npm.cmd run build` PASS
+
+## Git 커밋
+
+```text
+phase-130: add worker schedule adjustment requests
+```
+
+## 완료 보고 형식
+
+```text
+[Phase 130 완료 보고]
+
+1. 작업자 요청 action 목록
+2. ApprovalRequest/ScheduleAdjustmentRequest 사용 방식
+3. 승인 전 원본 보호 검증
+4. 알림/이력 생성 결과
+5. 권한 검증 결과
+6. lint/build 결과
+7. 다음 단계: Phase 131 진행 승인 요청
+
+Phase 131을 진행해도 될까요?
+```
+
+---
+
+# Phase 131 — 요청 승인 후 일정/세부일정 적용
+
+## 목표
+
+작업자의 일정 조정 요청이 승인되면 TaskCard, TaskWorkSegment, 일정표에 실제 반영되게 한다.
+
+## 작업
+
+- approval workflow에서 일정 조정 요청 type을 처리한다.
+- 승인 시 적용 규칙:
+  - DEADLINE_EXTENSION: TaskCard.dueDate 업데이트
+  - OVERTIME_REQUEST: TaskWorkSegment 또는 PersonalSchedule에 초과근무/추가시간 반영
+  - MANPOWER_SUPPORT: 추가 assignee 또는 support task 생성 여부를 명확히 결정
+  - SCHEDULE_REPLAN/WORK_SEGMENT_CHANGE: TaskWorkSegment를 승인된 값으로 생성/수정
+- 반려 시:
+  - 원본 TaskCard/TaskWorkSegment 유지
+  - 반려 사유 저장
+  - 작업자에게 알림
+- 승인/반려 모두 AuditLog 생성
+- 승인 후 일정표에서 변경 사항이 보이는지 확인한다.
+- 충돌 검사와 연결한다.
+  - 승인 후 충돌이 생기면 DataQuality 또는 ConflictStore에 issue 생성
+
+## 완료 조건
+
+- 승인 후 실제 task/schedule data가 변경된다.
+- 반려 후 원본 data가 유지된다.
+- 일정표에 변경된 일정이 보인다.
+- 충돌이 있으면 경고가 생긴다.
+- `npm.cmd run lint` error 0
+- `npm.cmd run build` PASS
+
+## Git 커밋
+
+```text
+phase-131: apply approved worker schedule changes
+```
+
+## 완료 보고 형식
+
+```text
+[Phase 131 완료 보고]
+
+1. 승인 type별 적용 규칙
+2. 반려 시 원본 보호 검증
+3. 일정표 반영 결과
+4. 충돌 검사 연결 결과
+5. Notification/AuditLog 결과
+6. lint/build 결과
+7. 다음 단계: Phase 132 진행 승인 요청
+
+Phase 132를 진행해도 될까요?
+```
+
+---
+
+# Phase 132 — 수정 컬럼 workflow 최종 정렬
+
+## 목표
+
+`수정` 컬럼을 완료 오른쪽에 배치하는 것에서 끝내지 않고, RevisionRequest가 실제로 수정 컬럼에 진입하고 완료로 복귀하는 workflow를 정리한다.
+
+## 작업
+
+- RevisionRequest 타입/status를 현재 코드와 Plan 15/16 기준으로 비교한다.
+- 화면 표시 status와 내부 status를 정리한다.
+- 완료된 project에 대해서만 수정 요청을 만들 수 있게 한다.
+- 수정 요청 생성 시:
+  - 원본 project status를 즉시 바꾸지 않는다.
+  - active RevisionRequest를 생성한다.
+  - board selector가 `REVISION` 컬럼으로 분류한다.
+- 수정 업무가 승인되면 필요한 TaskCard를 생성하거나 기존 TaskCard를 reopen한다.
+- 수정 완료 시:
+  - RevisionRequest를 완료 처리
+  - project는 다시 `COMPLETED` 컬럼에 보인다.
+- PostDeliveryWorkRequest와 혼동하지 않는다.
+
+## 완료 조건
+
+- 수정 컬럼이 완료 오른쪽에 있고 active RevisionRequest만 표시한다.
+- 완료 프로젝트에서 수정 요청을 생성할 수 있다.
+- 수정 완료 후 완료 컬럼으로 복귀한다.
+- 사후 추가업무 요청과 데이터가 섞이지 않는다.
+- `npm.cmd run lint` error 0
+- `npm.cmd run build` PASS
+
+## Git 커밋
+
+```text
+phase-132: finalize revision column workflow after completed column
+```
+
+## 완료 보고 형식
+
+```text
+[Phase 132 완료 보고]
+
+1. RevisionRequest status 정리
+2. 수정 컬럼 진입 조건
+3. 완료 컬럼 복귀 조건
+4. PostDeliveryWorkRequest와의 구분
+5. lint/build 결과
+6. 다음 단계: Phase 133 진행 승인 요청
+
+Phase 133을 진행해도 될까요?
+```
+
+---
+
+# Phase 133 — JSON handoff, import/export, persistence 정합성
+
+## 목표
+
+Plan 17에서 추가/변경된 모든 데이터가 JSON 저장/불러오기/handoff에 포함되게 한다.
+
+## 작업
+
+- JSON export 대상에 다음을 포함한다.
+  - projects
+  - tasks
+  - taskWorkSegments
+  - workDispatchPlans 또는 dispatch metadata
+  - scheduleAdjustmentRequests
+  - approvalRequests
+  - revisionRequests
+  - postDeliveryWorkRequests
+  - notifications
+  - auditLogs
+- JSON import validation을 강화한다.
+  - projectSourceType 유효성
+  - internal development targetDate 유효성
+  - client order deliveryDate 유효성
+  - task.projectId 참조
+  - task.assigneeId 참조
+  - request.taskId/projectId 참조
+  - approvalRequestId 참조
+- `scripts/validate-json-data.ts`, `scripts/import-json-data.ts`, `scripts/export-current-state.ts`를 Plan 17 구조에 맞춘다.
+- 정적 배포 환경 한계를 명확히 안내한다.
+
+## 완료 조건
+
+- 웹 export JSON에 Plan 17 데이터가 포함된다.
+- import 후 보드/업무/일정/요청이 복원된다.
+- validation 실패 시 apply가 차단된다.
+- `npm.cmd run json:validate` PASS
+- `npm.cmd run json:import` PASS
+- `npm.cmd run lint` error 0
+- `npm.cmd run build` PASS
+
+## Git 커밋
+
+```text
+phase-133: extend json handoff for plan17 workflow data
+```
+
+## 완료 보고 형식
+
+```text
+[Phase 133 완료 보고]
+
+1. JSON export 추가 데이터
+2. import 복원 검증 결과
+3. validation 강화 내용
+4. json script 실행 결과
+5. 정적 배포 안내 보강
+6. lint/build 결과
+7. 다음 단계: Phase 134 진행 승인 요청
+
+Phase 134를 진행해도 될까요?
+```
+
+---
+
+# Phase 134 — 권한, 알림, AuditLog, DataQuality 연결
+
+## 목표
+
+Plan 17 workflow가 권한, 알림, 이력, 데이터 품질 검사와 연결되게 한다.
+
+## 작업
+
+- 권한:
+  - SUPER_ADMIN: 전체 가능
+  - DEPARTMENT_MANAGER: 부서 범위 가능
+  - PM: 본인 담당 project/development work 하달 가능
+  - WORKER: 본인 task 일정 요청 가능
+- Notification 생성 지점:
+  - 신규 프로젝트/개발업무 등록
+  - PM 배정
+  - PM 업무 하달
+  - 작업자 일정 요청
+  - 요청 승인/반려
+  - 수정 요청 생성/승인/완료
+- AuditLog 생성 지점:
+  - 프로젝트 생성
+  - 개발팀 업무 생성
+  - PM 배정
+  - 프로젝트 진행 전환
+  - TaskCard 하달
+  - 일정 요청 생성
+  - 일정 요청 승인/반려
+  - RevisionRequest lifecycle 변경
+- DataQuality scanner 항목:
+  - `IN_PROGRESS` 프로젝트인데 TaskCard가 0개
+  - `IN_PROGRESS` 프로젝트인데 PM이 없음
+  - TaskCard에 assigneeId가 없음
+  - TaskCard startDate/dueDate 누락
+  - 개발팀 업무가 수주 실적에 포함됨
+  - 완료 오른쪽 수정 컬럼 조건 위반
+  - 승인 전 schedule 변경 감지
+
+## 완료 조건
+
+- 권한 없는 사용자는 진행 전환/업무 하달/타인 일정 요청을 할 수 없다.
+- 주요 workflow에서 알림과 AuditLog가 생성된다.
+- DataQuality 재검사에서 Plan 17 항목을 감지한다.
+- `npm.cmd run lint` error 0
+- `npm.cmd run build` PASS
+
+## Git 커밋
+
+```text
+phase-134: connect permissions notifications audit and quality checks
+```
+
+## 완료 보고 형식
+
+```text
+[Phase 134 완료 보고]
+
+1. 권한 규칙 구현 결과
+2. Notification 생성 지점
+3. AuditLog 생성 지점
+4. DataQuality 검사 항목
+5. 권한/알림/이력 검증 결과
+6. lint/build 결과
+7. 다음 단계: Phase 135 진행 승인 요청
+
+Phase 135를 진행해도 될까요?
+```
+
+---
+
+# Phase 135 — 실제 사용자 시나리오 QA
+
+## 목표
+
+Plan 17의 핵심 workflow가 실제 사용 가능한 수준인지 end-to-end로 검증한다.
+
+## 필수 시나리오
+
+### 시나리오 A: 수주 프로젝트
+
+```text
+1. `/projects/intake` 접속
+2. `수주 프로젝트 관리` 탭 선택
+3. 새 수주 프로젝트 생성
+4. PM 배정
+5. `/projects`에서 `외부 수주 프로젝트` 탭 확인
+6. 신규 프로젝트가 `착수 전`에 표시되는지 확인
+7. `착수 전` -> `진행 중` 드래그
+8. PM Dispatch workflow에서 TaskCard 생성
+9. 작업자 지정 및 일정 지정
+10. 저장
+11. 프로젝트가 `진행 중`으로 이동
+12. 작업자에게 알림 생성
+13. 작업자 화면/일정표에서 업무 확인
+```
+
+### 시나리오 B: 개발팀 업무
+
+```text
+1. `/projects/intake` 접속
+2. `개발팀 업무 리스트 관리` 탭 선택
+3. 새 개발팀 업무 생성
+4. PM 또는 개발 책임자 배정
+5. `/projects`에서 `개발팀 작업` 탭이 첫 번째인지 확인
+6. 신규 업무가 `착수 전`에 표시되는지 확인
+7. `착수 전` -> `진행 중` 드래그
+8. PM Dispatch workflow에서 내부 작업 TaskCard 생성
+9. 작업자 지정 및 목표일 기준 일정 지정
+10. 수주 실적에 포함되지 않는지 확인
+```
+
+### 시나리오 C: 작업자 일정 조정
+
+```text
+1. 작업자로 로그인
+2. 하달받은 TaskCard 확인
+3. 일정 연장 요청 생성
+4. 원본 task dueDate가 즉시 변경되지 않는지 확인
+5. PM 또는 부서장으로 로그인
+6. 요청 승인
+7. TaskCard dueDate 또는 TaskWorkSegment가 승인 후 반영되는지 확인
+8. 작업자에게 승인 알림이 생성되는지 확인
+```
+
+### 시나리오 D: 수정 컬럼
+
+```text
+1. 완료 프로젝트 선택
+2. RevisionRequest 생성
+3. 프로젝트가 `완료` 오른쪽 `수정` 컬럼으로 이동하는지 확인
+4. 수정 완료 처리
+5. 프로젝트가 다시 `완료` 컬럼으로 복귀하는지 확인
+```
+
+### 시나리오 E: JSON 복원
+
+```text
+1. Plan 17 데이터가 있는 상태에서 JSON export
+2. store reset 또는 empty 상태 구성
+3. JSON import preview
+4. validation PASS 확인
+5. apply
+6. 프로젝트/개발업무/TaskCard/일정요청/RevisionRequest가 복원되는지 확인
+```
+
+## 완료 조건
+
+- 모든 필수 시나리오 결과를 PASS/FAIL/WARNING으로 기록한다.
+- 실패 항목은 Phase 136 전에 수정하거나 남은 리스크로 명시한다.
+- `npm.cmd run lint` error 0
+- `npm.cmd run build` PASS
+
+## Git 커밋
+
+```text
+phase-135: verify plan17 end to end workflows
+```
+
+## 완료 보고 형식
+
+```text
+[Phase 135 완료 보고]
+
+1. 수주 프로젝트 시나리오 결과
+2. 개발팀 업무 시나리오 결과
+3. 작업자 일정 조정 시나리오 결과
+4. 수정 컬럼 시나리오 결과
+5. JSON 복원 시나리오 결과
+6. 발견한 오류와 수정 결과
+7. lint/build 결과
+8. 다음 단계: Phase 136 진행 승인 요청
+
+Phase 136을 진행해도 될까요?
+```
+
+---
+
+# Phase 136 — 문서, QA Evidence, 마스터 리포트 정정 및 push 승인 요청
+
+## 목표
+
+Plan 17 구현 결과를 문서에 정확히 반영하고, 사용자 승인 전까지 push하지 않는 상태로 마무리한다.
+
+## 작업
+
+- `docs/qa-evidence-matrix.md`에 Plan 17 테스트 항목을 추가/갱신한다.
+- `docs/test-matrix.md`에 Plan 17 end-to-end 시나리오를 추가한다.
+- `docs/workspace_master_report_v2.md` 또는 최신 마스터 리포트에 다음을 정정한다.
+  - 수주 프로젝트 관리/개발팀 업무 리스트 관리 분리 여부
+  - 보드 탭 순서
+  - 보드 컬럼 순서
+  - 신규 항목 착수 전 자동 진입
+  - PM 업무 하달 workflow
+  - 작업자 일정 조정 workflow
+  - JSON handoff 반영 여부
+  - 남은 제약
+- `docs/workspace plan17.txt` 하단에 실제 Phase 완료 결과 요약을 추가해도 된다.
+- 최종 `npm.cmd run lint`, `npm.cmd run build`를 실행한다.
+- Git 상태를 확인한다.
+- 원격 push는 사용자 승인 요청까지만 한다.
+
+## 완료 조건
+
+- Plan 17 구현 결과와 문서가 일치한다.
+- QA Evidence Matrix에 실제 결과가 들어간다.
+- 남은 리스크가 명확하다.
+- `npm.cmd run lint` error 0
+- `npm.cmd run build` PASS
+- 사용자에게 push 승인 요청을 한다.
+
+## Git 커밋
+
+```text
+phase-136: document and verify plan17 workflow completion
+```
+
+## 완료 보고 형식
+
+```text
+[Phase 136 완료 보고]
+
+1. Plan 17 구현 요약
+2. 수주 프로젝트 관리 탭 검증 결과
+3. 개발팀 업무 리스트 관리 탭 검증 결과
+4. 보드 탭/컬럼 순서 검증 결과
+5. 신규 항목 착수 전 자동 진입 검증 결과
+6. PM 업무 하달 workflow 검증 결과
+7. 작업자 일정 조정 workflow 검증 결과
+8. 수정 컬럼 workflow 검증 결과
+9. JSON handoff 검증 결과
+10. QA Evidence / Test Matrix / Master Report 정정 결과
+11. lint/build 결과
+12. 남은 리스크
+13. Git 상태
+14. GitHub push 승인 요청
+
+원격 저장소에 push를 진행해도 될까요?
+```
+
+사용자가 승인하기 전까지 push하지 마라.
+
+---
+
+## Plan 17 추가 금지사항
+
+- `수주 프로젝트 관리`와 `개발팀 업무 리스트 관리`를 한 테이블에서 label만 바꿔 같은 데이터처럼 섞지 마라.
+- 개발팀 업무를 수주 실적에 포함하지 마라.
+- 개발팀 업무에 외부 납품일을 강제하지 마라.
+- `개발팀 작업` 탭을 `외부 수주 프로젝트` 뒤에 두지 마라.
+- `수정` 컬럼을 `완료` 앞에 두지 마라.
+- `작수 전` 오탈자를 남기지 마라.
+- 신규 항목이 보드에 나타나지 않는데 생성 완료라고 보고하지 마라.
+- `착수 전` -> `진행 중` 이동을 단순 status 변경으로 끝내지 마라.
+- PM 미배정 프로젝트를 진행 중으로 넘기지 마라.
+- 작업자/일정 없는 프로젝트를 진행 중으로 확정하지 마라.
+- 작업자 일정 요청 승인 전에 원본 task/schedule을 변경하지 마라.
+- RevisionRequest와 PostDeliveryWorkRequest를 섞지 마라.
+- JSON export/import에 Plan 17 데이터를 누락하지 마라.
+- lint/build 실패 상태를 완료라고 보고하지 마라.
+- 사용자 승인 없이 다음 Phase로 넘어가지 마라.
+- 사용자 승인 없이 원격 push하지 마라.
+
+---
+
+## Antigravity 시작 프롬프트
+
+아래 내용을 Antigravity 채팅창에 그대로 입력한다.
+
+```text
+현재 F:\workspace 프로젝트의 Plan 17 작업을 시작한다.
+
+반드시 먼저 `docs/workspace plan17.txt` 전체를 읽어라.
+그 다음 기존 문서 `docs/workspace plan1.txt`부터 `docs/workspace plan16.txt`, `docs/workspace_master_report_v2.md`, `docs/qa-evidence-matrix.md`, `docs/test-matrix.md`, `docs/workspace-data-dictionary.md`를 연결 문서로 확인하라.
+
+이번 작업의 핵심은 다음이다.
+
+1. `/projects/intake`에 `수주 프로젝트 관리`, `개발팀 업무 리스트 관리` 2개 탭을 만든다.
+2. 수주 프로젝트는 `CLIENT_ORDER`, 개발팀 업무는 `INTERNAL_DEVELOPMENT`로 분리한다.
+3. `/projects` 보드 상단 탭 순서는 `개발팀 작업`, `외부 수주 프로젝트` 순서로 한다.
+4. 프로젝트 보드 컬럼 순서는 `착수 전`, `진행 중`, `완료`, `수정` 순서로 한다.
+5. 신규 수주 프로젝트 또는 신규 개발팀 업무는 생성 직후 자동으로 해당 보드의 `착수 전` 컬럼에 나타나야 한다.
+6. `착수 전`에서 `진행 중`으로 드래그하면 단순 status 변경이 아니라 PM 업무 하달 workflow로 진입해야 한다.
+7. PM은 작업자별 TaskCard를 생성하고 일정/우선순위를 지정할 수 있어야 한다.
+8. 작업자는 하달받은 일정에 대해 추가 일정 요청, 일정 연장 요청, 세부 작업일정 조정을 신청할 수 있어야 한다.
+9. 승인 전에는 원본 일정/업무를 변경하지 말고, 승인 후에만 반영하라.
+10. 주요 action은 Notification과 AuditLog를 남겨라.
+11. JSON export/import와 `/json` handoff에 Plan 17 데이터를 포함하라.
+12. QA Evidence Matrix와 Master Report를 실제 결과에 맞게 정정하라.
+
+중요 유의사항:
+- 속도보다 정확성을 우선한다.
+- 각 Phase 완료 후 반드시 사용자 승인 요청을 하고, 승인 전 다음 Phase로 넘어가지 마라.
+- 현재 별도 디자인 개선이 진행 중일 수 있으므로 색상, 간격, 카드 스타일, 전체 레이아웃 등 디자인 전용 변경은 하지 마라.
+- 단, 기능 이해에 필요한 탭명, 탭 순서, 컬럼명, 컬럼 순서는 반드시 수정하라.
+- 기존 사용자 변경분을 되돌리지 마라.
+- lint/build 실패 상태를 완료라고 보고하지 마라.
+- 사용자 승인 없이 원격 GitHub push하지 마라.
+
+지금은 Phase 123만 진행하라.
+
+Phase 123 완료 보고에는 반드시 다음을 포함하라.
+1. 검토한 문서
+2. 확인한 화면/route
+3. 실제 코드 확인 범위
+4. 기능별 완료/부분구현/mock/미구현 분류
+5. Plan 17 수정 대상 파일
+6. 디자인 작업과 충돌 가능한 파일
+7. lint/build 기준선
+8. Git 상태
+9. 다음 단계: Phase 124 진행 승인 요청
+
+Phase 124를 진행해도 될까요?
+```

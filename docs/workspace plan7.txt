@@ -1,0 +1,1243 @@
+# WORKSPACE PLAN 7 — Plan 1~6 통합 연결성 보강, 데이터 사전, 라우팅/권한/테스트 매트릭스 정리 프롬프트
+
+이 프롬프트는 기존 `workspace plan1.txt`, `workspace plan2.txt`, `workspace plan3.txt`, `workspace plan4.txt`, `workspace plan5.txt`, `workspace plan6.txt` 이후에 추가되는 일곱 번째 보강 지시사항이다.
+
+Plan 1~6은 각각 다음 영역을 정의한다.
+
+- Plan 1: 기본 통합업무관리 시스템, Phase 0~8
+- Plan 2: 선후행 업무, 변경요청, 체크리스트, 알림, 실제 DB/로그인 확장, Phase 9~14
+- Plan 3: 권한별 화면, 인사카드 기반 권한, PM/중간관리자 개인 일정, Phase 15~17
+- Plan 4: MVP 제한, 운영 안정화, 완료 기준, 부재/대리승인/복구/검색 정책, Phase 18~25
+- Plan 5: VN 월별 스케줄표 Excel 기반 샘플 데이터 검증, Phase 26~29
+- Plan 6: 카드형 프로젝트 보드 UI/UX, 진행도 게이지, HealthScore, Blocker, Phase 30~34
+
+Plan 7의 목적은 새로운 기능을 무작정 추가하는 것이 아니라, Plan 1~6 사이의 연결이 끊기지 않도록 **통합 설계 기준, 데이터 사전, 권한 매트릭스, 라우팅 구조, 테스트 시나리오, 개발 우선순위**를 고정하는 것이다.
+
+---
+
+## 0. Plan 7의 핵심 목적
+
+Antigravity는 Plan 1~6을 모두 읽은 후, 실제 구현 전에 다음 문제를 반드시 해결해야 한다.
+
+1. 엔티티가 너무 많아져 데이터 모델이 중복되거나 충돌할 수 있다.
+2. `status`, `approvalStatus`, `completionStatus`가 혼동될 수 있다.
+3. `TaskCard`, `ScheduleAssignment`, `PersonalSchedule`이 모두 일정처럼 보일 수 있다.
+4. 권한별 화면과 데이터 필터가 UI에서만 처리되고 로직에서는 누락될 위험이 있다.
+5. Excel 기반 샘플 데이터가 기존 Mock 데이터와 분리되어 따로 놀 수 있다.
+6. 보드 UI는 좋아졌지만 실제 승인/완료/일정/권한 흐름과 연결되지 않을 수 있다.
+7. Phase가 34까지 늘어나면서 구현 순서, 의존성, 완료 기준이 불명확해질 수 있다.
+8. GitHub Pages 배포 구조에서 라우팅, base path, 새로고침 404 문제가 발생할 수 있다.
+9. 한국어/영어/베트남어 이름과 업무명이 섞여 검색/필터/정렬 문제가 생길 수 있다.
+10. 개발자가 임의로 기능을 앞당겨 구현하면서 MVP 경계가 무너질 수 있다.
+
+따라서 Plan 7은 다음을 강제한다.
+
+- 통합 데이터 사전 작성
+- 상태값 표준화
+- 일정 데이터 구분 규칙 확정
+- 권한 스코프 함수 우선 구현
+- 라우팅/화면 구조 명세
+- Phase 의존성 매트릭스 작성
+- 테스트 시나리오 매트릭스 작성
+- 샘플 데이터와 UI 연결 규칙 확정
+- GitHub Pages 배포 조건 검증
+- 다국어/이름/검색 정규화 기준 확정
+- MVP와 확장 기능 경계 재확인
+
+---
+
+## 1. 절대 원칙
+
+Antigravity는 다음 원칙을 반드시 지켜라.
+
+- Plan 7은 Plan 1~6을 대체하지 않는다.
+- Plan 7은 Plan 1~6의 연결성을 보강하는 통합 설계 프롬프트다.
+- Plan 1의 Phase 0~8 기본 흐름을 가장 우선한다.
+- Plan 4의 MVP 범위 제한을 반드시 지킨다.
+- Plan 5의 VN Excel 샘플 데이터는 실제 업무 검증용 seed로 연결한다.
+- Plan 6의 보드 UI는 실제 데이터와 권한 로직 위에서만 구현한다.
+- 데이터 모델을 추가하기 전에 기존 엔티티로 표현 가능한지 먼저 검토한다.
+- status 계열 필드는 통합 규칙 없이 임의로 추가하지 않는다.
+- UI에서 숨기는 것만으로 권한을 처리하지 않는다. 데이터 필터링 로직을 반드시 분리한다.
+- 사용자가 승인하기 전까지 다음 Phase로 넘어가지 않는다.
+- 사용자가 승인하기 전까지 GitHub 원격 push를 하지 않는다.
+
+---
+
+## 2. Plan 1~6 연결성에서 보강해야 할 핵심 문제
+
+### 2-1. 엔티티 중복 위험
+
+Plan 1~6에는 다음 엔티티가 등장한다.
+
+```text
+User
+Department
+Project
+TaskCard
+SchedulePlan
+ApprovalRequest
+Notification
+AuditLog
+ChangeRequest
+TaskChecklistItem
+TaskArtifact
+PersonnelCard
+PersonalSchedule
+AbsenceSchedule
+DelegationRule
+ReassignmentRequest
+VersionSnapshot
+SavedView
+Attachment
+BackupRecord
+ScheduleAssignment
+ProgressUpdate
+TaskBlocker
+Client
+DigestNotification
+NotificationPreference
+```
+
+이 엔티티들을 모두 무작정 생성하면 구조가 과도하게 복잡해진다.
+
+따라서 Antigravity는 다음 원칙을 지켜라.
+
+- MVP에서는 핵심 엔티티만 먼저 구현한다.
+- 확장 Phase에서는 기존 엔티티를 재사용할 수 있는지 먼저 검토한다.
+- 같은 목적의 엔티티가 있으면 병합 가능성을 검토한다.
+- 데이터 모델은 `types`, `schemas`, `mock data`, `UI selectors`가 같은 기준을 사용해야 한다.
+
+### 2-2. status 혼동 위험
+
+다음 status들은 서로 역할이 다르다.
+
+```text
+Project.status
+TaskCard.status
+TaskCard.approvalStatus
+TaskCard.completionStatus
+SchedulePlan.status
+ApprovalRequest.status
+PersonalSchedule.status
+ChangeRequest.status
+AbsenceSchedule.status
+DelegationRule.status
+ReassignmentRequest.status
+```
+
+Antigravity는 Phase 0에서 반드시 status taxonomy를 작성해야 한다.
+
+### 2-3. 일정 데이터 혼동 위험
+
+일정 관련 데이터는 최소 4종류로 구분한다.
+
+```text
+Project schedule
+TaskCard schedule
+ScheduleAssignment
+PersonalSchedule
+```
+
+구분 기준:
+
+- `Project schedule`: 프로젝트 전체 시작일/종료일
+- `TaskCard schedule`: 업무 카드 단위 일정
+- `ScheduleAssignment`: Excel 또는 월별 스케줄표에서 추출한 일자별 배정 데이터
+- `PersonalSchedule`: PM/중간관리자/작업자의 개인 일정, Off, Day, 회의, 교육 등
+
+이 네 가지를 UI에서 함께 보여줄 수는 있지만, 데이터 모델에서는 반드시 구분해야 한다.
+
+### 2-4. 이력 데이터 혼동 위험
+
+이력 관련 데이터는 다음처럼 역할을 분리한다.
+
+```text
+AuditLog
+- 누가, 언제, 무엇을 바꿨는지 기록
+
+VersionSnapshot
+- 변경 전후 비교와 복구 준비용 스냅샷
+
+ProgressUpdate
+- 업무 진행률과 진행 내용 변경 이력
+
+Notification
+- 사용자에게 알려야 하는 사건
+
+DigestNotification
+- 여러 알림을 묶은 요약 알림
+```
+
+절대 모든 이력을 `AuditLog` 하나에 몰아넣지 마라.
+
+---
+
+## 3. Phase 0에서 반드시 추가 보고해야 할 통합 설계 항목
+
+Phase 0 보고서에는 기존 Plan 1~6의 Phase 0 요구사항 외에 다음 항목을 반드시 추가하라.
+
+```text
+[Phase 0 Plan 7 추가 보고 필수 항목]
+
+1. Plan 1~6 전체 연결성 평가
+2. 엔티티 중복 가능성
+3. status taxonomy 설계
+4. 일정 데이터 구분 기준
+5. 이력 데이터 구분 기준
+6. 권한 스코프 함수 설계
+7. 라우팅/화면 구조 설계
+8. GitHub Pages base path 대응 방식
+9. Mock 데이터와 VN Excel seed 데이터 통합 방식
+10. 보드 UI와 실제 데이터 연결 방식
+11. Phase 의존성 매트릭스
+12. MVP 우선순위와 확장 우선순위
+13. 테스트 매트릭스 설계
+14. 다국어/이름/검색 정규화 기준
+15. Phase 35~40 확장 구현 계획
+```
+
+---
+
+## 4. 통합 데이터 사전 작성 지시
+
+### 4-1. 데이터 사전 문서
+
+Phase 1 진행 승인 후, Antigravity는 다음 문서를 작성하라.
+
+```text
+docs/workspace-data-dictionary.md
+```
+
+이 문서는 Plan 1~6의 엔티티, 상태값, 관계, 계산값을 하나로 정리하는 기준 문서다.
+
+### 4-2. 데이터 사전 필수 목차
+
+```text
+# Workspace Data Dictionary
+
+1. Entity Overview
+2. Core MVP Entities
+3. Extension Entities
+4. Entity Relationship Map
+5. Status Taxonomy
+6. Schedule Data Types
+7. Permission Scope Rules
+8. Audit / Snapshot / Progress / Notification Difference
+9. Derived Fields
+10. Seed Data Strategy
+11. Future DB Migration Notes
+```
+
+### 4-3. Core MVP Entities
+
+MVP에서 우선 사용할 엔티티:
+
+```text
+User
+Department
+Project
+TaskCard
+SchedulePlan
+ApprovalRequest
+Notification
+AuditLog
+PersonnelCard
+PersonalSchedule
+ScheduleAssignment
+```
+
+### 4-4. Extension Entities
+
+확장 Phase에서 사용할 엔티티:
+
+```text
+ChangeRequest
+TaskChecklistItem
+TaskArtifact
+AbsenceSchedule
+DelegationRule
+ReassignmentRequest
+VersionSnapshot
+SavedView
+Attachment
+BackupRecord
+ProgressUpdate
+TaskBlocker
+Client
+DigestNotification
+NotificationPreference
+```
+
+단, 실제 구현은 각 Phase 승인 이후에만 진행한다.
+
+---
+
+## 5. 상태값 표준화 지시
+
+### 5-1. Project.status
+
+```text
+INTAKE_RECEIVED
+MANAGER_REVIEW
+PM_ASSIGNED
+SCHEDULE_DRAFTING
+SCHEDULE_PENDING_APPROVAL
+SCHEDULE_REJECTED
+SCHEDULE_APPROVED
+IN_PROGRESS
+QA_REVIEW
+COMPLETED
+ON_HOLD
+ARCHIVED
+```
+
+### 5-2. TaskCard.status
+
+```text
+TODO
+READY
+IN_PROGRESS
+REVIEW
+DONE
+HOLD
+REJECTED
+```
+
+### 5-3. TaskCard.completionStatus
+
+```text
+NOT_STARTED
+IN_PROGRESS
+WORKER_DONE
+PM_REVIEWING
+PM_APPROVED
+MANAGER_REVIEWING
+MANAGER_APPROVED
+COMPLETED
+REOPENED
+REJECTED
+```
+
+### 5-4. ApprovalRequest.status
+
+```text
+PENDING
+PM_REVIEWING
+PM_APPROVED
+MANAGER_REVIEWING
+APPROVED
+REJECTED
+CANCELLED
+```
+
+### 5-5. ChangeRequest.status
+
+```text
+DRAFT
+PENDING_REVIEW
+APPROVED
+REJECTED
+APPLIED
+CANCELLED
+```
+
+### 5-6. PersonalSchedule.status
+
+```text
+SCHEDULED
+CHANGED
+CANCELLED
+COMPLETED
+```
+
+### 5-7. 상태값 연결 규칙
+
+상태값은 서로 자동으로 연결될 수 있지만 동일한 의미로 취급하지 않는다.
+
+예시:
+
+- `TaskCard.status = DONE` 이라고 해서 무조건 `completionStatus = COMPLETED`는 아니다.
+- 작업자가 완료 요청한 상태는 `TaskCard.status = REVIEW`, `completionStatus = WORKER_DONE`으로 표현할 수 있다.
+- 중간관리자 최종 승인 후에만 `completionStatus = COMPLETED`로 변경한다.
+- 프로젝트 전체 완료는 모든 필수 TaskCard가 완료되고, 미해결 ApprovalRequest가 없을 때만 가능하다.
+
+---
+
+## 6. 권한 스코프 함수 설계
+
+권한은 UI 컴포넌트마다 직접 if문으로 처리하지 말고, 별도 함수로 분리한다.
+
+### 6-1. 권장 파일
+
+```text
+src/lib/permissions.ts
+src/lib/scope.ts
+src/lib/access-control.ts
+```
+
+프로젝트 구조에 따라 가장 적합한 위치를 선택하라.
+
+### 6-2. 필수 함수
+
+```ts
+canViewProject(user, project)
+canEditProject(user, project)
+canViewTask(user, task)
+canEditTask(user, task)
+canMoveTask(user, task, targetStatus)
+canApproveRequest(user, approvalRequest)
+canViewSchedule(user, scheduleItem)
+canViewPersonnelCard(user, personnelCard)
+canViewAuditLog(user, auditLog)
+canViewAttachment(user, attachment)
+getVisibleProjects(user, projects)
+getVisibleTasks(user, tasks)
+getVisibleScheduleItems(user, scheduleItems)
+getVisibleNotifications(user, notifications)
+```
+
+### 6-3. 권한 원칙
+
+- 최고관리자는 전체 조회 가능
+- 중간관리자는 본인 부서 범위
+- PM은 본인 프로젝트 범위
+- 작업자는 본인 업무 범위
+- 클라이언트는 초기 MVP에서 접속 권한 없음
+- 비활성 사용자는 신규 업무 배정 불가
+- 권한 없는 데이터는 검색 결과에도 노출되지 않음
+- 권한 없는 데이터는 카드 상세에서도 노출되지 않음
+
+---
+
+## 7. 라우팅 및 화면 구조 표준화
+
+### 7-1. 권장 라우트
+
+프로젝트가 React Router 또는 Next.js를 사용한다면 아래 라우팅 구조를 기준으로 설계한다.
+
+```text
+/
+ /dashboard
+ /projects
+ /projects/new
+ /projects/:projectId
+ /projects/:projectId/board
+ /board
+ /schedule
+ /schedule/day
+ /schedule/week
+ /schedule/month
+ /approvals
+ /notifications
+ /personnel
+ /personnel/:personnelId
+ /settings
+ /audit
+```
+
+GitHub Pages 배포에서는 base path가 `/workspace/`일 수 있으므로 라우팅과 asset path를 반드시 확인한다.
+
+### 7-2. 화면별 데이터 소스
+
+```text
+Dashboard
+- Project
+- TaskCard
+- ApprovalRequest
+- Notification
+- ScheduleAssignment
+
+Board
+- TaskCard
+- ScheduleAssignment
+- PersonalSchedule
+- ProgressUpdate
+- TaskBlocker
+
+Schedule
+- TaskCard
+- ScheduleAssignment
+- PersonalSchedule
+- ApprovalRequest
+
+Approvals
+- ApprovalRequest
+- ChangeRequest
+- ReassignmentRequest
+
+Personnel
+- PersonnelCard
+- Department
+- User
+
+Audit
+- AuditLog
+- VersionSnapshot
+```
+
+---
+
+## 8. GitHub Pages 배포 안정화 지시
+
+프로젝트의 GitHub 저장소와 배포 URL이 다음과 같다면:
+
+```text
+Repository: https://github.com/eumditravel-oss/workspace
+Pages URL: https://eumditravel-oss.github.io/workspace/
+```
+
+Antigravity는 다음을 확인해야 한다.
+
+### 8-1. base path 확인
+
+- Vite라면 `base: "/workspace/"` 필요 여부 확인
+- Next.js라면 `basePath` 또는 `assetPrefix` 필요 여부 확인
+- React Router라면 `basename="/workspace"` 필요 여부 확인
+
+### 8-2. 새로고침 404 대응
+
+GitHub Pages에서 SPA 라우팅을 사용할 경우 새로고침 시 404가 발생할 수 있다.
+
+해결 후보:
+
+- HashRouter 사용
+- 404.html fallback 구성
+- GitHub Pages용 SPA redirect 스크립트 적용
+- 라우트 수를 줄이고 query/hash 기반으로 관리
+
+임의로 적용하지 말고 Phase 0에서 현재 프로젝트 구조를 확인한 뒤 제안하라.
+
+### 8-3. 배포 검증 항목
+
+- 메인 페이지 로딩
+- `/workspace/` 하위 경로 로딩
+- 새로고침 시 404 여부
+- 정적 asset 경로 정상 여부
+- 모바일 화면 기본 표시
+- GitHub Pages 배포 반영 지연 안내
+
+---
+
+## 9. Mock 데이터와 VN Excel seed 데이터 통합 방식
+
+Plan 5의 VN Excel 기반 데이터는 기존 Mock 데이터와 분리되어 따로 존재하면 안 된다.
+
+### 9-1. 통합 원칙
+
+- `samplePersonnelCards`는 Plan 3의 `PersonnelCard` 구조와 연결한다.
+- `sampleProjects`는 Plan 1의 `Project` 구조와 연결한다.
+- `sampleScheduleAssignments`는 Plan 5의 Excel 일자별 배정 데이터로 유지한다.
+- `sampleTaskCards`는 연속 일정 묶음 단위로 생성한다.
+- `samplePersonalSchedules`는 Off/Day/HALF Day 등 개인 일정으로 유지한다.
+- 보드와 공정표는 같은 seed 데이터를 바라봐야 한다.
+
+### 9-2. 권장 파일 구조
+
+```text
+src/data/
+  seed/
+    departments.ts
+    personnel.ts
+    projects.ts
+    taskCards.ts
+    scheduleAssignments.ts
+    personalSchedules.ts
+    approvals.ts
+    notifications.ts
+    auditLogs.ts
+  index.ts
+```
+
+또는 기존 프로젝트 구조에 맞게 다음처럼 둘 수 있다.
+
+```text
+src/mocks/workspace/
+```
+
+중요한 것은 seed 데이터가 화면마다 따로 복사되지 않는 것이다.
+
+---
+
+## 10. Selector / Derived Data 레이어 분리
+
+UI 컴포넌트가 직접 모든 계산을 하지 않도록 한다.
+
+### 10-1. 권장 파일
+
+```text
+src/lib/selectors.ts
+src/lib/derived.ts
+src/lib/workspace-selectors.ts
+```
+
+### 10-2. 필수 selector
+
+```ts
+getProjectProgress(projectId)
+getTaskProgress(taskId)
+getScheduleProgress(taskId)
+getTaskHealthScore(taskId)
+getTaskBlockerStatus(taskId)
+getColumnSummary(columnId)
+getEmployeeWorkload(userId, dateRange)
+getDepartmentWorkload(departmentId, dateRange)
+getVisibleBoardColumns(user)
+getVisibleBoardCards(user, boardType)
+getScheduleItemsForCalendar(user, range)
+groupScheduleAssignmentsIntoTaskCards(assignments)
+normalizeProjectName(rawName)
+normalizeScopeName(rawName)
+```
+
+### 10-3. 원칙
+
+- 진행률 계산은 카드 컴포넌트 안에서 직접 하지 않는다.
+- 권한 필터링은 화면 컴포넌트 안에서 직접 하지 않는다.
+- Excel 정규화는 여러 곳에 흩어지지 않고 공통 함수로 둔다.
+- 컬럼 요약 정보도 selector로 계산한다.
+
+---
+
+## 11. 테스트 매트릭스 추가
+
+### 11-1. Phase별 테스트 문서
+
+Phase 1 승인 후 다음 문서를 작성하라.
+
+```text
+docs/test-matrix.md
+```
+
+### 11-2. 테스트 매트릭스 필수 항목
+
+```text
+1. Role Permission Tests
+2. Project Intake Tests
+3. PM Assignment Tests
+4. Schedule Approval Tests
+5. Task Board Tests
+6. Schedule Table Tests
+7. VN Excel Seed Tests
+8. Completion Workflow Tests
+9. Notification Tests
+10. Search / Filter Tests
+11. GitHub Pages Routing Tests
+12. Mobile Layout Tests
+```
+
+### 11-3. 권한 테스트 최소 시나리오
+
+- 최고관리자는 모든 프로젝트를 볼 수 있다.
+- 중간관리자는 본인 부서 프로젝트만 볼 수 있다.
+- PM은 본인 프로젝트만 볼 수 있다.
+- 작업자는 본인 업무만 볼 수 있다.
+- 작업자는 검색으로 타인 업무를 찾을 수 없다.
+- 작업자는 카드 상세 URL을 직접 입력해도 타인 카드 정보를 볼 수 없다.
+- PM은 다른 PM 프로젝트를 볼 수 없다.
+- 중간관리자는 타 부서 개인 일정을 볼 수 없다.
+
+### 11-4. VN Excel seed 테스트 최소 시나리오
+
+- Project / Scope 쌍이 올바르게 ScheduleAssignment로 생성된다.
+- Off / Day / HALF Day는 PersonalSchedule로 생성된다.
+- 같은 직원 + 같은 프로젝트 + 같은 Scope + 연속 날짜는 하나의 TaskCard로 묶인다.
+- 줄바꿈이 있는 프로젝트명이 정규화된다.
+- 원본 값은 source 필드로 보존된다.
+- Excel 날짜 숫자가 ISO 날짜로 변환된다.
+
+---
+
+## 12. 다국어 / 이름 / 검색 정규화 기준
+
+VN 스케줄 데이터에는 한국어, 영어, 베트남어 이름이 혼재될 수 있다.
+
+### 12-1. 이름 필드 기준
+
+PersonnelCard는 다음 필드를 지원한다.
+
+```text
+name
+displayName
+koreanAlias
+englishName
+vietnameseName
+searchableName
+```
+
+### 12-2. 검색 정규화
+
+검색 시 다음 값을 함께 검색한다.
+
+- 베트남어 원문 이름
+- 한글 별칭
+- 영문 이름
+- 프로젝트 원문명
+- 프로젝트 정규화명
+- Scope 원문명
+- Scope 정규화명
+
+### 12-3. 금지사항
+
+- 베트남어 특수문자를 임의로 제거하지 마라.
+- 한글 별칭을 덮어쓰지 마라.
+- Excel 원본명을 정규화명으로만 저장하지 마라.
+- 검색용 필드는 별도로 만들되 원문 필드는 보존하라.
+
+---
+
+## 13. Phase 의존성 매트릭스 작성
+
+Phase 0 보고서에는 다음 형태의 의존성 매트릭스를 포함하라.
+
+```text
+Phase 1 depends on Phase 0
+Phase 2 depends on Phase 1
+Phase 3 depends on Phase 1, 2
+Phase 4 depends on Phase 1, 2, 3
+Phase 5 depends on Phase 1, 2, 3, 4
+Phase 6 depends on Phase 5
+Phase 7 depends on Phase 1, 2, 4, 5
+Phase 8 depends on Phase 1~7
+Phase 9 depends on TaskCard and Schedule data
+Phase 15 depends on PersonnelCard structure
+Phase 26 depends on Plan 5 Excel file analysis
+Phase 30 depends on board data and progress selectors
+Phase 35 depends on Data Dictionary, Permission Functions, Selectors, Test Matrix
+```
+
+---
+
+# Phase 35 — 통합 데이터 사전, 상태값 표준화, 권한 스코프 설계
+
+## 목표
+
+Plan 1~6에서 정의된 모든 데이터 구조와 상태값, 권한 범위를 하나의 기준으로 정리한다.
+
+## 작업
+
+- `docs/workspace-data-dictionary.md` 작성
+- 엔티티 목록 정리
+- Core MVP Entities 정리
+- Extension Entities 정리
+- Entity relationship map 작성
+- Status taxonomy 작성
+- 일정 데이터 구분 기준 작성
+- 이력 데이터 구분 기준 작성
+- 권한 스코프 함수 설계
+- MVP와 확장 기능 경계 정리
+
+## 완료 조건
+
+- Plan 1~6의 엔티티가 하나의 데이터 사전에 정리됨
+- status 계열 필드가 명확히 구분됨
+- 일정 엔티티들이 혼동되지 않음
+- 권한 스코프 함수 설계가 문서화됨
+- 이후 Phase에서 데이터 구조 충돌을 줄일 수 있음
+
+## 자체검수 항목
+
+- 중복 엔티티가 없는지 확인
+- status 의미가 충돌하지 않는지 확인
+- 일정 데이터 구분이 명확한지 확인
+- 이력 데이터 역할이 분리되었는지 확인
+- MVP 범위를 넘어선 구현을 하지 않았는지 확인
+
+## Git 커밋
+
+커밋 메시지:
+
+```text
+phase-35: define unified data dictionary and permission scopes
+```
+
+## Phase 35 완료 후 출력 형식
+
+```text
+[Phase 35 완료 보고]
+
+1. 작성한 데이터 사전 문서
+2. 정리한 Core MVP Entities
+3. 정리한 Extension Entities
+4. status taxonomy 요약
+5. 일정 데이터 구분 기준
+6. 권한 스코프 설계
+7. 자체검수 결과
+8. 빌드/테스트 결과
+9. 커밋 메시지 및 커밋 해시
+10. 다음 단계: Phase 36 진행 승인 요청
+
+Phase 36을 진행해도 될까요?
+```
+
+사용자가 승인하기 전까지 Phase 36을 시작하지 마라.
+
+---
+
+# Phase 36 — Selector / Derived Data / Permission Function 레이어 구현
+
+## 목표
+
+UI 컴포넌트가 직접 권한 필터링, 진행률 계산, 컬럼 요약 계산, Excel 데이터 정규화를 하지 않도록 공통 로직 레이어를 만든다.
+
+## 작업
+
+- `src/lib/permissions.ts` 또는 동등 파일 생성
+- `src/lib/selectors.ts` 또는 동등 파일 생성
+- `src/lib/derived.ts` 또는 동등 파일 생성
+- 권한 스코프 함수 구현
+- 보드 카드 필터 selector 구현
+- 공정표 selector 구현
+- 진행률 계산 함수 구현
+- 일정 소진률 계산 함수 구현
+- HealthScore 계산 함수 준비
+- Excel 이름/프로젝트/Scope 정규화 함수 구현
+- VN seed 데이터와 UI 연결 selector 구현
+
+## 필수 구현 함수
+
+```ts
+canViewProject(user, project)
+canEditProject(user, project)
+canViewTask(user, task)
+canEditTask(user, task)
+canMoveTask(user, task, targetStatus)
+canApproveRequest(user, approvalRequest)
+canViewSchedule(user, scheduleItem)
+canViewPersonnelCard(user, personnelCard)
+getVisibleProjects(user, projects)
+getVisibleTasks(user, tasks)
+getVisibleScheduleItems(user, scheduleItems)
+getProjectProgress(projectId)
+getTaskProgress(taskId)
+getScheduleProgress(taskId)
+getColumnSummary(columnId)
+groupScheduleAssignmentsIntoTaskCards(assignments)
+normalizeProjectName(rawName)
+normalizeScopeName(rawName)
+```
+
+프로젝트 구조상 모든 함수를 한 번에 구현하기 어렵다면, MVP에 필요한 함수부터 구현하고 나머지는 TODO로 문서화한다.
+
+## 완료 조건
+
+- 권한 필터링이 UI에서 분리됨
+- 진행률 계산이 카드 컴포넌트에서 분리됨
+- Excel 정규화 로직이 공통 함수로 분리됨
+- 보드와 공정표가 같은 selector를 사용할 수 있음
+- 테스트 또는 최소 검증 가능
+
+## 자체검수 항목
+
+- 작업자가 타인 카드를 selector 결과로 받지 않는지 확인
+- PM이 다른 PM 프로젝트를 받지 않는지 확인
+- 중간관리자가 타 부서 일정을 받지 않는지 확인
+- 진행률 계산이 하드코딩되지 않았는지 확인
+- 정규화 함수가 원본 값을 훼손하지 않는지 확인
+
+## Git 커밋
+
+커밋 메시지:
+
+```text
+phase-36: implement selectors derived data and permission utilities
+```
+
+## Phase 36 완료 후 출력 형식
+
+```text
+[Phase 36 완료 보고]
+
+1. 구현한 권한 함수
+2. 구현한 selector
+3. 구현한 derived data 계산 함수
+4. Excel 정규화 함수
+5. 자체검수 결과
+6. 빌드/테스트 결과
+7. 커밋 메시지 및 커밋 해시
+8. 다음 단계: Phase 37 진행 승인 요청
+
+Phase 37을 진행해도 될까요?
+```
+
+사용자가 승인하기 전까지 Phase 37을 시작하지 마라.
+
+---
+
+# Phase 37 — 라우팅, GitHub Pages 배포 안정성, 화면 구조 정리
+
+## 목표
+
+GitHub Pages 배포 환경에서도 라우팅과 정적 리소스가 깨지지 않도록 구조를 정리한다.
+
+## 작업
+
+- 현재 프로젝트 프레임워크 확인
+- GitHub Pages base path 확인
+- 라우팅 방식 확인
+- 정적 asset 경로 확인
+- 새로고침 404 가능성 확인
+- SPA fallback 필요 여부 확인
+- 화면별 라우트 정리
+- 사이드바 메뉴와 라우트 연결
+- 권한별 접근 가능한 라우트 제한
+- 배포 전 확인 체크리스트 작성
+
+## GitHub Pages 기준
+
+```text
+Repository: https://github.com/eumditravel-oss/workspace
+Pages URL: https://eumditravel-oss.github.io/workspace/
+```
+
+## 완료 조건
+
+- `/workspace/` base path 문제가 검토됨
+- 새로고침 404 대응 방식이 결정됨
+- 화면별 라우트가 정리됨
+- 권한 없는 라우트 접근이 제한됨
+- 배포 전 체크리스트가 작성됨
+
+## 자체검수 항목
+
+- 메인 페이지가 `/workspace/`에서 로딩되는지 확인
+- 새로고침 시 404 가능성이 해결 또는 문서화되었는지 확인
+- asset 경로가 절대 루트 `/`에 고정되지 않았는지 확인
+- 권한 없는 사용자가 URL 직접 입력으로 접근하지 못하는지 확인
+
+## Git 커밋
+
+커밋 메시지:
+
+```text
+phase-37: harden routing and github pages deployment paths
+```
+
+## Phase 37 완료 후 출력 형식
+
+```text
+[Phase 37 완료 보고]
+
+1. 확인한 프레임워크와 라우팅 방식
+2. GitHub Pages base path 처리 방식
+3. 새로고침 404 대응 방식
+4. 화면별 라우트 구조
+5. 권한별 라우트 제한 방식
+6. 자체검수 결과
+7. 빌드/테스트 결과
+8. 커밋 메시지 및 커밋 해시
+9. 다음 단계: Phase 38 진행 승인 요청
+
+Phase 38을 진행해도 될까요?
+```
+
+사용자가 승인하기 전까지 Phase 38을 시작하지 마라.
+
+---
+
+# Phase 38 — 테스트 매트릭스 및 시나리오 검증 체계 작성
+
+## 목표
+
+Plan 1~6의 기능을 실제로 검증할 수 있는 테스트 매트릭스를 작성한다.
+
+## 작업
+
+- `docs/test-matrix.md` 작성
+- Role Permission Tests 작성
+- Project Intake Tests 작성
+- PM Assignment Tests 작성
+- Schedule Approval Tests 작성
+- Task Board Tests 작성
+- Schedule Table Tests 작성
+- VN Excel Seed Tests 작성
+- Completion Workflow Tests 작성
+- Notification Tests 작성
+- Search / Filter Tests 작성
+- GitHub Pages Routing Tests 작성
+- Mobile Layout Tests 작성
+- Phase별 최소 테스트 기준 작성
+
+## 완료 조건
+
+- 기능별 테스트 기준이 문서화됨
+- 권한별 테스트 기준이 문서화됨
+- VN Excel seed 테스트 기준이 문서화됨
+- GitHub Pages 배포 테스트 기준이 문서화됨
+- 모바일 레이아웃 테스트 기준이 문서화됨
+
+## 자체검수 항목
+
+- Plan 1~6 주요 기능이 테스트 매트릭스에 포함되었는지 확인
+- 권한 테스트가 누락되지 않았는지 확인
+- Excel seed 검증이 포함되었는지 확인
+- 보드 UI/진행률 게이지 검증이 포함되었는지 확인
+- 배포 경로 검증이 포함되었는지 확인
+
+## Git 커밋
+
+커밋 메시지:
+
+```text
+phase-38: add integrated test matrix for workspace plans
+```
+
+## Phase 38 완료 후 출력 형식
+
+```text
+[Phase 38 완료 보고]
+
+1. 작성한 테스트 매트릭스 문서
+2. 권한 테스트 항목
+3. 업무 흐름 테스트 항목
+4. VN Excel seed 테스트 항목
+5. 보드 UI 테스트 항목
+6. GitHub Pages 테스트 항목
+7. 자체검수 결과
+8. 빌드/테스트 결과
+9. 커밋 메시지 및 커밋 해시
+10. 다음 단계: Phase 39 진행 승인 요청
+
+Phase 39를 진행해도 될까요?
+```
+
+사용자가 승인하기 전까지 Phase 39를 시작하지 마라.
+
+---
+
+# Phase 39 — 다국어/이름/검색 정규화 및 데이터 품질 검증
+
+## 목표
+
+한국어, 영어, 베트남어가 혼재된 실무 데이터에서도 검색, 필터, 정렬이 안정적으로 작동하도록 정규화 기준을 만든다.
+
+## 작업
+
+- 이름 필드 표준화
+- `displayName`, `koreanAlias`, `englishName`, `vietnameseName`, `searchableName` 기준 정리
+- 프로젝트명 원본/정규화명 분리
+- Scope 원본/정규화명 분리
+- 검색용 토큰 생성 규칙 작성
+- 베트남어 특수문자 보존 규칙 작성
+- 한글 별칭 보존 규칙 작성
+- Excel 원본값 보존 규칙 작성
+- 데이터 품질 검증 함수 준비
+
+## 완료 조건
+
+- 베트남어 이름이 훼손되지 않음
+- 한글 별칭이 보존됨
+- 원본 프로젝트명과 정규화 프로젝트명이 분리됨
+- 검색 가능한 이름 필드가 준비됨
+- 검색/필터에서 원문과 별칭 모두 활용 가능
+
+## 자체검수 항목
+
+- 베트남어 특수문자를 제거하지 않았는지 확인
+- 한글 별칭을 덮어쓰지 않았는지 확인
+- Excel 원본명을 잃어버리지 않았는지 확인
+- 검색용 필드가 권한 없는 데이터 노출에 사용되지 않는지 확인
+
+## Git 커밋
+
+커밋 메시지:
+
+```text
+phase-39: standardize multilingual names and search normalization
+```
+
+## Phase 39 완료 후 출력 형식
+
+```text
+[Phase 39 완료 보고]
+
+1. 이름 필드 표준화 방식
+2. 프로젝트명 정규화 방식
+3. Scope 정규화 방식
+4. 검색용 토큰 생성 방식
+5. 데이터 품질 검증 방식
+6. 자체검수 결과
+7. 빌드/테스트 결과
+8. 커밋 메시지 및 커밋 해시
+9. 다음 단계: Phase 40 진행 승인 요청
+
+Phase 40을 진행해도 될까요?
+```
+
+사용자가 승인하기 전까지 Phase 40을 시작하지 마라.
+
+---
+
+# Phase 40 — Plan 1~7 통합 연결성 최종 QA
+
+## 목표
+
+Plan 1~7 전체가 실제 구현 흐름에서 충돌하지 않고, 하나의 통합업무관리 시스템으로 연결되는지 최종 검토한다.
+
+## 전체 테스트 시나리오
+
+1. Plan 1~7 파일을 모두 읽는다.
+2. Data Dictionary가 Plan 1~7 요구사항을 반영하는지 확인한다.
+3. status taxonomy가 모든 status 계열 필드를 구분하는지 확인한다.
+4. 권한 스코프 함수가 역할별 데이터 제한을 보장하는지 확인한다.
+5. Mock 데이터와 VN Excel seed 데이터가 같은 화면에서 사용되는지 확인한다.
+6. 보드 UI가 selector 기반 데이터를 사용하는지 확인한다.
+7. 카드 진행률이 실제 progress/checklist/schedule data를 기반으로 계산되는지 확인한다.
+8. 직원별 공정표가 TaskCard, ScheduleAssignment, PersonalSchedule을 구분해서 표시하는지 확인한다.
+9. 검색 결과가 권한을 넘어서지 않는지 확인한다.
+10. SavedView가 권한 범위를 넘지 않는지 확인한다.
+11. GitHub Pages 배포 경로가 깨지지 않는지 확인한다.
+12. 모바일 화면에서 카드/보드/공정표가 깨지지 않는지 확인한다.
+13. Excel 원본 데이터의 베트남어 이름과 한글 별칭이 보존되는지 확인한다.
+14. AuditLog, VersionSnapshot, ProgressUpdate의 역할이 구분되는지 확인한다.
+15. 빌드 오류가 없는지 확인한다.
+16. Git 상태를 확인한다.
+
+## 완료 조건
+
+- Plan 1~7의 연결성이 문서와 코드에서 정리됨
+- 데이터 모델 충돌이 최소화됨
+- status 혼동이 줄어듦
+- 권한 필터가 공통 함수로 분리됨
+- selector/derived data 레이어가 분리됨
+- GitHub Pages 배포 리스크가 문서화 또는 해결됨
+- 테스트 매트릭스가 존재함
+- 다국어/이름/검색 정규화 기준이 존재함
+- 원격 push는 사용자 승인 전까지 금지
+
+## Git 커밋
+
+커밋 메시지:
+
+```text
+phase-40: complete integrated connectivity qa for workspace plans
+```
+
+## Phase 40 완료 후 출력 형식
+
+```text
+[Phase 40 완료 보고]
+
+1. Plan 1~7 통합 연결성 검토 결과
+2. 데이터 사전 검증 결과
+3. status taxonomy 검증 결과
+4. 권한 스코프 검증 결과
+5. selector/derived data 검증 결과
+6. VN Excel seed 연결 검증 결과
+7. 보드 UI 연결 검증 결과
+8. GitHub Pages 배포 검증 결과
+9. 다국어/검색 정규화 검증 결과
+10. 테스트 매트릭스 검증 결과
+11. 빌드/테스트 결과
+12. 커밋 메시지 및 커밋 해시
+13. 남은 리스크
+14. GitHub push 승인 요청
+
+원격 저장소에 push를 진행해도 될까요?
+```
+
+사용자가 승인하기 전까지 push하지 마라.
+
+---
+
+## 추가 무결성 검토 기준
+
+Phase 35 이후에는 다음 항목을 반드시 추가 검토한다.
+
+### 데이터 모델 무결성
+
+- 같은 의미의 엔티티가 중복 생성되지 않았는가?
+- `TaskArtifact`와 `Attachment`의 역할이 충돌하지 않는가?
+- `ScheduleAssignment`와 `TaskCard`의 역할이 분리되었는가?
+- `PersonalSchedule`이 업무 카드처럼 잘못 처리되지 않는가?
+
+### 상태값 무결성
+
+- `TaskCard.status`와 `TaskCard.completionStatus`가 혼동되지 않는가?
+- `ApprovalRequest.status`와 `SchedulePlan.status`가 혼동되지 않는가?
+- `Project.status`가 개별 카드 상태로 오염되지 않는가?
+
+### 권한 무결성
+
+- 권한 필터가 UI가 아니라 공통 함수에서 처리되는가?
+- 검색 결과에도 권한 필터가 적용되는가?
+- 카드 상세 URL 직접 접근 시에도 권한이 적용되는가?
+- selector 결과가 권한 범위를 벗어나지 않는가?
+
+### 데이터 연결 무결성
+
+- VN Excel seed 데이터가 별도 더미 화면에만 쓰이지 않는가?
+- 보드, 공정표, 대시보드가 같은 seed 데이터를 바라보는가?
+- Excel source 추적 정보가 유지되는가?
+
+### 배포 무결성
+
+- GitHub Pages base path가 반영되었는가?
+- 정적 asset 경로가 깨지지 않는가?
+- 새로고침 404 문제가 확인되었는가?
+
+---
+
+## 추가 금지사항
+
+- Plan 1~6을 읽지 않고 Plan 7부터 구현하지 마라.
+- 데이터 사전 없이 엔티티를 계속 추가하지 마라.
+- status 필드를 임의로 계속 추가하지 마라.
+- 권한 필터링을 UI 조건문으로만 처리하지 마라.
+- 검색 결과에서 권한 없는 데이터를 노출하지 마라.
+- VN Excel seed 데이터를 별도 더미 데이터로 방치하지 마라.
+- 보드 UI 진행률을 하드코딩하지 마라.
+- GitHub Pages base path를 확인하지 않고 배포 완료라고 보고하지 마라.
+- 테스트 매트릭스 없이 최종 QA를 완료했다고 하지 마라.
+- 사용자 승인 없이 Phase 36으로 넘어가지 마라.
+- 사용자 승인 없이 GitHub 원격 push를 하지 마라.
+
+---
+
+## 기존 프롬프트와의 연결 지시
+
+이 프롬프트는 기존 `workspace plan1.txt`, `workspace plan2.txt`, `workspace plan3.txt`, `workspace plan4.txt`, `workspace plan5.txt`, `workspace plan6.txt` 이후에 추가되는 일곱 번째 보강 프롬프트다.
+
+Antigravity는 다음 순서를 반드시 지켜야 한다.
+
+1. `workspace plan1.txt`를 먼저 읽는다.
+2. `workspace plan2.txt`를 읽는다.
+3. `workspace plan3.txt`를 읽는다.
+4. `workspace plan4.txt`를 읽는다.
+5. `workspace plan5.txt`를 읽는다.
+6. `workspace plan6.txt`를 읽는다.
+7. `workspace plan7.txt`를 읽는다.
+8. Plan 7을 Plan 1~6의 통합 연결성 보강 지시로 해석한다.
+9. Phase 0 보고서에 Plan 7의 통합 설계 요구사항을 함께 반영한다.
+10. 기존 Phase 0~34의 흐름을 무너뜨리지 않는다.
+11. Plan 7의 실제 구현은 Phase 35 이후 확장 단계로 진행한다.
+12. 사용자 승인 없이 다음 Phase로 넘어가지 않는다.
+13. 사용자 승인 없이 원격 push를 하지 않는다.
+
+현재는 아직 구현을 시작하지 마라.
+
+먼저 `workspace plan1.txt`, `workspace plan2.txt`, `workspace plan3.txt`, `workspace plan4.txt`, `workspace plan5.txt`, `workspace plan6.txt`, `workspace plan7.txt` 전체를 읽고 Phase 0 분석부터 시작하라.
+
+Phase 0에서는 반드시 다음 항목을 추가 보고하라.
+
+```text
+[Phase 0 Plan 7 추가 보고 필수 항목]
+
+1. Plan 1~7 전체 연결성 평가
+2. 엔티티 중복 가능성
+3. status taxonomy 설계
+4. 일정 데이터 구분 기준
+5. 이력 데이터 구분 기준
+6. 권한 스코프 함수 설계
+7. 라우팅/화면 구조 설계
+8. GitHub Pages base path 대응 방식
+9. Mock 데이터와 VN Excel seed 데이터 통합 방식
+10. 보드 UI와 실제 데이터 연결 방식
+11. selector/derived data 레이어 설계
+12. 테스트 매트릭스 설계
+13. 다국어/이름/검색 정규화 기준
+14. MVP 우선순위와 확장 우선순위
+15. Phase 35~40 확장 구현 계획
+```
+
+사용자가 Phase 1 진행을 승인하기 전까지 실제 구현을 시작하지 마라.

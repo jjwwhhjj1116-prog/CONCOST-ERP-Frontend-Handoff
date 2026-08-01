@@ -1,0 +1,735 @@
+{
+  "components": {
+    "schemas": {
+      "MailAddressDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "address"
+        ],
+        "properties": {
+          "address": {
+            "type": "string",
+            "format": "email"
+          },
+          "displayName": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "MailFolderDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "name",
+          "type",
+          "unreadCount",
+          "totalCount",
+          "revision"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "INBOX",
+              "SENT",
+              "DRAFT",
+              "TRASH",
+              "SPAM",
+              "CUSTOM"
+            ]
+          },
+          "unreadCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "totalCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      },
+      "MailMessageSummaryDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "companyId",
+          "providerMessageId",
+          "folderId",
+          "from",
+          "to",
+          "subject",
+          "preview",
+          "receivedAt",
+          "isRead",
+          "isImportant",
+          "projectId",
+          "attachmentCount",
+          "revision"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "companyId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "providerMessageId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "folderId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "from": {
+            "$ref": "#/components/schemas/MailAddressDto"
+          },
+          "to": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MailAddressDto"
+            }
+          },
+          "subject": {
+            "type": "string"
+          },
+          "preview": {
+            "type": "string"
+          },
+          "receivedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "isRead": {
+            "type": "boolean"
+          },
+          "isImportant": {
+            "type": "boolean"
+          },
+          "projectId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "attachmentCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      },
+      "MailMessageDetailDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "summary",
+          "cc",
+          "bcc",
+          "bodyFormat",
+          "body",
+          "attachmentRefs",
+          "inReplyToMessageId",
+          "threadId"
+        ],
+        "properties": {
+          "summary": {
+            "$ref": "#/components/schemas/MailMessageSummaryDto"
+          },
+          "cc": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MailAddressDto"
+            }
+          },
+          "bcc": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MailAddressDto"
+            }
+          },
+          "bodyFormat": {
+            "type": "string",
+            "enum": [
+              "TEXT",
+              "HTML"
+            ]
+          },
+          "body": {
+            "type": "string"
+          },
+          "attachmentRefs": {
+            "type": "array",
+            "items": {
+              "$ref": "./collaboration-common.yaml#/components/schemas/CollaborationFileReference"
+            }
+          },
+          "inReplyToMessageId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "threadId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "MailDraftDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "companyId",
+          "revision",
+          "state",
+          "fromAccountId",
+          "to",
+          "cc",
+          "bcc",
+          "subject",
+          "bodyFormat",
+          "body",
+          "projectId",
+          "attachmentRefs",
+          "updatedAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "companyId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "DRAFT",
+              "SAVING",
+              "READY_TO_SEND",
+              "SENDING",
+              "SENT",
+              "FAILED",
+              "CANCELLED"
+            ]
+          },
+          "fromAccountId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "to": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MailAddressDto"
+            }
+          },
+          "cc": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MailAddressDto"
+            }
+          },
+          "bcc": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MailAddressDto"
+            }
+          },
+          "subject": {
+            "type": "string"
+          },
+          "bodyFormat": {
+            "type": "string",
+            "enum": [
+              "TEXT",
+              "HTML"
+            ]
+          },
+          "body": {
+            "type": "string"
+          },
+          "projectId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "attachmentRefs": {
+            "type": "array",
+            "items": {
+              "$ref": "./collaboration-common.yaml#/components/schemas/CollaborationFileReference"
+            }
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "SaveMailDraftRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "fromAccountId",
+          "to",
+          "subject",
+          "bodyFormat",
+          "body"
+        ],
+        "properties": {
+          "fromAccountId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "to": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MailAddressDto"
+            }
+          },
+          "cc": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MailAddressDto"
+            }
+          },
+          "bcc": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MailAddressDto"
+            }
+          },
+          "subject": {
+            "type": "string",
+            "maxLength": 500
+          },
+          "bodyFormat": {
+            "type": "string",
+            "enum": [
+              "TEXT",
+              "HTML"
+            ]
+          },
+          "body": {
+            "type": "string"
+          },
+          "projectId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "attachmentFileIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "uniqueItems": true
+          }
+        }
+      },
+      "SendMailRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "expectedRevision",
+          "providerAccountId"
+        ],
+        "properties": {
+          "expectedRevision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "providerAccountId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          }
+        }
+      },
+      "MailBulkActionRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "messageIds",
+          "action"
+        ],
+        "properties": {
+          "messageIds": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            },
+            "uniqueItems": true
+          },
+          "action": {
+            "type": "string",
+            "enum": [
+              "MARK_READ",
+              "MARK_UNREAD",
+              "MARK_IMPORTANT",
+              "UNMARK_IMPORTANT",
+              "MOVE",
+              "DELETE",
+              "RESTORE"
+            ]
+          },
+          "targetFolderId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "MailProviderCapabilitiesDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "mode",
+          "status",
+          "providerType",
+          "sendSupported",
+          "threadingSupported",
+          "labelsSupported",
+          "searchSupported",
+          "archiveSupported",
+          "spamSupported",
+          "deliveryTrackingSupported",
+          "reminderSupported",
+          "projectLinkSupported",
+          "maxAttachmentSize",
+          "syncStatus",
+          "gouMode",
+          "retention",
+          "messageKey"
+        ],
+        "properties": {
+          "mode": {
+            "type": "string",
+            "enum": [
+              "DEMO_LOCAL",
+              "API_SANDBOX",
+              "PRODUCTION_SERVER"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "NOT_CONFIGURED",
+              "CONNECTING",
+              "READY",
+              "DEGRADED",
+              "FAILED",
+              "DISABLED"
+            ]
+          },
+          "providerType": {
+            "type": "string",
+            "enum": [
+              "PROVIDER_TBD",
+              "GOOGLE_WORKSPACE",
+              "MICROSOFT_GRAPH",
+              "MAIL_GATEWAY",
+              "OTHER_APPROVED"
+            ]
+          },
+          "sendSupported": {
+            "type": "boolean"
+          },
+          "threadingSupported": {
+            "type": "boolean"
+          },
+          "labelsSupported": {
+            "type": "boolean"
+          },
+          "searchSupported": {
+            "type": "boolean"
+          },
+          "archiveSupported": {
+            "type": "boolean"
+          },
+          "spamSupported": {
+            "type": "boolean"
+          },
+          "deliveryTrackingSupported": {
+            "type": "boolean"
+          },
+          "reminderSupported": {
+            "type": "boolean"
+          },
+          "projectLinkSupported": {
+            "type": "boolean"
+          },
+          "maxAttachmentSize": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 1
+          },
+          "syncStatus": {
+            "type": "string",
+            "enum": [
+              "NOT_CONFIGURED",
+              "IDLE",
+              "SYNCING",
+              "DEGRADED",
+              "FAILED"
+            ]
+          },
+          "gouMode": {
+            "type": "string",
+            "enum": [
+              "LEGACY_GOU_ONLY",
+              "GOU_LINK",
+              "READ_ONLY_MIRROR",
+              "API_SANDBOX",
+              "PILOT",
+              "PRODUCTION_PRIMARY"
+            ]
+          },
+          "retention": {
+            "$ref": "#/components/schemas/MailRetentionPolicyDto"
+          },
+          "messageKey": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "MailRetentionPolicyDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "trashRetentionDays",
+          "spamRetentionDays",
+          "draftStaleDays",
+          "hardDeleteAllowed",
+          "legalHoldSupported",
+          "providerRetentionSummary"
+        ],
+        "properties": {
+          "trashRetentionDays": {
+            "type": "integer",
+            "const": 30
+          },
+          "spamRetentionDays": {
+            "type": "integer",
+            "const": 30
+          },
+          "draftStaleDays": {
+            "type": "integer",
+            "const": 90
+          },
+          "hardDeleteAllowed": {
+            "type": "boolean"
+          },
+          "legalHoldSupported": {
+            "type": "boolean"
+          },
+          "providerRetentionSummary": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 1000
+          }
+        }
+      },
+      "SuggestedProjectLinkDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "projectId",
+          "reasonCode",
+          "confidence",
+          "source",
+          "requiresConfirmation"
+        ],
+        "properties": {
+          "projectId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "reasonCode": {
+            "type": "string",
+            "enum": [
+              "PROJECT_NO",
+              "APPROVED_RELATIONSHIP",
+              "LINKED_THREAD",
+              "USER_RULE"
+            ]
+          },
+          "confidence": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "RULE",
+              "BACKEND_RECOMMENDATION"
+            ]
+          },
+          "requiresConfirmation": {
+            "type": "boolean",
+            "const": true
+          }
+        }
+      },
+      "MailDeliveryDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "messageId",
+          "status",
+          "providerAcceptedAt",
+          "deliveredAt",
+          "failureCode"
+        ],
+        "properties": {
+          "messageId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "QUEUED",
+              "ACCEPTED_BY_PROVIDER",
+              "DELIVERED",
+              "BOUNCED",
+              "REJECTED",
+              "UNKNOWN"
+            ]
+          },
+          "providerAcceptedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "deliveredAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "failureCode": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "GouMailLinkDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "sourceSystem",
+          "externalId",
+          "deepLink",
+          "lastSyncedAt",
+          "syncStatus",
+          "readOnly"
+        ],
+        "properties": {
+          "sourceSystem": {
+            "type": "string",
+            "const": "GOU"
+          },
+          "externalId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "deepLink": {
+            "type": "string",
+            "format": "uri"
+          },
+          "lastSyncedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "syncStatus": {
+            "type": "string",
+            "enum": [
+              "UNKNOWN",
+              "CURRENT",
+              "STALE",
+              "FAILED"
+            ]
+          },
+          "readOnly": {
+            "type": "boolean",
+            "const": true
+          }
+        }
+      }
+    }
+  },
+  "x-final-contract": {
+    "decisions": [
+      "COLLAB-DEC-01",
+      "COLLAB-DEC-02",
+      "COLLAB-DEC-03",
+      "COLLAB-DEC-04"
+    ],
+    "provider": "PROVIDER_TBD",
+    "sendFalseSuccessAllowed": false
+  }
+}

@@ -1,0 +1,215 @@
+{
+  "paths": {
+    "/api/v1/business-search": {
+      "get": {
+        "operationId": "searchBusinessModules",
+        "summary": "Search permission-filtered business metadata",
+        "tags": [
+          "business-search"
+        ],
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful company-scoped response",
+            "headers": {
+              "ETag": {
+                "description": "Quoted resource revision where applicable",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "../schemas/business-search.yaml#/components/schemas/BusinessSearchResponseDto"
+                      }
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessBadRequest"
+          },
+          "401": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnauthorized"
+          },
+          "403": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessForbidden"
+          },
+          "404": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessNotFound"
+          },
+          "409": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessConflict"
+          },
+          "422": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnprocessable"
+          },
+          "503": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnavailable"
+          }
+        },
+        "x-contract": {
+          "evidence": "PROPOSAL",
+          "executionModes": [
+            "DEMO_LOCAL",
+            "API_SANDBOX",
+            "PRODUCTION_SERVER"
+          ],
+          "permission": "SOURCE_PERMISSION_REQUIRED",
+          "companyScope": "X-Company-Id required; server validates allowedCompanyIds and resource.companyId; no fallback",
+          "organizationScope": "Explicit organization IDs only; server filters before projection",
+          "projectScope": "Canonical projectId only; project-name joins forbidden",
+          "revision": "not required",
+          "idempotency": "not required",
+          "fileReference": "Frozen Common File Reference contract",
+          "fileReadyGuard": "NOT_APPLICABLE_OR_DRAFT",
+          "providerCapability": "BACKEND_REQUIRED",
+          "notificationEvent": "none",
+          "gouCoexistence": "No dual write; GOU state explicitly returned when relevant",
+          "dataOwnership": "READ_ONLY_MIRROR",
+          "productionMockFallback": false
+        }
+      }
+    },
+    "/api/v1/business-search/providers": {
+      "get": {
+        "operationId": "getBusinessSearchProviders",
+        "summary": "Get search provider statuses",
+        "tags": [
+          "business-search"
+        ],
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful company-scoped response",
+            "headers": {
+              "ETag": {
+                "description": "Quoted resource revision where applicable",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "../schemas/business-search.yaml#/components/schemas/BusinessSearchProviderStatusDto"
+                      }
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessBadRequest"
+          },
+          "401": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnauthorized"
+          },
+          "403": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessForbidden"
+          },
+          "404": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessNotFound"
+          },
+          "409": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessConflict"
+          },
+          "422": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnprocessable"
+          },
+          "503": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnavailable"
+          }
+        },
+        "x-contract": {
+          "evidence": "PROPOSAL",
+          "executionModes": [
+            "DEMO_LOCAL",
+            "API_SANDBOX",
+            "PRODUCTION_SERVER"
+          ],
+          "permission": "SOURCE_PERMISSION_REQUIRED",
+          "companyScope": "X-Company-Id required; server validates allowedCompanyIds and resource.companyId; no fallback",
+          "organizationScope": "Explicit organization IDs only; server filters before projection",
+          "projectScope": "Canonical projectId only; project-name joins forbidden",
+          "revision": "not required",
+          "idempotency": "not required",
+          "fileReference": "Frozen Common File Reference contract",
+          "fileReadyGuard": "NOT_APPLICABLE_OR_DRAFT",
+          "providerCapability": "BACKEND_REQUIRED",
+          "notificationEvent": "none",
+          "gouCoexistence": "No dual write; GOU state explicitly returned when relevant",
+          "dataOwnership": "READ_ONLY_MIRROR",
+          "productionMockFallback": false
+        }
+      }
+    }
+  },
+  "x-business-final-policy": {
+    "status": "BUSINESS_CONTRACT_FROZEN_V1",
+    "permissionBeforeProjection": true,
+    "restrictedMetadataLeak": false
+  }
+}

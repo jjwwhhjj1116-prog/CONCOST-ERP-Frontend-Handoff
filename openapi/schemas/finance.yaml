@@ -1,0 +1,742 @@
+{
+  "components": {
+    "schemas": {
+      "FinanceDashboardDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "companyId",
+          "status",
+          "revision",
+          "amountVisibility"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "companyId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "type": "string",
+            "minLength": 1
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "amountVisibility": {
+            "type": "string",
+            "enum": [
+              "FULL",
+              "SUMMARY",
+              "HIDDEN"
+            ]
+          },
+          "totals": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "./business-common.yaml#/components/schemas/BusinessMoney"
+            }
+          }
+        },
+        "description": "FinanceDashboardDto contract DTO. ORM models are never exposed directly."
+      },
+      "FinanceTransactionSummaryDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "companyId",
+          "status",
+          "revision",
+          "transactionType"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "companyId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "type": "string",
+            "minLength": 1
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "transactionType": {
+            "type": "string",
+            "description": ""
+          },
+          "projectId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": ""
+          },
+          "total": {
+            "$ref": "./business-common.yaml#/components/schemas/BusinessMoney"
+          }
+        },
+        "description": "FinanceTransactionSummaryDto contract DTO. ORM models are never exposed directly."
+      },
+      "FinanceTransactionDetailDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "companyId",
+          "status",
+          "revision",
+          "transactionType",
+          "total"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "companyId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "type": "string",
+            "minLength": 1,
+            "enum": [
+              "DRAFT",
+              "SUBMITTED",
+              "APPROVED",
+              "POSTED",
+              "VOIDED",
+              "CANCELLED"
+            ]
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "transactionType": {
+            "type": "string",
+            "description": ""
+          },
+          "customerId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": ""
+          },
+          "projectId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": ""
+          },
+          "total": {
+            "$ref": "./business-common.yaml#/components/schemas/BusinessMoney"
+          },
+          "postedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": ""
+          }
+        },
+        "description": "FinanceTransactionDetailDto contract DTO. ORM models are never exposed directly."
+      },
+      "ReceivableDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "companyId",
+          "status",
+          "revision",
+          "customerId",
+          "balance"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "companyId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "type": "string",
+            "minLength": 1
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "customerId": {
+            "type": "string",
+            "description": ""
+          },
+          "projectId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": ""
+          },
+          "balance": {
+            "$ref": "./business-common.yaml#/components/schemas/BusinessMoney"
+          }
+        },
+        "description": "ReceivableDto contract DTO. ORM models are never exposed directly."
+      },
+      "PayableDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "companyId",
+          "status",
+          "revision",
+          "counterpartyId",
+          "balance"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "companyId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "type": "string",
+            "minLength": 1
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "counterpartyId": {
+            "type": "string",
+            "description": ""
+          },
+          "projectId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": ""
+          },
+          "balance": {
+            "$ref": "./business-common.yaml#/components/schemas/BusinessMoney"
+          }
+        },
+        "description": "PayableDto contract DTO. ORM models are never exposed directly."
+      },
+      "ReceiptDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "companyId",
+          "status",
+          "revision",
+          "receivableId",
+          "amount"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "companyId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "type": "string",
+            "minLength": 1
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "receivableId": {
+            "type": "string",
+            "description": ""
+          },
+          "amount": {
+            "$ref": "./business-common.yaml#/components/schemas/BusinessMoney"
+          },
+          "sourceType": {
+            "type": "string"
+          }
+        },
+        "description": "ReceiptDto contract DTO. ORM models are never exposed directly."
+      },
+      "PaymentDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "companyId",
+          "status",
+          "revision",
+          "payableId",
+          "amount"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "companyId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "type": "string",
+            "minLength": 1
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "payableId": {
+            "type": "string",
+            "description": ""
+          },
+          "amount": {
+            "$ref": "./business-common.yaml#/components/schemas/BusinessMoney"
+          },
+          "sourceType": {
+            "type": "string"
+          }
+        },
+        "description": "PaymentDto contract DTO. ORM models are never exposed directly."
+      },
+      "ExpenseClaimDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "companyId",
+          "status",
+          "revision",
+          "claimantPersonnelId",
+          "amount"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "companyId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "type": "string",
+            "minLength": 1
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "claimantPersonnelId": {
+            "type": "string",
+            "description": ""
+          },
+          "projectId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": ""
+          },
+          "amount": {
+            "$ref": "./business-common.yaml#/components/schemas/BusinessMoney"
+          },
+          "evidenceFileIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "uniqueItems": true
+          },
+          "approvalDocumentId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": ""
+          }
+        },
+        "description": "ExpenseClaimDto contract DTO. ORM models are never exposed directly."
+      },
+      "CorporateCardTransactionDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "companyId",
+          "status",
+          "revision",
+          "amount"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "companyId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "type": "string",
+            "minLength": 1
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "providerReferenceMasked": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": ""
+          },
+          "projectId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": ""
+          },
+          "amount": {
+            "$ref": "./business-common.yaml#/components/schemas/BusinessMoney"
+          }
+        },
+        "description": "CorporateCardTransactionDto contract DTO. ORM models are never exposed directly."
+      },
+      "BudgetDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "companyId",
+          "status",
+          "revision",
+          "scopeType",
+          "scopeId",
+          "period"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "companyId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "type": "string",
+            "minLength": 1
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "scopeType": {
+            "type": "string",
+            "enum": [
+              "COMPANY",
+              "ORGANIZATION",
+              "PROJECT"
+            ]
+          },
+          "scopeId": {
+            "type": "string",
+            "description": ""
+          },
+          "period": {
+            "type": "string",
+            "description": ""
+          },
+          "approvedAmount": {
+            "$ref": "./business-common.yaml#/components/schemas/BusinessMoney"
+          }
+        },
+        "description": "BudgetDto contract DTO. ORM models are never exposed directly."
+      },
+      "CashPositionDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "companyId",
+          "status",
+          "revision",
+          "sourceType"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "companyId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "type": "string",
+            "minLength": 1
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "sourceType": {
+            "type": "string",
+            "enum": [
+              "MANUAL",
+              "PROVIDER",
+              "NOT_CONFIGURED"
+            ]
+          },
+          "asOf": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": ""
+          },
+          "total": {
+            "$ref": "./business-common.yaml#/components/schemas/BusinessMoney"
+          }
+        },
+        "description": "CashPositionDto contract DTO. ORM models are never exposed directly."
+      },
+      "TaxInvoiceDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "companyId",
+          "status",
+          "revision",
+          "supplyAmount",
+          "taxAmount"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "companyId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "type": "string",
+            "minLength": 1,
+            "enum": [
+              "DRAFT",
+              "VALIDATION_REQUIRED",
+              "APPROVAL_PENDING",
+              "APPROVED",
+              "SUBMISSION_PENDING",
+              "SUBMITTED",
+              "ACCEPTED",
+              "REJECTED",
+              "FAILED",
+              "CANCELLED",
+              "CORRECTION_REQUIRED",
+              "CORRECTED"
+            ]
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "transactionId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": ""
+          },
+          "providerSubmissionId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": ""
+          },
+          "supplyAmount": {
+            "$ref": "./business-common.yaml#/components/schemas/BusinessMoney"
+          },
+          "taxAmount": {
+            "$ref": "./business-common.yaml#/components/schemas/BusinessMoney"
+          },
+          "providerState": {
+            "type": "string"
+          }
+        },
+        "description": "TaxInvoiceDto contract DTO. ORM models are never exposed directly."
+      },
+      "TaxInvoiceCapabilityDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "companyId",
+          "status",
+          "revision",
+          "providerState"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "companyId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "type": "string",
+            "minLength": 1
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "providerState": {
+            "type": "string",
+            "enum": [
+              "NOT_CONFIGURED",
+              "CONFIGURED",
+              "DEGRADED",
+              "UNAVAILABLE"
+            ]
+          },
+          "supportedActions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "uniqueItems": true
+          }
+        },
+        "description": "TaxInvoiceCapabilityDto contract DTO. ORM models are never exposed directly."
+      },
+      "ClosingPeriodDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "companyId",
+          "status",
+          "revision",
+          "period"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "companyId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "type": "string",
+            "minLength": 1
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "period": {
+            "type": "string",
+            "description": ""
+          },
+          "checklistComplete": {
+            "type": "boolean"
+          }
+        },
+        "description": "ClosingPeriodDto contract DTO. ORM models are never exposed directly."
+      },
+      "FinanceReportDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "companyId",
+          "status",
+          "revision",
+          "reportType",
+          "snapshotAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "companyId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "type": "string",
+            "minLength": 1
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "reportType": {
+            "type": "string",
+            "description": ""
+          },
+          "snapshotAt": {
+            "type": "string",
+            "description": ""
+          },
+          "amountVisibility": {
+            "type": "string"
+          }
+        },
+        "description": "FinanceReportDto contract DTO. ORM models are never exposed directly."
+      },
+      "FinanceSensitivity": {
+        "type": "string",
+        "enum": [
+          "SUMMARY",
+          "DETAIL",
+          "RESTRICTED",
+          "PAYROLL_RESTRICTED",
+          "BANK_RESTRICTED",
+          "TAX_RESTRICTED"
+        ]
+      }
+    }
+  }
+}

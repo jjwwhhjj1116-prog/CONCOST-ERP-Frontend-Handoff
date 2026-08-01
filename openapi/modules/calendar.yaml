@@ -1,0 +1,887 @@
+{
+  "paths": {
+    "/api/v1/calendars": {
+      "get": {
+        "operationId": "listCalendars",
+        "summary": "List visible calendars",
+        "tags": [
+          "calendar"
+        ],
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful scoped response",
+            "headers": {
+              "ETag": {
+                "description": "Quoted resource revision where applicable",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "../schemas/calendar.yaml#/components/schemas/CalendarEventDto"
+                      }
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "evidence": "PROPOSAL",
+          "frontendStatus": "FRONTEND_DEMO_ONLY",
+          "permission": "CALENDAR_VIEW",
+          "companyScope": "X-Company-Id required; server validates allowedCompanyIds; no default-company fallback",
+          "organizationScope": "Server applies explicit scope and membership before materializing fields",
+          "projectScope": "Canonical projectId only; project-name joins forbidden",
+          "revision": "not required",
+          "idempotency": "not required",
+          "fileReference": "none",
+          "fileReadyGuard": "NOT_APPLICABLE_OR_DRAFT",
+          "providerCapability": "not required",
+          "providerRequired": false,
+          "permissionBeforeProjection": true,
+          "notificationEvent": "none",
+          "gouCoexistence": "No dual-write; status is returned explicitly",
+          "dataOwnership": "SERVER_PERSISTENCE_REQUIRED_OR_READ_ONLY_MIRROR"
+        }
+      }
+    },
+    "/api/v1/calendar/events": {
+      "get": {
+        "operationId": "listCalendarEvents",
+        "summary": "List scoped events",
+        "tags": [
+          "calendar"
+        ],
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful scoped response",
+            "headers": {
+              "ETag": {
+                "description": "Quoted resource revision where applicable",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "../schemas/calendar.yaml#/components/schemas/CalendarEventDto"
+                      }
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "evidence": "PROPOSAL",
+          "frontendStatus": "FRONTEND_DEMO_ONLY",
+          "permission": "CALENDAR_VIEW",
+          "companyScope": "X-Company-Id required; server validates allowedCompanyIds; no default-company fallback",
+          "organizationScope": "Server applies explicit scope and membership before materializing fields",
+          "projectScope": "Canonical projectId only; project-name joins forbidden",
+          "revision": "not required",
+          "idempotency": "not required",
+          "fileReference": "none",
+          "fileReadyGuard": "NOT_APPLICABLE_OR_DRAFT",
+          "providerCapability": "not required",
+          "providerRequired": false,
+          "permissionBeforeProjection": true,
+          "notificationEvent": "none",
+          "gouCoexistence": "No dual-write; status is returned explicitly",
+          "dataOwnership": "SERVER_PERSISTENCE_REQUIRED_OR_READ_ONLY_MIRROR"
+        }
+      },
+      "post": {
+        "operationId": "createCalendarEvent",
+        "summary": "Create event",
+        "tags": [
+          "calendar"
+        ],
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Successful scoped response",
+            "headers": {
+              "ETag": {
+                "description": "Quoted resource revision where applicable",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/calendar.yaml#/components/schemas/CalendarEventDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "evidence": "PROPOSAL",
+          "frontendStatus": "FRONTEND_DEMO_ONLY",
+          "permission": "CALENDAR_CREATE",
+          "companyScope": "X-Company-Id required; server validates allowedCompanyIds; no default-company fallback",
+          "organizationScope": "Server applies explicit scope and membership before materializing fields",
+          "projectScope": "Canonical projectId only; project-name joins forbidden",
+          "revision": "not required",
+          "idempotency": "Idempotency-Key required and scoped by company, actor and operation",
+          "fileReference": "none",
+          "fileReadyGuard": "NOT_APPLICABLE_OR_DRAFT",
+          "providerCapability": "not required",
+          "providerRequired": false,
+          "permissionBeforeProjection": true,
+          "notificationEvent": "CALENDAR_EVENT_CREATED",
+          "gouCoexistence": "No dual-write; status is returned explicitly",
+          "dataOwnership": "SERVER_PERSISTENCE_REQUIRED"
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/calendar.yaml#/components/schemas/SaveCalendarEventRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/calendar/events/{id}": {
+      "get": {
+        "operationId": "getCalendarEvent",
+        "summary": "Get event",
+        "tags": [
+          "calendar"
+        ],
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful scoped response",
+            "headers": {
+              "ETag": {
+                "description": "Quoted resource revision where applicable",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/calendar.yaml#/components/schemas/CalendarEventDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "evidence": "PROPOSAL",
+          "frontendStatus": "FRONTEND_DEMO_ONLY",
+          "permission": "CALENDAR_VIEW",
+          "companyScope": "X-Company-Id required; server validates allowedCompanyIds; no default-company fallback",
+          "organizationScope": "Server applies explicit scope and membership before materializing fields",
+          "projectScope": "Canonical projectId only; project-name joins forbidden",
+          "revision": "not required",
+          "idempotency": "not required",
+          "fileReference": "none",
+          "fileReadyGuard": "NOT_APPLICABLE_OR_DRAFT",
+          "providerCapability": "not required",
+          "providerRequired": false,
+          "permissionBeforeProjection": true,
+          "notificationEvent": "none",
+          "gouCoexistence": "No dual-write; status is returned explicitly",
+          "dataOwnership": "SERVER_PERSISTENCE_REQUIRED_OR_READ_ONLY_MIRROR"
+        }
+      },
+      "patch": {
+        "operationId": "updateCalendarEvent",
+        "summary": "Update event or recurrence scope",
+        "tags": [
+          "calendar"
+        ],
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful scoped response",
+            "headers": {
+              "ETag": {
+                "description": "Quoted resource revision where applicable",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/calendar.yaml#/components/schemas/CalendarEventDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "evidence": "PROPOSAL",
+          "frontendStatus": "FRONTEND_DEMO_ONLY",
+          "permission": "CALENDAR_EDIT",
+          "companyScope": "X-Company-Id required; server validates allowedCompanyIds; no default-company fallback",
+          "organizationScope": "Server applies explicit scope and membership before materializing fields",
+          "projectScope": "Canonical projectId only; project-name joins forbidden",
+          "revision": "If-Match required and conflict returns REVISION_CONFLICT",
+          "idempotency": "Idempotency-Key required and scoped by company, actor and operation",
+          "fileReference": "none",
+          "fileReadyGuard": "NOT_APPLICABLE_OR_DRAFT",
+          "providerCapability": "not required",
+          "providerRequired": false,
+          "permissionBeforeProjection": true,
+          "notificationEvent": "CALENDAR_EVENT_UPDATED",
+          "gouCoexistence": "No dual-write; status is returned explicitly",
+          "dataOwnership": "SERVER_PERSISTENCE_REQUIRED"
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/calendar.yaml#/components/schemas/SaveCalendarEventRequest"
+              }
+            }
+          }
+        },
+        "description": "Recurring edits default to THIS_OCCURRENCE and require an explicit recurrence scope for wider changes."
+      },
+      "delete": {
+        "operationId": "cancelCalendarEvent",
+        "summary": "Cancel event or recurrence scope",
+        "tags": [
+          "calendar"
+        ],
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Command accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "additionalProperties": true
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "evidence": "PROPOSAL",
+          "frontendStatus": "FRONTEND_DEMO_ONLY",
+          "permission": "CALENDAR_EDIT",
+          "companyScope": "X-Company-Id required; server validates allowedCompanyIds; no default-company fallback",
+          "organizationScope": "Server applies explicit scope and membership before materializing fields",
+          "projectScope": "Canonical projectId only; project-name joins forbidden",
+          "revision": "If-Match required and conflict returns REVISION_CONFLICT",
+          "idempotency": "Idempotency-Key required and scoped by company, actor and operation",
+          "fileReference": "none",
+          "fileReadyGuard": "NOT_APPLICABLE_OR_DRAFT",
+          "providerCapability": "not required",
+          "providerRequired": false,
+          "permissionBeforeProjection": true,
+          "notificationEvent": "CALENDAR_EVENT_CANCELLED",
+          "gouCoexistence": "No dual-write; status is returned explicitly",
+          "dataOwnership": "SERVER_PERSISTENCE_REQUIRED"
+        }
+      }
+    },
+    "/api/v1/calendar/events/{id}/responses": {
+      "post": {
+        "operationId": "respondToCalendarEvent",
+        "summary": "Respond as attendee",
+        "tags": [
+          "calendar"
+        ],
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful scoped response",
+            "headers": {
+              "ETag": {
+                "description": "Quoted resource revision where applicable",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/calendar.yaml#/components/schemas/CalendarEventDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "evidence": "PROPOSAL",
+          "frontendStatus": "FRONTEND_DEMO_ONLY",
+          "permission": "CALENDAR_RESPOND",
+          "companyScope": "X-Company-Id required; server validates allowedCompanyIds; no default-company fallback",
+          "organizationScope": "Server applies explicit scope and membership before materializing fields",
+          "projectScope": "Canonical projectId only; project-name joins forbidden",
+          "revision": "If-Match required and conflict returns REVISION_CONFLICT",
+          "idempotency": "Idempotency-Key required and scoped by company, actor and operation",
+          "fileReference": "none",
+          "fileReadyGuard": "NOT_APPLICABLE_OR_DRAFT",
+          "providerCapability": "not required",
+          "providerRequired": false,
+          "permissionBeforeProjection": true,
+          "notificationEvent": "CALENDAR_ATTENDEE_RESPONDED",
+          "gouCoexistence": "No dual-write; status is returned explicitly",
+          "dataOwnership": "SERVER_PERSISTENCE_REQUIRED"
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/calendar.yaml#/components/schemas/CalendarResponseRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/calendar/free-busy": {
+      "get": {
+        "operationId": "getCalendarFreeBusy",
+        "summary": "Get permission-safe availability",
+        "tags": [
+          "calendar"
+        ],
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful scoped response",
+            "headers": {
+              "ETag": {
+                "description": "Quoted resource revision where applicable",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "../schemas/calendar.yaml#/components/schemas/CalendarEventDto"
+                      }
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "evidence": "PROPOSAL",
+          "frontendStatus": "FRONTEND_DEMO_ONLY",
+          "permission": "CALENDAR_VIEW_AVAILABILITY",
+          "companyScope": "X-Company-Id required; server validates allowedCompanyIds; no default-company fallback",
+          "organizationScope": "Server applies explicit scope and membership before materializing fields",
+          "projectScope": "Canonical projectId only; project-name joins forbidden",
+          "revision": "not required",
+          "idempotency": "not required",
+          "fileReference": "none",
+          "fileReadyGuard": "NOT_APPLICABLE_OR_DRAFT",
+          "providerCapability": "not required",
+          "providerRequired": false,
+          "permissionBeforeProjection": true,
+          "notificationEvent": "none",
+          "gouCoexistence": "No dual-write; status is returned explicitly",
+          "dataOwnership": "SERVER_PERSISTENCE_REQUIRED_OR_READ_ONLY_MIRROR"
+        }
+      }
+    }
+  },
+  "x-final-contract": {
+    "status": "COLLABORATION_CONTRACT_FROZEN_V1",
+    "decisions": [
+      "COLLAB-DEC-09",
+      "COLLAB-DEC-10"
+    ]
+  }
+}

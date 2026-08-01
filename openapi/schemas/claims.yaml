@@ -1,0 +1,722 @@
+{
+  "components": {
+    "schemas": {
+      "InternalClaimSummaryDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "companyId",
+          "status",
+          "revision",
+          "title",
+          "category",
+          "ownerOrganizationUnitId"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "companyId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "type": "string",
+            "minLength": 1
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "title": {
+            "type": "string",
+            "description": ""
+          },
+          "category": {
+            "type": "string",
+            "description": ""
+          },
+          "ownerOrganizationUnitId": {
+            "type": "string",
+            "description": ""
+          },
+          "projectId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": ""
+          }
+        },
+        "description": "InternalClaimSummaryDto contract DTO. ORM models are never exposed directly."
+      },
+      "InternalClaimDetailDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "companyId",
+          "status",
+          "revision",
+          "title",
+          "category",
+          "ownerOrganizationUnitId"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "companyId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "type": "string",
+            "minLength": 1,
+            "enum": [
+              "RECEIVED",
+              "TRIAGE",
+              "INVESTIGATING",
+              "ACTION_REQUIRED",
+              "RESOLUTION_PROPOSED",
+              "RESOLVED",
+              "CLOSED",
+              "REOPENED",
+              "CANCELLED"
+            ]
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "title": {
+            "type": "string",
+            "description": ""
+          },
+          "category": {
+            "type": "string",
+            "description": ""
+          },
+          "ownerOrganizationUnitId": {
+            "type": "string",
+            "description": ""
+          },
+          "projectId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": ""
+          },
+          "issueIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "uniqueItems": true
+          },
+          "evidenceIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "uniqueItems": true
+          }
+        },
+        "description": "InternalClaimDetailDto contract DTO. ORM models are never exposed directly."
+      },
+      "ClaimServiceProjectDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "companyId",
+          "status",
+          "revision",
+          "projectId",
+          "customerId",
+          "conflictCheckStatus"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "companyId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "type": "string",
+            "minLength": 1,
+            "enum": [
+              "INTAKE",
+              "CONFLICT_CHECK",
+              "CONTRACTING",
+              "EVIDENCE_COLLECTION",
+              "ANALYSIS",
+              "REPORT_DRAFTING",
+              "CLIENT_REVIEW",
+              "FINALIZED",
+              "CLOSED",
+              "ON_HOLD",
+              "CANCELLED"
+            ]
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "projectId": {
+            "type": "string",
+            "description": ""
+          },
+          "customerId": {
+            "type": "string",
+            "description": ""
+          },
+          "conflictCheckStatus": {
+            "type": "string",
+            "description": ""
+          }
+        },
+        "description": "ClaimServiceProjectDto contract DTO. ORM models are never exposed directly."
+      },
+      "DisputeCaseDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "companyId",
+          "status",
+          "revision",
+          "claimServiceProjectId",
+          "title"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "companyId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "type": "string",
+            "minLength": 1
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "claimServiceProjectId": {
+            "type": "string",
+            "description": ""
+          },
+          "title": {
+            "type": "string",
+            "description": ""
+          },
+          "forum": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": ""
+          }
+        },
+        "description": "DisputeCaseDto contract DTO. ORM models are never exposed directly."
+      },
+      "ClaimPartyDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "companyId",
+          "status",
+          "revision",
+          "disputeCaseId",
+          "partyRole",
+          "displayLabel"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "companyId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "type": "string",
+            "minLength": 1
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "disputeCaseId": {
+            "type": "string",
+            "description": ""
+          },
+          "partyRole": {
+            "type": "string",
+            "description": ""
+          },
+          "customerId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": ""
+          },
+          "displayLabel": {
+            "type": "string",
+            "description": ""
+          }
+        },
+        "description": "ClaimPartyDto contract DTO. ORM models are never exposed directly."
+      },
+      "ClaimIssueDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "companyId",
+          "status",
+          "revision",
+          "contextType",
+          "contextId",
+          "title"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "companyId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "type": "string",
+            "minLength": 1
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "contextType": {
+            "type": "string",
+            "enum": [
+              "INTERNAL_CLAIM",
+              "CLAIM_SERVICE"
+            ]
+          },
+          "contextId": {
+            "type": "string",
+            "description": ""
+          },
+          "title": {
+            "type": "string",
+            "description": ""
+          },
+          "evidenceIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "uniqueItems": true
+          }
+        },
+        "description": "ClaimIssueDto contract DTO. ORM models are never exposed directly."
+      },
+      "ClaimEvidenceDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "companyId",
+          "status",
+          "revision",
+          "contextType",
+          "contextId",
+          "fileId",
+          "checksum",
+          "versionNumber",
+          "legalHold",
+          "auditEventId"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "companyId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "type": "string",
+            "minLength": 1
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "contextType": {
+            "type": "string",
+            "description": ""
+          },
+          "contextId": {
+            "type": "string",
+            "description": ""
+          },
+          "fileId": {
+            "type": "string",
+            "description": ""
+          },
+          "checksum": {
+            "type": "string",
+            "description": ""
+          },
+          "versionNumber": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "legalHold": {
+            "type": "boolean"
+          },
+          "auditEventId": {
+            "type": "string",
+            "description": ""
+          }
+        },
+        "description": "ClaimEvidenceDto contract DTO. ORM models are never exposed directly."
+      },
+      "ClaimMeetingDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "companyId",
+          "status",
+          "revision",
+          "claimServiceProjectId",
+          "startsAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "companyId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "type": "string",
+            "minLength": 1
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "claimServiceProjectId": {
+            "type": "string",
+            "description": ""
+          },
+          "startsAt": {
+            "type": "string",
+            "description": ""
+          },
+          "attendeeContactIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "uniqueItems": true
+          },
+          "minutesFileId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": ""
+          }
+        },
+        "description": "ClaimMeetingDto contract DTO. ORM models are never exposed directly."
+      },
+      "ClaimCallRecordDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "companyId",
+          "status",
+          "revision",
+          "claimServiceProjectId",
+          "recordingFileId",
+          "consentRecorded"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "companyId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "type": "string",
+            "minLength": 1
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "claimServiceProjectId": {
+            "type": "string",
+            "description": ""
+          },
+          "recordingFileId": {
+            "type": "string",
+            "description": ""
+          },
+          "consentRecorded": {
+            "type": "boolean"
+          },
+          "transcriptId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": ""
+          }
+        },
+        "description": "ClaimCallRecordDto contract DTO. ORM models are never exposed directly."
+      },
+      "ClaimTranscriptDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "companyId",
+          "status",
+          "revision",
+          "callRecordId",
+          "fileId",
+          "humanReviewed"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "companyId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "type": "string",
+            "minLength": 1
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "callRecordId": {
+            "type": "string",
+            "description": ""
+          },
+          "fileId": {
+            "type": "string",
+            "description": ""
+          },
+          "humanReviewed": {
+            "type": "boolean"
+          }
+        },
+        "description": "ClaimTranscriptDto contract DTO. ORM models are never exposed directly."
+      },
+      "ClaimDeadlineDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "companyId",
+          "status",
+          "revision",
+          "contextId",
+          "dueAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "companyId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "type": "string",
+            "minLength": 1
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "contextId": {
+            "type": "string",
+            "description": ""
+          },
+          "dueAt": {
+            "type": "string",
+            "description": ""
+          },
+          "reminderPolicyId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": ""
+          }
+        },
+        "description": "ClaimDeadlineDto contract DTO. ORM models are never exposed directly."
+      },
+      "ClaimReportDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "companyId",
+          "status",
+          "revision",
+          "claimServiceProjectId",
+          "humanReviewRequired"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "companyId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "type": "string",
+            "minLength": 1,
+            "enum": [
+              "DRAFT",
+              "REVIEW",
+              "APPROVED",
+              "ISSUED",
+              "SUPERSEDED",
+              "WITHDRAWN"
+            ]
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "claimServiceProjectId": {
+            "type": "string",
+            "description": ""
+          },
+          "currentVersionId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": ""
+          },
+          "humanReviewRequired": {
+            "type": "boolean",
+            "const": true
+          }
+        },
+        "description": "ClaimReportDto contract DTO. ORM models are never exposed directly."
+      },
+      "ClaimReportVersionDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "companyId",
+          "status",
+          "revision",
+          "reportId",
+          "versionNumber",
+          "fileId",
+          "immutable"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "companyId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "type": "string",
+            "minLength": 1
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "reportId": {
+            "type": "string",
+            "description": ""
+          },
+          "versionNumber": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "fileId": {
+            "type": "string",
+            "description": ""
+          },
+          "immutable": {
+            "type": "boolean",
+            "const": true
+          }
+        },
+        "description": "ClaimReportVersionDto contract DTO. ORM models are never exposed directly."
+      },
+      "LegalHoldPolicyDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "claimOwnerApproval",
+          "legalOrExecutiveApproval",
+          "auditRequired"
+        ],
+        "properties": {
+          "claimOwnerApproval": {
+            "type": "boolean",
+            "const": true
+          },
+          "legalOrExecutiveApproval": {
+            "type": "boolean",
+            "const": true
+          },
+          "auditRequired": {
+            "type": "boolean",
+            "const": true
+          }
+        }
+      }
+    }
+  }
+}

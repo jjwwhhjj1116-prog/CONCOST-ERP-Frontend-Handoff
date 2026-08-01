@@ -1,0 +1,322 @@
+{
+  "components": {
+    "schemas": {
+      "AiCapabilityDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "companyId",
+          "status",
+          "revision",
+          "capabilityType",
+          "providerState"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "companyId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "type": "string",
+            "minLength": 1
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "capabilityType": {
+            "type": "string",
+            "enum": [
+              "OCR",
+              "STT",
+              "SUMMARIZATION",
+              "RAG"
+            ]
+          },
+          "providerState": {
+            "type": "string",
+            "description": ""
+          },
+          "localOnly": {
+            "type": "boolean"
+          },
+          "permissionAware": {
+            "type": "boolean"
+          }
+        },
+        "description": "AiCapabilityDto contract DTO. ORM models are never exposed directly."
+      },
+      "AiJobDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "companyId",
+          "status",
+          "revision",
+          "jobType",
+          "humanReviewRequired"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "companyId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "type": "string",
+            "minLength": 1,
+            "enum": [
+              "QUEUED",
+              "PROCESSING",
+              "REVIEW_REQUIRED",
+              "COMPLETED",
+              "FAILED",
+              "CANCELLED"
+            ]
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "jobType": {
+            "type": "string",
+            "description": ""
+          },
+          "inputFileIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "uniqueItems": true
+          },
+          "outputId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": ""
+          },
+          "humanReviewRequired": {
+            "type": "boolean",
+            "const": true
+          }
+        },
+        "description": "AiJobDto contract DTO. ORM models are never exposed directly."
+      },
+      "OcrResultDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "companyId",
+          "status",
+          "revision",
+          "jobId",
+          "extractedText"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "companyId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "type": "string",
+            "minLength": 1
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "jobId": {
+            "type": "string",
+            "description": ""
+          },
+          "extractedText": {
+            "type": "string",
+            "description": ""
+          },
+          "confidence": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          }
+        },
+        "description": "OcrResultDto contract DTO. ORM models are never exposed directly."
+      },
+      "TranscriptDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "companyId",
+          "status",
+          "revision",
+          "jobId",
+          "text",
+          "consentRecorded"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "companyId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "type": "string",
+            "minLength": 1
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "jobId": {
+            "type": "string",
+            "description": ""
+          },
+          "text": {
+            "type": "string",
+            "description": ""
+          },
+          "consentRecorded": {
+            "type": "boolean"
+          }
+        },
+        "description": "TranscriptDto contract DTO. ORM models are never exposed directly."
+      },
+      "AiCitationDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "companyId",
+          "status",
+          "revision",
+          "sourceFileId",
+          "sourceVersion",
+          "safeSnippet"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "companyId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "type": "string",
+            "minLength": 1
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "sourceFileId": {
+            "type": "string",
+            "description": ""
+          },
+          "sourceVersion": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "safeSnippet": {
+            "type": "string",
+            "description": ""
+          }
+        },
+        "description": "AiCitationDto contract DTO. ORM models are never exposed directly."
+      },
+      "RagAnswerDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "companyId",
+          "status",
+          "revision",
+          "answer",
+          "citationIds",
+          "humanReviewRequired",
+          "automatedDecision"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "companyId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "type": "string",
+            "minLength": 1
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "answer": {
+            "type": "string",
+            "description": ""
+          },
+          "citationIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "uniqueItems": true
+          },
+          "humanReviewRequired": {
+            "type": "boolean",
+            "const": true
+          },
+          "automatedDecision": {
+            "type": "boolean",
+            "const": false
+          }
+        },
+        "description": "RagAnswerDto contract DTO. ORM models are never exposed directly."
+      },
+      "AiDataClassification": {
+        "type": "string",
+        "enum": [
+          "PUBLIC",
+          "INTERNAL_GENERAL",
+          "CONFIDENTIAL",
+          "RESTRICTED_LEGAL",
+          "HR_SENSITIVE",
+          "FINANCE_RESTRICTED",
+          "SECURITY_SECRET"
+        ]
+      },
+      "AiProviderMode": {
+        "type": "string",
+        "enum": [
+          "APPROVED_EXTERNAL",
+          "ENTERPRISE_EXTERNAL",
+          "PRIVATE_VPC",
+          "LOCAL_ONLY",
+          "PROHIBITED"
+        ]
+      }
+    }
+  }
+}

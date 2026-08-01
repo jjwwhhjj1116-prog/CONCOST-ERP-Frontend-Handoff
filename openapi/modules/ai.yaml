@@ -1,0 +1,1003 @@
+{
+  "paths": {
+    "/api/v1/ai/capabilities": {
+      "get": {
+        "operationId": "getAiCapabilities",
+        "summary": "Get permission-aware AI capabilities",
+        "tags": [
+          "ai"
+        ],
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful company-scoped response",
+            "headers": {
+              "ETag": {
+                "description": "Quoted resource revision where applicable",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "../schemas/ai.yaml#/components/schemas/AiCapabilityDto"
+                      }
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessBadRequest"
+          },
+          "401": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnauthorized"
+          },
+          "403": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessForbidden"
+          },
+          "404": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessNotFound"
+          },
+          "409": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessConflict"
+          },
+          "422": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnprocessable"
+          },
+          "503": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnavailable"
+          }
+        },
+        "x-contract": {
+          "evidence": "PROPOSAL",
+          "executionModes": [
+            "DEMO_LOCAL",
+            "API_SANDBOX",
+            "PRODUCTION_SERVER"
+          ],
+          "permission": "USE_AI_ASSISTANCE",
+          "companyScope": "X-Company-Id required; server validates allowedCompanyIds and resource.companyId; no fallback",
+          "organizationScope": "Explicit organization IDs only; server filters before projection",
+          "projectScope": "Canonical projectId only; project-name joins forbidden",
+          "revision": "not required",
+          "idempotency": "not required",
+          "fileReference": "Frozen Common File Reference contract",
+          "fileReadyGuard": "NOT_APPLICABLE_OR_DRAFT",
+          "providerCapability": "PROVIDER_REQUIRED",
+          "notificationEvent": "none",
+          "gouCoexistence": "No dual write; GOU state explicitly returned when relevant",
+          "dataOwnership": "SERVER_PERSISTENCE_REQUIRED",
+          "productionMockFallback": false
+        }
+      }
+    },
+    "/api/v1/ai/ocr-jobs": {
+      "post": {
+        "operationId": "createAiOcrJob",
+        "summary": "Create OCR assistance job",
+        "tags": [
+          "ai"
+        ],
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "data"
+                ],
+                "properties": {
+                  "data": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "description": "Command payload for createAiOcrJob; fields are defined in BUSINESS_DTO_DICTIONARY.md and module contract."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful company-scoped response",
+            "headers": {
+              "ETag": {
+                "description": "Quoted resource revision where applicable",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/ai.yaml#/components/schemas/AiJobDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessBadRequest"
+          },
+          "401": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnauthorized"
+          },
+          "403": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessForbidden"
+          },
+          "404": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessNotFound"
+          },
+          "409": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessConflict"
+          },
+          "422": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnprocessable"
+          },
+          "503": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnavailable"
+          }
+        },
+        "x-contract": {
+          "evidence": "PROPOSAL",
+          "executionModes": [
+            "DEMO_LOCAL",
+            "API_SANDBOX",
+            "PRODUCTION_SERVER"
+          ],
+          "permission": "USE_AI_ASSISTANCE",
+          "companyScope": "X-Company-Id required; server validates allowedCompanyIds and resource.companyId; no fallback",
+          "organizationScope": "Explicit organization IDs only; server filters before projection",
+          "projectScope": "Canonical projectId only; project-name joins forbidden",
+          "revision": "not required",
+          "idempotency": "Idempotency-Key required; same key with different payload is 409",
+          "fileReference": "Frozen Common File Reference contract",
+          "fileReadyGuard": "READY_REQUIRED",
+          "providerCapability": "PROVIDER_REQUIRED",
+          "notificationEvent": "none",
+          "gouCoexistence": "No dual write; GOU state explicitly returned when relevant",
+          "dataOwnership": "SERVER_PERSISTENCE_REQUIRED",
+          "productionMockFallback": false
+        }
+      }
+    },
+    "/api/v1/ai/transcription-jobs": {
+      "post": {
+        "operationId": "createAiTranscriptionJob",
+        "summary": "Create consent-checked STT job",
+        "tags": [
+          "ai"
+        ],
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "data"
+                ],
+                "properties": {
+                  "data": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "description": "Command payload for createAiTranscriptionJob; fields are defined in BUSINESS_DTO_DICTIONARY.md and module contract."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful company-scoped response",
+            "headers": {
+              "ETag": {
+                "description": "Quoted resource revision where applicable",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/ai.yaml#/components/schemas/AiJobDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessBadRequest"
+          },
+          "401": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnauthorized"
+          },
+          "403": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessForbidden"
+          },
+          "404": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessNotFound"
+          },
+          "409": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessConflict"
+          },
+          "422": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnprocessable"
+          },
+          "503": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnavailable"
+          }
+        },
+        "x-contract": {
+          "evidence": "PROPOSAL",
+          "executionModes": [
+            "DEMO_LOCAL",
+            "API_SANDBOX",
+            "PRODUCTION_SERVER"
+          ],
+          "permission": "USE_AI_ASSISTANCE",
+          "companyScope": "X-Company-Id required; server validates allowedCompanyIds and resource.companyId; no fallback",
+          "organizationScope": "Explicit organization IDs only; server filters before projection",
+          "projectScope": "Canonical projectId only; project-name joins forbidden",
+          "revision": "not required",
+          "idempotency": "Idempotency-Key required; same key with different payload is 409",
+          "fileReference": "Frozen Common File Reference contract",
+          "fileReadyGuard": "READY_REQUIRED",
+          "providerCapability": "PROVIDER_REQUIRED",
+          "notificationEvent": "none",
+          "gouCoexistence": "No dual write; GOU state explicitly returned when relevant",
+          "dataOwnership": "SERVER_PERSISTENCE_REQUIRED",
+          "productionMockFallback": false
+        }
+      }
+    },
+    "/api/v1/ai/summarization-jobs": {
+      "post": {
+        "operationId": "createAiSummarizationJob",
+        "summary": "Create summary draft job",
+        "tags": [
+          "ai"
+        ],
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "data"
+                ],
+                "properties": {
+                  "data": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "description": "Command payload for createAiSummarizationJob; fields are defined in BUSINESS_DTO_DICTIONARY.md and module contract."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful company-scoped response",
+            "headers": {
+              "ETag": {
+                "description": "Quoted resource revision where applicable",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/ai.yaml#/components/schemas/AiJobDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessBadRequest"
+          },
+          "401": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnauthorized"
+          },
+          "403": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessForbidden"
+          },
+          "404": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessNotFound"
+          },
+          "409": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessConflict"
+          },
+          "422": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnprocessable"
+          },
+          "503": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnavailable"
+          }
+        },
+        "x-contract": {
+          "evidence": "PROPOSAL",
+          "executionModes": [
+            "DEMO_LOCAL",
+            "API_SANDBOX",
+            "PRODUCTION_SERVER"
+          ],
+          "permission": "USE_AI_ASSISTANCE",
+          "companyScope": "X-Company-Id required; server validates allowedCompanyIds and resource.companyId; no fallback",
+          "organizationScope": "Explicit organization IDs only; server filters before projection",
+          "projectScope": "Canonical projectId only; project-name joins forbidden",
+          "revision": "not required",
+          "idempotency": "Idempotency-Key required; same key with different payload is 409",
+          "fileReference": "Frozen Common File Reference contract",
+          "fileReadyGuard": "READY_REQUIRED",
+          "providerCapability": "PROVIDER_REQUIRED",
+          "notificationEvent": "none",
+          "gouCoexistence": "No dual write; GOU state explicitly returned when relevant",
+          "dataOwnership": "SERVER_PERSISTENCE_REQUIRED",
+          "productionMockFallback": false
+        }
+      }
+    },
+    "/api/v1/ai/rag-queries": {
+      "post": {
+        "operationId": "queryAiRag",
+        "summary": "Query permission-filtered RAG",
+        "tags": [
+          "ai"
+        ],
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "data"
+                ],
+                "properties": {
+                  "data": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "description": "Command payload for queryAiRag; fields are defined in BUSINESS_DTO_DICTIONARY.md and module contract."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful company-scoped response",
+            "headers": {
+              "ETag": {
+                "description": "Quoted resource revision where applicable",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/ai.yaml#/components/schemas/RagAnswerDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessBadRequest"
+          },
+          "401": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnauthorized"
+          },
+          "403": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessForbidden"
+          },
+          "404": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessNotFound"
+          },
+          "409": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessConflict"
+          },
+          "422": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnprocessable"
+          },
+          "503": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnavailable"
+          }
+        },
+        "x-contract": {
+          "evidence": "PROPOSAL",
+          "executionModes": [
+            "DEMO_LOCAL",
+            "API_SANDBOX",
+            "PRODUCTION_SERVER"
+          ],
+          "permission": "USE_AI_ASSISTANCE",
+          "companyScope": "X-Company-Id required; server validates allowedCompanyIds and resource.companyId; no fallback",
+          "organizationScope": "Explicit organization IDs only; server filters before projection",
+          "projectScope": "Canonical projectId only; project-name joins forbidden",
+          "revision": "not required",
+          "idempotency": "not required",
+          "fileReference": "Frozen Common File Reference contract",
+          "fileReadyGuard": "NOT_APPLICABLE_OR_DRAFT",
+          "providerCapability": "PROVIDER_REQUIRED",
+          "notificationEvent": "none",
+          "gouCoexistence": "No dual write; GOU state explicitly returned when relevant",
+          "dataOwnership": "SERVER_PERSISTENCE_REQUIRED",
+          "productionMockFallback": false
+        }
+      }
+    },
+    "/api/v1/ai/jobs/{jobId}": {
+      "get": {
+        "operationId": "getAiJob",
+        "summary": "Get AI job",
+        "tags": [
+          "ai"
+        ],
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "jobId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful company-scoped response",
+            "headers": {
+              "ETag": {
+                "description": "Quoted resource revision where applicable",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/ai.yaml#/components/schemas/AiJobDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessBadRequest"
+          },
+          "401": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnauthorized"
+          },
+          "403": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessForbidden"
+          },
+          "404": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessNotFound"
+          },
+          "409": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessConflict"
+          },
+          "422": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnprocessable"
+          },
+          "503": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnavailable"
+          }
+        },
+        "x-contract": {
+          "evidence": "PROPOSAL",
+          "executionModes": [
+            "DEMO_LOCAL",
+            "API_SANDBOX",
+            "PRODUCTION_SERVER"
+          ],
+          "permission": "USE_AI_ASSISTANCE",
+          "companyScope": "X-Company-Id required; server validates allowedCompanyIds and resource.companyId; no fallback",
+          "organizationScope": "Explicit organization IDs only; server filters before projection",
+          "projectScope": "Canonical projectId only; project-name joins forbidden",
+          "revision": "not required",
+          "idempotency": "not required",
+          "fileReference": "Frozen Common File Reference contract",
+          "fileReadyGuard": "NOT_APPLICABLE_OR_DRAFT",
+          "providerCapability": "PROVIDER_REQUIRED",
+          "notificationEvent": "none",
+          "gouCoexistence": "No dual write; GOU state explicitly returned when relevant",
+          "dataOwnership": "SERVER_PERSISTENCE_REQUIRED",
+          "productionMockFallback": false
+        }
+      }
+    },
+    "/api/v1/ai/jobs/{jobId}/cancel": {
+      "post": {
+        "operationId": "cancelAiJob",
+        "summary": "Cancel AI job",
+        "tags": [
+          "ai"
+        ],
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "jobId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "data"
+                ],
+                "properties": {
+                  "data": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "description": "Command payload for cancelAiJob; fields are defined in BUSINESS_DTO_DICTIONARY.md and module contract."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful company-scoped response",
+            "headers": {
+              "ETag": {
+                "description": "Quoted resource revision where applicable",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/ai.yaml#/components/schemas/AiJobDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessBadRequest"
+          },
+          "401": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnauthorized"
+          },
+          "403": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessForbidden"
+          },
+          "404": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessNotFound"
+          },
+          "409": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessConflict"
+          },
+          "422": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnprocessable"
+          },
+          "503": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnavailable"
+          }
+        },
+        "x-contract": {
+          "evidence": "PROPOSAL",
+          "executionModes": [
+            "DEMO_LOCAL",
+            "API_SANDBOX",
+            "PRODUCTION_SERVER"
+          ],
+          "permission": "USE_AI_ASSISTANCE",
+          "companyScope": "X-Company-Id required; server validates allowedCompanyIds and resource.companyId; no fallback",
+          "organizationScope": "Explicit organization IDs only; server filters before projection",
+          "projectScope": "Canonical projectId only; project-name joins forbidden",
+          "revision": "If-Match required; mismatch is 409",
+          "idempotency": "Idempotency-Key required; same key with different payload is 409",
+          "fileReference": "Frozen Common File Reference contract",
+          "fileReadyGuard": "NOT_APPLICABLE_OR_DRAFT",
+          "providerCapability": "PROVIDER_REQUIRED",
+          "notificationEvent": "none",
+          "gouCoexistence": "No dual write; GOU state explicitly returned when relevant",
+          "dataOwnership": "SERVER_PERSISTENCE_REQUIRED",
+          "productionMockFallback": false
+        }
+      }
+    },
+    "/api/v1/ai/outputs/{outputId}/feedback": {
+      "post": {
+        "operationId": "createAiFeedback",
+        "summary": "Record human feedback",
+        "tags": [
+          "ai"
+        ],
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "outputId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "data"
+                ],
+                "properties": {
+                  "data": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "description": "Command payload for createAiFeedback; fields are defined in BUSINESS_DTO_DICTIONARY.md and module contract."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful company-scoped response",
+            "headers": {
+              "ETag": {
+                "description": "Quoted resource revision where applicable",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/ai.yaml#/components/schemas/AiJobDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessBadRequest"
+          },
+          "401": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnauthorized"
+          },
+          "403": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessForbidden"
+          },
+          "404": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessNotFound"
+          },
+          "409": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessConflict"
+          },
+          "422": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnprocessable"
+          },
+          "503": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnavailable"
+          }
+        },
+        "x-contract": {
+          "evidence": "PROPOSAL",
+          "executionModes": [
+            "DEMO_LOCAL",
+            "API_SANDBOX",
+            "PRODUCTION_SERVER"
+          ],
+          "permission": "USE_AI_ASSISTANCE",
+          "companyScope": "X-Company-Id required; server validates allowedCompanyIds and resource.companyId; no fallback",
+          "organizationScope": "Explicit organization IDs only; server filters before projection",
+          "projectScope": "Canonical projectId only; project-name joins forbidden",
+          "revision": "not required",
+          "idempotency": "Idempotency-Key required; same key with different payload is 409",
+          "fileReference": "Frozen Common File Reference contract",
+          "fileReadyGuard": "NOT_APPLICABLE_OR_DRAFT",
+          "providerCapability": "PROVIDER_REQUIRED",
+          "notificationEvent": "none",
+          "gouCoexistence": "No dual write; GOU state explicitly returned when relevant",
+          "dataOwnership": "SERVER_PERSISTENCE_REQUIRED",
+          "productionMockFallback": false
+        }
+      }
+    }
+  },
+  "x-business-final-policy": {
+    "status": "BUSINESS_CONTRACT_FROZEN_V1",
+    "finalLegalOrAccountingDecision": false,
+    "citationRequired": true,
+    "humanReviewRequired": true,
+    "secretInput": "PROHIBITED"
+  }
+}

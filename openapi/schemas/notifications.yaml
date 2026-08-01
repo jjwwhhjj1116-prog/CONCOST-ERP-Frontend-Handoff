@@ -1,0 +1,296 @@
+{
+  "components": {
+    "schemas": {
+      "NotificationEventDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "companyId",
+          "eventType",
+          "resourceType",
+          "resourceId",
+          "projectId",
+          "actorPersonnelCardId",
+          "occurredAt",
+          "payloadVersion"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "companyId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "eventType": {
+            "type": "string",
+            "minLength": 1
+          },
+          "resourceType": {
+            "type": "string",
+            "minLength": 1
+          },
+          "resourceId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "projectId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "actorPersonnelCardId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "occurredAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "payloadVersion": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      "NotificationDeliveryDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "eventId",
+          "recipientPersonnelCardId",
+          "channel",
+          "status",
+          "attemptCount",
+          "deliveredAt",
+          "failureCode"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "eventId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "recipientPersonnelCardId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "channel": {
+            "type": "string",
+            "enum": [
+              "IN_APP",
+              "EMAIL",
+              "WEB_PUSH",
+              "MOBILE_PUSH"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "SENT",
+              "FAILED",
+              "SKIPPED",
+              "CANCELLED"
+            ]
+          },
+          "attemptCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "deliveredAt": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "failureCode": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "NotificationItemDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "event",
+          "delivery",
+          "titleKey",
+          "bodyKey",
+          "route",
+          "readAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "event": {
+            "$ref": "#/components/schemas/NotificationEventDto"
+          },
+          "delivery": {
+            "$ref": "#/components/schemas/NotificationDeliveryDto"
+          },
+          "titleKey": {
+            "type": "string",
+            "minLength": 1
+          },
+          "bodyKey": {
+            "type": "string",
+            "minLength": 1
+          },
+          "route": {
+            "type": "string",
+            "minLength": 1
+          },
+          "readAt": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "NotificationPreferenceDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "personnelCardId",
+          "companyId",
+          "eventType",
+          "channels",
+          "enabled",
+          "quietHours",
+          "revision"
+        ],
+        "properties": {
+          "personnelCardId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "companyId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "eventType": {
+            "type": "string",
+            "minLength": 1
+          },
+          "channels": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "IN_APP",
+                "EMAIL",
+                "WEB_PUSH",
+                "MOBILE_PUSH"
+              ]
+            }
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "quietHours": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "startsAt": {
+                "type": "string",
+                "pattern": "^\\d{2}:\\d{2}$"
+              },
+              "endsAt": {
+                "type": "string",
+                "pattern": "^\\d{2}:\\d{2}$"
+              },
+              "timezone": {
+                "type": "string"
+              }
+            }
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      },
+      "SaveNotificationPreferencesRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "preferences"
+        ],
+        "properties": {
+          "preferences": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NotificationPreferenceDto"
+            }
+          }
+        }
+      },
+      "NotificationDefaultPolicyDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "taskAppOffsetsHours",
+          "eventRetentionIndependentOfPreference"
+        ],
+        "properties": {
+          "taskAppOffsetsHours": {
+            "type": "array",
+            "prefixItems": [
+              {
+                "const": -24
+              },
+              {
+                "const": 0
+              },
+              {
+                "const": 24
+              }
+            ],
+            "minItems": 3,
+            "maxItems": 3
+          },
+          "eventRetentionIndependentOfPreference": {
+            "type": "boolean",
+            "const": true
+          }
+        }
+      }
+    }
+  },
+  "x-final-contract": {
+    "decisions": [
+      "COLLAB-DEC-11",
+      "COLLAB-DEC-15"
+    ],
+    "eventDeliveryReadPreferenceSeparated": true
+  }
+}

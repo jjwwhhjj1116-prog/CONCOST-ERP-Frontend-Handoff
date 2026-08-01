@@ -1,0 +1,3260 @@
+{
+  "paths": {
+    "/api/v1/customers": {
+      "get": {
+        "operationId": "listCustomers",
+        "summary": "List scoped customers",
+        "tags": [
+          "sales"
+        ],
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful company-scoped response",
+            "headers": {
+              "ETag": {
+                "description": "Quoted resource revision where applicable",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "../schemas/sales.yaml#/components/schemas/CustomerSummaryDto"
+                      }
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessBadRequest"
+          },
+          "401": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnauthorized"
+          },
+          "403": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessForbidden"
+          },
+          "404": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessNotFound"
+          },
+          "409": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessConflict"
+          },
+          "422": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnprocessable"
+          },
+          "503": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnavailable"
+          }
+        },
+        "x-contract": {
+          "evidence": "FRONTEND_VERIFIED_AND_PROPOSAL",
+          "executionModes": [
+            "DEMO_LOCAL",
+            "API_SANDBOX",
+            "PRODUCTION_SERVER"
+          ],
+          "permission": "VIEW_CUSTOMER",
+          "companyScope": "X-Company-Id required; server validates allowedCompanyIds and resource.companyId; no fallback",
+          "organizationScope": "Explicit organization IDs only; server filters before projection",
+          "projectScope": "Canonical projectId only; project-name joins forbidden",
+          "revision": "not required",
+          "idempotency": "not required",
+          "fileReference": "Frozen Common File Reference contract",
+          "fileReadyGuard": "NOT_APPLICABLE_OR_DRAFT",
+          "providerCapability": "NOT_APPLICABLE",
+          "notificationEvent": "none",
+          "gouCoexistence": "No dual write; GOU state explicitly returned when relevant",
+          "dataOwnership": "SERVER_PERSISTENCE_REQUIRED",
+          "productionMockFallback": false
+        }
+      },
+      "post": {
+        "operationId": "createCustomer",
+        "summary": "Create a customer account",
+        "tags": [
+          "sales"
+        ],
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "data"
+                ],
+                "properties": {
+                  "data": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "description": "Command payload for createCustomer; fields are defined in BUSINESS_DTO_DICTIONARY.md and module contract."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful company-scoped response",
+            "headers": {
+              "ETag": {
+                "description": "Quoted resource revision where applicable",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/sales.yaml#/components/schemas/CustomerDetailDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessBadRequest"
+          },
+          "401": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnauthorized"
+          },
+          "403": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessForbidden"
+          },
+          "404": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessNotFound"
+          },
+          "409": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessConflict"
+          },
+          "422": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnprocessable"
+          },
+          "503": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnavailable"
+          }
+        },
+        "x-contract": {
+          "evidence": "FRONTEND_VERIFIED_AND_PROPOSAL",
+          "executionModes": [
+            "DEMO_LOCAL",
+            "API_SANDBOX",
+            "PRODUCTION_SERVER"
+          ],
+          "permission": "VIEW_CUSTOMER",
+          "companyScope": "X-Company-Id required; server validates allowedCompanyIds and resource.companyId; no fallback",
+          "organizationScope": "Explicit organization IDs only; server filters before projection",
+          "projectScope": "Canonical projectId only; project-name joins forbidden",
+          "revision": "not required",
+          "idempotency": "Idempotency-Key required; same key with different payload is 409",
+          "fileReference": "Frozen Common File Reference contract",
+          "fileReadyGuard": "NOT_APPLICABLE_OR_DRAFT",
+          "providerCapability": "NOT_APPLICABLE",
+          "notificationEvent": "none",
+          "gouCoexistence": "No dual write; GOU state explicitly returned when relevant",
+          "dataOwnership": "SERVER_PERSISTENCE_REQUIRED",
+          "productionMockFallback": false
+        }
+      }
+    },
+    "/api/v1/customers/{customerId}": {
+      "get": {
+        "operationId": "getCustomer",
+        "summary": "Get customer 360 detail",
+        "tags": [
+          "sales"
+        ],
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "customerId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful company-scoped response",
+            "headers": {
+              "ETag": {
+                "description": "Quoted resource revision where applicable",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/sales.yaml#/components/schemas/CustomerDetailDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessBadRequest"
+          },
+          "401": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnauthorized"
+          },
+          "403": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessForbidden"
+          },
+          "404": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessNotFound"
+          },
+          "409": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessConflict"
+          },
+          "422": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnprocessable"
+          },
+          "503": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnavailable"
+          }
+        },
+        "x-contract": {
+          "evidence": "FRONTEND_VERIFIED_AND_PROPOSAL",
+          "executionModes": [
+            "DEMO_LOCAL",
+            "API_SANDBOX",
+            "PRODUCTION_SERVER"
+          ],
+          "permission": "VIEW_CUSTOMER",
+          "companyScope": "X-Company-Id required; server validates allowedCompanyIds and resource.companyId; no fallback",
+          "organizationScope": "Explicit organization IDs only; server filters before projection",
+          "projectScope": "Canonical projectId only; project-name joins forbidden",
+          "revision": "not required",
+          "idempotency": "not required",
+          "fileReference": "Frozen Common File Reference contract",
+          "fileReadyGuard": "NOT_APPLICABLE_OR_DRAFT",
+          "providerCapability": "NOT_APPLICABLE",
+          "notificationEvent": "none",
+          "gouCoexistence": "No dual write; GOU state explicitly returned when relevant",
+          "dataOwnership": "SERVER_PERSISTENCE_REQUIRED",
+          "productionMockFallback": false
+        }
+      },
+      "patch": {
+        "operationId": "updateCustomer",
+        "summary": "Update a customer",
+        "tags": [
+          "sales"
+        ],
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "customerId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "data"
+                ],
+                "properties": {
+                  "data": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "description": "Command payload for updateCustomer; fields are defined in BUSINESS_DTO_DICTIONARY.md and module contract."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful company-scoped response",
+            "headers": {
+              "ETag": {
+                "description": "Quoted resource revision where applicable",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/sales.yaml#/components/schemas/CustomerDetailDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessBadRequest"
+          },
+          "401": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnauthorized"
+          },
+          "403": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessForbidden"
+          },
+          "404": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessNotFound"
+          },
+          "409": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessConflict"
+          },
+          "422": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnprocessable"
+          },
+          "503": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnavailable"
+          }
+        },
+        "x-contract": {
+          "evidence": "FRONTEND_VERIFIED_AND_PROPOSAL",
+          "executionModes": [
+            "DEMO_LOCAL",
+            "API_SANDBOX",
+            "PRODUCTION_SERVER"
+          ],
+          "permission": "VIEW_CUSTOMER",
+          "companyScope": "X-Company-Id required; server validates allowedCompanyIds and resource.companyId; no fallback",
+          "organizationScope": "Explicit organization IDs only; server filters before projection",
+          "projectScope": "Canonical projectId only; project-name joins forbidden",
+          "revision": "If-Match required; mismatch is 409",
+          "idempotency": "not required",
+          "fileReference": "Frozen Common File Reference contract",
+          "fileReadyGuard": "NOT_APPLICABLE_OR_DRAFT",
+          "providerCapability": "NOT_APPLICABLE",
+          "notificationEvent": "none",
+          "gouCoexistence": "No dual write; GOU state explicitly returned when relevant",
+          "dataOwnership": "SERVER_PERSISTENCE_REQUIRED",
+          "productionMockFallback": false
+        }
+      }
+    },
+    "/api/v1/customers/{customerId}/archive": {
+      "post": {
+        "operationId": "archiveCustomer",
+        "summary": "Archive a customer",
+        "tags": [
+          "sales"
+        ],
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "customerId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "data"
+                ],
+                "properties": {
+                  "data": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "description": "Command payload for archiveCustomer; fields are defined in BUSINESS_DTO_DICTIONARY.md and module contract."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful company-scoped response",
+            "headers": {
+              "ETag": {
+                "description": "Quoted resource revision where applicable",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/sales.yaml#/components/schemas/CustomerDetailDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessBadRequest"
+          },
+          "401": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnauthorized"
+          },
+          "403": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessForbidden"
+          },
+          "404": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessNotFound"
+          },
+          "409": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessConflict"
+          },
+          "422": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnprocessable"
+          },
+          "503": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnavailable"
+          }
+        },
+        "x-contract": {
+          "evidence": "FRONTEND_VERIFIED_AND_PROPOSAL",
+          "executionModes": [
+            "DEMO_LOCAL",
+            "API_SANDBOX",
+            "PRODUCTION_SERVER"
+          ],
+          "permission": "VIEW_CUSTOMER",
+          "companyScope": "X-Company-Id required; server validates allowedCompanyIds and resource.companyId; no fallback",
+          "organizationScope": "Explicit organization IDs only; server filters before projection",
+          "projectScope": "Canonical projectId only; project-name joins forbidden",
+          "revision": "If-Match required; mismatch is 409",
+          "idempotency": "Idempotency-Key required; same key with different payload is 409",
+          "fileReference": "Frozen Common File Reference contract",
+          "fileReadyGuard": "NOT_APPLICABLE_OR_DRAFT",
+          "providerCapability": "NOT_APPLICABLE",
+          "notificationEvent": "none",
+          "gouCoexistence": "No dual write; GOU state explicitly returned when relevant",
+          "dataOwnership": "SERVER_PERSISTENCE_REQUIRED",
+          "productionMockFallback": false
+        }
+      }
+    },
+    "/api/v1/customers/{customerId}/timeline": {
+      "get": {
+        "operationId": "getCustomerTimeline",
+        "summary": "Get customer timeline",
+        "tags": [
+          "sales"
+        ],
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "customerId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful company-scoped response",
+            "headers": {
+              "ETag": {
+                "description": "Quoted resource revision where applicable",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "../schemas/sales.yaml#/components/schemas/SalesActivityDto"
+                      }
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessBadRequest"
+          },
+          "401": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnauthorized"
+          },
+          "403": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessForbidden"
+          },
+          "404": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessNotFound"
+          },
+          "409": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessConflict"
+          },
+          "422": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnprocessable"
+          },
+          "503": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnavailable"
+          }
+        },
+        "x-contract": {
+          "evidence": "FRONTEND_VERIFIED_AND_PROPOSAL",
+          "executionModes": [
+            "DEMO_LOCAL",
+            "API_SANDBOX",
+            "PRODUCTION_SERVER"
+          ],
+          "permission": "VIEW_CUSTOMER",
+          "companyScope": "X-Company-Id required; server validates allowedCompanyIds and resource.companyId; no fallback",
+          "organizationScope": "Explicit organization IDs only; server filters before projection",
+          "projectScope": "Canonical projectId only; project-name joins forbidden",
+          "revision": "not required",
+          "idempotency": "not required",
+          "fileReference": "Frozen Common File Reference contract",
+          "fileReadyGuard": "NOT_APPLICABLE_OR_DRAFT",
+          "providerCapability": "NOT_APPLICABLE",
+          "notificationEvent": "none",
+          "gouCoexistence": "No dual write; GOU state explicitly returned when relevant",
+          "dataOwnership": "SERVER_PERSISTENCE_REQUIRED",
+          "productionMockFallback": false
+        }
+      }
+    },
+    "/api/v1/leads": {
+      "get": {
+        "operationId": "listLeads",
+        "summary": "List leads",
+        "tags": [
+          "sales"
+        ],
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful company-scoped response",
+            "headers": {
+              "ETag": {
+                "description": "Quoted resource revision where applicable",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "../schemas/sales.yaml#/components/schemas/LeadDto"
+                      }
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessBadRequest"
+          },
+          "401": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnauthorized"
+          },
+          "403": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessForbidden"
+          },
+          "404": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessNotFound"
+          },
+          "409": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessConflict"
+          },
+          "422": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnprocessable"
+          },
+          "503": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnavailable"
+          }
+        },
+        "x-contract": {
+          "evidence": "FRONTEND_VERIFIED_AND_PROPOSAL",
+          "executionModes": [
+            "DEMO_LOCAL",
+            "API_SANDBOX",
+            "PRODUCTION_SERVER"
+          ],
+          "permission": "VIEW_CUSTOMER",
+          "companyScope": "X-Company-Id required; server validates allowedCompanyIds and resource.companyId; no fallback",
+          "organizationScope": "Explicit organization IDs only; server filters before projection",
+          "projectScope": "Canonical projectId only; project-name joins forbidden",
+          "revision": "not required",
+          "idempotency": "not required",
+          "fileReference": "Frozen Common File Reference contract",
+          "fileReadyGuard": "NOT_APPLICABLE_OR_DRAFT",
+          "providerCapability": "NOT_APPLICABLE",
+          "notificationEvent": "none",
+          "gouCoexistence": "No dual write; GOU state explicitly returned when relevant",
+          "dataOwnership": "SERVER_PERSISTENCE_REQUIRED",
+          "productionMockFallback": false
+        }
+      },
+      "post": {
+        "operationId": "createLead",
+        "summary": "Create a lead",
+        "tags": [
+          "sales"
+        ],
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "data"
+                ],
+                "properties": {
+                  "data": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "description": "Command payload for createLead; fields are defined in BUSINESS_DTO_DICTIONARY.md and module contract."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful company-scoped response",
+            "headers": {
+              "ETag": {
+                "description": "Quoted resource revision where applicable",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/sales.yaml#/components/schemas/LeadDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessBadRequest"
+          },
+          "401": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnauthorized"
+          },
+          "403": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessForbidden"
+          },
+          "404": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessNotFound"
+          },
+          "409": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessConflict"
+          },
+          "422": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnprocessable"
+          },
+          "503": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnavailable"
+          }
+        },
+        "x-contract": {
+          "evidence": "FRONTEND_VERIFIED_AND_PROPOSAL",
+          "executionModes": [
+            "DEMO_LOCAL",
+            "API_SANDBOX",
+            "PRODUCTION_SERVER"
+          ],
+          "permission": "VIEW_CUSTOMER",
+          "companyScope": "X-Company-Id required; server validates allowedCompanyIds and resource.companyId; no fallback",
+          "organizationScope": "Explicit organization IDs only; server filters before projection",
+          "projectScope": "Canonical projectId only; project-name joins forbidden",
+          "revision": "not required",
+          "idempotency": "Idempotency-Key required; same key with different payload is 409",
+          "fileReference": "Frozen Common File Reference contract",
+          "fileReadyGuard": "NOT_APPLICABLE_OR_DRAFT",
+          "providerCapability": "NOT_APPLICABLE",
+          "notificationEvent": "none",
+          "gouCoexistence": "No dual write; GOU state explicitly returned when relevant",
+          "dataOwnership": "SERVER_PERSISTENCE_REQUIRED",
+          "productionMockFallback": false
+        }
+      }
+    },
+    "/api/v1/leads/{leadId}": {
+      "get": {
+        "operationId": "getLead",
+        "summary": "Get a lead",
+        "tags": [
+          "sales"
+        ],
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "leadId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful company-scoped response",
+            "headers": {
+              "ETag": {
+                "description": "Quoted resource revision where applicable",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/sales.yaml#/components/schemas/LeadDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessBadRequest"
+          },
+          "401": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnauthorized"
+          },
+          "403": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessForbidden"
+          },
+          "404": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessNotFound"
+          },
+          "409": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessConflict"
+          },
+          "422": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnprocessable"
+          },
+          "503": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnavailable"
+          }
+        },
+        "x-contract": {
+          "evidence": "FRONTEND_VERIFIED_AND_PROPOSAL",
+          "executionModes": [
+            "DEMO_LOCAL",
+            "API_SANDBOX",
+            "PRODUCTION_SERVER"
+          ],
+          "permission": "VIEW_CUSTOMER",
+          "companyScope": "X-Company-Id required; server validates allowedCompanyIds and resource.companyId; no fallback",
+          "organizationScope": "Explicit organization IDs only; server filters before projection",
+          "projectScope": "Canonical projectId only; project-name joins forbidden",
+          "revision": "not required",
+          "idempotency": "not required",
+          "fileReference": "Frozen Common File Reference contract",
+          "fileReadyGuard": "NOT_APPLICABLE_OR_DRAFT",
+          "providerCapability": "NOT_APPLICABLE",
+          "notificationEvent": "none",
+          "gouCoexistence": "No dual write; GOU state explicitly returned when relevant",
+          "dataOwnership": "SERVER_PERSISTENCE_REQUIRED",
+          "productionMockFallback": false
+        }
+      },
+      "patch": {
+        "operationId": "updateLead",
+        "summary": "Update a lead",
+        "tags": [
+          "sales"
+        ],
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "leadId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "data"
+                ],
+                "properties": {
+                  "data": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "description": "Command payload for updateLead; fields are defined in BUSINESS_DTO_DICTIONARY.md and module contract."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful company-scoped response",
+            "headers": {
+              "ETag": {
+                "description": "Quoted resource revision where applicable",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/sales.yaml#/components/schemas/LeadDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessBadRequest"
+          },
+          "401": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnauthorized"
+          },
+          "403": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessForbidden"
+          },
+          "404": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessNotFound"
+          },
+          "409": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessConflict"
+          },
+          "422": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnprocessable"
+          },
+          "503": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnavailable"
+          }
+        },
+        "x-contract": {
+          "evidence": "FRONTEND_VERIFIED_AND_PROPOSAL",
+          "executionModes": [
+            "DEMO_LOCAL",
+            "API_SANDBOX",
+            "PRODUCTION_SERVER"
+          ],
+          "permission": "VIEW_CUSTOMER",
+          "companyScope": "X-Company-Id required; server validates allowedCompanyIds and resource.companyId; no fallback",
+          "organizationScope": "Explicit organization IDs only; server filters before projection",
+          "projectScope": "Canonical projectId only; project-name joins forbidden",
+          "revision": "If-Match required; mismatch is 409",
+          "idempotency": "not required",
+          "fileReference": "Frozen Common File Reference contract",
+          "fileReadyGuard": "NOT_APPLICABLE_OR_DRAFT",
+          "providerCapability": "NOT_APPLICABLE",
+          "notificationEvent": "none",
+          "gouCoexistence": "No dual write; GOU state explicitly returned when relevant",
+          "dataOwnership": "SERVER_PERSISTENCE_REQUIRED",
+          "productionMockFallback": false
+        }
+      }
+    },
+    "/api/v1/leads/{leadId}/qualify": {
+      "post": {
+        "operationId": "qualifyLead",
+        "summary": "Qualify a lead",
+        "tags": [
+          "sales"
+        ],
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "leadId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "data"
+                ],
+                "properties": {
+                  "data": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "description": "Command payload for qualifyLead; fields are defined in BUSINESS_DTO_DICTIONARY.md and module contract."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful company-scoped response",
+            "headers": {
+              "ETag": {
+                "description": "Quoted resource revision where applicable",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/sales.yaml#/components/schemas/LeadDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessBadRequest"
+          },
+          "401": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnauthorized"
+          },
+          "403": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessForbidden"
+          },
+          "404": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessNotFound"
+          },
+          "409": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessConflict"
+          },
+          "422": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnprocessable"
+          },
+          "503": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnavailable"
+          }
+        },
+        "x-contract": {
+          "evidence": "FRONTEND_VERIFIED_AND_PROPOSAL",
+          "executionModes": [
+            "DEMO_LOCAL",
+            "API_SANDBOX",
+            "PRODUCTION_SERVER"
+          ],
+          "permission": "VIEW_CUSTOMER",
+          "companyScope": "X-Company-Id required; server validates allowedCompanyIds and resource.companyId; no fallback",
+          "organizationScope": "Explicit organization IDs only; server filters before projection",
+          "projectScope": "Canonical projectId only; project-name joins forbidden",
+          "revision": "If-Match required; mismatch is 409",
+          "idempotency": "Idempotency-Key required; same key with different payload is 409",
+          "fileReference": "Frozen Common File Reference contract",
+          "fileReadyGuard": "NOT_APPLICABLE_OR_DRAFT",
+          "providerCapability": "NOT_APPLICABLE",
+          "notificationEvent": "none",
+          "gouCoexistence": "No dual write; GOU state explicitly returned when relevant",
+          "dataOwnership": "SERVER_PERSISTENCE_REQUIRED",
+          "productionMockFallback": false
+        }
+      }
+    },
+    "/api/v1/leads/{leadId}/disqualify": {
+      "post": {
+        "operationId": "disqualifyLead",
+        "summary": "Disqualify a lead",
+        "tags": [
+          "sales"
+        ],
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "leadId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "data"
+                ],
+                "properties": {
+                  "data": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "description": "Command payload for disqualifyLead; fields are defined in BUSINESS_DTO_DICTIONARY.md and module contract."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful company-scoped response",
+            "headers": {
+              "ETag": {
+                "description": "Quoted resource revision where applicable",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/sales.yaml#/components/schemas/LeadDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessBadRequest"
+          },
+          "401": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnauthorized"
+          },
+          "403": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessForbidden"
+          },
+          "404": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessNotFound"
+          },
+          "409": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessConflict"
+          },
+          "422": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnprocessable"
+          },
+          "503": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnavailable"
+          }
+        },
+        "x-contract": {
+          "evidence": "FRONTEND_VERIFIED_AND_PROPOSAL",
+          "executionModes": [
+            "DEMO_LOCAL",
+            "API_SANDBOX",
+            "PRODUCTION_SERVER"
+          ],
+          "permission": "VIEW_CUSTOMER",
+          "companyScope": "X-Company-Id required; server validates allowedCompanyIds and resource.companyId; no fallback",
+          "organizationScope": "Explicit organization IDs only; server filters before projection",
+          "projectScope": "Canonical projectId only; project-name joins forbidden",
+          "revision": "If-Match required; mismatch is 409",
+          "idempotency": "Idempotency-Key required; same key with different payload is 409",
+          "fileReference": "Frozen Common File Reference contract",
+          "fileReadyGuard": "NOT_APPLICABLE_OR_DRAFT",
+          "providerCapability": "NOT_APPLICABLE",
+          "notificationEvent": "none",
+          "gouCoexistence": "No dual write; GOU state explicitly returned when relevant",
+          "dataOwnership": "SERVER_PERSISTENCE_REQUIRED",
+          "productionMockFallback": false
+        }
+      }
+    },
+    "/api/v1/leads/{leadId}/convert": {
+      "post": {
+        "operationId": "convertLead",
+        "summary": "Convert a qualified lead",
+        "tags": [
+          "sales"
+        ],
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "leadId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "data"
+                ],
+                "properties": {
+                  "data": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "description": "Command payload for convertLead; fields are defined in BUSINESS_DTO_DICTIONARY.md and module contract."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful company-scoped response",
+            "headers": {
+              "ETag": {
+                "description": "Quoted resource revision where applicable",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/sales.yaml#/components/schemas/OpportunityDetailDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessBadRequest"
+          },
+          "401": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnauthorized"
+          },
+          "403": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessForbidden"
+          },
+          "404": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessNotFound"
+          },
+          "409": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessConflict"
+          },
+          "422": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnprocessable"
+          },
+          "503": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnavailable"
+          }
+        },
+        "x-contract": {
+          "evidence": "FRONTEND_VERIFIED_AND_PROPOSAL",
+          "executionModes": [
+            "DEMO_LOCAL",
+            "API_SANDBOX",
+            "PRODUCTION_SERVER"
+          ],
+          "permission": "VIEW_CUSTOMER",
+          "companyScope": "X-Company-Id required; server validates allowedCompanyIds and resource.companyId; no fallback",
+          "organizationScope": "Explicit organization IDs only; server filters before projection",
+          "projectScope": "Canonical projectId only; project-name joins forbidden",
+          "revision": "If-Match required; mismatch is 409",
+          "idempotency": "Idempotency-Key required; same key with different payload is 409",
+          "fileReference": "Frozen Common File Reference contract",
+          "fileReadyGuard": "NOT_APPLICABLE_OR_DRAFT",
+          "providerCapability": "NOT_APPLICABLE",
+          "notificationEvent": "none",
+          "gouCoexistence": "No dual write; GOU state explicitly returned when relevant",
+          "dataOwnership": "SERVER_PERSISTENCE_REQUIRED",
+          "productionMockFallback": false
+        }
+      }
+    },
+    "/api/v1/opportunities": {
+      "get": {
+        "operationId": "listOpportunities",
+        "summary": "List opportunities",
+        "tags": [
+          "sales"
+        ],
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful company-scoped response",
+            "headers": {
+              "ETag": {
+                "description": "Quoted resource revision where applicable",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "../schemas/sales.yaml#/components/schemas/OpportunitySummaryDto"
+                      }
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessBadRequest"
+          },
+          "401": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnauthorized"
+          },
+          "403": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessForbidden"
+          },
+          "404": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessNotFound"
+          },
+          "409": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessConflict"
+          },
+          "422": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnprocessable"
+          },
+          "503": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnavailable"
+          }
+        },
+        "x-contract": {
+          "evidence": "FRONTEND_VERIFIED_AND_PROPOSAL",
+          "executionModes": [
+            "DEMO_LOCAL",
+            "API_SANDBOX",
+            "PRODUCTION_SERVER"
+          ],
+          "permission": "VIEW_CUSTOMER",
+          "companyScope": "X-Company-Id required; server validates allowedCompanyIds and resource.companyId; no fallback",
+          "organizationScope": "Explicit organization IDs only; server filters before projection",
+          "projectScope": "Canonical projectId only; project-name joins forbidden",
+          "revision": "not required",
+          "idempotency": "not required",
+          "fileReference": "Frozen Common File Reference contract",
+          "fileReadyGuard": "NOT_APPLICABLE_OR_DRAFT",
+          "providerCapability": "NOT_APPLICABLE",
+          "notificationEvent": "none",
+          "gouCoexistence": "No dual write; GOU state explicitly returned when relevant",
+          "dataOwnership": "SERVER_PERSISTENCE_REQUIRED",
+          "productionMockFallback": false
+        }
+      },
+      "post": {
+        "operationId": "createOpportunity",
+        "summary": "Create an opportunity",
+        "tags": [
+          "sales"
+        ],
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "data"
+                ],
+                "properties": {
+                  "data": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "description": "Command payload for createOpportunity; fields are defined in BUSINESS_DTO_DICTIONARY.md and module contract."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful company-scoped response",
+            "headers": {
+              "ETag": {
+                "description": "Quoted resource revision where applicable",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/sales.yaml#/components/schemas/OpportunityDetailDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessBadRequest"
+          },
+          "401": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnauthorized"
+          },
+          "403": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessForbidden"
+          },
+          "404": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessNotFound"
+          },
+          "409": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessConflict"
+          },
+          "422": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnprocessable"
+          },
+          "503": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnavailable"
+          }
+        },
+        "x-contract": {
+          "evidence": "FRONTEND_VERIFIED_AND_PROPOSAL",
+          "executionModes": [
+            "DEMO_LOCAL",
+            "API_SANDBOX",
+            "PRODUCTION_SERVER"
+          ],
+          "permission": "VIEW_CUSTOMER",
+          "companyScope": "X-Company-Id required; server validates allowedCompanyIds and resource.companyId; no fallback",
+          "organizationScope": "Explicit organization IDs only; server filters before projection",
+          "projectScope": "Canonical projectId only; project-name joins forbidden",
+          "revision": "not required",
+          "idempotency": "Idempotency-Key required; same key with different payload is 409",
+          "fileReference": "Frozen Common File Reference contract",
+          "fileReadyGuard": "NOT_APPLICABLE_OR_DRAFT",
+          "providerCapability": "NOT_APPLICABLE",
+          "notificationEvent": "none",
+          "gouCoexistence": "No dual write; GOU state explicitly returned when relevant",
+          "dataOwnership": "SERVER_PERSISTENCE_REQUIRED",
+          "productionMockFallback": false
+        }
+      }
+    },
+    "/api/v1/opportunities/{opportunityId}": {
+      "get": {
+        "operationId": "getOpportunity",
+        "summary": "Get opportunity detail",
+        "tags": [
+          "sales"
+        ],
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "opportunityId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful company-scoped response",
+            "headers": {
+              "ETag": {
+                "description": "Quoted resource revision where applicable",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/sales.yaml#/components/schemas/OpportunityDetailDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessBadRequest"
+          },
+          "401": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnauthorized"
+          },
+          "403": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessForbidden"
+          },
+          "404": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessNotFound"
+          },
+          "409": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessConflict"
+          },
+          "422": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnprocessable"
+          },
+          "503": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnavailable"
+          }
+        },
+        "x-contract": {
+          "evidence": "FRONTEND_VERIFIED_AND_PROPOSAL",
+          "executionModes": [
+            "DEMO_LOCAL",
+            "API_SANDBOX",
+            "PRODUCTION_SERVER"
+          ],
+          "permission": "VIEW_CUSTOMER",
+          "companyScope": "X-Company-Id required; server validates allowedCompanyIds and resource.companyId; no fallback",
+          "organizationScope": "Explicit organization IDs only; server filters before projection",
+          "projectScope": "Canonical projectId only; project-name joins forbidden",
+          "revision": "not required",
+          "idempotency": "not required",
+          "fileReference": "Frozen Common File Reference contract",
+          "fileReadyGuard": "NOT_APPLICABLE_OR_DRAFT",
+          "providerCapability": "NOT_APPLICABLE",
+          "notificationEvent": "none",
+          "gouCoexistence": "No dual write; GOU state explicitly returned when relevant",
+          "dataOwnership": "SERVER_PERSISTENCE_REQUIRED",
+          "productionMockFallback": false
+        }
+      },
+      "patch": {
+        "operationId": "updateOpportunity",
+        "summary": "Update opportunity",
+        "tags": [
+          "sales"
+        ],
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "opportunityId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "data"
+                ],
+                "properties": {
+                  "data": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "description": "Command payload for updateOpportunity; fields are defined in BUSINESS_DTO_DICTIONARY.md and module contract."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful company-scoped response",
+            "headers": {
+              "ETag": {
+                "description": "Quoted resource revision where applicable",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/sales.yaml#/components/schemas/OpportunityDetailDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessBadRequest"
+          },
+          "401": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnauthorized"
+          },
+          "403": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessForbidden"
+          },
+          "404": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessNotFound"
+          },
+          "409": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessConflict"
+          },
+          "422": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnprocessable"
+          },
+          "503": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnavailable"
+          }
+        },
+        "x-contract": {
+          "evidence": "FRONTEND_VERIFIED_AND_PROPOSAL",
+          "executionModes": [
+            "DEMO_LOCAL",
+            "API_SANDBOX",
+            "PRODUCTION_SERVER"
+          ],
+          "permission": "VIEW_CUSTOMER",
+          "companyScope": "X-Company-Id required; server validates allowedCompanyIds and resource.companyId; no fallback",
+          "organizationScope": "Explicit organization IDs only; server filters before projection",
+          "projectScope": "Canonical projectId only; project-name joins forbidden",
+          "revision": "If-Match required; mismatch is 409",
+          "idempotency": "not required",
+          "fileReference": "Frozen Common File Reference contract",
+          "fileReadyGuard": "NOT_APPLICABLE_OR_DRAFT",
+          "providerCapability": "NOT_APPLICABLE",
+          "notificationEvent": "none",
+          "gouCoexistence": "No dual write; GOU state explicitly returned when relevant",
+          "dataOwnership": "SERVER_PERSISTENCE_REQUIRED",
+          "productionMockFallback": false
+        }
+      }
+    },
+    "/api/v1/opportunities/{opportunityId}/win": {
+      "post": {
+        "operationId": "winOpportunity",
+        "summary": "Mark opportunity won",
+        "tags": [
+          "sales"
+        ],
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "opportunityId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "data"
+                ],
+                "properties": {
+                  "data": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "description": "Command payload for winOpportunity; fields are defined in BUSINESS_DTO_DICTIONARY.md and module contract."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful company-scoped response",
+            "headers": {
+              "ETag": {
+                "description": "Quoted resource revision where applicable",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/sales.yaml#/components/schemas/OpportunityDetailDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessBadRequest"
+          },
+          "401": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnauthorized"
+          },
+          "403": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessForbidden"
+          },
+          "404": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessNotFound"
+          },
+          "409": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessConflict"
+          },
+          "422": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnprocessable"
+          },
+          "503": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnavailable"
+          }
+        },
+        "x-contract": {
+          "evidence": "FRONTEND_VERIFIED_AND_PROPOSAL",
+          "executionModes": [
+            "DEMO_LOCAL",
+            "API_SANDBOX",
+            "PRODUCTION_SERVER"
+          ],
+          "permission": "VIEW_CUSTOMER",
+          "companyScope": "X-Company-Id required; server validates allowedCompanyIds and resource.companyId; no fallback",
+          "organizationScope": "Explicit organization IDs only; server filters before projection",
+          "projectScope": "Canonical projectId only; project-name joins forbidden",
+          "revision": "If-Match required; mismatch is 409",
+          "idempotency": "Idempotency-Key required; same key with different payload is 409",
+          "fileReference": "Frozen Common File Reference contract",
+          "fileReadyGuard": "NOT_APPLICABLE_OR_DRAFT",
+          "providerCapability": "NOT_APPLICABLE",
+          "notificationEvent": "none",
+          "gouCoexistence": "No dual write; GOU state explicitly returned when relevant",
+          "dataOwnership": "SERVER_PERSISTENCE_REQUIRED",
+          "productionMockFallback": false
+        }
+      }
+    },
+    "/api/v1/opportunities/{opportunityId}/lose": {
+      "post": {
+        "operationId": "loseOpportunity",
+        "summary": "Mark opportunity lost",
+        "tags": [
+          "sales"
+        ],
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "opportunityId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "data"
+                ],
+                "properties": {
+                  "data": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "description": "Command payload for loseOpportunity; fields are defined in BUSINESS_DTO_DICTIONARY.md and module contract."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful company-scoped response",
+            "headers": {
+              "ETag": {
+                "description": "Quoted resource revision where applicable",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/sales.yaml#/components/schemas/OpportunityDetailDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessBadRequest"
+          },
+          "401": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnauthorized"
+          },
+          "403": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessForbidden"
+          },
+          "404": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessNotFound"
+          },
+          "409": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessConflict"
+          },
+          "422": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnprocessable"
+          },
+          "503": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnavailable"
+          }
+        },
+        "x-contract": {
+          "evidence": "FRONTEND_VERIFIED_AND_PROPOSAL",
+          "executionModes": [
+            "DEMO_LOCAL",
+            "API_SANDBOX",
+            "PRODUCTION_SERVER"
+          ],
+          "permission": "VIEW_CUSTOMER",
+          "companyScope": "X-Company-Id required; server validates allowedCompanyIds and resource.companyId; no fallback",
+          "organizationScope": "Explicit organization IDs only; server filters before projection",
+          "projectScope": "Canonical projectId only; project-name joins forbidden",
+          "revision": "If-Match required; mismatch is 409",
+          "idempotency": "Idempotency-Key required; same key with different payload is 409",
+          "fileReference": "Frozen Common File Reference contract",
+          "fileReadyGuard": "NOT_APPLICABLE_OR_DRAFT",
+          "providerCapability": "NOT_APPLICABLE",
+          "notificationEvent": "none",
+          "gouCoexistence": "No dual write; GOU state explicitly returned when relevant",
+          "dataOwnership": "SERVER_PERSISTENCE_REQUIRED",
+          "productionMockFallback": false
+        }
+      }
+    },
+    "/api/v1/opportunities/{opportunityId}/hold": {
+      "post": {
+        "operationId": "holdOpportunity",
+        "summary": "Put opportunity on hold",
+        "tags": [
+          "sales"
+        ],
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "opportunityId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "data"
+                ],
+                "properties": {
+                  "data": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "description": "Command payload for holdOpportunity; fields are defined in BUSINESS_DTO_DICTIONARY.md and module contract."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful company-scoped response",
+            "headers": {
+              "ETag": {
+                "description": "Quoted resource revision where applicable",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/sales.yaml#/components/schemas/OpportunityDetailDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessBadRequest"
+          },
+          "401": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnauthorized"
+          },
+          "403": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessForbidden"
+          },
+          "404": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessNotFound"
+          },
+          "409": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessConflict"
+          },
+          "422": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnprocessable"
+          },
+          "503": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnavailable"
+          }
+        },
+        "x-contract": {
+          "evidence": "FRONTEND_VERIFIED_AND_PROPOSAL",
+          "executionModes": [
+            "DEMO_LOCAL",
+            "API_SANDBOX",
+            "PRODUCTION_SERVER"
+          ],
+          "permission": "VIEW_CUSTOMER",
+          "companyScope": "X-Company-Id required; server validates allowedCompanyIds and resource.companyId; no fallback",
+          "organizationScope": "Explicit organization IDs only; server filters before projection",
+          "projectScope": "Canonical projectId only; project-name joins forbidden",
+          "revision": "If-Match required; mismatch is 409",
+          "idempotency": "Idempotency-Key required; same key with different payload is 409",
+          "fileReference": "Frozen Common File Reference contract",
+          "fileReadyGuard": "NOT_APPLICABLE_OR_DRAFT",
+          "providerCapability": "NOT_APPLICABLE",
+          "notificationEvent": "none",
+          "gouCoexistence": "No dual write; GOU state explicitly returned when relevant",
+          "dataOwnership": "SERVER_PERSISTENCE_REQUIRED",
+          "productionMockFallback": false
+        }
+      }
+    },
+    "/api/v1/opportunities/{opportunityId}/create-estimate-request": {
+      "post": {
+        "operationId": "createEstimateRequestFromOpportunity",
+        "summary": "Create Project Chain Estimate Request",
+        "tags": [
+          "sales"
+        ],
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "opportunityId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "data"
+                ],
+                "properties": {
+                  "data": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "description": "Command payload for createEstimateRequestFromOpportunity; fields are defined in BUSINESS_DTO_DICTIONARY.md and module contract."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful company-scoped response",
+            "headers": {
+              "ETag": {
+                "description": "Quoted resource revision where applicable",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/sales.yaml#/components/schemas/OpportunityDetailDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessBadRequest"
+          },
+          "401": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnauthorized"
+          },
+          "403": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessForbidden"
+          },
+          "404": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessNotFound"
+          },
+          "409": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessConflict"
+          },
+          "422": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnprocessable"
+          },
+          "503": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnavailable"
+          }
+        },
+        "x-contract": {
+          "evidence": "FRONTEND_VERIFIED_AND_PROPOSAL",
+          "executionModes": [
+            "DEMO_LOCAL",
+            "API_SANDBOX",
+            "PRODUCTION_SERVER"
+          ],
+          "permission": "CREATE_ESTIMATE_REQUEST",
+          "companyScope": "X-Company-Id required; server validates allowedCompanyIds and resource.companyId; no fallback",
+          "organizationScope": "Explicit organization IDs only; server filters before projection",
+          "projectScope": "Canonical projectId only; project-name joins forbidden",
+          "revision": "If-Match required; mismatch is 409",
+          "idempotency": "Idempotency-Key required; same key with different payload is 409",
+          "fileReference": "Frozen Common File Reference contract",
+          "fileReadyGuard": "NOT_APPLICABLE_OR_DRAFT",
+          "providerCapability": "NOT_APPLICABLE",
+          "notificationEvent": "sales.estimate-request-linked",
+          "gouCoexistence": "No dual write; GOU state explicitly returned when relevant",
+          "dataOwnership": "SERVER_PERSISTENCE_REQUIRED",
+          "productionMockFallback": false
+        }
+      }
+    },
+    "/api/v1/sales-activities": {
+      "get": {
+        "operationId": "listSalesActivities",
+        "summary": "List sales activities",
+        "tags": [
+          "sales"
+        ],
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful company-scoped response",
+            "headers": {
+              "ETag": {
+                "description": "Quoted resource revision where applicable",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "../schemas/sales.yaml#/components/schemas/SalesActivityDto"
+                      }
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessBadRequest"
+          },
+          "401": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnauthorized"
+          },
+          "403": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessForbidden"
+          },
+          "404": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessNotFound"
+          },
+          "409": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessConflict"
+          },
+          "422": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnprocessable"
+          },
+          "503": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnavailable"
+          }
+        },
+        "x-contract": {
+          "evidence": "FRONTEND_VERIFIED_AND_PROPOSAL",
+          "executionModes": [
+            "DEMO_LOCAL",
+            "API_SANDBOX",
+            "PRODUCTION_SERVER"
+          ],
+          "permission": "VIEW_CUSTOMER",
+          "companyScope": "X-Company-Id required; server validates allowedCompanyIds and resource.companyId; no fallback",
+          "organizationScope": "Explicit organization IDs only; server filters before projection",
+          "projectScope": "Canonical projectId only; project-name joins forbidden",
+          "revision": "not required",
+          "idempotency": "not required",
+          "fileReference": "Frozen Common File Reference contract",
+          "fileReadyGuard": "NOT_APPLICABLE_OR_DRAFT",
+          "providerCapability": "NOT_APPLICABLE",
+          "notificationEvent": "none",
+          "gouCoexistence": "No dual write; GOU state explicitly returned when relevant",
+          "dataOwnership": "SERVER_PERSISTENCE_REQUIRED",
+          "productionMockFallback": false
+        }
+      },
+      "post": {
+        "operationId": "createSalesActivity",
+        "summary": "Create sales activity",
+        "tags": [
+          "sales"
+        ],
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "data"
+                ],
+                "properties": {
+                  "data": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "description": "Command payload for createSalesActivity; fields are defined in BUSINESS_DTO_DICTIONARY.md and module contract."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful company-scoped response",
+            "headers": {
+              "ETag": {
+                "description": "Quoted resource revision where applicable",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/sales.yaml#/components/schemas/SalesActivityDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessBadRequest"
+          },
+          "401": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnauthorized"
+          },
+          "403": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessForbidden"
+          },
+          "404": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessNotFound"
+          },
+          "409": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessConflict"
+          },
+          "422": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnprocessable"
+          },
+          "503": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnavailable"
+          }
+        },
+        "x-contract": {
+          "evidence": "FRONTEND_VERIFIED_AND_PROPOSAL",
+          "executionModes": [
+            "DEMO_LOCAL",
+            "API_SANDBOX",
+            "PRODUCTION_SERVER"
+          ],
+          "permission": "VIEW_CUSTOMER",
+          "companyScope": "X-Company-Id required; server validates allowedCompanyIds and resource.companyId; no fallback",
+          "organizationScope": "Explicit organization IDs only; server filters before projection",
+          "projectScope": "Canonical projectId only; project-name joins forbidden",
+          "revision": "not required",
+          "idempotency": "Idempotency-Key required; same key with different payload is 409",
+          "fileReference": "Frozen Common File Reference contract",
+          "fileReadyGuard": "NOT_APPLICABLE_OR_DRAFT",
+          "providerCapability": "NOT_APPLICABLE",
+          "notificationEvent": "none",
+          "gouCoexistence": "No dual write; GOU state explicitly returned when relevant",
+          "dataOwnership": "SERVER_PERSISTENCE_REQUIRED",
+          "productionMockFallback": false
+        }
+      }
+    },
+    "/api/v1/sales-activities/{activityId}": {
+      "get": {
+        "operationId": "getSalesActivity",
+        "summary": "Get sales activity",
+        "tags": [
+          "sales"
+        ],
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "activityId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful company-scoped response",
+            "headers": {
+              "ETag": {
+                "description": "Quoted resource revision where applicable",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/sales.yaml#/components/schemas/SalesActivityDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessBadRequest"
+          },
+          "401": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnauthorized"
+          },
+          "403": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessForbidden"
+          },
+          "404": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessNotFound"
+          },
+          "409": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessConflict"
+          },
+          "422": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnprocessable"
+          },
+          "503": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnavailable"
+          }
+        },
+        "x-contract": {
+          "evidence": "FRONTEND_VERIFIED_AND_PROPOSAL",
+          "executionModes": [
+            "DEMO_LOCAL",
+            "API_SANDBOX",
+            "PRODUCTION_SERVER"
+          ],
+          "permission": "VIEW_CUSTOMER",
+          "companyScope": "X-Company-Id required; server validates allowedCompanyIds and resource.companyId; no fallback",
+          "organizationScope": "Explicit organization IDs only; server filters before projection",
+          "projectScope": "Canonical projectId only; project-name joins forbidden",
+          "revision": "not required",
+          "idempotency": "not required",
+          "fileReference": "Frozen Common File Reference contract",
+          "fileReadyGuard": "NOT_APPLICABLE_OR_DRAFT",
+          "providerCapability": "NOT_APPLICABLE",
+          "notificationEvent": "none",
+          "gouCoexistence": "No dual write; GOU state explicitly returned when relevant",
+          "dataOwnership": "SERVER_PERSISTENCE_REQUIRED",
+          "productionMockFallback": false
+        }
+      },
+      "patch": {
+        "operationId": "updateSalesActivity",
+        "summary": "Update sales activity",
+        "tags": [
+          "sales"
+        ],
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "activityId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "data"
+                ],
+                "properties": {
+                  "data": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "description": "Command payload for updateSalesActivity; fields are defined in BUSINESS_DTO_DICTIONARY.md and module contract."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful company-scoped response",
+            "headers": {
+              "ETag": {
+                "description": "Quoted resource revision where applicable",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/sales.yaml#/components/schemas/SalesActivityDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessBadRequest"
+          },
+          "401": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnauthorized"
+          },
+          "403": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessForbidden"
+          },
+          "404": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessNotFound"
+          },
+          "409": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessConflict"
+          },
+          "422": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnprocessable"
+          },
+          "503": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnavailable"
+          }
+        },
+        "x-contract": {
+          "evidence": "FRONTEND_VERIFIED_AND_PROPOSAL",
+          "executionModes": [
+            "DEMO_LOCAL",
+            "API_SANDBOX",
+            "PRODUCTION_SERVER"
+          ],
+          "permission": "VIEW_CUSTOMER",
+          "companyScope": "X-Company-Id required; server validates allowedCompanyIds and resource.companyId; no fallback",
+          "organizationScope": "Explicit organization IDs only; server filters before projection",
+          "projectScope": "Canonical projectId only; project-name joins forbidden",
+          "revision": "If-Match required; mismatch is 409",
+          "idempotency": "not required",
+          "fileReference": "Frozen Common File Reference contract",
+          "fileReadyGuard": "NOT_APPLICABLE_OR_DRAFT",
+          "providerCapability": "NOT_APPLICABLE",
+          "notificationEvent": "none",
+          "gouCoexistence": "No dual write; GOU state explicitly returned when relevant",
+          "dataOwnership": "SERVER_PERSISTENCE_REQUIRED",
+          "productionMockFallback": false
+        }
+      }
+    },
+    "/api/v1/sales-activities/{activityId}/complete": {
+      "post": {
+        "operationId": "completeSalesActivity",
+        "summary": "Complete sales activity",
+        "tags": [
+          "sales"
+        ],
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "activityId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "data"
+                ],
+                "properties": {
+                  "data": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "description": "Command payload for completeSalesActivity; fields are defined in BUSINESS_DTO_DICTIONARY.md and module contract."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful company-scoped response",
+            "headers": {
+              "ETag": {
+                "description": "Quoted resource revision where applicable",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/sales.yaml#/components/schemas/SalesActivityDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessBadRequest"
+          },
+          "401": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnauthorized"
+          },
+          "403": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessForbidden"
+          },
+          "404": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessNotFound"
+          },
+          "409": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessConflict"
+          },
+          "422": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnprocessable"
+          },
+          "503": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnavailable"
+          }
+        },
+        "x-contract": {
+          "evidence": "FRONTEND_VERIFIED_AND_PROPOSAL",
+          "executionModes": [
+            "DEMO_LOCAL",
+            "API_SANDBOX",
+            "PRODUCTION_SERVER"
+          ],
+          "permission": "VIEW_CUSTOMER",
+          "companyScope": "X-Company-Id required; server validates allowedCompanyIds and resource.companyId; no fallback",
+          "organizationScope": "Explicit organization IDs only; server filters before projection",
+          "projectScope": "Canonical projectId only; project-name joins forbidden",
+          "revision": "If-Match required; mismatch is 409",
+          "idempotency": "Idempotency-Key required; same key with different payload is 409",
+          "fileReference": "Frozen Common File Reference contract",
+          "fileReadyGuard": "NOT_APPLICABLE_OR_DRAFT",
+          "providerCapability": "NOT_APPLICABLE",
+          "notificationEvent": "none",
+          "gouCoexistence": "No dual write; GOU state explicitly returned when relevant",
+          "dataOwnership": "SERVER_PERSISTENCE_REQUIRED",
+          "productionMockFallback": false
+        }
+      }
+    }
+  },
+  "x-business-final-policy": {
+    "status": "BUSINESS_CONTRACT_FROZEN_V1",
+    "contactMergeApproval": [
+      "CRM_DATA_STEWARD",
+      "SALES_MANAGER"
+    ],
+    "pipelineSource": "COMPANY_VERSIONED_BACKEND_CAPABILITY",
+    "estimateLink": "PROJECT_CHAIN_ESTIMATE_REQUEST_ONLY"
+  }
+}

@@ -1,0 +1,1349 @@
+{
+  "paths": {
+    "/api/v1/contacts": {
+      "get": {
+        "operationId": "listContacts",
+        "summary": "List contacts",
+        "tags": [
+          "contacts"
+        ],
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful company-scoped response",
+            "headers": {
+              "ETag": {
+                "description": "Quoted resource revision where applicable",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "../schemas/contacts.yaml#/components/schemas/ContactSummaryDto"
+                      }
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessBadRequest"
+          },
+          "401": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnauthorized"
+          },
+          "403": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessForbidden"
+          },
+          "404": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessNotFound"
+          },
+          "409": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessConflict"
+          },
+          "422": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnprocessable"
+          },
+          "503": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnavailable"
+          }
+        },
+        "x-contract": {
+          "evidence": "FRONTEND_VERIFIED_AND_PROPOSAL",
+          "executionModes": [
+            "DEMO_LOCAL",
+            "API_SANDBOX",
+            "PRODUCTION_SERVER"
+          ],
+          "permission": "CREATE_CONTACT",
+          "companyScope": "X-Company-Id required; server validates allowedCompanyIds and resource.companyId; no fallback",
+          "organizationScope": "Explicit organization IDs only; server filters before projection",
+          "projectScope": "Canonical projectId only; project-name joins forbidden",
+          "revision": "not required",
+          "idempotency": "not required",
+          "fileReference": "Frozen Common File Reference contract",
+          "fileReadyGuard": "NOT_APPLICABLE_OR_DRAFT",
+          "providerCapability": "PROVIDER_REQUIRED",
+          "notificationEvent": "none",
+          "gouCoexistence": "No dual write; GOU state explicitly returned when relevant",
+          "dataOwnership": "SERVER_PERSISTENCE_REQUIRED",
+          "productionMockFallback": false
+        }
+      },
+      "post": {
+        "operationId": "createContact",
+        "summary": "Create reviewed contact",
+        "tags": [
+          "contacts"
+        ],
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "data"
+                ],
+                "properties": {
+                  "data": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "description": "Command payload for createContact; fields are defined in BUSINESS_DTO_DICTIONARY.md and module contract."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful company-scoped response",
+            "headers": {
+              "ETag": {
+                "description": "Quoted resource revision where applicable",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/contacts.yaml#/components/schemas/ContactDetailDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessBadRequest"
+          },
+          "401": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnauthorized"
+          },
+          "403": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessForbidden"
+          },
+          "404": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessNotFound"
+          },
+          "409": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessConflict"
+          },
+          "422": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnprocessable"
+          },
+          "503": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnavailable"
+          }
+        },
+        "x-contract": {
+          "evidence": "FRONTEND_VERIFIED_AND_PROPOSAL",
+          "executionModes": [
+            "DEMO_LOCAL",
+            "API_SANDBOX",
+            "PRODUCTION_SERVER"
+          ],
+          "permission": "CREATE_CONTACT",
+          "companyScope": "X-Company-Id required; server validates allowedCompanyIds and resource.companyId; no fallback",
+          "organizationScope": "Explicit organization IDs only; server filters before projection",
+          "projectScope": "Canonical projectId only; project-name joins forbidden",
+          "revision": "not required",
+          "idempotency": "Idempotency-Key required; same key with different payload is 409",
+          "fileReference": "Frozen Common File Reference contract",
+          "fileReadyGuard": "NOT_APPLICABLE_OR_DRAFT",
+          "providerCapability": "PROVIDER_REQUIRED",
+          "notificationEvent": "none",
+          "gouCoexistence": "No dual write; GOU state explicitly returned when relevant",
+          "dataOwnership": "SERVER_PERSISTENCE_REQUIRED",
+          "productionMockFallback": false
+        }
+      }
+    },
+    "/api/v1/contacts/{contactId}": {
+      "get": {
+        "operationId": "getContact",
+        "summary": "Get contact",
+        "tags": [
+          "contacts"
+        ],
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "contactId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful company-scoped response",
+            "headers": {
+              "ETag": {
+                "description": "Quoted resource revision where applicable",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/contacts.yaml#/components/schemas/ContactDetailDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessBadRequest"
+          },
+          "401": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnauthorized"
+          },
+          "403": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessForbidden"
+          },
+          "404": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessNotFound"
+          },
+          "409": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessConflict"
+          },
+          "422": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnprocessable"
+          },
+          "503": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnavailable"
+          }
+        },
+        "x-contract": {
+          "evidence": "FRONTEND_VERIFIED_AND_PROPOSAL",
+          "executionModes": [
+            "DEMO_LOCAL",
+            "API_SANDBOX",
+            "PRODUCTION_SERVER"
+          ],
+          "permission": "CREATE_CONTACT",
+          "companyScope": "X-Company-Id required; server validates allowedCompanyIds and resource.companyId; no fallback",
+          "organizationScope": "Explicit organization IDs only; server filters before projection",
+          "projectScope": "Canonical projectId only; project-name joins forbidden",
+          "revision": "not required",
+          "idempotency": "not required",
+          "fileReference": "Frozen Common File Reference contract",
+          "fileReadyGuard": "NOT_APPLICABLE_OR_DRAFT",
+          "providerCapability": "PROVIDER_REQUIRED",
+          "notificationEvent": "none",
+          "gouCoexistence": "No dual write; GOU state explicitly returned when relevant",
+          "dataOwnership": "SERVER_PERSISTENCE_REQUIRED",
+          "productionMockFallback": false
+        }
+      },
+      "patch": {
+        "operationId": "updateContact",
+        "summary": "Update contact",
+        "tags": [
+          "contacts"
+        ],
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "contactId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "data"
+                ],
+                "properties": {
+                  "data": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "description": "Command payload for updateContact; fields are defined in BUSINESS_DTO_DICTIONARY.md and module contract."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful company-scoped response",
+            "headers": {
+              "ETag": {
+                "description": "Quoted resource revision where applicable",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/contacts.yaml#/components/schemas/ContactDetailDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessBadRequest"
+          },
+          "401": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnauthorized"
+          },
+          "403": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessForbidden"
+          },
+          "404": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessNotFound"
+          },
+          "409": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessConflict"
+          },
+          "422": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnprocessable"
+          },
+          "503": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnavailable"
+          }
+        },
+        "x-contract": {
+          "evidence": "FRONTEND_VERIFIED_AND_PROPOSAL",
+          "executionModes": [
+            "DEMO_LOCAL",
+            "API_SANDBOX",
+            "PRODUCTION_SERVER"
+          ],
+          "permission": "CREATE_CONTACT",
+          "companyScope": "X-Company-Id required; server validates allowedCompanyIds and resource.companyId; no fallback",
+          "organizationScope": "Explicit organization IDs only; server filters before projection",
+          "projectScope": "Canonical projectId only; project-name joins forbidden",
+          "revision": "If-Match required; mismatch is 409",
+          "idempotency": "not required",
+          "fileReference": "Frozen Common File Reference contract",
+          "fileReadyGuard": "NOT_APPLICABLE_OR_DRAFT",
+          "providerCapability": "PROVIDER_REQUIRED",
+          "notificationEvent": "none",
+          "gouCoexistence": "No dual write; GOU state explicitly returned when relevant",
+          "dataOwnership": "SERVER_PERSISTENCE_REQUIRED",
+          "productionMockFallback": false
+        }
+      }
+    },
+    "/api/v1/contacts/{contactId}/archive": {
+      "post": {
+        "operationId": "archiveContact",
+        "summary": "Archive contact",
+        "tags": [
+          "contacts"
+        ],
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "contactId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "data"
+                ],
+                "properties": {
+                  "data": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "description": "Command payload for archiveContact; fields are defined in BUSINESS_DTO_DICTIONARY.md and module contract."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful company-scoped response",
+            "headers": {
+              "ETag": {
+                "description": "Quoted resource revision where applicable",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/contacts.yaml#/components/schemas/ContactDetailDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessBadRequest"
+          },
+          "401": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnauthorized"
+          },
+          "403": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessForbidden"
+          },
+          "404": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessNotFound"
+          },
+          "409": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessConflict"
+          },
+          "422": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnprocessable"
+          },
+          "503": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnavailable"
+          }
+        },
+        "x-contract": {
+          "evidence": "FRONTEND_VERIFIED_AND_PROPOSAL",
+          "executionModes": [
+            "DEMO_LOCAL",
+            "API_SANDBOX",
+            "PRODUCTION_SERVER"
+          ],
+          "permission": "CREATE_CONTACT",
+          "companyScope": "X-Company-Id required; server validates allowedCompanyIds and resource.companyId; no fallback",
+          "organizationScope": "Explicit organization IDs only; server filters before projection",
+          "projectScope": "Canonical projectId only; project-name joins forbidden",
+          "revision": "If-Match required; mismatch is 409",
+          "idempotency": "Idempotency-Key required; same key with different payload is 409",
+          "fileReference": "Frozen Common File Reference contract",
+          "fileReadyGuard": "NOT_APPLICABLE_OR_DRAFT",
+          "providerCapability": "PROVIDER_REQUIRED",
+          "notificationEvent": "none",
+          "gouCoexistence": "No dual write; GOU state explicitly returned when relevant",
+          "dataOwnership": "SERVER_PERSISTENCE_REQUIRED",
+          "productionMockFallback": false
+        }
+      }
+    },
+    "/api/v1/contacts/merge-preview": {
+      "post": {
+        "operationId": "previewContactMerge",
+        "summary": "Preview contact merge",
+        "tags": [
+          "contacts"
+        ],
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "data"
+                ],
+                "properties": {
+                  "data": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "description": "Command payload for previewContactMerge; fields are defined in BUSINESS_DTO_DICTIONARY.md and module contract."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful company-scoped response",
+            "headers": {
+              "ETag": {
+                "description": "Quoted resource revision where applicable",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/contacts.yaml#/components/schemas/ContactDuplicateCandidateDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessBadRequest"
+          },
+          "401": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnauthorized"
+          },
+          "403": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessForbidden"
+          },
+          "404": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessNotFound"
+          },
+          "409": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessConflict"
+          },
+          "422": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnprocessable"
+          },
+          "503": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnavailable"
+          }
+        },
+        "x-contract": {
+          "evidence": "FRONTEND_VERIFIED_AND_PROPOSAL",
+          "executionModes": [
+            "DEMO_LOCAL",
+            "API_SANDBOX",
+            "PRODUCTION_SERVER"
+          ],
+          "permission": "CREATE_CONTACT",
+          "companyScope": "X-Company-Id required; server validates allowedCompanyIds and resource.companyId; no fallback",
+          "organizationScope": "Explicit organization IDs only; server filters before projection",
+          "projectScope": "Canonical projectId only; project-name joins forbidden",
+          "revision": "not required",
+          "idempotency": "Idempotency-Key required; same key with different payload is 409",
+          "fileReference": "Frozen Common File Reference contract",
+          "fileReadyGuard": "NOT_APPLICABLE_OR_DRAFT",
+          "providerCapability": "PROVIDER_REQUIRED",
+          "notificationEvent": "none",
+          "gouCoexistence": "No dual write; GOU state explicitly returned when relevant",
+          "dataOwnership": "SERVER_PERSISTENCE_REQUIRED",
+          "productionMockFallback": false
+        }
+      }
+    },
+    "/api/v1/contacts/merge": {
+      "post": {
+        "operationId": "mergeContacts",
+        "summary": "Merge contacts with approval",
+        "tags": [
+          "contacts"
+        ],
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "data"
+                ],
+                "properties": {
+                  "data": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "description": "Command payload for mergeContacts; fields are defined in BUSINESS_DTO_DICTIONARY.md and module contract."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful company-scoped response",
+            "headers": {
+              "ETag": {
+                "description": "Quoted resource revision where applicable",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/contacts.yaml#/components/schemas/ContactDetailDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessBadRequest"
+          },
+          "401": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnauthorized"
+          },
+          "403": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessForbidden"
+          },
+          "404": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessNotFound"
+          },
+          "409": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessConflict"
+          },
+          "422": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnprocessable"
+          },
+          "503": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnavailable"
+          }
+        },
+        "x-contract": {
+          "evidence": "FRONTEND_VERIFIED_AND_PROPOSAL",
+          "executionModes": [
+            "DEMO_LOCAL",
+            "API_SANDBOX",
+            "PRODUCTION_SERVER"
+          ],
+          "permission": "MERGE_CONTACT",
+          "companyScope": "X-Company-Id required; server validates allowedCompanyIds and resource.companyId; no fallback",
+          "organizationScope": "Explicit organization IDs only; server filters before projection",
+          "projectScope": "Canonical projectId only; project-name joins forbidden",
+          "revision": "If-Match required; mismatch is 409",
+          "idempotency": "Idempotency-Key required; same key with different payload is 409",
+          "fileReference": "Frozen Common File Reference contract",
+          "fileReadyGuard": "NOT_APPLICABLE_OR_DRAFT",
+          "providerCapability": "PROVIDER_REQUIRED",
+          "notificationEvent": "none",
+          "gouCoexistence": "No dual write; GOU state explicitly returned when relevant",
+          "dataOwnership": "SERVER_PERSISTENCE_REQUIRED",
+          "productionMockFallback": false
+        }
+      }
+    },
+    "/api/v1/contact-sync/capabilities": {
+      "get": {
+        "operationId": "getContactSyncCapabilities",
+        "summary": "Get contacts provider capabilities",
+        "tags": [
+          "contacts"
+        ],
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful company-scoped response",
+            "headers": {
+              "ETag": {
+                "description": "Quoted resource revision where applicable",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "../schemas/contacts.yaml#/components/schemas/ContactSyncStatusDto"
+                      }
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessBadRequest"
+          },
+          "401": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnauthorized"
+          },
+          "403": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessForbidden"
+          },
+          "404": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessNotFound"
+          },
+          "409": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessConflict"
+          },
+          "422": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnprocessable"
+          },
+          "503": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnavailable"
+          }
+        },
+        "x-contract": {
+          "evidence": "FRONTEND_VERIFIED_AND_PROPOSAL",
+          "executionModes": [
+            "DEMO_LOCAL",
+            "API_SANDBOX",
+            "PRODUCTION_SERVER"
+          ],
+          "permission": "CREATE_CONTACT",
+          "companyScope": "X-Company-Id required; server validates allowedCompanyIds and resource.companyId; no fallback",
+          "organizationScope": "Explicit organization IDs only; server filters before projection",
+          "projectScope": "Canonical projectId only; project-name joins forbidden",
+          "revision": "not required",
+          "idempotency": "not required",
+          "fileReference": "Frozen Common File Reference contract",
+          "fileReadyGuard": "NOT_APPLICABLE_OR_DRAFT",
+          "providerCapability": "PROVIDER_REQUIRED",
+          "notificationEvent": "none",
+          "gouCoexistence": "No dual write; GOU state explicitly returned when relevant",
+          "dataOwnership": "SERVER_PERSISTENCE_REQUIRED",
+          "productionMockFallback": false
+        }
+      }
+    },
+    "/api/v1/contact-sync/status": {
+      "get": {
+        "operationId": "getContactSyncStatus",
+        "summary": "Get contact sync status",
+        "tags": [
+          "contacts"
+        ],
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful company-scoped response",
+            "headers": {
+              "ETag": {
+                "description": "Quoted resource revision where applicable",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "../schemas/contacts.yaml#/components/schemas/ContactSyncStatusDto"
+                      }
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessBadRequest"
+          },
+          "401": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnauthorized"
+          },
+          "403": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessForbidden"
+          },
+          "404": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessNotFound"
+          },
+          "409": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessConflict"
+          },
+          "422": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnprocessable"
+          },
+          "503": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnavailable"
+          }
+        },
+        "x-contract": {
+          "evidence": "FRONTEND_VERIFIED_AND_PROPOSAL",
+          "executionModes": [
+            "DEMO_LOCAL",
+            "API_SANDBOX",
+            "PRODUCTION_SERVER"
+          ],
+          "permission": "CREATE_CONTACT",
+          "companyScope": "X-Company-Id required; server validates allowedCompanyIds and resource.companyId; no fallback",
+          "organizationScope": "Explicit organization IDs only; server filters before projection",
+          "projectScope": "Canonical projectId only; project-name joins forbidden",
+          "revision": "not required",
+          "idempotency": "not required",
+          "fileReference": "Frozen Common File Reference contract",
+          "fileReadyGuard": "NOT_APPLICABLE_OR_DRAFT",
+          "providerCapability": "PROVIDER_REQUIRED",
+          "notificationEvent": "none",
+          "gouCoexistence": "No dual write; GOU state explicitly returned when relevant",
+          "dataOwnership": "SERVER_PERSISTENCE_REQUIRED",
+          "productionMockFallback": false
+        }
+      }
+    },
+    "/api/v1/contacts/{contactId}/sync": {
+      "post": {
+        "operationId": "syncContact",
+        "summary": "Sync reviewed contact",
+        "tags": [
+          "contacts"
+        ],
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "contactId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "data"
+                ],
+                "properties": {
+                  "data": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "description": "Command payload for syncContact; fields are defined in BUSINESS_DTO_DICTIONARY.md and module contract."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful company-scoped response",
+            "headers": {
+              "ETag": {
+                "description": "Quoted resource revision where applicable",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/contacts.yaml#/components/schemas/ContactSyncStatusDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessBadRequest"
+          },
+          "401": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnauthorized"
+          },
+          "403": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessForbidden"
+          },
+          "404": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessNotFound"
+          },
+          "409": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessConflict"
+          },
+          "422": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnprocessable"
+          },
+          "503": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnavailable"
+          }
+        },
+        "x-contract": {
+          "evidence": "FRONTEND_VERIFIED_AND_PROPOSAL",
+          "executionModes": [
+            "DEMO_LOCAL",
+            "API_SANDBOX",
+            "PRODUCTION_SERVER"
+          ],
+          "permission": "CREATE_CONTACT",
+          "companyScope": "X-Company-Id required; server validates allowedCompanyIds and resource.companyId; no fallback",
+          "organizationScope": "Explicit organization IDs only; server filters before projection",
+          "projectScope": "Canonical projectId only; project-name joins forbidden",
+          "revision": "If-Match required; mismatch is 409",
+          "idempotency": "Idempotency-Key required; same key with different payload is 409",
+          "fileReference": "Frozen Common File Reference contract",
+          "fileReadyGuard": "NOT_APPLICABLE_OR_DRAFT",
+          "providerCapability": "PROVIDER_REQUIRED",
+          "notificationEvent": "none",
+          "gouCoexistence": "No dual write; GOU state explicitly returned when relevant",
+          "dataOwnership": "SERVER_PERSISTENCE_REQUIRED",
+          "productionMockFallback": false
+        }
+      }
+    },
+    "/api/v1/contact-sync/pull": {
+      "post": {
+        "operationId": "pullContactSync",
+        "summary": "Pull provider changes into review queue",
+        "tags": [
+          "contacts"
+        ],
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "data"
+                ],
+                "properties": {
+                  "data": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "description": "Command payload for pullContactSync; fields are defined in BUSINESS_DTO_DICTIONARY.md and module contract."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful company-scoped response",
+            "headers": {
+              "ETag": {
+                "description": "Quoted resource revision where applicable",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/contacts.yaml#/components/schemas/ContactSyncStatusDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessBadRequest"
+          },
+          "401": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnauthorized"
+          },
+          "403": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessForbidden"
+          },
+          "404": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessNotFound"
+          },
+          "409": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessConflict"
+          },
+          "422": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnprocessable"
+          },
+          "503": {
+            "$ref": "../schemas/business-common.yaml#/components/responses/BusinessUnavailable"
+          }
+        },
+        "x-contract": {
+          "evidence": "FRONTEND_VERIFIED_AND_PROPOSAL",
+          "executionModes": [
+            "DEMO_LOCAL",
+            "API_SANDBOX",
+            "PRODUCTION_SERVER"
+          ],
+          "permission": "CREATE_CONTACT",
+          "companyScope": "X-Company-Id required; server validates allowedCompanyIds and resource.companyId; no fallback",
+          "organizationScope": "Explicit organization IDs only; server filters before projection",
+          "projectScope": "Canonical projectId only; project-name joins forbidden",
+          "revision": "not required",
+          "idempotency": "Idempotency-Key required; same key with different payload is 409",
+          "fileReference": "Frozen Common File Reference contract",
+          "fileReadyGuard": "NOT_APPLICABLE_OR_DRAFT",
+          "providerCapability": "PROVIDER_REQUIRED",
+          "notificationEvent": "none",
+          "gouCoexistence": "No dual write; GOU state explicitly returned when relevant",
+          "dataOwnership": "SERVER_PERSISTENCE_REQUIRED",
+          "productionMockFallback": false
+        }
+      }
+    }
+  },
+  "x-business-final-policy": {
+    "status": "BUSINESS_CONTRACT_FROZEN_V1",
+    "exportDirection": "ERP_TO_GOOGLE_OPT_IN",
+    "importDirection": "GOOGLE_TO_ERP_IMPORT_REVIEW",
+    "automaticTwoWaySync": false
+  }
+}

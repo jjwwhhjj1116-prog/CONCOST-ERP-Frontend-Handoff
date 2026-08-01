@@ -1,0 +1,314 @@
+{
+  "components": {
+    "schemas": {
+      "OpaqueId": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 200
+      },
+      "UtcTimestamp": {
+        "type": "string",
+        "format": "date-time"
+      },
+      "LocalDate": {
+        "type": "string",
+        "format": "date",
+        "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+      },
+      "Locale": {
+        "type": "string",
+        "enum": [
+          "ko-KR",
+          "en-US",
+          "vi-VN"
+        ]
+      },
+      "ExecutionMode": {
+        "type": "string",
+        "enum": [
+          "DEMO_LOCAL",
+          "API_SANDBOX",
+          "PRODUCTION_SERVER"
+        ]
+      },
+      "SaveState": {
+        "type": "string",
+        "enum": [
+          "IDLE",
+          "DIRTY",
+          "SAVING",
+          "SAVED",
+          "ERROR",
+          "CONFLICT",
+          "OFFLINE",
+          "UNSYNCED_LOCAL",
+          "READ_ONLY"
+        ]
+      },
+      "Money": {
+        "type": "object",
+        "required": [
+          "amount",
+          "currency"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "amount": {
+            "type": "string",
+            "pattern": "^-?\\d+(\\.\\d+)?$"
+          },
+          "currency": {
+            "type": "string",
+            "pattern": "^[A-Z]{3}$"
+          }
+        },
+        "example": {
+          "amount": "1500000",
+          "currency": "KRW"
+        }
+      },
+      "PermissionCapabilities": {
+        "type": "object",
+        "additionalProperties": {
+          "type": "boolean"
+        },
+        "example": {
+          "canEdit": true,
+          "canSubmit": false,
+          "canApprove": false
+        }
+      },
+      "ApiMeta": {
+        "type": "object",
+        "required": [
+          "requestId",
+          "timestamp",
+          "apiVersion"
+        ],
+        "additionalProperties": true,
+        "properties": {
+          "requestId": {
+            "$ref": "#/components/schemas/OpaqueId"
+          },
+          "correlationId": {
+            "$ref": "#/components/schemas/OpaqueId"
+          },
+          "timestamp": {
+            "$ref": "#/components/schemas/UtcTimestamp"
+          },
+          "apiVersion": {
+            "type": "string",
+            "const": "v1"
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "example": {
+          "requestId": "req_demo_001",
+          "timestamp": "2026-07-27T06:00:00Z",
+          "apiVersion": "v1"
+        }
+      },
+      "SuccessResponse": {
+        "type": "object",
+        "required": [
+          "data",
+          "meta"
+        ],
+        "properties": {
+          "data": {},
+          "meta": {
+            "$ref": "#/components/schemas/ApiMeta"
+          }
+        }
+      },
+      "WorkspaceDescriptor": {
+        "type": "object",
+        "required": [
+          "companyId",
+          "companyName",
+          "locale",
+          "themeKey",
+          "enabledModules",
+          "featureFlags"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "companyId": {
+            "$ref": "#/components/schemas/OpaqueId"
+          },
+          "companyName": {
+            "type": "string",
+            "minLength": 1
+          },
+          "locale": {
+            "$ref": "#/components/schemas/Locale"
+          },
+          "themeKey": {
+            "type": "string",
+            "minLength": 1
+          },
+          "enabledModules": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "featureFlags": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "boolean"
+            }
+          }
+        }
+      },
+      "ProviderCapability": {
+        "type": "object",
+        "required": [
+          "status"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "READY",
+              "NOT_CONFIGURED",
+              "DEGRADED",
+              "UNAVAILABLE"
+            ]
+          },
+          "messageKey": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "SystemCapabilities": {
+        "type": "object",
+        "required": [
+          "apiVersion",
+          "mode",
+          "supportedModules",
+          "providers",
+          "featureFlags",
+          "file"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "apiVersion": {
+            "type": "string"
+          },
+          "minimumFrontendVersion": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "mode": {
+            "$ref": "#/components/schemas/ExecutionMode"
+          },
+          "supportedModules": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "providers": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/ProviderCapability"
+            }
+          },
+          "notificationChannels": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "IN_APP",
+                "EMAIL",
+                "BROWSER",
+                "MOBILE"
+              ]
+            }
+          },
+          "featureFlags": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "boolean"
+            }
+          },
+          "file": {
+            "$ref": "#/components/schemas/FileCapability"
+          }
+        }
+      },
+      "FileCapability": {
+        "type": "object",
+        "required": [
+          "allowedExtensions",
+          "allowedMimeTypes",
+          "batchMaxSize",
+          "defaultMaxFileSize",
+          "moduleMaxFileSize",
+          "resumableUploadThreshold",
+          "scanRequired",
+          "storageReady"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "defaultMaxFileSize": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 1,
+            "description": "Default maximum bytes per file."
+          },
+          "moduleMaxFileSize": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          },
+          "batchMaxSize": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 1
+          },
+          "allowedMimeTypes": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "uniqueItems": true
+          },
+          "allowedExtensions": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^\\.[A-Za-z0-9]+$"
+            },
+            "uniqueItems": true
+          },
+          "resumableUploadThreshold": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 1
+          },
+          "scanRequired": {
+            "type": "boolean"
+          },
+          "storageReady": {
+            "type": "boolean"
+          }
+        }
+      }
+    }
+  }
+}

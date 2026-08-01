@@ -1,0 +1,367 @@
+{
+  "components": {
+    "schemas": {
+      "CollaborationTaskDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "companyId",
+          "scope",
+          "title",
+          "description",
+          "status",
+          "priority",
+          "assigneePersonnelCardIds",
+          "projectId",
+          "dueAt",
+          "revision"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "companyId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "scope": {
+            "$ref": "./collaboration-common.yaml#/components/schemas/CollaborationScope"
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "TODO",
+              "IN_PROGRESS",
+              "BLOCKED",
+              "DONE",
+              "CANCELLED"
+            ]
+          },
+          "priority": {
+            "type": "string",
+            "enum": [
+              "LOW",
+              "NORMAL",
+              "HIGH",
+              "URGENT"
+            ]
+          },
+          "assigneePersonnelCardIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "uniqueItems": true
+          },
+          "projectId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "dueAt": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      },
+      "SaveTaskRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "scope",
+          "title",
+          "priority",
+          "assigneePersonnelCardIds"
+        ],
+        "properties": {
+          "scope": {
+            "$ref": "./collaboration-common.yaml#/components/schemas/CollaborationScope"
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "priority": {
+            "type": "string",
+            "enum": [
+              "LOW",
+              "NORMAL",
+              "HIGH",
+              "URGENT"
+            ]
+          },
+          "assigneePersonnelCardIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "uniqueItems": true
+          },
+          "projectId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "dueAt": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "TaskTransitionRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "expectedRevision",
+          "targetStatus",
+          "reason"
+        ],
+        "properties": {
+          "expectedRevision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "targetStatus": {
+            "type": "string",
+            "enum": [
+              "TODO",
+              "IN_PROGRESS",
+              "BLOCKED",
+              "DONE",
+              "CANCELLED"
+            ]
+          },
+          "reason": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "TaskChecklistItemDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "taskId",
+          "label",
+          "completed",
+          "completedByPersonnelCardId",
+          "revision"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "taskId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "label": {
+            "type": "string",
+            "minLength": 1
+          },
+          "completed": {
+            "type": "boolean"
+          },
+          "completedByPersonnelCardId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      },
+      "TaskCommentDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "taskId",
+          "authorPersonnelCardId",
+          "body",
+          "createdAt",
+          "revision"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "taskId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "authorPersonnelCardId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "body": {
+            "type": "string",
+            "minLength": 1
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      },
+      "TaskReminderDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "taskId",
+          "recipientPersonnelCardId",
+          "remindAt",
+          "channel",
+          "status",
+          "revision"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "taskId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "recipientPersonnelCardId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "remindAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "channel": {
+            "type": "string",
+            "enum": [
+              "APP",
+              "EMAIL",
+              "BROWSER",
+              "MOBILE"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "SCHEDULED",
+              "DELIVERED",
+              "CANCELLED",
+              "FAILED"
+            ]
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      },
+      "TaskReminderPolicyDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "defaultChannel",
+          "defaultOffsetsHours",
+          "emailOptIn",
+          "browserOptIn",
+          "deduplicationRequired"
+        ],
+        "properties": {
+          "defaultChannel": {
+            "type": "string",
+            "const": "APP"
+          },
+          "defaultOffsetsHours": {
+            "type": "array",
+            "prefixItems": [
+              {
+                "const": -24
+              },
+              {
+                "const": 0
+              },
+              {
+                "const": 24
+              }
+            ],
+            "minItems": 3,
+            "maxItems": 3
+          },
+          "emailOptIn": {
+            "type": "boolean",
+            "const": true
+          },
+          "browserOptIn": {
+            "type": "boolean",
+            "const": true
+          },
+          "deduplicationRequired": {
+            "type": "boolean",
+            "const": true
+          }
+        }
+      }
+    }
+  },
+  "x-final-contract": {
+    "decisions": [
+      "COLLAB-DEC-11"
+    ],
+    "defaultAppOffsetsHours": [
+      -24,
+      0,
+      24
+    ]
+  }
+}

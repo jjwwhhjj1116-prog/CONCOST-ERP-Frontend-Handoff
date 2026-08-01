@@ -1,0 +1,390 @@
+{
+  "components": {
+    "schemas": {
+      "CollaborationScopeType": {
+        "type": "string",
+        "enum": [
+          "PERSONAL",
+          "TEAM",
+          "ORGANIZATION",
+          "COMPANY",
+          "PROJECT"
+        ]
+      },
+      "CollaborationScope": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "scopeType"
+        ],
+        "properties": {
+          "scopeType": {
+            "$ref": "#/components/schemas/CollaborationScopeType"
+          },
+          "scopeId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "organizationId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "projectId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "ActorReference": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "personnelCardId",
+          "displayName"
+        ],
+        "properties": {
+          "personnelCardId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "displayName": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      "CollaborationFileReference": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "fileId",
+          "status",
+          "displayName",
+          "size",
+          "declaredMimeType",
+          "revision"
+        ],
+        "properties": {
+          "fileId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "status": {
+            "$ref": "../common/files.yaml#/components/schemas/FileStatus"
+          },
+          "displayName": {
+            "type": "string",
+            "minLength": 1
+          },
+          "size": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "declaredMimeType": {
+            "type": "string",
+            "minLength": 1
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      },
+      "GouReference": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "sourceSystem",
+          "externalId",
+          "sourceUpdatedAt",
+          "lastSyncedAt",
+          "syncStatus"
+        ],
+        "properties": {
+          "sourceSystem": {
+            "type": "string",
+            "const": "GOU"
+          },
+          "externalId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "sourceUpdatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lastSyncedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "syncStatus": {
+            "type": "string",
+            "enum": [
+              "CURRENT",
+              "STALE",
+              "UNAVAILABLE"
+            ]
+          }
+        }
+      },
+      "CollaborationResourceBase": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "companyId",
+          "revision",
+          "scope",
+          "createdAt",
+          "updatedAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "companyId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "scope": {
+            "$ref": "#/components/schemas/CollaborationScope"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "CollaborationModuleErrorCode": {
+        "type": "string",
+        "enum": [
+          "MAIL_PROVIDER_NOT_CONFIGURED",
+          "MAIL_SEND_REJECTED",
+          "APPROVAL_POLICY_NOT_RESOLVED",
+          "APPROVER_UNAVAILABLE",
+          "DELEGATION_NOT_ALLOWED",
+          "CALENDAR_CONFLICT",
+          "RECURRENCE_SCOPE_REQUIRED",
+          "TASK_DEPENDENCY_BLOCKED",
+          "BOARD_PUBLISH_POLICY_REQUIRED",
+          "MANDATORY_READ_REQUIRED",
+          "NOTIFICATION_CHANNEL_DISABLED",
+          "SEARCH_PROVIDER_PARTIAL_FAILURE",
+          "PROJECT_LINK_CONFIRMATION_REQUIRED",
+          "RECALL_NOT_ALLOWED_AFTER_DECISION",
+          "FINAL_RECORD_IMMUTABLE",
+          "DELEGATION_DURATION_EXCEEDED"
+        ]
+      },
+      "CollaborationErrorCode": {
+        "oneOf": [
+          {
+            "$ref": "../common/errors.yaml#/components/schemas/ErrorCode"
+          },
+          {
+            "$ref": "#/components/schemas/CollaborationModuleErrorCode"
+          }
+        ]
+      },
+      "CollaborationErrorBody": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "code",
+          "messageKey",
+          "requestId",
+          "details",
+          "retryable"
+        ],
+        "properties": {
+          "code": {
+            "$ref": "#/components/schemas/CollaborationErrorCode"
+          },
+          "messageKey": {
+            "type": "string",
+            "minLength": 1
+          },
+          "requestId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "details": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "retryable": {
+            "type": "boolean"
+          }
+        }
+      },
+      "CollaborationErrorResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "error"
+        ],
+        "properties": {
+          "error": {
+            "$ref": "#/components/schemas/CollaborationErrorBody"
+          }
+        }
+      },
+      "CollaborationCapabilities": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "mode",
+          "provider",
+          "permissions",
+          "features"
+        ],
+        "properties": {
+          "mode": {
+            "type": "string",
+            "enum": [
+              "DEMO_LOCAL",
+              "API_SANDBOX",
+              "PRODUCTION_SERVER"
+            ]
+          },
+          "provider": {
+            "$ref": "../common/schemas.yaml#/components/schemas/ProviderCapability"
+          },
+          "permissions": {
+            "$ref": "../common/schemas.yaml#/components/schemas/PermissionCapabilities"
+          },
+          "features": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "boolean"
+            }
+          }
+        }
+      },
+      "CollaborationContractClassification": {
+        "type": "string",
+        "enum": [
+          "CONTRACT_DEFINED",
+          "PROVIDER_TBD_CONTRACT_COMPLETE",
+          "GOU_UNKNOWN_READ_ONLY_DEFERRED",
+          "OUT_OF_SCOPE_APPROVED",
+          "BACKEND_CAPABILITY_PENDING",
+          "PILOT_PHASE_DEFERRED"
+        ]
+      }
+    },
+    "responses": {
+      "BadRequest": {
+        "description": "Invalid request or missing company scope",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/CollaborationErrorResponse"
+            }
+          }
+        }
+      },
+      "Unauthorized": {
+        "description": "Authentication required",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/CollaborationErrorResponse"
+            }
+          }
+        }
+      },
+      "Forbidden": {
+        "description": "Company, organization, project or action forbidden",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/CollaborationErrorResponse"
+            }
+          }
+        }
+      },
+      "NotFound": {
+        "description": "Not found within authorized scope",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/CollaborationErrorResponse"
+            }
+          }
+        }
+      },
+      "Conflict": {
+        "description": "Revision, idempotency, provider or transition conflict",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/CollaborationErrorResponse"
+            }
+          }
+        }
+      },
+      "Unprocessable": {
+        "description": "Business validation failed",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/CollaborationErrorResponse"
+            }
+          }
+        }
+      },
+      "ServiceUnavailable": {
+        "description": "Required provider or backend capability unavailable",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/CollaborationErrorResponse"
+            }
+          }
+        }
+      }
+    }
+  },
+  "x-final-contract": {
+    "status": "COLLABORATION_CONTRACT_FROZEN_V1",
+    "decisions": [
+      "COLLAB-DEC-01",
+      "COLLAB-DEC-02",
+      "COLLAB-DEC-03",
+      "COLLAB-DEC-04",
+      "COLLAB-DEC-05",
+      "COLLAB-DEC-06",
+      "COLLAB-DEC-07",
+      "COLLAB-DEC-08",
+      "COLLAB-DEC-09",
+      "COLLAB-DEC-10",
+      "COLLAB-DEC-11",
+      "COLLAB-DEC-12",
+      "COLLAB-DEC-13",
+      "COLLAB-DEC-14",
+      "COLLAB-DEC-15"
+    ]
+  }
+}

@@ -1,0 +1,563 @@
+{
+  "components": {
+    "schemas": {
+      "FileStatus": {
+        "type": "string",
+        "enum": [
+          "DELETED",
+          "FAILED",
+          "QUARANTINED",
+          "READY",
+          "SCANNING",
+          "UPLOADED",
+          "UPLOAD_INTENT_CREATED"
+        ]
+      },
+      "FileDto": {
+        "type": "object",
+        "required": [
+          "id",
+          "companyId",
+          "originalName",
+          "size",
+          "declaredMimeType",
+          "status",
+          "createdAt"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "companyId": {
+            "type": "string"
+          },
+          "originalName": {
+            "type": "string"
+          },
+          "size": {
+            "type": "integer",
+            "minimum": 0,
+            "format": "int64"
+          },
+          "declaredMimeType": {
+            "type": "string"
+          },
+          "detectedMimeType": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "checksumSha256": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "pattern": "^[A-Fa-f0-9]{64}$"
+          },
+          "status": {
+            "$ref": "#/components/schemas/FileStatus"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      },
+      "UploadIntentRequest": {
+        "type": "object",
+        "required": [
+          "resourceType",
+          "resourceId",
+          "originalName",
+          "size",
+          "declaredMimeType"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "resourceType": {
+            "type": "string"
+          },
+          "resourceId": {
+            "type": "string"
+          },
+          "originalName": {
+            "type": "string"
+          },
+          "size": {
+            "type": "integer",
+            "minimum": 1,
+            "format": "int64"
+          },
+          "declaredMimeType": {
+            "type": "string"
+          },
+          "checksumSha256": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "pattern": "^[A-Fa-f0-9]{64}$"
+          }
+        }
+      },
+      "UploadIntentData": {
+        "type": "object",
+        "required": [
+          "file",
+          "uploadUrl",
+          "expiresAt",
+          "uploadMode"
+        ],
+        "properties": {
+          "file": {
+            "$ref": "#/components/schemas/FileDto"
+          },
+          "uploadUrl": {
+            "type": "string",
+            "format": "uri"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "requiredHeaders": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "uploadMode": {
+            "type": "string",
+            "enum": [
+              "SINGLE",
+              "RESUMABLE"
+            ]
+          },
+          "resumableSessionUrl": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uri"
+          },
+          "chunkSize": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "minimum": 1
+          }
+        }
+      },
+      "FinalizeFileRequest": {
+        "type": "object",
+        "properties": {
+          "checksumSha256": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "pattern": "^[A-Fa-f0-9]{64}$"
+          }
+        },
+        "additionalProperties": false
+      },
+      "DownloadUrlData": {
+        "type": "object",
+        "required": [
+          "url",
+          "expiresAt"
+        ],
+        "properties": {
+          "url": {
+            "type": "string",
+            "format": "uri"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/api/v1/files/upload-intents": {
+      "post": {
+        "operationId": "createUploadIntent",
+        "summary": "Authorize a file upload",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UploadIntentRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Upload intent created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/UploadIntentData"
+                    },
+                    "meta": {
+                      "$ref": "./schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "./errors.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "./errors.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "./errors.yaml#/components/responses/Forbidden"
+          },
+          "409": {
+            "$ref": "./errors.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "./errors.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "./errors.yaml#/components/responses/ServiceUnavailable"
+          }
+        }
+      }
+    },
+    "/api/v1/files/{id}/finalize": {
+      "post": {
+        "operationId": "finalizeFile",
+        "summary": "Finalize upload and start verification",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FinalizeFileRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "File finalized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/FileDto"
+                    },
+                    "meta": {
+                      "$ref": "./schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "./errors.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "./errors.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "./errors.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "./errors.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "./errors.yaml#/components/responses/Unprocessable"
+          }
+        }
+      }
+    },
+    "/api/v1/files/{id}": {
+      "get": {
+        "operationId": "getFile",
+        "summary": "Read file processing state",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "File state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/FileDto"
+                    },
+                    "meta": {
+                      "$ref": "./schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "./errors.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "./errors.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "./errors.yaml#/components/responses/NotFound"
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteFile",
+        "summary": "Request file deletion under retention policy",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Deletion recorded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/FileDto"
+                    },
+                    "meta": {
+                      "$ref": "./schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "./errors.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "./errors.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "./errors.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "./errors.yaml#/components/responses/Conflict"
+          }
+        }
+      }
+    },
+    "/api/v1/files/{id}/download-url": {
+      "get": {
+        "operationId": "createDownloadUrl",
+        "summary": "Issue a short-lived authorized download URL",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Download grant",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/DownloadUrlData"
+                    },
+                    "meta": {
+                      "$ref": "./schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "./errors.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "./errors.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "./errors.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "./errors.yaml#/components/responses/Conflict"
+          },
+          "423": {
+            "$ref": "./errors.yaml#/components/responses/Conflict"
+          }
+        }
+      }
+    }
+  }
+}

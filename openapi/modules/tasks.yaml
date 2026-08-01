@@ -1,0 +1,1648 @@
+{
+  "paths": {
+    "/api/v1/tasks": {
+      "get": {
+        "operationId": "listCollaborationTasks",
+        "summary": "List personal, team and project tasks",
+        "tags": [
+          "tasks"
+        ],
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful scoped response",
+            "headers": {
+              "ETag": {
+                "description": "Quoted resource revision where applicable",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "../schemas/tasks.yaml#/components/schemas/CollaborationTaskDto"
+                      }
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "evidence": "PROPOSAL",
+          "frontendStatus": "FRONTEND_DEMO_ONLY",
+          "permission": "TASK_VIEW",
+          "companyScope": "X-Company-Id required; server validates allowedCompanyIds; no default-company fallback",
+          "organizationScope": "Server applies explicit scope and membership before materializing fields",
+          "projectScope": "Canonical projectId only; project-name joins forbidden",
+          "revision": "not required",
+          "idempotency": "not required",
+          "fileReference": "Common File Reference; READY required before irreversible action",
+          "fileReadyGuard": "NOT_APPLICABLE_OR_DRAFT",
+          "providerCapability": "not required",
+          "providerRequired": false,
+          "permissionBeforeProjection": true,
+          "notificationEvent": "none",
+          "gouCoexistence": "No dual-write; status is returned explicitly",
+          "dataOwnership": "SERVER_PERSISTENCE_REQUIRED_OR_READ_ONLY_MIRROR"
+        }
+      },
+      "post": {
+        "operationId": "createCollaborationTask",
+        "summary": "Create task",
+        "tags": [
+          "tasks"
+        ],
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Successful scoped response",
+            "headers": {
+              "ETag": {
+                "description": "Quoted resource revision where applicable",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/tasks.yaml#/components/schemas/CollaborationTaskDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "evidence": "PROPOSAL",
+          "frontendStatus": "FRONTEND_DEMO_ONLY",
+          "permission": "TASK_CREATE",
+          "companyScope": "X-Company-Id required; server validates allowedCompanyIds; no default-company fallback",
+          "organizationScope": "Server applies explicit scope and membership before materializing fields",
+          "projectScope": "Canonical projectId only; project-name joins forbidden",
+          "revision": "not required",
+          "idempotency": "Idempotency-Key required and scoped by company, actor and operation",
+          "fileReference": "Common File Reference; READY required before irreversible action",
+          "fileReadyGuard": "NOT_APPLICABLE_OR_DRAFT",
+          "providerCapability": "not required",
+          "providerRequired": false,
+          "permissionBeforeProjection": true,
+          "notificationEvent": "TASK_CREATED",
+          "gouCoexistence": "No dual-write; status is returned explicitly",
+          "dataOwnership": "SERVER_PERSISTENCE_REQUIRED"
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/tasks.yaml#/components/schemas/SaveTaskRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tasks/{id}": {
+      "get": {
+        "operationId": "getCollaborationTask",
+        "summary": "Get task",
+        "tags": [
+          "tasks"
+        ],
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful scoped response",
+            "headers": {
+              "ETag": {
+                "description": "Quoted resource revision where applicable",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/tasks.yaml#/components/schemas/CollaborationTaskDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "evidence": "PROPOSAL",
+          "frontendStatus": "FRONTEND_DEMO_ONLY",
+          "permission": "TASK_VIEW",
+          "companyScope": "X-Company-Id required; server validates allowedCompanyIds; no default-company fallback",
+          "organizationScope": "Server applies explicit scope and membership before materializing fields",
+          "projectScope": "Canonical projectId only; project-name joins forbidden",
+          "revision": "not required",
+          "idempotency": "not required",
+          "fileReference": "Common File Reference; READY required before irreversible action",
+          "fileReadyGuard": "NOT_APPLICABLE_OR_DRAFT",
+          "providerCapability": "not required",
+          "providerRequired": false,
+          "permissionBeforeProjection": true,
+          "notificationEvent": "none",
+          "gouCoexistence": "No dual-write; status is returned explicitly",
+          "dataOwnership": "SERVER_PERSISTENCE_REQUIRED_OR_READ_ONLY_MIRROR"
+        }
+      },
+      "patch": {
+        "operationId": "updateCollaborationTask",
+        "summary": "Update task",
+        "tags": [
+          "tasks"
+        ],
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful scoped response",
+            "headers": {
+              "ETag": {
+                "description": "Quoted resource revision where applicable",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/tasks.yaml#/components/schemas/CollaborationTaskDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "evidence": "PROPOSAL",
+          "frontendStatus": "FRONTEND_DEMO_ONLY",
+          "permission": "TASK_EDIT",
+          "companyScope": "X-Company-Id required; server validates allowedCompanyIds; no default-company fallback",
+          "organizationScope": "Server applies explicit scope and membership before materializing fields",
+          "projectScope": "Canonical projectId only; project-name joins forbidden",
+          "revision": "If-Match required and conflict returns REVISION_CONFLICT",
+          "idempotency": "Idempotency-Key required and scoped by company, actor and operation",
+          "fileReference": "Common File Reference; READY required before irreversible action",
+          "fileReadyGuard": "NOT_APPLICABLE_OR_DRAFT",
+          "providerCapability": "not required",
+          "providerRequired": false,
+          "permissionBeforeProjection": true,
+          "notificationEvent": "TASK_UPDATED",
+          "gouCoexistence": "No dual-write; status is returned explicitly",
+          "dataOwnership": "SERVER_PERSISTENCE_REQUIRED"
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/tasks.yaml#/components/schemas/SaveTaskRequest"
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteCollaborationTask",
+        "summary": "Cancel task",
+        "tags": [
+          "tasks"
+        ],
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Command accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "additionalProperties": true
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "evidence": "PROPOSAL",
+          "frontendStatus": "FRONTEND_DEMO_ONLY",
+          "permission": "TASK_DELETE",
+          "companyScope": "X-Company-Id required; server validates allowedCompanyIds; no default-company fallback",
+          "organizationScope": "Server applies explicit scope and membership before materializing fields",
+          "projectScope": "Canonical projectId only; project-name joins forbidden",
+          "revision": "If-Match required and conflict returns REVISION_CONFLICT",
+          "idempotency": "Idempotency-Key required and scoped by company, actor and operation",
+          "fileReference": "Common File Reference; READY required before irreversible action",
+          "fileReadyGuard": "NOT_APPLICABLE_OR_DRAFT",
+          "providerCapability": "not required",
+          "providerRequired": false,
+          "permissionBeforeProjection": true,
+          "notificationEvent": "TASK_CANCELLED",
+          "gouCoexistence": "No dual-write; status is returned explicitly",
+          "dataOwnership": "SERVER_PERSISTENCE_REQUIRED"
+        }
+      }
+    },
+    "/api/v1/tasks/{id}/transitions": {
+      "post": {
+        "operationId": "transitionCollaborationTask",
+        "summary": "Transition task state",
+        "tags": [
+          "tasks"
+        ],
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful scoped response",
+            "headers": {
+              "ETag": {
+                "description": "Quoted resource revision where applicable",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/tasks.yaml#/components/schemas/CollaborationTaskDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "evidence": "PROPOSAL",
+          "frontendStatus": "FRONTEND_DEMO_ONLY",
+          "permission": "TASK_TRANSITION",
+          "companyScope": "X-Company-Id required; server validates allowedCompanyIds; no default-company fallback",
+          "organizationScope": "Server applies explicit scope and membership before materializing fields",
+          "projectScope": "Canonical projectId only; project-name joins forbidden",
+          "revision": "If-Match required and conflict returns REVISION_CONFLICT",
+          "idempotency": "Idempotency-Key required and scoped by company, actor and operation",
+          "fileReference": "Common File Reference; READY required before irreversible action",
+          "fileReadyGuard": "NOT_APPLICABLE_OR_DRAFT",
+          "providerCapability": "not required",
+          "providerRequired": false,
+          "permissionBeforeProjection": true,
+          "notificationEvent": "TASK_TRANSITIONED",
+          "gouCoexistence": "No dual-write; status is returned explicitly",
+          "dataOwnership": "SERVER_PERSISTENCE_REQUIRED"
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/tasks.yaml#/components/schemas/TaskTransitionRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tasks/{id}/checklist-items": {
+      "post": {
+        "operationId": "createTaskChecklistItem",
+        "summary": "Add checklist item",
+        "tags": [
+          "tasks"
+        ],
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Successful scoped response",
+            "headers": {
+              "ETag": {
+                "description": "Quoted resource revision where applicable",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/tasks.yaml#/components/schemas/TaskChecklistItemDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "evidence": "PROPOSAL",
+          "frontendStatus": "FRONTEND_DEMO_ONLY",
+          "permission": "TASK_EDIT",
+          "companyScope": "X-Company-Id required; server validates allowedCompanyIds; no default-company fallback",
+          "organizationScope": "Server applies explicit scope and membership before materializing fields",
+          "projectScope": "Canonical projectId only; project-name joins forbidden",
+          "revision": "If-Match required and conflict returns REVISION_CONFLICT",
+          "idempotency": "Idempotency-Key required and scoped by company, actor and operation",
+          "fileReference": "Common File Reference; READY required before irreversible action",
+          "fileReadyGuard": "NOT_APPLICABLE_OR_DRAFT",
+          "providerCapability": "not required",
+          "providerRequired": false,
+          "permissionBeforeProjection": true,
+          "notificationEvent": "TASK_CHECKLIST_ADDED",
+          "gouCoexistence": "No dual-write; status is returned explicitly",
+          "dataOwnership": "SERVER_PERSISTENCE_REQUIRED"
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/tasks.yaml#/components/schemas/TaskChecklistItemDto"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tasks/{id}/checklist-items/{itemId}": {
+      "patch": {
+        "operationId": "updateTaskChecklistItem",
+        "summary": "Update checklist item",
+        "tags": [
+          "tasks"
+        ],
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          },
+          {
+            "name": "itemId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful scoped response",
+            "headers": {
+              "ETag": {
+                "description": "Quoted resource revision where applicable",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/tasks.yaml#/components/schemas/TaskChecklistItemDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "evidence": "PROPOSAL",
+          "frontendStatus": "FRONTEND_DEMO_ONLY",
+          "permission": "TASK_EDIT",
+          "companyScope": "X-Company-Id required; server validates allowedCompanyIds; no default-company fallback",
+          "organizationScope": "Server applies explicit scope and membership before materializing fields",
+          "projectScope": "Canonical projectId only; project-name joins forbidden",
+          "revision": "If-Match required and conflict returns REVISION_CONFLICT",
+          "idempotency": "Idempotency-Key required and scoped by company, actor and operation",
+          "fileReference": "Common File Reference; READY required before irreversible action",
+          "fileReadyGuard": "NOT_APPLICABLE_OR_DRAFT",
+          "providerCapability": "not required",
+          "providerRequired": false,
+          "permissionBeforeProjection": true,
+          "notificationEvent": "TASK_CHECKLIST_UPDATED",
+          "gouCoexistence": "No dual-write; status is returned explicitly",
+          "dataOwnership": "SERVER_PERSISTENCE_REQUIRED"
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/tasks.yaml#/components/schemas/TaskChecklistItemDto"
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteTaskChecklistItem",
+        "summary": "Delete checklist item",
+        "tags": [
+          "tasks"
+        ],
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          },
+          {
+            "name": "itemId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Command accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "additionalProperties": true
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "evidence": "PROPOSAL",
+          "frontendStatus": "FRONTEND_DEMO_ONLY",
+          "permission": "TASK_EDIT",
+          "companyScope": "X-Company-Id required; server validates allowedCompanyIds; no default-company fallback",
+          "organizationScope": "Server applies explicit scope and membership before materializing fields",
+          "projectScope": "Canonical projectId only; project-name joins forbidden",
+          "revision": "If-Match required and conflict returns REVISION_CONFLICT",
+          "idempotency": "Idempotency-Key required and scoped by company, actor and operation",
+          "fileReference": "Common File Reference; READY required before irreversible action",
+          "fileReadyGuard": "NOT_APPLICABLE_OR_DRAFT",
+          "providerCapability": "not required",
+          "providerRequired": false,
+          "permissionBeforeProjection": true,
+          "notificationEvent": "TASK_CHECKLIST_DELETED",
+          "gouCoexistence": "No dual-write; status is returned explicitly",
+          "dataOwnership": "SERVER_PERSISTENCE_REQUIRED"
+        }
+      }
+    },
+    "/api/v1/tasks/{id}/comments": {
+      "post": {
+        "operationId": "createTaskComment",
+        "summary": "Add task comment",
+        "tags": [
+          "tasks"
+        ],
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Successful scoped response",
+            "headers": {
+              "ETag": {
+                "description": "Quoted resource revision where applicable",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/tasks.yaml#/components/schemas/TaskCommentDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "evidence": "PROPOSAL",
+          "frontendStatus": "FRONTEND_DEMO_ONLY",
+          "permission": "TASK_COMMENT",
+          "companyScope": "X-Company-Id required; server validates allowedCompanyIds; no default-company fallback",
+          "organizationScope": "Server applies explicit scope and membership before materializing fields",
+          "projectScope": "Canonical projectId only; project-name joins forbidden",
+          "revision": "not required",
+          "idempotency": "Idempotency-Key required and scoped by company, actor and operation",
+          "fileReference": "Common File Reference; READY required before irreversible action",
+          "fileReadyGuard": "NOT_APPLICABLE_OR_DRAFT",
+          "providerCapability": "not required",
+          "providerRequired": false,
+          "permissionBeforeProjection": true,
+          "notificationEvent": "TASK_COMMENT_CREATED",
+          "gouCoexistence": "No dual-write; status is returned explicitly",
+          "dataOwnership": "SERVER_PERSISTENCE_REQUIRED"
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/tasks.yaml#/components/schemas/TaskCommentDto"
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "operationId": "listTaskComments",
+        "summary": "List task comments",
+        "tags": [
+          "tasks"
+        ],
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful scoped response",
+            "headers": {
+              "ETag": {
+                "description": "Quoted resource revision where applicable",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "../schemas/tasks.yaml#/components/schemas/TaskCommentDto"
+                      }
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "evidence": "PROPOSAL",
+          "frontendStatus": "FRONTEND_DEMO_ONLY",
+          "permission": "TASK_VIEW",
+          "companyScope": "X-Company-Id required; server validates allowedCompanyIds; no default-company fallback",
+          "organizationScope": "Server applies explicit scope and membership before materializing fields",
+          "projectScope": "Canonical projectId only; project-name joins forbidden",
+          "revision": "not required",
+          "idempotency": "not required",
+          "fileReference": "Common File Reference; READY required before irreversible action",
+          "fileReadyGuard": "NOT_APPLICABLE_OR_DRAFT",
+          "providerCapability": "not required",
+          "providerRequired": false,
+          "permissionBeforeProjection": true,
+          "notificationEvent": "none",
+          "gouCoexistence": "No dual-write; status is returned explicitly",
+          "dataOwnership": "SERVER_PERSISTENCE_REQUIRED_OR_READ_ONLY_MIRROR"
+        }
+      }
+    },
+    "/api/v1/tasks/{id}/reminders": {
+      "get": {
+        "operationId": "listTaskReminders",
+        "summary": "List reminders",
+        "tags": [
+          "tasks"
+        ],
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful scoped response",
+            "headers": {
+              "ETag": {
+                "description": "Quoted resource revision where applicable",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "../schemas/tasks.yaml#/components/schemas/TaskReminderDto"
+                      }
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "evidence": "PROPOSAL",
+          "frontendStatus": "FRONTEND_DEMO_ONLY",
+          "permission": "TASK_VIEW",
+          "companyScope": "X-Company-Id required; server validates allowedCompanyIds; no default-company fallback",
+          "organizationScope": "Server applies explicit scope and membership before materializing fields",
+          "projectScope": "Canonical projectId only; project-name joins forbidden",
+          "revision": "not required",
+          "idempotency": "not required",
+          "fileReference": "Common File Reference; READY required before irreversible action",
+          "fileReadyGuard": "NOT_APPLICABLE_OR_DRAFT",
+          "providerCapability": "not required",
+          "providerRequired": false,
+          "permissionBeforeProjection": true,
+          "notificationEvent": "none",
+          "gouCoexistence": "No dual-write; status is returned explicitly",
+          "dataOwnership": "SERVER_PERSISTENCE_REQUIRED_OR_READ_ONLY_MIRROR"
+        }
+      },
+      "post": {
+        "operationId": "createTaskReminder",
+        "summary": "Create reminder",
+        "tags": [
+          "tasks"
+        ],
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Successful scoped response",
+            "headers": {
+              "ETag": {
+                "description": "Quoted resource revision where applicable",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/tasks.yaml#/components/schemas/TaskReminderDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "evidence": "PROPOSAL",
+          "frontendStatus": "FRONTEND_DEMO_ONLY",
+          "permission": "TASK_EDIT",
+          "companyScope": "X-Company-Id required; server validates allowedCompanyIds; no default-company fallback",
+          "organizationScope": "Server applies explicit scope and membership before materializing fields",
+          "projectScope": "Canonical projectId only; project-name joins forbidden",
+          "revision": "If-Match required and conflict returns REVISION_CONFLICT",
+          "idempotency": "Idempotency-Key required and scoped by company, actor and operation",
+          "fileReference": "Common File Reference; READY required before irreversible action",
+          "fileReadyGuard": "NOT_APPLICABLE_OR_DRAFT",
+          "providerCapability": "not required",
+          "providerRequired": false,
+          "permissionBeforeProjection": true,
+          "notificationEvent": "TASK_REMINDER_CREATED",
+          "gouCoexistence": "No dual-write; status is returned explicitly",
+          "dataOwnership": "SERVER_PERSISTENCE_REQUIRED"
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/tasks.yaml#/components/schemas/TaskReminderDto"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tasks/{id}/reminders/{reminderId}": {
+      "delete": {
+        "operationId": "deleteTaskReminder",
+        "summary": "Cancel reminder",
+        "tags": [
+          "tasks"
+        ],
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          },
+          {
+            "name": "reminderId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Command accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "additionalProperties": true
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "evidence": "PROPOSAL",
+          "frontendStatus": "FRONTEND_DEMO_ONLY",
+          "permission": "TASK_EDIT",
+          "companyScope": "X-Company-Id required; server validates allowedCompanyIds; no default-company fallback",
+          "organizationScope": "Server applies explicit scope and membership before materializing fields",
+          "projectScope": "Canonical projectId only; project-name joins forbidden",
+          "revision": "If-Match required and conflict returns REVISION_CONFLICT",
+          "idempotency": "Idempotency-Key required and scoped by company, actor and operation",
+          "fileReference": "Common File Reference; READY required before irreversible action",
+          "fileReadyGuard": "NOT_APPLICABLE_OR_DRAFT",
+          "providerCapability": "not required",
+          "providerRequired": false,
+          "permissionBeforeProjection": true,
+          "notificationEvent": "TASK_REMINDER_CANCELLED",
+          "gouCoexistence": "No dual-write; status is returned explicitly",
+          "dataOwnership": "SERVER_PERSISTENCE_REQUIRED"
+        }
+      }
+    }
+  },
+  "x-final-contract": {
+    "status": "COLLABORATION_CONTRACT_FROZEN_V1",
+    "decisions": [
+      "COLLAB-DEC-11"
+    ]
+  }
+}

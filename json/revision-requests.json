@@ -1,0 +1,15 @@
+{
+  "schemaVersion": "1.0.0",
+  "revisionRequests": [
+    {
+      "id": "rev-1",
+      "projectId": "p1-con-finish",
+      "title": "물량 재산출 요청",
+      "description": "설계 변경으로 인한 구조물 물량 전면 재산출 필요",
+      "requestedByClient": "Client A",
+      "status": "ACCEPTED",
+      "createdAt": "2026-07-08T00:00:00Z",
+      "updatedAt": "2026-07-08T00:00:00Z"
+    }
+  ]
+}

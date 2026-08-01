@@ -1,0 +1,765 @@
+{
+  "components": {
+    "schemas": {
+      "ProjectSummaryDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "$ref": "../common/schemas.yaml#/components/schemas/OpaqueId"
+          },
+          "companyId": {
+            "$ref": "../common/schemas.yaml#/components/schemas/OpaqueId"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "INTAKE_PREPARATION",
+              "START_PLANNED",
+              "PM_ASSIGNMENT",
+              "SCHEDULE_PLANNING",
+              "IN_PROGRESS",
+              "QC",
+              "DELIVERY",
+              "COMPLETED",
+              "ARCHIVED",
+              "CANCELLED"
+            ]
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "createdAt": {
+            "$ref": "../common/schemas.yaml#/components/schemas/UtcTimestamp"
+          },
+          "updatedAt": {
+            "$ref": "../common/schemas.yaml#/components/schemas/UtcTimestamp"
+          },
+          "permissions": {
+            "$ref": "../common/schemas.yaml#/components/schemas/PermissionCapabilities"
+          },
+          "name": {
+            "type": "string"
+          },
+          "health": {
+            "type": "string",
+            "enum": [
+              "NORMAL",
+              "AT_RISK",
+              "BLOCKED"
+            ]
+          },
+          "primaryOrganizationUnitId": {
+            "$ref": "../common/schemas.yaml#/components/schemas/OpaqueId"
+          },
+          "primaryTeamUnitId": {
+            "$ref": "../common/schemas.yaml#/components/schemas/OpaqueId"
+          },
+          "newBadge": {
+            "type": "boolean"
+          },
+          "newUntil": {
+            "oneOf": [
+              {
+                "$ref": "../common/schemas.yaml#/components/schemas/UtcTimestamp"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "projectNo": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Official server-issued Project number. Null until final intake approval and Project activation."
+          }
+        },
+        "required": [
+          "id",
+          "companyId",
+          "status",
+          "revision",
+          "name",
+          "health",
+          "newBadge",
+          "permissions"
+        ]
+      },
+      "ProjectAssignmentDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "$ref": "../common/schemas.yaml#/components/schemas/OpaqueId"
+          },
+          "projectId": {
+            "$ref": "../common/schemas.yaml#/components/schemas/OpaqueId"
+          },
+          "organizationUnitId": {
+            "$ref": "../common/schemas.yaml#/components/schemas/OpaqueId"
+          },
+          "personnelCardId": {
+            "oneOf": [
+              {
+                "$ref": "../common/schemas.yaml#/components/schemas/OpaqueId"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "PRIMARY_ORGANIZATION",
+              "PRIMARY_TEAM",
+              "PARTICIPANT_TEAM",
+              "SUPPORT_ORGANIZATION",
+              "PM",
+              "RESOURCE"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "START_PLANNED",
+              "PM_ASSIGNED",
+              "SCHEDULED",
+              "ACTIVE",
+              "COMPLETED",
+              "CHANGE_PENDING",
+              "REMOVED",
+              "REPLACED"
+            ]
+          },
+          "validFrom": {
+            "$ref": "../common/schemas.yaml#/components/schemas/LocalDate"
+          },
+          "validTo": {
+            "oneOf": [
+              {
+                "$ref": "../common/schemas.yaml#/components/schemas/LocalDate"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "projectId",
+          "organizationUnitId",
+          "role",
+          "status",
+          "validFrom"
+        ]
+      },
+      "ProjectParticipantDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "personnelCardId": {
+            "$ref": "../common/schemas.yaml#/components/schemas/OpaqueId"
+          },
+          "assignmentId": {
+            "$ref": "../common/schemas.yaml#/components/schemas/OpaqueId"
+          },
+          "role": {
+            "type": "string"
+          },
+          "active": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "personnelCardId",
+          "assignmentId",
+          "role",
+          "active"
+        ]
+      },
+      "ProjectScheduleDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "$ref": "../common/schemas.yaml#/components/schemas/OpaqueId"
+          },
+          "companyId": {
+            "$ref": "../common/schemas.yaml#/components/schemas/OpaqueId"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PENDING_ASSIGNMENT",
+              "PM_ASSIGNED",
+              "DRAFT_REQUESTED",
+              "DRAFTING",
+              "SUBMITTED",
+              "REJECTED",
+              "APPROVED"
+            ]
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "createdAt": {
+            "$ref": "../common/schemas.yaml#/components/schemas/UtcTimestamp"
+          },
+          "updatedAt": {
+            "$ref": "../common/schemas.yaml#/components/schemas/UtcTimestamp"
+          },
+          "permissions": {
+            "$ref": "../common/schemas.yaml#/components/schemas/PermissionCapabilities"
+          },
+          "projectId": {
+            "$ref": "../common/schemas.yaml#/components/schemas/OpaqueId"
+          },
+          "pmPersonnelCardId": {
+            "oneOf": [
+              {
+                "$ref": "../common/schemas.yaml#/components/schemas/OpaqueId"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "resourcePersonnelCardIds": {
+            "type": "array",
+            "items": {
+              "$ref": "../common/schemas.yaml#/components/schemas/OpaqueId"
+            },
+            "uniqueItems": true
+          },
+          "plannedStartDate": {
+            "oneOf": [
+              {
+                "$ref": "../common/schemas.yaml#/components/schemas/LocalDate"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "plannedEndDate": {
+            "oneOf": [
+              {
+                "$ref": "../common/schemas.yaml#/components/schemas/LocalDate"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "pmCandidatePersonnelCardIds": {
+            "type": "array",
+            "items": {
+              "$ref": "../common/schemas.yaml#/components/schemas/OpaqueId"
+            },
+            "uniqueItems": true
+          },
+          "assignedPmPersonnelCardIds": {
+            "type": "array",
+            "items": {
+              "$ref": "../common/schemas.yaml#/components/schemas/OpaqueId"
+            },
+            "uniqueItems": true,
+            "description": "At least one active same-company PM is required before schedule submit and approval."
+          }
+        },
+        "required": [
+          "id",
+          "companyId",
+          "projectId",
+          "status",
+          "revision",
+          "resourcePersonnelCardIds",
+          "permissions",
+          "pmCandidatePersonnelCardIds",
+          "assignedPmPersonnelCardIds"
+        ]
+      },
+      "ProjectTimelineItemDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "$ref": "../common/schemas.yaml#/components/schemas/OpaqueId"
+          },
+          "projectId": {
+            "$ref": "../common/schemas.yaml#/components/schemas/OpaqueId"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "occurredAt": {
+            "$ref": "../common/schemas.yaml#/components/schemas/UtcTimestamp"
+          },
+          "actorId": {
+            "$ref": "../common/schemas.yaml#/components/schemas/OpaqueId"
+          },
+          "summary": {
+            "type": "string"
+          },
+          "safePayload": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        },
+        "required": [
+          "id",
+          "projectId",
+          "kind",
+          "occurredAt",
+          "actorId",
+          "summary",
+          "safePayload"
+        ]
+      },
+      "ProjectNotificationDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "$ref": "../common/schemas.yaml#/components/schemas/OpaqueId"
+          },
+          "eventType": {
+            "type": "string"
+          },
+          "projectId": {
+            "$ref": "../common/schemas.yaml#/components/schemas/OpaqueId"
+          },
+          "summary": {
+            "type": "string"
+          },
+          "route": {
+            "type": "string"
+          },
+          "readAt": {
+            "oneOf": [
+              {
+                "$ref": "../common/schemas.yaml#/components/schemas/UtcTimestamp"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "createdAt": {
+            "$ref": "../common/schemas.yaml#/components/schemas/UtcTimestamp"
+          }
+        },
+        "required": [
+          "id",
+          "eventType",
+          "projectId",
+          "summary",
+          "route",
+          "createdAt"
+        ]
+      },
+      "ApprovalPolicySummaryDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "approvalPolicyId": {
+            "$ref": "../common/schemas.yaml#/components/schemas/OpaqueId"
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "steps": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "order": {
+                  "type": "integer"
+                },
+                "kind": {
+                  "type": "string"
+                },
+                "approverPersonnelCardId": {
+                  "$ref": "../common/schemas.yaml#/components/schemas/OpaqueId"
+                },
+                "displaySummary": {
+                  "type": "string"
+                },
+                "available": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "order",
+                "kind",
+                "approverPersonnelCardId",
+                "displaySummary",
+                "available"
+              ]
+            }
+          },
+          "currentStep": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "unavailableReason": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "permissions": {
+            "$ref": "../common/schemas.yaml#/components/schemas/PermissionCapabilities"
+          }
+        },
+        "required": [
+          "approvalPolicyId",
+          "version",
+          "steps",
+          "permissions"
+        ]
+      },
+      "PermissionCapabilitiesDto": {
+        "$ref": "../common/schemas.yaml#/components/schemas/PermissionCapabilities"
+      },
+      "ProjectDetailDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "$ref": "../common/schemas.yaml#/components/schemas/OpaqueId"
+          },
+          "companyId": {
+            "$ref": "../common/schemas.yaml#/components/schemas/OpaqueId"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "INTAKE_PREPARATION",
+              "START_PLANNED",
+              "PM_ASSIGNMENT",
+              "SCHEDULE_PLANNING",
+              "IN_PROGRESS",
+              "QC",
+              "DELIVERY",
+              "COMPLETED",
+              "ARCHIVED",
+              "CANCELLED"
+            ]
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "createdAt": {
+            "$ref": "../common/schemas.yaml#/components/schemas/UtcTimestamp"
+          },
+          "updatedAt": {
+            "$ref": "../common/schemas.yaml#/components/schemas/UtcTimestamp"
+          },
+          "permissions": {
+            "$ref": "../common/schemas.yaml#/components/schemas/PermissionCapabilities"
+          },
+          "name": {
+            "type": "string"
+          },
+          "health": {
+            "type": "string",
+            "enum": [
+              "NORMAL",
+              "AT_RISK",
+              "BLOCKED"
+            ]
+          },
+          "primaryOrganizationUnitId": {
+            "$ref": "../common/schemas.yaml#/components/schemas/OpaqueId"
+          },
+          "primaryTeamUnitId": {
+            "$ref": "../common/schemas.yaml#/components/schemas/OpaqueId"
+          },
+          "newBadge": {
+            "type": "boolean"
+          },
+          "newUntil": {
+            "oneOf": [
+              {
+                "$ref": "../common/schemas.yaml#/components/schemas/UtcTimestamp"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "estimateRequestId": {
+            "$ref": "../common/schemas.yaml#/components/schemas/OpaqueId"
+          },
+          "commercialDecisionId": {
+            "$ref": "../common/schemas.yaml#/components/schemas/OpaqueId"
+          },
+          "executionPlanId": {
+            "$ref": "../common/schemas.yaml#/components/schemas/OpaqueId"
+          },
+          "projectIntakeId": {
+            "$ref": "../common/schemas.yaml#/components/schemas/OpaqueId"
+          },
+          "assignments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProjectAssignmentDto"
+            }
+          },
+          "participants": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProjectParticipantDto"
+            }
+          },
+          "schedule": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ProjectScheduleDto"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "timeline": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProjectTimelineItemDto"
+            }
+          },
+          "projectNo": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Official server-issued Project number. Null until final intake approval and Project activation."
+          },
+          "projectNoIssuedAt": {
+            "oneOf": [
+              {
+                "$ref": "../common/schemas.yaml#/components/schemas/UtcTimestamp"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "completionGate": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "assignmentsClosed": {
+                "type": "boolean"
+              },
+              "finalQcApproved": {
+                "type": "boolean"
+              },
+              "finalDeliveryAcknowledged": {
+                "type": "boolean"
+              },
+              "criticalBlockerCount": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "workLogReviewComplete": {
+                "type": "boolean"
+              },
+              "financeCloseOrWaiver": {
+                "type": "boolean"
+              },
+              "completionApprovalsComplete": {
+                "type": "boolean"
+              },
+              "canComplete": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "assignmentsClosed",
+              "finalQcApproved",
+              "finalDeliveryAcknowledged",
+              "criticalBlockerCount",
+              "workLogReviewComplete",
+              "financeCloseOrWaiver",
+              "completionApprovalsComplete",
+              "canComplete"
+            ]
+          },
+          "archiveGate": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "projectCompleted": {
+                "type": "boolean"
+              },
+              "reopenOrRedeliveryPending": {
+                "type": "boolean"
+              },
+              "retentionMaterialReady": {
+                "type": "boolean"
+              },
+              "earliestArchiveAt": {
+                "oneOf": [
+                  {
+                    "$ref": "../common/schemas.yaml#/components/schemas/UtcTimestamp"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "canArchive": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "projectCompleted",
+              "reopenOrRedeliveryPending",
+              "retentionMaterialReady",
+              "earliestArchiveAt",
+              "canArchive"
+            ]
+          },
+          "legacyBridge": {
+            "oneOf": [
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "sourceSystem": {
+                    "type": "string",
+                    "const": "GOU"
+                  },
+                  "externalId": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "legacyProjectNo": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "legacyProjectName": {
+                    "type": "string"
+                  },
+                  "legacyStatus": {
+                    "type": "string"
+                  },
+                  "legacyManagerDisplay": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "legacyScheduleSummary": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "legacyLink": {
+                    "type": "string",
+                    "format": "uri"
+                  },
+                  "lastSyncedAt": {
+                    "oneOf": [
+                      {
+                        "$ref": "../common/schemas.yaml#/components/schemas/UtcTimestamp"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "syncStatus": {
+                    "type": "string",
+                    "enum": [
+                      "UNKNOWN",
+                      "AVAILABLE",
+                      "STALE",
+                      "UNAVAILABLE"
+                    ]
+                  },
+                  "readOnly": {
+                    "type": "boolean",
+                    "const": true
+                  }
+                },
+                "required": [
+                  "sourceSystem",
+                  "externalId",
+                  "legacyProjectName",
+                  "legacyStatus",
+                  "legacyLink",
+                  "syncStatus",
+                  "readOnly"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "companyId",
+          "status",
+          "revision",
+          "name",
+          "health",
+          "permissions",
+          "estimateRequestId",
+          "commercialDecisionId",
+          "executionPlanId",
+          "projectIntakeId",
+          "assignments",
+          "participants",
+          "timeline"
+        ]
+      },
+      "ProjectActionRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "action": {
+            "type": "string"
+          },
+          "reason": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "targetState": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "payload": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        },
+        "required": [
+          "action"
+        ]
+      }
+    }
+  }
+}

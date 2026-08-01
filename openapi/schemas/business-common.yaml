@@ -1,0 +1,355 @@
+{
+  "components": {
+    "schemas": {
+      "BusinessMoney": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "amount",
+          "currency"
+        ],
+        "properties": {
+          "amount": {
+            "type": "string",
+            "pattern": "^-?\\d+(\\.\\d{1,6})?$"
+          },
+          "currency": {
+            "type": "string",
+            "enum": [
+              "KRW",
+              "VND",
+              "USD"
+            ]
+          }
+        }
+      },
+      "BusinessErrorCode": {
+        "type": "string",
+        "enum": [
+          "CUSTOMER_DUPLICATE_CANDIDATE",
+          "CONTACT_DUPLICATE_CANDIDATE",
+          "CONTACT_MERGE_CONFLICT",
+          "LEAD_NOT_CONVERTIBLE",
+          "OPPORTUNITY_INVALID_STAGE",
+          "ESTIMATE_REQUEST_ALREADY_LINKED",
+          "OCR_PROVIDER_NOT_CONFIGURED",
+          "OCR_REVIEW_REQUIRED",
+          "CONTACT_SYNC_PROVIDER_NOT_CONFIGURED",
+          "CONTACT_SYNC_CONFLICT",
+          "FINANCE_PERMISSION_REQUIRED",
+          "TRANSACTION_NOT_EDITABLE",
+          "POSTED_TRANSACTION_IMMUTABLE",
+          "ACCOUNTING_PERIOD_CLOSED",
+          "TAX_INVOICE_PROVIDER_NOT_CONFIGURED",
+          "TAX_INVOICE_VALIDATION_FAILED",
+          "TAX_INVOICE_SUBMISSION_FAILED",
+          "PAYMENT_ALREADY_RECORDED",
+          "BUDGET_EXCEEDED",
+          "BANK_PROVIDER_NOT_CONFIGURED",
+          "CARD_PROVIDER_NOT_CONFIGURED",
+          "PERSONNEL_NOT_ASSIGNABLE",
+          "ORGANIZATION_MEMBERSHIP_CONFLICT",
+          "PRIMARY_MEMBERSHIP_REQUIRED",
+          "ROLE_ASSIGNMENT_FORBIDDEN",
+          "ACCOUNT_STATUS_INVALID",
+          "DELEGATION_INVALID",
+          "DEMO_ACCOUNT_FORBIDDEN",
+          "DRIVE_PROVIDER_NOT_CONFIGURED",
+          "DRIVE_FOLDER_BINDING_CONFLICT",
+          "DRIVE_PERMISSION_FORBIDDEN",
+          "DRIVE_SYNC_FAILED",
+          "DRIVE_ITEM_NOT_READY",
+          "PUBLIC_LINK_FORBIDDEN",
+          "CLAIM_CONFLICT_CHECK_REQUIRED",
+          "CLAIM_PERMISSION_REQUIRED",
+          "EVIDENCE_NOT_READY",
+          "EVIDENCE_LEGAL_HOLD",
+          "EVIDENCE_CHAIN_INVALID",
+          "REPORT_NOT_ISSUABLE",
+          "REPORT_VERSION_IMMUTABLE",
+          "DEADLINE_CONFLICT",
+          "AI_PROVIDER_NOT_CONFIGURED",
+          "AI_CITATION_REQUIRED",
+          "AI_PERMISSION_DENIED",
+          "SEARCH_PROVIDER_PARTIAL",
+          "CONTACT_MERGE_APPROVAL_REQUIRED",
+          "HR_SOURCE_CONFLICT",
+          "LEGAL_HOLD_RELEASE_FORBIDDEN",
+          "RECORDING_POLICY_REQUIRED",
+          "AI_PROVIDER_DEGRADED",
+          "SEARCH_RESULT_FORBIDDEN"
+        ]
+      },
+      "BusinessErrorBody": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "code",
+          "messageKey",
+          "requestId",
+          "details",
+          "retryable"
+        ],
+        "properties": {
+          "code": {
+            "$ref": "#/components/schemas/BusinessErrorCode"
+          },
+          "messageKey": {
+            "type": "string",
+            "description": ""
+          },
+          "requestId": {
+            "type": "string",
+            "description": ""
+          },
+          "details": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "retryable": {
+            "type": "boolean"
+          }
+        }
+      },
+      "BusinessErrorResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "error"
+        ],
+        "properties": {
+          "error": {
+            "$ref": "#/components/schemas/BusinessErrorBody"
+          }
+        }
+      },
+      "ProviderCapabilityDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "companyId",
+          "status",
+          "revision",
+          "providerState",
+          "capabilities"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "companyId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "type": "string",
+            "minLength": 1
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "providerState": {
+            "type": "string",
+            "enum": [
+              "NOT_CONFIGURED",
+              "CONNECTING",
+              "READY",
+              "DEGRADED",
+              "FAILED",
+              "DISABLED"
+            ]
+          },
+          "capabilities": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "uniqueItems": true
+          }
+        },
+        "description": "ProviderCapabilityDto contract DTO. ORM models are never exposed directly."
+      },
+      "BusinessDecisionExample": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "scenario",
+          "outcome",
+          "companyId",
+          "status",
+          "data"
+        ],
+        "properties": {
+          "scenario": {
+            "type": "string",
+            "minLength": 1
+          },
+          "outcome": {
+            "type": "string",
+            "enum": [
+              "SUCCESS",
+              "ERROR"
+            ]
+          },
+          "companyId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "type": "string",
+            "minLength": 1
+          },
+          "data": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        }
+      },
+      "RecordingPolicyDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "recordingPurpose",
+          "consentOrLegalBasis",
+          "retentionClass",
+          "legalHold",
+          "reviewRequired"
+        ],
+        "properties": {
+          "recordingPurpose": {
+            "type": "string",
+            "minLength": 1
+          },
+          "consentOrLegalBasis": {
+            "type": "string",
+            "minLength": 1
+          },
+          "retentionClass": {
+            "type": "string",
+            "minLength": 1
+          },
+          "legalHold": {
+            "type": "boolean"
+          },
+          "reviewRequired": {
+            "type": "boolean",
+            "const": true
+          }
+        }
+      },
+      "BusinessPilotCapabilityDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "pilotId",
+          "enabled",
+          "scope",
+          "rollbackDefined"
+        ],
+        "properties": {
+          "pilotId": {
+            "type": "string",
+            "enum": [
+              "B1",
+              "B2",
+              "B3",
+              "B4",
+              "B5",
+              "B6",
+              "B7"
+            ]
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "scope": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "uniqueItems": true
+          },
+          "rollbackDefined": {
+            "type": "boolean",
+            "const": true
+          }
+        }
+      }
+    },
+    "responses": {
+      "BusinessBadRequest": {
+        "description": "Business module error (400)",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/BusinessErrorResponse"
+            }
+          }
+        }
+      },
+      "BusinessUnauthorized": {
+        "description": "Business module error (401)",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/BusinessErrorResponse"
+            }
+          }
+        }
+      },
+      "BusinessForbidden": {
+        "description": "Business module error (403)",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/BusinessErrorResponse"
+            }
+          }
+        }
+      },
+      "BusinessNotFound": {
+        "description": "Business module error (404)",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/BusinessErrorResponse"
+            }
+          }
+        }
+      },
+      "BusinessConflict": {
+        "description": "Business module error (409)",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/BusinessErrorResponse"
+            }
+          }
+        }
+      },
+      "BusinessUnprocessable": {
+        "description": "Business module error (422)",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/BusinessErrorResponse"
+            }
+          }
+        }
+      },
+      "BusinessUnavailable": {
+        "description": "Business module error (503)",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/BusinessErrorResponse"
+            }
+          }
+        }
+      }
+    }
+  }
+}

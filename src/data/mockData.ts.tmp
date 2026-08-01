@@ -1,0 +1,1 @@
+import dummyData from '../../dummy/personnel-cards.json'; 

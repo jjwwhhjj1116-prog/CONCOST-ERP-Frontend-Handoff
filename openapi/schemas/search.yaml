@@ -1,0 +1,217 @@
+{
+  "components": {
+    "schemas": {
+      "CollaborationSearchResultDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "type",
+          "title",
+          "subtitle",
+          "highlightFragments",
+          "route",
+          "companyId",
+          "projectId",
+          "permissionProof",
+          "sourceSystem",
+          "externalId",
+          "lastSyncedAt",
+          "readOnly",
+          "metadataRedacted"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "MAIL",
+              "APPROVAL",
+              "CALENDAR_EVENT",
+              "TASK",
+              "BOARD_POST",
+              "NOTIFICATION",
+              "PROJECT",
+              "FILE"
+            ]
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1
+          },
+          "subtitle": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "highlightFragments": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "route": {
+            "type": "string",
+            "minLength": 1
+          },
+          "companyId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "projectId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "permissionProof": {
+            "type": "string",
+            "minLength": 1
+          },
+          "sourceSystem": {
+            "type": "string",
+            "enum": [
+              "NEW_ERP",
+              "GOU_READ_ONLY"
+            ]
+          },
+          "externalId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "lastSyncedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "readOnly": {
+            "type": "boolean"
+          },
+          "metadataRedacted": {
+            "type": "boolean"
+          }
+        }
+      },
+      "CollaborationSearchGroupDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "type",
+          "items",
+          "providerStatus"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "minLength": 1
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CollaborationSearchResultDto"
+            }
+          },
+          "providerStatus": {
+            "type": "string",
+            "enum": [
+              "READY",
+              "PARTIAL",
+              "FAILED"
+            ]
+          }
+        }
+      },
+      "CollaborationSearchResponseData": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "query",
+          "groups",
+          "providerErrors",
+          "total"
+        ],
+        "properties": {
+          "query": {
+            "type": "string",
+            "minLength": 1
+          },
+          "groups": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CollaborationSearchGroupDto"
+            }
+          },
+          "providerErrors": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "provider",
+                "code",
+                "messageKey"
+              ],
+              "properties": {
+                "provider": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "code": {
+                  "type": "string",
+                  "enum": [
+                    "PROVIDER_UNAVAILABLE",
+                    "PROVIDER_FAILED"
+                  ]
+                },
+                "messageKey": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              }
+            }
+          },
+          "total": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      },
+      "SearchSuggestionDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "text",
+          "type"
+        ],
+        "properties": {
+          "text": {
+            "type": "string",
+            "minLength": 1
+          },
+          "type": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    }
+  },
+  "x-final-contract": {
+    "decisions": [
+      "COLLAB-DEC-14",
+      "COLLAB-DEC-15"
+    ],
+    "permissionFilterBeforeProjection": true,
+    "unauthorizedMetadataAllowed": false
+  }
+}

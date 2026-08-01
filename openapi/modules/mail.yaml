@@ -1,0 +1,1578 @@
+{
+  "paths": {
+    "/api/v1/mail/capabilities": {
+      "get": {
+        "operationId": "getMailCapabilities",
+        "summary": "Get provider-neutral mail capability",
+        "tags": [
+          "mail"
+        ],
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful scoped response",
+            "headers": {
+              "ETag": {
+                "description": "Quoted resource revision where applicable",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/mail.yaml#/components/schemas/MailProviderCapabilitiesDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "evidence": "PROPOSAL",
+          "frontendStatus": "FRONTEND_DEMO_ONLY",
+          "permission": "MAIL_VIEW",
+          "companyScope": "X-Company-Id required; server validates allowedCompanyIds; no default-company fallback",
+          "organizationScope": "Server applies explicit scope and membership before materializing fields",
+          "projectScope": "Canonical projectId only; project-name joins forbidden",
+          "revision": "not required",
+          "idempotency": "not required",
+          "fileReference": "Common File Reference; READY required before irreversible action",
+          "fileReadyGuard": "NOT_APPLICABLE_OR_DRAFT",
+          "providerCapability": "Server capability required; NOT_CONFIGURED must not report success",
+          "providerRequired": true,
+          "permissionBeforeProjection": true,
+          "notificationEvent": "none",
+          "gouCoexistence": "No dual-write; status is returned explicitly",
+          "dataOwnership": "SERVER_PERSISTENCE_REQUIRED_OR_READ_ONLY_MIRROR"
+        }
+      }
+    },
+    "/api/v1/mail/folders": {
+      "get": {
+        "operationId": "listMailFolders",
+        "summary": "List mail folders",
+        "tags": [
+          "mail"
+        ],
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful scoped response",
+            "headers": {
+              "ETag": {
+                "description": "Quoted resource revision where applicable",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "../schemas/mail.yaml#/components/schemas/MailFolderDto"
+                      }
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "evidence": "PROPOSAL",
+          "frontendStatus": "FRONTEND_DEMO_ONLY",
+          "permission": "MAIL_VIEW",
+          "companyScope": "X-Company-Id required; server validates allowedCompanyIds; no default-company fallback",
+          "organizationScope": "Server applies explicit scope and membership before materializing fields",
+          "projectScope": "Canonical projectId only; project-name joins forbidden",
+          "revision": "not required",
+          "idempotency": "not required",
+          "fileReference": "Common File Reference; READY required before irreversible action",
+          "fileReadyGuard": "NOT_APPLICABLE_OR_DRAFT",
+          "providerCapability": "Server capability required; NOT_CONFIGURED must not report success",
+          "providerRequired": true,
+          "permissionBeforeProjection": true,
+          "notificationEvent": "none",
+          "gouCoexistence": "No dual-write; status is returned explicitly",
+          "dataOwnership": "SERVER_PERSISTENCE_REQUIRED_OR_READ_ONLY_MIRROR"
+        }
+      }
+    },
+    "/api/v1/mail/messages": {
+      "get": {
+        "operationId": "listMailMessages",
+        "summary": "List scoped messages",
+        "tags": [
+          "mail"
+        ],
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful scoped response",
+            "headers": {
+              "ETag": {
+                "description": "Quoted resource revision where applicable",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "../schemas/mail.yaml#/components/schemas/MailMessageSummaryDto"
+                      }
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "evidence": "PROPOSAL",
+          "frontendStatus": "FRONTEND_DEMO_ONLY",
+          "permission": "MAIL_VIEW",
+          "companyScope": "X-Company-Id required; server validates allowedCompanyIds; no default-company fallback",
+          "organizationScope": "Server applies explicit scope and membership before materializing fields",
+          "projectScope": "Canonical projectId only; project-name joins forbidden",
+          "revision": "not required",
+          "idempotency": "not required",
+          "fileReference": "Common File Reference; READY required before irreversible action",
+          "fileReadyGuard": "NOT_APPLICABLE_OR_DRAFT",
+          "providerCapability": "Server capability required; NOT_CONFIGURED must not report success",
+          "providerRequired": true,
+          "permissionBeforeProjection": true,
+          "notificationEvent": "none",
+          "gouCoexistence": "No dual-write; status is returned explicitly",
+          "dataOwnership": "SERVER_PERSISTENCE_REQUIRED_OR_READ_ONLY_MIRROR"
+        }
+      }
+    },
+    "/api/v1/mail/messages/{id}": {
+      "get": {
+        "operationId": "getMailMessage",
+        "summary": "Get one scoped message",
+        "tags": [
+          "mail"
+        ],
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful scoped response",
+            "headers": {
+              "ETag": {
+                "description": "Quoted resource revision where applicable",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/mail.yaml#/components/schemas/MailMessageDetailDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "evidence": "PROPOSAL",
+          "frontendStatus": "FRONTEND_DEMO_ONLY",
+          "permission": "MAIL_VIEW",
+          "companyScope": "X-Company-Id required; server validates allowedCompanyIds; no default-company fallback",
+          "organizationScope": "Server applies explicit scope and membership before materializing fields",
+          "projectScope": "Canonical projectId only; project-name joins forbidden",
+          "revision": "not required",
+          "idempotency": "not required",
+          "fileReference": "Common File Reference; READY required before irreversible action",
+          "fileReadyGuard": "NOT_APPLICABLE_OR_DRAFT",
+          "providerCapability": "Server capability required; NOT_CONFIGURED must not report success",
+          "providerRequired": true,
+          "permissionBeforeProjection": true,
+          "notificationEvent": "none",
+          "gouCoexistence": "No dual-write; status is returned explicitly",
+          "dataOwnership": "SERVER_PERSISTENCE_REQUIRED_OR_READ_ONLY_MIRROR"
+        }
+      }
+    },
+    "/api/v1/mail/messages/actions": {
+      "post": {
+        "operationId": "applyMailBulkAction",
+        "summary": "Apply mailbox action",
+        "tags": [
+          "mail"
+        ],
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful scoped response",
+            "headers": {
+              "ETag": {
+                "description": "Quoted resource revision where applicable",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/mail.yaml#/components/schemas/MailMessageSummaryDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "evidence": "PROPOSAL",
+          "frontendStatus": "FRONTEND_DEMO_ONLY",
+          "permission": "MAIL_MANAGE",
+          "companyScope": "X-Company-Id required; server validates allowedCompanyIds; no default-company fallback",
+          "organizationScope": "Server applies explicit scope and membership before materializing fields",
+          "projectScope": "Canonical projectId only; project-name joins forbidden",
+          "revision": "If-Match required and conflict returns REVISION_CONFLICT",
+          "idempotency": "Idempotency-Key required and scoped by company, actor and operation",
+          "fileReference": "Common File Reference; READY required before irreversible action",
+          "fileReadyGuard": "NOT_APPLICABLE_OR_DRAFT",
+          "providerCapability": "Server capability required; NOT_CONFIGURED must not report success",
+          "providerRequired": true,
+          "permissionBeforeProjection": true,
+          "notificationEvent": "MESSAGE_UPDATED",
+          "gouCoexistence": "No dual-write; status is returned explicitly",
+          "dataOwnership": "SERVER_PERSISTENCE_REQUIRED"
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/mail.yaml#/components/schemas/MailBulkActionRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/mail/drafts": {
+      "get": {
+        "operationId": "listMailDrafts",
+        "summary": "List server mail drafts",
+        "tags": [
+          "mail"
+        ],
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful scoped response",
+            "headers": {
+              "ETag": {
+                "description": "Quoted resource revision where applicable",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "../schemas/mail.yaml#/components/schemas/MailDraftDto"
+                      }
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "evidence": "PROPOSAL",
+          "frontendStatus": "FRONTEND_DEMO_ONLY",
+          "permission": "MAIL_COMPOSE",
+          "companyScope": "X-Company-Id required; server validates allowedCompanyIds; no default-company fallback",
+          "organizationScope": "Server applies explicit scope and membership before materializing fields",
+          "projectScope": "Canonical projectId only; project-name joins forbidden",
+          "revision": "not required",
+          "idempotency": "not required",
+          "fileReference": "Common File Reference; READY required before irreversible action",
+          "fileReadyGuard": "NOT_APPLICABLE_OR_DRAFT",
+          "providerCapability": "Server capability required; NOT_CONFIGURED must not report success",
+          "providerRequired": true,
+          "permissionBeforeProjection": true,
+          "notificationEvent": "none",
+          "gouCoexistence": "No dual-write; status is returned explicitly",
+          "dataOwnership": "SERVER_PERSISTENCE_REQUIRED_OR_READ_ONLY_MIRROR"
+        }
+      },
+      "post": {
+        "operationId": "createMailDraft",
+        "summary": "Create server mail draft",
+        "tags": [
+          "mail"
+        ],
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Successful scoped response",
+            "headers": {
+              "ETag": {
+                "description": "Quoted resource revision where applicable",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/mail.yaml#/components/schemas/MailDraftDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "evidence": "PROPOSAL",
+          "frontendStatus": "FRONTEND_DEMO_ONLY",
+          "permission": "MAIL_COMPOSE",
+          "companyScope": "X-Company-Id required; server validates allowedCompanyIds; no default-company fallback",
+          "organizationScope": "Server applies explicit scope and membership before materializing fields",
+          "projectScope": "Canonical projectId only; project-name joins forbidden",
+          "revision": "not required",
+          "idempotency": "Idempotency-Key required and scoped by company, actor and operation",
+          "fileReference": "Common File Reference; READY required before irreversible action",
+          "fileReadyGuard": "NOT_APPLICABLE_OR_DRAFT",
+          "providerCapability": "not required",
+          "providerRequired": false,
+          "permissionBeforeProjection": true,
+          "notificationEvent": "MAIL_DRAFT_CREATED",
+          "gouCoexistence": "No dual-write; status is returned explicitly",
+          "dataOwnership": "SERVER_PERSISTENCE_REQUIRED"
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/mail.yaml#/components/schemas/SaveMailDraftRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/mail/drafts/{id}": {
+      "get": {
+        "operationId": "getMailDraft",
+        "summary": "Get mail draft",
+        "tags": [
+          "mail"
+        ],
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful scoped response",
+            "headers": {
+              "ETag": {
+                "description": "Quoted resource revision where applicable",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/mail.yaml#/components/schemas/MailDraftDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "evidence": "PROPOSAL",
+          "frontendStatus": "FRONTEND_DEMO_ONLY",
+          "permission": "MAIL_COMPOSE",
+          "companyScope": "X-Company-Id required; server validates allowedCompanyIds; no default-company fallback",
+          "organizationScope": "Server applies explicit scope and membership before materializing fields",
+          "projectScope": "Canonical projectId only; project-name joins forbidden",
+          "revision": "not required",
+          "idempotency": "not required",
+          "fileReference": "Common File Reference; READY required before irreversible action",
+          "fileReadyGuard": "NOT_APPLICABLE_OR_DRAFT",
+          "providerCapability": "not required",
+          "providerRequired": false,
+          "permissionBeforeProjection": true,
+          "notificationEvent": "none",
+          "gouCoexistence": "No dual-write; status is returned explicitly",
+          "dataOwnership": "SERVER_PERSISTENCE_REQUIRED_OR_READ_ONLY_MIRROR"
+        }
+      },
+      "patch": {
+        "operationId": "updateMailDraft",
+        "summary": "Update mail draft",
+        "tags": [
+          "mail"
+        ],
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful scoped response",
+            "headers": {
+              "ETag": {
+                "description": "Quoted resource revision where applicable",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/mail.yaml#/components/schemas/MailDraftDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "evidence": "PROPOSAL",
+          "frontendStatus": "FRONTEND_DEMO_ONLY",
+          "permission": "MAIL_COMPOSE",
+          "companyScope": "X-Company-Id required; server validates allowedCompanyIds; no default-company fallback",
+          "organizationScope": "Server applies explicit scope and membership before materializing fields",
+          "projectScope": "Canonical projectId only; project-name joins forbidden",
+          "revision": "If-Match required and conflict returns REVISION_CONFLICT",
+          "idempotency": "Idempotency-Key required and scoped by company, actor and operation",
+          "fileReference": "Common File Reference; READY required before irreversible action",
+          "fileReadyGuard": "NOT_APPLICABLE_OR_DRAFT",
+          "providerCapability": "not required",
+          "providerRequired": false,
+          "permissionBeforeProjection": true,
+          "notificationEvent": "MAIL_DRAFT_UPDATED",
+          "gouCoexistence": "No dual-write; status is returned explicitly",
+          "dataOwnership": "SERVER_PERSISTENCE_REQUIRED"
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/mail.yaml#/components/schemas/SaveMailDraftRequest"
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteMailDraft",
+        "summary": "Delete mail draft",
+        "tags": [
+          "mail"
+        ],
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Command accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "additionalProperties": true
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "evidence": "PROPOSAL",
+          "frontendStatus": "FRONTEND_DEMO_ONLY",
+          "permission": "MAIL_COMPOSE",
+          "companyScope": "X-Company-Id required; server validates allowedCompanyIds; no default-company fallback",
+          "organizationScope": "Server applies explicit scope and membership before materializing fields",
+          "projectScope": "Canonical projectId only; project-name joins forbidden",
+          "revision": "If-Match required and conflict returns REVISION_CONFLICT",
+          "idempotency": "Idempotency-Key required and scoped by company, actor and operation",
+          "fileReference": "Common File Reference; READY required before irreversible action",
+          "fileReadyGuard": "NOT_APPLICABLE_OR_DRAFT",
+          "providerCapability": "not required",
+          "providerRequired": false,
+          "permissionBeforeProjection": true,
+          "notificationEvent": "MAIL_DRAFT_CANCELLED",
+          "gouCoexistence": "No dual-write; status is returned explicitly",
+          "dataOwnership": "SERVER_PERSISTENCE_REQUIRED"
+        }
+      }
+    },
+    "/api/v1/mail/drafts/{id}/send": {
+      "post": {
+        "operationId": "sendMailDraft",
+        "summary": "Send through configured provider",
+        "tags": [
+          "mail"
+        ],
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Successful scoped response",
+            "headers": {
+              "ETag": {
+                "description": "Quoted resource revision where applicable",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/mail.yaml#/components/schemas/MailMessageDetailDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "evidence": "PROPOSAL",
+          "frontendStatus": "FRONTEND_DEMO_ONLY",
+          "permission": "MAIL_SEND",
+          "companyScope": "X-Company-Id required; server validates allowedCompanyIds; no default-company fallback",
+          "organizationScope": "Server applies explicit scope and membership before materializing fields",
+          "projectScope": "Canonical projectId only; project-name joins forbidden",
+          "revision": "If-Match required and conflict returns REVISION_CONFLICT",
+          "idempotency": "Idempotency-Key required and scoped by company, actor and operation",
+          "fileReference": "Common File Reference; READY required before irreversible action",
+          "fileReadyGuard": "REQUIRED",
+          "providerCapability": "Server capability required; NOT_CONFIGURED must not report success",
+          "providerRequired": true,
+          "permissionBeforeProjection": true,
+          "notificationEvent": "MAIL_SENT",
+          "gouCoexistence": "No dual-write; status is returned explicitly",
+          "dataOwnership": "SERVER_PERSISTENCE_REQUIRED"
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/mail.yaml#/components/schemas/SendMailRequest"
+              }
+            }
+          }
+        },
+        "description": "Requires Provider READY and every File READY. NOT_CONFIGURED returns MAIL_PROVIDER_NOT_CONFIGURED and never a success response."
+      }
+    },
+    "/api/v1/mail/messages/{id}/reply": {
+      "post": {
+        "operationId": "replyToMailMessage",
+        "summary": "Create reply draft",
+        "tags": [
+          "mail"
+        ],
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Successful scoped response",
+            "headers": {
+              "ETag": {
+                "description": "Quoted resource revision where applicable",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/mail.yaml#/components/schemas/MailDraftDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "evidence": "PROPOSAL",
+          "frontendStatus": "FRONTEND_DEMO_ONLY",
+          "permission": "MAIL_COMPOSE",
+          "companyScope": "X-Company-Id required; server validates allowedCompanyIds; no default-company fallback",
+          "organizationScope": "Server applies explicit scope and membership before materializing fields",
+          "projectScope": "Canonical projectId only; project-name joins forbidden",
+          "revision": "not required",
+          "idempotency": "Idempotency-Key required and scoped by company, actor and operation",
+          "fileReference": "Common File Reference; READY required before irreversible action",
+          "fileReadyGuard": "NOT_APPLICABLE_OR_DRAFT",
+          "providerCapability": "not required",
+          "providerRequired": false,
+          "permissionBeforeProjection": true,
+          "notificationEvent": "MAIL_REPLY_DRAFT_CREATED",
+          "gouCoexistence": "No dual-write; status is returned explicitly",
+          "dataOwnership": "SERVER_PERSISTENCE_REQUIRED"
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/mail.yaml#/components/schemas/SaveMailDraftRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/mail/messages/{id}/reply-all": {
+      "post": {
+        "operationId": "replyAllToMailMessage",
+        "summary": "Create reply-all draft",
+        "tags": [
+          "mail"
+        ],
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Successful scoped response",
+            "headers": {
+              "ETag": {
+                "description": "Quoted resource revision where applicable",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/mail.yaml#/components/schemas/MailDraftDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "evidence": "PROPOSAL",
+          "frontendStatus": "FRONTEND_DEMO_ONLY",
+          "permission": "MAIL_COMPOSE",
+          "companyScope": "X-Company-Id required; server validates allowedCompanyIds; no default-company fallback",
+          "organizationScope": "Server applies explicit scope and membership before materializing fields",
+          "projectScope": "Canonical projectId only; project-name joins forbidden",
+          "revision": "not required",
+          "idempotency": "Idempotency-Key required and scoped by company, actor and operation",
+          "fileReference": "Common File Reference; READY required before irreversible action",
+          "fileReadyGuard": "NOT_APPLICABLE_OR_DRAFT",
+          "providerCapability": "not required",
+          "providerRequired": false,
+          "permissionBeforeProjection": true,
+          "notificationEvent": "MAIL_REPLY_ALL_DRAFT_CREATED",
+          "gouCoexistence": "No dual-write; status is returned explicitly",
+          "dataOwnership": "SERVER_PERSISTENCE_REQUIRED"
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/mail.yaml#/components/schemas/SaveMailDraftRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/mail/messages/{id}/forward": {
+      "post": {
+        "operationId": "forwardMailMessage",
+        "summary": "Create forward draft",
+        "tags": [
+          "mail"
+        ],
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Successful scoped response",
+            "headers": {
+              "ETag": {
+                "description": "Quoted resource revision where applicable",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/mail.yaml#/components/schemas/MailDraftDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "evidence": "PROPOSAL",
+          "frontendStatus": "FRONTEND_DEMO_ONLY",
+          "permission": "MAIL_COMPOSE",
+          "companyScope": "X-Company-Id required; server validates allowedCompanyIds; no default-company fallback",
+          "organizationScope": "Server applies explicit scope and membership before materializing fields",
+          "projectScope": "Canonical projectId only; project-name joins forbidden",
+          "revision": "not required",
+          "idempotency": "Idempotency-Key required and scoped by company, actor and operation",
+          "fileReference": "Common File Reference; READY required before irreversible action",
+          "fileReadyGuard": "NOT_APPLICABLE_OR_DRAFT",
+          "providerCapability": "not required",
+          "providerRequired": false,
+          "permissionBeforeProjection": true,
+          "notificationEvent": "MAIL_FORWARD_DRAFT_CREATED",
+          "gouCoexistence": "No dual-write; status is returned explicitly",
+          "dataOwnership": "SERVER_PERSISTENCE_REQUIRED"
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/mail.yaml#/components/schemas/SaveMailDraftRequest"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "x-final-contract": {
+    "status": "COLLABORATION_CONTRACT_FROZEN_V1",
+    "decisions": [
+      "COLLAB-DEC-01",
+      "COLLAB-DEC-02",
+      "COLLAB-DEC-03",
+      "COLLAB-DEC-04"
+    ]
+  }
+}

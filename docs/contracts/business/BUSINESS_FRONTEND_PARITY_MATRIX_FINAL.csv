@@ -1,0 +1,14 @@
+Module,Route,Capability,Status,Evidence,Current Finding,Required Action
+Sales,/sales,Sales dashboard and cards,PARTIAL,FRONTEND_VERIFIED,"UI exists; pipeline values derive from local/hybrid stores, not authoritative Sales API.",Contract + backend required
+Contacts,/sales?view=CONTACTS,Customer/contact directory,PARTIAL,FRONTEND_VERIFIED,Browser-persisted contactStore; no canonical server contactId owner.,Replace local SSOT in PRODUCTION_SERVER
+Business Cards,/sales/business-cards,"Upload, OCR, review and local registration",PARTIAL,FRONTEND_VERIFIED,Provider capability is checked and human review is shown; approved result still saves locally.,OCR and Contact APIs required
+Google Contacts,No verified route,Sync capability,MISSING,PROVIDER_TBD_CONTRACT_COMPLETE,No OAuth/provider binding or conflict workflow.,Provider and policy decision required
+Estimate linkage,Sales opportunity cards,Opportunity to estimate,PARTIAL,PROJECT_CONTRACT,Project Chain Estimate Request exists; no verified Sales command contract at runtime.,"Use estimateRequestId, never Sales Quote copy"
+Finance,/finance,Finance module shell,MISSING,FRONTEND_VERIFIED,Read-only cards and empty states; no ledger/provider persistence.,Backend/accounting/provider review required
+Tax invoices,/finance?view=TAX_INVOICES,Tax invoice screen,MISSING,PROVIDER_TBD_CONTRACT_COMPLETE,No configured provider or authoritative state.,Never show issued success when unconfigured
+HR,Organization/personnel screens,Directory and local administration,PARTIAL,FRONTEND_VERIFIED,Fixture/persisted HR state and frozen policy; GOU remains SSOT.,Explicit role/membership server APIs
+Drive,/drive,Workspace cards and access-denied demo,MISSING,FRONTEND_VERIFIED,UI explicitly waits for Google Drive; no provider binding.,Server-side token and ACL bridge required
+Internal Claims,No verified dedicated route,Internal operational claim,MISSING,PROPOSAL,No dedicated entity/store/API.,Separate INTERNAL_CLAIM bounded context
+Claim Service,No verified dedicated route,External consulting matter,MISSING,PROPOSAL,No dedicated legal evidence/report workflow.,Separate CLAIM_SERVICE linked to canonical projectId
+AI Assistant,/ai-assistant,Assistant placeholder,MISSING,FRONTEND_VERIFIED,"No gateway, STT, RAG index or permission-aware retrieval.",Capability API and human review required
+Business Search,Global search shell,Business/support search,MISSING,COLLABORATION_CONTRACT,Collaboration search exists conceptually; business providers are not contracted at runtime.,Permission-before-projection provider registry

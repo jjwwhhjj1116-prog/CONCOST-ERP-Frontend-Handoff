@@ -1,0 +1,2754 @@
+{
+  "schemaVersion": "2.0.0-synthetic",
+  "source": "synthetic://concost-erp-personnel-v1",
+  "synthetic": true,
+  "generatedAt": "2026-08-01T00:00:00.000Z",
+  "personnel": [
+    {
+      "id": "demo-cc-admin-001",
+      "employeeNumber": "DEMO-CC-0001",
+      "name": "[DEMO] CONCOST Executive 001",
+      "displayName": "[DEMO] CONCOST Executive 001",
+      "email": "demo.cc.001@example.invalid",
+      "companyId": "CON_COST",
+      "companyName": "CON-COST",
+      "departmentId": "EXECUTIVE",
+      "departmentName": "임원",
+      "teamName": "",
+      "role": "SUPER_ADMIN",
+      "systemRole": "SUPER_ADMIN",
+      "permissionLevel": 5,
+      "organizationRank": "CEO",
+      "jobTitle": "[DEMO] Executive",
+      "employmentStatus": "ACTIVE",
+      "isActive": true,
+      "position": "[DEMO] Executive",
+      "accessGrade": "ADMIN",
+      "capabilities": [
+        "FINANCE_ACCESS"
+      ],
+      "organizationMemberships": [
+        {
+          "organizationId": "EXECUTIVE",
+          "status": "ACTIVE",
+          "membershipType": "PRIMARY"
+        }
+      ]
+    },
+    {
+      "id": "demo-cc-executive-002",
+      "employeeNumber": "DEMO-CC-0002",
+      "name": "[DEMO] CONCOST Executive 002",
+      "displayName": "[DEMO] CONCOST Executive 002",
+      "email": "demo.cc.002@example.invalid",
+      "companyId": "CON_COST",
+      "companyName": "CON-COST",
+      "departmentId": "EXECUTIVE",
+      "departmentName": "임원",
+      "teamName": "",
+      "role": "SUPER_ADMIN",
+      "systemRole": "SUPER_ADMIN",
+      "permissionLevel": 5,
+      "organizationRank": "COO",
+      "jobTitle": "[DEMO] Executive",
+      "employmentStatus": "ACTIVE",
+      "isActive": true,
+      "position": "[DEMO] Executive",
+      "accessGrade": "GRADE_1",
+      "capabilities": [
+        "FINANCE_ACCESS"
+      ],
+      "organizationMemberships": [
+        {
+          "organizationId": "EXECUTIVE",
+          "status": "ACTIVE",
+          "membershipType": "PRIMARY"
+        }
+      ]
+    },
+    {
+      "id": "demo-cc-management-001",
+      "employeeNumber": "DEMO-CC-0003",
+      "name": "[DEMO] CONCOST Executive 003",
+      "displayName": "[DEMO] CONCOST Executive 003",
+      "email": "demo.cc.003@example.invalid",
+      "companyId": "CON_COST",
+      "companyName": "CON-COST",
+      "departmentId": "MANAGEMENT_SUPPORT",
+      "departmentName": "경영지원본부",
+      "teamName": "",
+      "role": "DEPARTMENT_MANAGER",
+      "systemRole": "DEPARTMENT_MANAGER",
+      "permissionLevel": 4,
+      "organizationRank": "VICE_PRESIDENT",
+      "jobTitle": "[DEMO] Executive",
+      "employmentStatus": "ACTIVE",
+      "isActive": true,
+      "position": "[DEMO] Executive",
+      "accessGrade": "GRADE_1",
+      "capabilities": [
+        "FINANCE_ACCESS"
+      ],
+      "organizationMemberships": [
+        {
+          "organizationId": "MANAGEMENT_SUPPORT",
+          "status": "ACTIVE",
+          "membershipType": "PRIMARY"
+        }
+      ]
+    },
+    {
+      "id": "demo-cc-management-002",
+      "employeeNumber": "DEMO-CC-0004",
+      "name": "[DEMO] CONCOST Manager 004",
+      "displayName": "[DEMO] CONCOST Manager 004",
+      "email": "demo.cc.004@example.invalid",
+      "companyId": "CON_COST",
+      "companyName": "CON-COST",
+      "departmentId": "MANAGEMENT_SUPPORT",
+      "departmentName": "경영지원본부",
+      "teamName": "",
+      "role": "DEPARTMENT_MANAGER",
+      "systemRole": "DEPARTMENT_MANAGER",
+      "permissionLevel": 4,
+      "organizationRank": "MANAGER",
+      "jobTitle": "[DEMO] Manager",
+      "employmentStatus": "ACTIVE",
+      "isActive": true,
+      "position": "[DEMO] Manager",
+      "accessGrade": "GRADE_2",
+      "capabilities": [
+        "FINANCE_ACCESS"
+      ],
+      "organizationMemberships": [
+        {
+          "organizationId": "MANAGEMENT_SUPPORT",
+          "status": "ACTIVE",
+          "membershipType": "PRIMARY"
+        }
+      ]
+    },
+    {
+      "id": "demo-cc-management-003",
+      "employeeNumber": "DEMO-CC-0005",
+      "name": "[DEMO] CONCOST Team Member 005",
+      "displayName": "[DEMO] CONCOST Team Member 005",
+      "email": "demo.cc.005@example.invalid",
+      "companyId": "CON_COST",
+      "companyName": "CON-COST",
+      "departmentId": "MANAGEMENT_SUPPORT",
+      "departmentName": "경영지원본부",
+      "teamName": "",
+      "role": "WORKER",
+      "systemRole": "WORKER",
+      "permissionLevel": 2,
+      "organizationRank": "STAFF",
+      "jobTitle": "[DEMO] Team Member",
+      "employmentStatus": "ACTIVE",
+      "isActive": true,
+      "position": "[DEMO] Team Member",
+      "accessGrade": "GRADE_4",
+      "capabilities": [
+        "FINANCE_ACCESS"
+      ],
+      "organizationMemberships": [
+        {
+          "organizationId": "MANAGEMENT_SUPPORT",
+          "status": "ACTIVE",
+          "membershipType": "PRIMARY"
+        }
+      ]
+    },
+    {
+      "id": "demo-cc-management-004",
+      "employeeNumber": "DEMO-CC-0006",
+      "name": "[DEMO] CONCOST Team Member 006",
+      "displayName": "[DEMO] CONCOST Team Member 006",
+      "email": "demo.cc.006@example.invalid",
+      "companyId": "CON_COST",
+      "companyName": "CON-COST",
+      "departmentId": "MANAGEMENT_SUPPORT",
+      "departmentName": "경영지원본부",
+      "teamName": "",
+      "role": "WORKER",
+      "systemRole": "WORKER",
+      "permissionLevel": 2,
+      "organizationRank": "STAFF",
+      "jobTitle": "[DEMO] Team Member",
+      "employmentStatus": "ACTIVE",
+      "isActive": true,
+      "position": "[DEMO] Team Member",
+      "accessGrade": "GRADE_4",
+      "capabilities": [
+        "FINANCE_ACCESS"
+      ],
+      "organizationMemberships": [
+        {
+          "organizationId": "MANAGEMENT_SUPPORT",
+          "status": "ACTIVE",
+          "membershipType": "PRIMARY"
+        }
+      ]
+    },
+    {
+      "id": "demo-cc-management-005",
+      "employeeNumber": "DEMO-CC-0007",
+      "name": "[DEMO] CONCOST Team Member 007",
+      "displayName": "[DEMO] CONCOST Team Member 007",
+      "email": "demo.cc.007@example.invalid",
+      "companyId": "CON_COST",
+      "companyName": "CON-COST",
+      "departmentId": "MANAGEMENT_SUPPORT",
+      "departmentName": "경영지원본부",
+      "teamName": "",
+      "role": "WORKER",
+      "systemRole": "WORKER",
+      "permissionLevel": 2,
+      "organizationRank": "STAFF",
+      "jobTitle": "[DEMO] Team Member",
+      "employmentStatus": "ACTIVE",
+      "isActive": true,
+      "position": "[DEMO] Team Member",
+      "accessGrade": "GRADE_4",
+      "capabilities": [
+        "FINANCE_ACCESS"
+      ],
+      "organizationMemberships": [
+        {
+          "organizationId": "MANAGEMENT_SUPPORT",
+          "status": "ACTIVE",
+          "membershipType": "PRIMARY"
+        }
+      ]
+    },
+    {
+      "id": "demo-cc-technical-001",
+      "employeeNumber": "DEMO-CC-0008",
+      "name": "[DEMO] CONCOST Manager 008",
+      "displayName": "[DEMO] CONCOST Manager 008",
+      "email": "demo.cc.008@example.invalid",
+      "companyId": "CON_COST",
+      "companyName": "CON-COST",
+      "departmentId": "TECHNICAL_HQ",
+      "departmentName": "기술본부",
+      "teamName": "",
+      "role": "DEPARTMENT_MANAGER",
+      "systemRole": "DEPARTMENT_MANAGER",
+      "permissionLevel": 4,
+      "organizationRank": "MANAGER",
+      "jobTitle": "[DEMO] Manager",
+      "employmentStatus": "ACTIVE",
+      "isActive": true,
+      "position": "[DEMO] Manager",
+      "accessGrade": "GRADE_2",
+      "capabilities": [],
+      "organizationMemberships": [
+        {
+          "organizationId": "TECHNICAL_HQ",
+          "status": "ACTIVE",
+          "membershipType": "PRIMARY"
+        }
+      ]
+    },
+    {
+      "id": "demo-cc-claim-001",
+      "employeeNumber": "DEMO-CC-0009",
+      "name": "[DEMO] CONCOST Manager 009",
+      "displayName": "[DEMO] CONCOST Manager 009",
+      "email": "demo.cc.009@example.invalid",
+      "companyId": "CON_COST",
+      "companyName": "CON-COST",
+      "departmentId": "CLAIM",
+      "departmentName": "클레임센터",
+      "teamName": "",
+      "role": "DEPARTMENT_MANAGER",
+      "systemRole": "DEPARTMENT_MANAGER",
+      "permissionLevel": 4,
+      "organizationRank": "MANAGER",
+      "jobTitle": "[DEMO] Manager",
+      "employmentStatus": "ACTIVE",
+      "isActive": true,
+      "position": "[DEMO] Manager",
+      "accessGrade": "GRADE_2",
+      "capabilities": [],
+      "organizationMemberships": [
+        {
+          "organizationId": "CLAIM",
+          "status": "ACTIVE",
+          "membershipType": "PRIMARY"
+        }
+      ]
+    },
+    {
+      "id": "demo-cc-development-001",
+      "employeeNumber": "DEMO-CC-0010",
+      "name": "[DEMO] CONCOST Manager 010",
+      "displayName": "[DEMO] CONCOST Manager 010",
+      "email": "demo.cc.010@example.invalid",
+      "companyId": "CON_COST",
+      "companyName": "CON-COST",
+      "departmentId": "DEVELOPMENT",
+      "departmentName": "개발 T/F",
+      "teamName": "",
+      "role": "SUPER_ADMIN",
+      "systemRole": "SUPER_ADMIN",
+      "permissionLevel": 5,
+      "organizationRank": "MANAGER",
+      "jobTitle": "[DEMO] Manager",
+      "employmentStatus": "ACTIVE",
+      "isActive": true,
+      "position": "[DEMO] Manager",
+      "accessGrade": "GRADE_2",
+      "capabilities": [],
+      "organizationMemberships": [
+        {
+          "organizationId": "DEVELOPMENT",
+          "status": "ACTIVE",
+          "membershipType": "PRIMARY"
+        }
+      ]
+    },
+    {
+      "id": "demo-cc-development-002",
+      "employeeNumber": "DEMO-CC-0011",
+      "name": "[DEMO] CONCOST Team Member 011",
+      "displayName": "[DEMO] CONCOST Team Member 011",
+      "email": "demo.cc.011@example.invalid",
+      "companyId": "CON_COST",
+      "companyName": "CON-COST",
+      "departmentId": "DEVELOPMENT",
+      "departmentName": "개발 T/F",
+      "teamName": "",
+      "role": "WORKER",
+      "systemRole": "WORKER",
+      "permissionLevel": 2,
+      "organizationRank": "STAFF",
+      "jobTitle": "[DEMO] Team Member",
+      "employmentStatus": "ACTIVE",
+      "isActive": true,
+      "position": "[DEMO] Team Member",
+      "accessGrade": "GRADE_4",
+      "capabilities": [],
+      "organizationMemberships": [
+        {
+          "organizationId": "DEVELOPMENT",
+          "status": "ACTIVE",
+          "membershipType": "PRIMARY"
+        }
+      ]
+    },
+    {
+      "id": "demo-cc-finish-001",
+      "employeeNumber": "DEMO-CC-0012",
+      "name": "[DEMO] CONCOST Manager 012",
+      "displayName": "[DEMO] CONCOST Manager 012",
+      "email": "demo.cc.012@example.invalid",
+      "companyId": "CON_COST",
+      "companyName": "CON-COST",
+      "departmentId": "FINISH",
+      "departmentName": "마감",
+      "teamName": "",
+      "role": "DEPARTMENT_MANAGER",
+      "systemRole": "DEPARTMENT_MANAGER",
+      "permissionLevel": 4,
+      "organizationRank": "MANAGER",
+      "jobTitle": "[DEMO] Manager",
+      "employmentStatus": "ACTIVE",
+      "isActive": true,
+      "position": "[DEMO] Manager",
+      "accessGrade": "GRADE_2",
+      "capabilities": [],
+      "organizationMemberships": [
+        {
+          "organizationId": "FINISH",
+          "status": "ACTIVE",
+          "membershipType": "PRIMARY"
+        }
+      ]
+    },
+    {
+      "id": "demo-cc-finish-002",
+      "employeeNumber": "DEMO-CC-0013",
+      "name": "[DEMO] CONCOST Team Member 013",
+      "displayName": "[DEMO] CONCOST Team Member 013",
+      "email": "demo.cc.013@example.invalid",
+      "companyId": "CON_COST",
+      "companyName": "CON-COST",
+      "departmentId": "FINISH",
+      "departmentName": "마감",
+      "teamName": "",
+      "role": "WORKER",
+      "systemRole": "WORKER",
+      "permissionLevel": 2,
+      "organizationRank": "STAFF",
+      "jobTitle": "[DEMO] Team Member",
+      "employmentStatus": "ACTIVE",
+      "isActive": true,
+      "position": "[DEMO] Team Member",
+      "accessGrade": "GRADE_4",
+      "capabilities": [],
+      "organizationMemberships": [
+        {
+          "organizationId": "FINISH",
+          "status": "ACTIVE",
+          "membershipType": "PRIMARY"
+        }
+      ]
+    },
+    {
+      "id": "demo-cc-finish-003",
+      "employeeNumber": "DEMO-CC-0014",
+      "name": "[DEMO] CONCOST Team Member 014",
+      "displayName": "[DEMO] CONCOST Team Member 014",
+      "email": "demo.cc.014@example.invalid",
+      "companyId": "CON_COST",
+      "companyName": "CON-COST",
+      "departmentId": "FINISH",
+      "departmentName": "마감",
+      "teamName": "",
+      "role": "WORKER",
+      "systemRole": "WORKER",
+      "permissionLevel": 2,
+      "organizationRank": "STAFF",
+      "jobTitle": "[DEMO] Team Member",
+      "employmentStatus": "ACTIVE",
+      "isActive": true,
+      "position": "[DEMO] Team Member",
+      "accessGrade": "GRADE_4",
+      "capabilities": [],
+      "organizationMemberships": [
+        {
+          "organizationId": "FINISH",
+          "status": "ACTIVE",
+          "membershipType": "PRIMARY"
+        }
+      ]
+    },
+    {
+      "id": "demo-cc-finish-004",
+      "employeeNumber": "DEMO-CC-0015",
+      "name": "[DEMO] CONCOST Team Member 015",
+      "displayName": "[DEMO] CONCOST Team Member 015",
+      "email": "demo.cc.015@example.invalid",
+      "companyId": "CON_COST",
+      "companyName": "CON-COST",
+      "departmentId": "FINISH",
+      "departmentName": "마감",
+      "teamName": "",
+      "role": "WORKER",
+      "systemRole": "WORKER",
+      "permissionLevel": 2,
+      "organizationRank": "STAFF",
+      "jobTitle": "[DEMO] Team Member",
+      "employmentStatus": "ACTIVE",
+      "isActive": true,
+      "position": "[DEMO] Team Member",
+      "accessGrade": "GRADE_4",
+      "capabilities": [],
+      "organizationMemberships": [
+        {
+          "organizationId": "FINISH",
+          "status": "ACTIVE",
+          "membershipType": "PRIMARY"
+        }
+      ]
+    },
+    {
+      "id": "demo-cc-finish-005",
+      "employeeNumber": "DEMO-CC-0016",
+      "name": "[DEMO] CONCOST Team Member 016",
+      "displayName": "[DEMO] CONCOST Team Member 016",
+      "email": "demo.cc.016@example.invalid",
+      "companyId": "CON_COST",
+      "companyName": "CON-COST",
+      "departmentId": "FINISH",
+      "departmentName": "마감",
+      "teamName": "",
+      "role": "WORKER",
+      "systemRole": "WORKER",
+      "permissionLevel": 2,
+      "organizationRank": "STAFF",
+      "jobTitle": "[DEMO] Team Member",
+      "employmentStatus": "ACTIVE",
+      "isActive": true,
+      "position": "[DEMO] Team Member",
+      "accessGrade": "GRADE_4",
+      "capabilities": [],
+      "organizationMemberships": [
+        {
+          "organizationId": "FINISH",
+          "status": "ACTIVE",
+          "membershipType": "PRIMARY"
+        }
+      ]
+    },
+    {
+      "id": "demo-cc-finish-006",
+      "employeeNumber": "DEMO-CC-0017",
+      "name": "[DEMO] CONCOST Team Member 017",
+      "displayName": "[DEMO] CONCOST Team Member 017",
+      "email": "demo.cc.017@example.invalid",
+      "companyId": "CON_COST",
+      "companyName": "CON-COST",
+      "departmentId": "FINISH",
+      "departmentName": "마감",
+      "teamName": "",
+      "role": "WORKER",
+      "systemRole": "WORKER",
+      "permissionLevel": 2,
+      "organizationRank": "STAFF",
+      "jobTitle": "[DEMO] Team Member",
+      "employmentStatus": "ACTIVE",
+      "isActive": true,
+      "position": "[DEMO] Team Member",
+      "accessGrade": "GRADE_4",
+      "capabilities": [],
+      "organizationMemberships": [
+        {
+          "organizationId": "FINISH",
+          "status": "ACTIVE",
+          "membershipType": "PRIMARY"
+        }
+      ]
+    },
+    {
+      "id": "demo-cc-finish-007",
+      "employeeNumber": "DEMO-CC-0018",
+      "name": "[DEMO] CONCOST Team Member 018",
+      "displayName": "[DEMO] CONCOST Team Member 018",
+      "email": "demo.cc.018@example.invalid",
+      "companyId": "CON_COST",
+      "companyName": "CON-COST",
+      "departmentId": "FINISH",
+      "departmentName": "마감",
+      "teamName": "",
+      "role": "WORKER",
+      "systemRole": "WORKER",
+      "permissionLevel": 2,
+      "organizationRank": "STAFF",
+      "jobTitle": "[DEMO] Team Member",
+      "employmentStatus": "ACTIVE",
+      "isActive": true,
+      "position": "[DEMO] Team Member",
+      "accessGrade": "GRADE_4",
+      "capabilities": [],
+      "organizationMemberships": [
+        {
+          "organizationId": "FINISH",
+          "status": "ACTIVE",
+          "membershipType": "PRIMARY"
+        }
+      ]
+    },
+    {
+      "id": "demo-cc-finish-008",
+      "employeeNumber": "DEMO-CC-0019",
+      "name": "[DEMO] CONCOST Team Member 019",
+      "displayName": "[DEMO] CONCOST Team Member 019",
+      "email": "demo.cc.019@example.invalid",
+      "companyId": "CON_COST",
+      "companyName": "CON-COST",
+      "departmentId": "FINISH",
+      "departmentName": "마감",
+      "teamName": "",
+      "role": "WORKER",
+      "systemRole": "WORKER",
+      "permissionLevel": 2,
+      "organizationRank": "STAFF",
+      "jobTitle": "[DEMO] Team Member",
+      "employmentStatus": "ACTIVE",
+      "isActive": true,
+      "position": "[DEMO] Team Member",
+      "accessGrade": "GRADE_4",
+      "capabilities": [],
+      "organizationMemberships": [
+        {
+          "organizationId": "FINISH",
+          "status": "ACTIVE",
+          "membershipType": "PRIMARY"
+        }
+      ]
+    },
+    {
+      "id": "demo-cc-finish-009",
+      "employeeNumber": "DEMO-CC-0020",
+      "name": "[DEMO] CONCOST Team Member 020",
+      "displayName": "[DEMO] CONCOST Team Member 020",
+      "email": "demo.cc.020@example.invalid",
+      "companyId": "CON_COST",
+      "companyName": "CON-COST",
+      "departmentId": "FINISH",
+      "departmentName": "마감",
+      "teamName": "",
+      "role": "WORKER",
+      "systemRole": "WORKER",
+      "permissionLevel": 2,
+      "organizationRank": "STAFF",
+      "jobTitle": "[DEMO] Team Member",
+      "employmentStatus": "ACTIVE",
+      "isActive": true,
+      "position": "[DEMO] Team Member",
+      "accessGrade": "GRADE_4",
+      "capabilities": [],
+      "organizationMemberships": [
+        {
+          "organizationId": "FINISH",
+          "status": "ACTIVE",
+          "membershipType": "PRIMARY"
+        }
+      ]
+    },
+    {
+      "id": "demo-cc-finish-010",
+      "employeeNumber": "DEMO-CC-0021",
+      "name": "[DEMO] CONCOST Team Member 021",
+      "displayName": "[DEMO] CONCOST Team Member 021",
+      "email": "demo.cc.021@example.invalid",
+      "companyId": "CON_COST",
+      "companyName": "CON-COST",
+      "departmentId": "FINISH",
+      "departmentName": "마감",
+      "teamName": "",
+      "role": "WORKER",
+      "systemRole": "WORKER",
+      "permissionLevel": 2,
+      "organizationRank": "STAFF",
+      "jobTitle": "[DEMO] Team Member",
+      "employmentStatus": "ACTIVE",
+      "isActive": true,
+      "position": "[DEMO] Team Member",
+      "accessGrade": "GRADE_4",
+      "capabilities": [],
+      "organizationMemberships": [
+        {
+          "organizationId": "FINISH",
+          "status": "ACTIVE",
+          "membershipType": "PRIMARY"
+        }
+      ]
+    },
+    {
+      "id": "demo-cc-finish-011",
+      "employeeNumber": "DEMO-CC-0022",
+      "name": "[DEMO] CONCOST Team Member 022",
+      "displayName": "[DEMO] CONCOST Team Member 022",
+      "email": "demo.cc.022@example.invalid",
+      "companyId": "CON_COST",
+      "companyName": "CON-COST",
+      "departmentId": "FINISH",
+      "departmentName": "마감",
+      "teamName": "",
+      "role": "WORKER",
+      "systemRole": "WORKER",
+      "permissionLevel": 2,
+      "organizationRank": "STAFF",
+      "jobTitle": "[DEMO] Team Member",
+      "employmentStatus": "ACTIVE",
+      "isActive": true,
+      "position": "[DEMO] Team Member",
+      "accessGrade": "GRADE_4",
+      "capabilities": [],
+      "organizationMemberships": [
+        {
+          "organizationId": "FINISH",
+          "status": "ACTIVE",
+          "membershipType": "PRIMARY"
+        }
+      ]
+    },
+    {
+      "id": "demo-cc-finish-012",
+      "employeeNumber": "DEMO-CC-0023",
+      "name": "[DEMO] CONCOST Team Member 023",
+      "displayName": "[DEMO] CONCOST Team Member 023",
+      "email": "demo.cc.023@example.invalid",
+      "companyId": "CON_COST",
+      "companyName": "CON-COST",
+      "departmentId": "FINISH",
+      "departmentName": "마감",
+      "teamName": "",
+      "role": "WORKER",
+      "systemRole": "WORKER",
+      "permissionLevel": 2,
+      "organizationRank": "STAFF",
+      "jobTitle": "[DEMO] Team Member",
+      "employmentStatus": "ACTIVE",
+      "isActive": true,
+      "position": "[DEMO] Team Member",
+      "accessGrade": "GRADE_4",
+      "capabilities": [],
+      "organizationMemberships": [
+        {
+          "organizationId": "FINISH",
+          "status": "ACTIVE",
+          "membershipType": "PRIMARY"
+        }
+      ]
+    },
+    {
+      "id": "demo-cc-technical-002",
+      "employeeNumber": "DEMO-CC-0024",
+      "name": "[DEMO] CONCOST Manager 024",
+      "displayName": "[DEMO] CONCOST Manager 024",
+      "email": "demo.cc.024@example.invalid",
+      "companyId": "CON_COST",
+      "companyName": "CON-COST",
+      "departmentId": "TECHNICAL_HQ",
+      "departmentName": "구조/토목·조경",
+      "teamName": "",
+      "role": "DEPARTMENT_MANAGER",
+      "systemRole": "DEPARTMENT_MANAGER",
+      "permissionLevel": 4,
+      "organizationRank": "MANAGER",
+      "jobTitle": "[DEMO] Manager",
+      "employmentStatus": "ACTIVE",
+      "isActive": true,
+      "position": "[DEMO] Manager",
+      "accessGrade": "GRADE_2",
+      "capabilities": [],
+      "organizationMemberships": [
+        {
+          "organizationId": "TECHNICAL_HQ",
+          "status": "ACTIVE",
+          "membershipType": "PRIMARY"
+        }
+      ]
+    },
+    {
+      "id": "demo-cc-structure-001",
+      "employeeNumber": "DEMO-CC-0025",
+      "name": "[DEMO] CONCOST Team Lead 025",
+      "displayName": "[DEMO] CONCOST Team Lead 025",
+      "email": "demo.cc.025@example.invalid",
+      "companyId": "CON_COST",
+      "companyName": "CON-COST",
+      "departmentId": "STRUCTURE",
+      "departmentName": "구조",
+      "teamName": "",
+      "role": "PM",
+      "systemRole": "PM",
+      "permissionLevel": 3,
+      "organizationRank": "TEAM_LEADER",
+      "jobTitle": "[DEMO] Team Lead",
+      "employmentStatus": "ACTIVE",
+      "isActive": true,
+      "position": "[DEMO] Team Lead",
+      "accessGrade": "GRADE_2",
+      "capabilities": [],
+      "organizationMemberships": [
+        {
+          "organizationId": "STRUCTURE",
+          "status": "ACTIVE",
+          "membershipType": "PRIMARY"
+        }
+      ]
+    },
+    {
+      "id": "demo-cc-structure-002",
+      "employeeNumber": "DEMO-CC-0026",
+      "name": "[DEMO] CONCOST Team Member 026",
+      "displayName": "[DEMO] CONCOST Team Member 026",
+      "email": "demo.cc.026@example.invalid",
+      "companyId": "CON_COST",
+      "companyName": "CON-COST",
+      "departmentId": "STRUCTURE",
+      "departmentName": "구조",
+      "teamName": "",
+      "role": "WORKER",
+      "systemRole": "WORKER",
+      "permissionLevel": 2,
+      "organizationRank": "STAFF",
+      "jobTitle": "[DEMO] Team Member",
+      "employmentStatus": "ACTIVE",
+      "isActive": true,
+      "position": "[DEMO] Team Member",
+      "accessGrade": "GRADE_4",
+      "capabilities": [],
+      "organizationMemberships": [
+        {
+          "organizationId": "STRUCTURE",
+          "status": "ACTIVE",
+          "membershipType": "PRIMARY"
+        }
+      ]
+    },
+    {
+      "id": "demo-cc-structure-003",
+      "employeeNumber": "DEMO-CC-0027",
+      "name": "[DEMO] CONCOST Team Member 027",
+      "displayName": "[DEMO] CONCOST Team Member 027",
+      "email": "demo.cc.027@example.invalid",
+      "companyId": "CON_COST",
+      "companyName": "CON-COST",
+      "departmentId": "STRUCTURE",
+      "departmentName": "구조",
+      "teamName": "",
+      "role": "WORKER",
+      "systemRole": "WORKER",
+      "permissionLevel": 2,
+      "organizationRank": "STAFF",
+      "jobTitle": "[DEMO] Team Member",
+      "employmentStatus": "ACTIVE",
+      "isActive": true,
+      "position": "[DEMO] Team Member",
+      "accessGrade": "GRADE_4",
+      "capabilities": [],
+      "organizationMemberships": [
+        {
+          "organizationId": "STRUCTURE",
+          "status": "ACTIVE",
+          "membershipType": "PRIMARY"
+        }
+      ]
+    },
+    {
+      "id": "demo-cc-structure-004",
+      "employeeNumber": "DEMO-CC-0028",
+      "name": "[DEMO] CONCOST Team Member 028",
+      "displayName": "[DEMO] CONCOST Team Member 028",
+      "email": "demo.cc.028@example.invalid",
+      "companyId": "CON_COST",
+      "companyName": "CON-COST",
+      "departmentId": "STRUCTURE",
+      "departmentName": "구조",
+      "teamName": "",
+      "role": "WORKER",
+      "systemRole": "WORKER",
+      "permissionLevel": 2,
+      "organizationRank": "STAFF",
+      "jobTitle": "[DEMO] Team Member",
+      "employmentStatus": "ACTIVE",
+      "isActive": true,
+      "position": "[DEMO] Team Member",
+      "accessGrade": "GRADE_4",
+      "capabilities": [],
+      "organizationMemberships": [
+        {
+          "organizationId": "STRUCTURE",
+          "status": "ACTIVE",
+          "membershipType": "PRIMARY"
+        }
+      ]
+    },
+    {
+      "id": "demo-cc-structure-005",
+      "employeeNumber": "DEMO-CC-0029",
+      "name": "[DEMO] CONCOST Team Member 029",
+      "displayName": "[DEMO] CONCOST Team Member 029",
+      "email": "demo.cc.029@example.invalid",
+      "companyId": "CON_COST",
+      "companyName": "CON-COST",
+      "departmentId": "STRUCTURE",
+      "departmentName": "구조",
+      "teamName": "",
+      "role": "WORKER",
+      "systemRole": "WORKER",
+      "permissionLevel": 2,
+      "organizationRank": "STAFF",
+      "jobTitle": "[DEMO] Team Member",
+      "employmentStatus": "ACTIVE",
+      "isActive": true,
+      "position": "[DEMO] Team Member",
+      "accessGrade": "GRADE_4",
+      "capabilities": [],
+      "organizationMemberships": [
+        {
+          "organizationId": "STRUCTURE",
+          "status": "ACTIVE",
+          "membershipType": "PRIMARY"
+        }
+      ]
+    },
+    {
+      "id": "demo-cc-structure-006",
+      "employeeNumber": "DEMO-CC-0030",
+      "name": "[DEMO] CONCOST Team Member 030",
+      "displayName": "[DEMO] CONCOST Team Member 030",
+      "email": "demo.cc.030@example.invalid",
+      "companyId": "CON_COST",
+      "companyName": "CON-COST",
+      "departmentId": "STRUCTURE",
+      "departmentName": "구조",
+      "teamName": "",
+      "role": "WORKER",
+      "systemRole": "WORKER",
+      "permissionLevel": 2,
+      "organizationRank": "STAFF",
+      "jobTitle": "[DEMO] Team Member",
+      "employmentStatus": "ACTIVE",
+      "isActive": true,
+      "position": "[DEMO] Team Member",
+      "accessGrade": "GRADE_4",
+      "capabilities": [],
+      "organizationMemberships": [
+        {
+          "organizationId": "STRUCTURE",
+          "status": "ACTIVE",
+          "membershipType": "PRIMARY"
+        }
+      ]
+    },
+    {
+      "id": "demo-cc-structure-007",
+      "employeeNumber": "DEMO-CC-0031",
+      "name": "[DEMO] CONCOST Team Lead 031",
+      "displayName": "[DEMO] CONCOST Team Lead 031",
+      "email": "demo.cc.031@example.invalid",
+      "companyId": "CON_COST",
+      "companyName": "CON-COST",
+      "departmentId": "STRUCTURE",
+      "departmentName": "BIM파트",
+      "teamName": "",
+      "role": "PM",
+      "systemRole": "PM",
+      "permissionLevel": 3,
+      "organizationRank": "TEAM_LEADER",
+      "jobTitle": "[DEMO] Team Lead",
+      "employmentStatus": "ACTIVE",
+      "isActive": true,
+      "position": "[DEMO] Team Lead",
+      "accessGrade": "GRADE_2",
+      "capabilities": [],
+      "organizationMemberships": [
+        {
+          "organizationId": "STRUCTURE",
+          "status": "ACTIVE",
+          "membershipType": "PRIMARY"
+        }
+      ]
+    },
+    {
+      "id": "demo-cc-civil-001",
+      "employeeNumber": "DEMO-CC-0032",
+      "name": "[DEMO] CONCOST Team Lead 032",
+      "displayName": "[DEMO] CONCOST Team Lead 032",
+      "email": "demo.cc.032@example.invalid",
+      "companyId": "CON_COST",
+      "companyName": "CON-COST",
+      "departmentId": "CIVIL_LANDSCAPE",
+      "departmentName": "토목·조경파트",
+      "teamName": "",
+      "role": "PM",
+      "systemRole": "PM",
+      "permissionLevel": 3,
+      "organizationRank": "TEAM_LEADER",
+      "jobTitle": "[DEMO] Team Lead",
+      "employmentStatus": "ACTIVE",
+      "isActive": true,
+      "position": "[DEMO] Team Lead",
+      "accessGrade": "GRADE_2",
+      "capabilities": [],
+      "organizationMemberships": [
+        {
+          "organizationId": "CIVIL_LANDSCAPE",
+          "status": "ACTIVE",
+          "membershipType": "PRIMARY"
+        }
+      ]
+    },
+    {
+      "id": "demo-cc-civil-002",
+      "employeeNumber": "DEMO-CC-0033",
+      "name": "[DEMO] CONCOST Team Member 033",
+      "displayName": "[DEMO] CONCOST Team Member 033",
+      "email": "demo.cc.033@example.invalid",
+      "companyId": "CON_COST",
+      "companyName": "CON-COST",
+      "departmentId": "CIVIL_LANDSCAPE",
+      "departmentName": "토목·조경파트",
+      "teamName": "",
+      "role": "WORKER",
+      "systemRole": "WORKER",
+      "permissionLevel": 2,
+      "organizationRank": "STAFF",
+      "jobTitle": "[DEMO] Team Member",
+      "employmentStatus": "ACTIVE",
+      "isActive": true,
+      "position": "[DEMO] Team Member",
+      "accessGrade": "GRADE_4",
+      "capabilities": [],
+      "organizationMemberships": [
+        {
+          "organizationId": "CIVIL_LANDSCAPE",
+          "status": "ACTIVE",
+          "membershipType": "PRIMARY"
+        }
+      ]
+    },
+    {
+      "id": "demo-vq-manager-001",
+      "employeeNumber": "DEMO-VQ-0001",
+      "name": "[DEMO] Viet QS Manager 001",
+      "displayName": "[DEMO] Viet QS Manager 001",
+      "email": "demo.vq.001@example.invalid",
+      "companyId": "VIET_QS",
+      "companyName": "VIETQS",
+      "departmentId": "MANAGEMENT_SUPPORT",
+      "departmentName": "Management Support",
+      "teamName": "Admin",
+      "role": "DEPARTMENT_MANAGER",
+      "systemRole": "DEPARTMENT_MANAGER",
+      "permissionLevel": 4,
+      "organizationRank": "MANAGER",
+      "jobTitle": "[DEMO] Manager",
+      "employmentStatus": "ACTIVE",
+      "isActive": true,
+      "position": "[DEMO] Manager",
+      "accessGrade": "GRADE_2",
+      "capabilities": [
+        "FINANCE_ACCESS"
+      ],
+      "organizationMemberships": [
+        {
+          "organizationId": "MANAGEMENT_SUPPORT",
+          "status": "ACTIVE",
+          "membershipType": "PRIMARY"
+        }
+      ]
+    },
+    {
+      "id": "demo-vq-management-002",
+      "employeeNumber": "DEMO-VQ-0002",
+      "name": "[DEMO] Viet QS Team Member 002",
+      "displayName": "[DEMO] Viet QS Team Member 002",
+      "email": "demo.vq.002@example.invalid",
+      "companyId": "VIET_QS",
+      "companyName": "VIETQS",
+      "departmentId": "MANAGEMENT_SUPPORT",
+      "departmentName": "Management Support",
+      "teamName": "Admin",
+      "role": "WORKER",
+      "systemRole": "WORKER",
+      "permissionLevel": 2,
+      "organizationRank": "STAFF",
+      "jobTitle": "[DEMO] Team Member",
+      "employmentStatus": "ACTIVE",
+      "isActive": true,
+      "position": "[DEMO] Team Member",
+      "accessGrade": "GRADE_4",
+      "capabilities": [
+        "FINANCE_ACCESS"
+      ],
+      "organizationMemberships": [
+        {
+          "organizationId": "MANAGEMENT_SUPPORT",
+          "status": "ACTIVE",
+          "membershipType": "PRIMARY"
+        }
+      ]
+    },
+    {
+      "id": "demo-vq-management-003",
+      "employeeNumber": "DEMO-VQ-0003",
+      "name": "[DEMO] Viet QS Team Member 003",
+      "displayName": "[DEMO] Viet QS Team Member 003",
+      "email": "demo.vq.003@example.invalid",
+      "companyId": "VIET_QS",
+      "companyName": "VIETQS",
+      "departmentId": "MANAGEMENT_SUPPORT",
+      "departmentName": "Management Support",
+      "teamName": "Admin",
+      "role": "WORKER",
+      "systemRole": "WORKER",
+      "permissionLevel": 2,
+      "organizationRank": "STAFF",
+      "jobTitle": "[DEMO] Team Member",
+      "employmentStatus": "ACTIVE",
+      "isActive": true,
+      "position": "[DEMO] Team Member",
+      "accessGrade": "GRADE_4",
+      "capabilities": [
+        "FINANCE_ACCESS"
+      ],
+      "organizationMemberships": [
+        {
+          "organizationId": "MANAGEMENT_SUPPORT",
+          "status": "ACTIVE",
+          "membershipType": "PRIMARY"
+        }
+      ]
+    },
+    {
+      "id": "demo-vq-finish-001",
+      "employeeNumber": "DEMO-VQ-0004",
+      "name": "[DEMO] Viet QS Team Lead 004",
+      "displayName": "[DEMO] Viet QS Team Lead 004",
+      "email": "demo.vq.004@example.invalid",
+      "companyId": "VIET_QS",
+      "companyName": "VIETQS",
+      "departmentId": "FINISH",
+      "departmentName": "Finish",
+      "teamName": "External",
+      "role": "PM",
+      "systemRole": "PM",
+      "permissionLevel": 3,
+      "organizationRank": "TEAM_LEADER",
+      "jobTitle": "[DEMO] Team Lead",
+      "employmentStatus": "ACTIVE",
+      "isActive": true,
+      "position": "[DEMO] Team Lead",
+      "accessGrade": "GRADE_2",
+      "capabilities": [],
+      "organizationMemberships": [
+        {
+          "organizationId": "FINISH",
+          "status": "ACTIVE",
+          "membershipType": "PRIMARY"
+        }
+      ]
+    },
+    {
+      "id": "demo-vq-finish-002",
+      "employeeNumber": "DEMO-VQ-0005",
+      "name": "[DEMO] Viet QS Deputy Lead 005",
+      "displayName": "[DEMO] Viet QS Deputy Lead 005",
+      "email": "demo.vq.005@example.invalid",
+      "companyId": "VIET_QS",
+      "companyName": "VIETQS",
+      "departmentId": "FINISH",
+      "departmentName": "Finish",
+      "teamName": "External",
+      "role": "PM",
+      "systemRole": "PM",
+      "permissionLevel": 3,
+      "organizationRank": "DEPUTY_TEAM_LEADER",
+      "jobTitle": "[DEMO] Deputy Lead",
+      "employmentStatus": "ACTIVE",
+      "isActive": true,
+      "position": "[DEMO] Deputy Lead",
+      "accessGrade": "GRADE_3",
+      "capabilities": [],
+      "organizationMemberships": [
+        {
+          "organizationId": "FINISH",
+          "status": "ACTIVE",
+          "membershipType": "PRIMARY"
+        }
+      ]
+    },
+    {
+      "id": "demo-vq-finish-003",
+      "employeeNumber": "DEMO-VQ-0006",
+      "name": "[DEMO] Viet QS Team Member 006",
+      "displayName": "[DEMO] Viet QS Team Member 006",
+      "email": "demo.vq.006@example.invalid",
+      "companyId": "VIET_QS",
+      "companyName": "VIETQS",
+      "departmentId": "FINISH",
+      "departmentName": "Finish",
+      "teamName": "External",
+      "role": "WORKER",
+      "systemRole": "WORKER",
+      "permissionLevel": 2,
+      "organizationRank": "STAFF",
+      "jobTitle": "[DEMO] Team Member",
+      "employmentStatus": "ACTIVE",
+      "isActive": true,
+      "position": "[DEMO] Team Member",
+      "accessGrade": "GRADE_4",
+      "capabilities": [],
+      "organizationMemberships": [
+        {
+          "organizationId": "FINISH",
+          "status": "ACTIVE",
+          "membershipType": "PRIMARY"
+        }
+      ]
+    },
+    {
+      "id": "demo-vq-finish-004",
+      "employeeNumber": "DEMO-VQ-0007",
+      "name": "[DEMO] Viet QS Team Member 007",
+      "displayName": "[DEMO] Viet QS Team Member 007",
+      "email": "demo.vq.007@example.invalid",
+      "companyId": "VIET_QS",
+      "companyName": "VIETQS",
+      "departmentId": "FINISH",
+      "departmentName": "Finish",
+      "teamName": "External",
+      "role": "WORKER",
+      "systemRole": "WORKER",
+      "permissionLevel": 2,
+      "organizationRank": "STAFF",
+      "jobTitle": "[DEMO] Team Member",
+      "employmentStatus": "ACTIVE",
+      "isActive": true,
+      "position": "[DEMO] Team Member",
+      "accessGrade": "GRADE_4",
+      "capabilities": [],
+      "organizationMemberships": [
+        {
+          "organizationId": "FINISH",
+          "status": "ACTIVE",
+          "membershipType": "PRIMARY"
+        }
+      ]
+    },
+    {
+      "id": "demo-vq-finish-005",
+      "employeeNumber": "DEMO-VQ-0008",
+      "name": "[DEMO] Viet QS Team Member 008",
+      "displayName": "[DEMO] Viet QS Team Member 008",
+      "email": "demo.vq.008@example.invalid",
+      "companyId": "VIET_QS",
+      "companyName": "VIETQS",
+      "departmentId": "FINISH",
+      "departmentName": "Finish",
+      "teamName": "External",
+      "role": "WORKER",
+      "systemRole": "WORKER",
+      "permissionLevel": 2,
+      "organizationRank": "STAFF",
+      "jobTitle": "[DEMO] Team Member",
+      "employmentStatus": "ACTIVE",
+      "isActive": true,
+      "position": "[DEMO] Team Member",
+      "accessGrade": "GRADE_4",
+      "capabilities": [],
+      "organizationMemberships": [
+        {
+          "organizationId": "FINISH",
+          "status": "ACTIVE",
+          "membershipType": "PRIMARY"
+        }
+      ]
+    },
+    {
+      "id": "demo-vq-finish-006",
+      "employeeNumber": "DEMO-VQ-0009",
+      "name": "[DEMO] Viet QS Team Member 009",
+      "displayName": "[DEMO] Viet QS Team Member 009",
+      "email": "demo.vq.009@example.invalid",
+      "companyId": "VIET_QS",
+      "companyName": "VIETQS",
+      "departmentId": "FINISH",
+      "departmentName": "Finish",
+      "teamName": "External",
+      "role": "WORKER",
+      "systemRole": "WORKER",
+      "permissionLevel": 2,
+      "organizationRank": "STAFF",
+      "jobTitle": "[DEMO] Team Member",
+      "employmentStatus": "ACTIVE",
+      "isActive": true,
+      "position": "[DEMO] Team Member",
+      "accessGrade": "GRADE_4",
+      "capabilities": [],
+      "organizationMemberships": [
+        {
+          "organizationId": "FINISH",
+          "status": "ACTIVE",
+          "membershipType": "PRIMARY"
+        }
+      ]
+    },
+    {
+      "id": "demo-vq-finish-007",
+      "employeeNumber": "DEMO-VQ-0010",
+      "name": "[DEMO] Viet QS Team Member 010",
+      "displayName": "[DEMO] Viet QS Team Member 010",
+      "email": "demo.vq.010@example.invalid",
+      "companyId": "VIET_QS",
+      "companyName": "VIETQS",
+      "departmentId": "FINISH",
+      "departmentName": "Finish",
+      "teamName": "External",
+      "role": "WORKER",
+      "systemRole": "WORKER",
+      "permissionLevel": 2,
+      "organizationRank": "STAFF",
+      "jobTitle": "[DEMO] Team Member",
+      "employmentStatus": "ACTIVE",
+      "isActive": true,
+      "position": "[DEMO] Team Member",
+      "accessGrade": "GRADE_4",
+      "capabilities": [],
+      "organizationMemberships": [
+        {
+          "organizationId": "FINISH",
+          "status": "ACTIVE",
+          "membershipType": "PRIMARY"
+        }
+      ]
+    },
+    {
+      "id": "demo-vq-finish-008",
+      "employeeNumber": "DEMO-VQ-0011",
+      "name": "[DEMO] Viet QS Team Lead 011",
+      "displayName": "[DEMO] Viet QS Team Lead 011",
+      "email": "demo.vq.011@example.invalid",
+      "companyId": "VIET_QS",
+      "companyName": "VIETQS",
+      "departmentId": "FINISH",
+      "departmentName": "Finish",
+      "teamName": "Internal1",
+      "role": "PM",
+      "systemRole": "PM",
+      "permissionLevel": 3,
+      "organizationRank": "TEAM_LEADER",
+      "jobTitle": "[DEMO] Team Lead",
+      "employmentStatus": "ACTIVE",
+      "isActive": true,
+      "position": "[DEMO] Team Lead",
+      "accessGrade": "GRADE_2",
+      "capabilities": [],
+      "organizationMemberships": [
+        {
+          "organizationId": "FINISH",
+          "status": "ACTIVE",
+          "membershipType": "PRIMARY"
+        }
+      ]
+    },
+    {
+      "id": "demo-vq-finish-009",
+      "employeeNumber": "DEMO-VQ-0012",
+      "name": "[DEMO] Viet QS Deputy Lead 012",
+      "displayName": "[DEMO] Viet QS Deputy Lead 012",
+      "email": "demo.vq.012@example.invalid",
+      "companyId": "VIET_QS",
+      "companyName": "VIETQS",
+      "departmentId": "FINISH",
+      "departmentName": "Finish",
+      "teamName": "Internal1",
+      "role": "PM",
+      "systemRole": "PM",
+      "permissionLevel": 3,
+      "organizationRank": "DEPUTY_TEAM_LEADER",
+      "jobTitle": "[DEMO] Deputy Lead",
+      "employmentStatus": "ACTIVE",
+      "isActive": true,
+      "position": "[DEMO] Deputy Lead",
+      "accessGrade": "GRADE_3",
+      "capabilities": [],
+      "organizationMemberships": [
+        {
+          "organizationId": "FINISH",
+          "status": "ACTIVE",
+          "membershipType": "PRIMARY"
+        }
+      ]
+    },
+    {
+      "id": "demo-vq-finish-010",
+      "employeeNumber": "DEMO-VQ-0013",
+      "name": "[DEMO] Viet QS Team Member 013",
+      "displayName": "[DEMO] Viet QS Team Member 013",
+      "email": "demo.vq.013@example.invalid",
+      "companyId": "VIET_QS",
+      "companyName": "VIETQS",
+      "departmentId": "FINISH",
+      "departmentName": "Finish",
+      "teamName": "Internal1",
+      "role": "WORKER",
+      "systemRole": "WORKER",
+      "permissionLevel": 2,
+      "organizationRank": "STAFF",
+      "jobTitle": "[DEMO] Team Member",
+      "employmentStatus": "ACTIVE",
+      "isActive": true,
+      "position": "[DEMO] Team Member",
+      "accessGrade": "GRADE_4",
+      "capabilities": [],
+      "organizationMemberships": [
+        {
+          "organizationId": "FINISH",
+          "status": "ACTIVE",
+          "membershipType": "PRIMARY"
+        }
+      ]
+    },
+    {
+      "id": "demo-vq-finish-011",
+      "employeeNumber": "DEMO-VQ-0014",
+      "name": "[DEMO] Viet QS Team Member 014",
+      "displayName": "[DEMO] Viet QS Team Member 014",
+      "email": "demo.vq.014@example.invalid",
+      "companyId": "VIET_QS",
+      "companyName": "VIETQS",
+      "departmentId": "FINISH",
+      "departmentName": "Finish",
+      "teamName": "Internal1",
+      "role": "WORKER",
+      "systemRole": "WORKER",
+      "permissionLevel": 2,
+      "organizationRank": "STAFF",
+      "jobTitle": "[DEMO] Team Member",
+      "employmentStatus": "ACTIVE",
+      "isActive": true,
+      "position": "[DEMO] Team Member",
+      "accessGrade": "GRADE_4",
+      "capabilities": [],
+      "organizationMemberships": [
+        {
+          "organizationId": "FINISH",
+          "status": "ACTIVE",
+          "membershipType": "PRIMARY"
+        }
+      ]
+    },
+    {
+      "id": "demo-vq-finish-012",
+      "employeeNumber": "DEMO-VQ-0015",
+      "name": "[DEMO] Viet QS Team Lead 015",
+      "displayName": "[DEMO] Viet QS Team Lead 015",
+      "email": "demo.vq.015@example.invalid",
+      "companyId": "VIET_QS",
+      "companyName": "VIETQS",
+      "departmentId": "FINISH",
+      "departmentName": "Finish",
+      "teamName": "Internal2",
+      "role": "PM",
+      "systemRole": "PM",
+      "permissionLevel": 3,
+      "organizationRank": "TEAM_LEADER",
+      "jobTitle": "[DEMO] Team Lead",
+      "employmentStatus": "ACTIVE",
+      "isActive": true,
+      "position": "[DEMO] Team Lead",
+      "accessGrade": "GRADE_2",
+      "capabilities": [],
+      "organizationMemberships": [
+        {
+          "organizationId": "FINISH",
+          "status": "ACTIVE",
+          "membershipType": "PRIMARY"
+        }
+      ]
+    },
+    {
+      "id": "demo-vq-finish-013",
+      "employeeNumber": "DEMO-VQ-0016",
+      "name": "[DEMO] Viet QS Team Member 016",
+      "displayName": "[DEMO] Viet QS Team Member 016",
+      "email": "demo.vq.016@example.invalid",
+      "companyId": "VIET_QS",
+      "companyName": "VIETQS",
+      "departmentId": "FINISH",
+      "departmentName": "Finish",
+      "teamName": "Internal2",
+      "role": "WORKER",
+      "systemRole": "WORKER",
+      "permissionLevel": 2,
+      "organizationRank": "STAFF",
+      "jobTitle": "[DEMO] Team Member",
+      "employmentStatus": "ACTIVE",
+      "isActive": true,
+      "position": "[DEMO] Team Member",
+      "accessGrade": "GRADE_4",
+      "capabilities": [],
+      "organizationMemberships": [
+        {
+          "organizationId": "FINISH",
+          "status": "ACTIVE",
+          "membershipType": "PRIMARY"
+        }
+      ]
+    },
+    {
+      "id": "demo-vq-finish-014",
+      "employeeNumber": "DEMO-VQ-0017",
+      "name": "[DEMO] Viet QS Team Member 017",
+      "displayName": "[DEMO] Viet QS Team Member 017",
+      "email": "demo.vq.017@example.invalid",
+      "companyId": "VIET_QS",
+      "companyName": "VIETQS",
+      "departmentId": "FINISH",
+      "departmentName": "Finish",
+      "teamName": "Internal2",
+      "role": "WORKER",
+      "systemRole": "WORKER",
+      "permissionLevel": 2,
+      "organizationRank": "STAFF",
+      "jobTitle": "[DEMO] Team Member",
+      "employmentStatus": "ACTIVE",
+      "isActive": true,
+      "position": "[DEMO] Team Member",
+      "accessGrade": "GRADE_4",
+      "capabilities": [],
+      "organizationMemberships": [
+        {
+          "organizationId": "FINISH",
+          "status": "ACTIVE",
+          "membershipType": "PRIMARY"
+        }
+      ]
+    },
+    {
+      "id": "demo-vq-finish-015",
+      "employeeNumber": "DEMO-VQ-0018",
+      "name": "[DEMO] Viet QS Team Member 018",
+      "displayName": "[DEMO] Viet QS Team Member 018",
+      "email": "demo.vq.018@example.invalid",
+      "companyId": "VIET_QS",
+      "companyName": "VIETQS",
+      "departmentId": "FINISH",
+      "departmentName": "Finish",
+      "teamName": "Internal2",
+      "role": "WORKER",
+      "systemRole": "WORKER",
+      "permissionLevel": 2,
+      "organizationRank": "STAFF",
+      "jobTitle": "[DEMO] Team Member",
+      "employmentStatus": "ACTIVE",
+      "isActive": true,
+      "position": "[DEMO] Team Member",
+      "accessGrade": "GRADE_4",
+      "capabilities": [],
+      "organizationMemberships": [
+        {
+          "organizationId": "FINISH",
+          "status": "ACTIVE",
+          "membershipType": "PRIMARY"
+        }
+      ]
+    },
+    {
+      "id": "demo-vq-finish-016",
+      "employeeNumber": "DEMO-VQ-0019",
+      "name": "[DEMO] Viet QS Team Member 019",
+      "displayName": "[DEMO] Viet QS Team Member 019",
+      "email": "demo.vq.019@example.invalid",
+      "companyId": "VIET_QS",
+      "companyName": "VIETQS",
+      "departmentId": "FINISH",
+      "departmentName": "Finish",
+      "teamName": "Internal2",
+      "role": "WORKER",
+      "systemRole": "WORKER",
+      "permissionLevel": 2,
+      "organizationRank": "STAFF",
+      "jobTitle": "[DEMO] Team Member",
+      "employmentStatus": "ACTIVE",
+      "isActive": true,
+      "position": "[DEMO] Team Member",
+      "accessGrade": "GRADE_4",
+      "capabilities": [],
+      "organizationMemberships": [
+        {
+          "organizationId": "FINISH",
+          "status": "ACTIVE",
+          "membershipType": "PRIMARY"
+        }
+      ]
+    },
+    {
+      "id": "demo-vq-finish-017",
+      "employeeNumber": "DEMO-VQ-0020",
+      "name": "[DEMO] Viet QS Team Lead 020",
+      "displayName": "[DEMO] Viet QS Team Lead 020",
+      "email": "demo.vq.020@example.invalid",
+      "companyId": "VIET_QS",
+      "companyName": "VIETQS",
+      "departmentId": "FINISH",
+      "departmentName": "Finish",
+      "teamName": "Internal3",
+      "role": "PM",
+      "systemRole": "PM",
+      "permissionLevel": 3,
+      "organizationRank": "TEAM_LEADER",
+      "jobTitle": "[DEMO] Team Lead",
+      "employmentStatus": "ACTIVE",
+      "isActive": true,
+      "position": "[DEMO] Team Lead",
+      "accessGrade": "GRADE_2",
+      "capabilities": [],
+      "organizationMemberships": [
+        {
+          "organizationId": "FINISH",
+          "status": "ACTIVE",
+          "membershipType": "PRIMARY"
+        }
+      ]
+    },
+    {
+      "id": "demo-vq-finish-018",
+      "employeeNumber": "DEMO-VQ-0021",
+      "name": "[DEMO] Viet QS Deputy Lead 021",
+      "displayName": "[DEMO] Viet QS Deputy Lead 021",
+      "email": "demo.vq.021@example.invalid",
+      "companyId": "VIET_QS",
+      "companyName": "VIETQS",
+      "departmentId": "FINISH",
+      "departmentName": "Finish",
+      "teamName": "Internal3",
+      "role": "PM",
+      "systemRole": "PM",
+      "permissionLevel": 3,
+      "organizationRank": "DEPUTY_TEAM_LEADER",
+      "jobTitle": "[DEMO] Deputy Lead",
+      "employmentStatus": "ACTIVE",
+      "isActive": true,
+      "position": "[DEMO] Deputy Lead",
+      "accessGrade": "GRADE_3",
+      "capabilities": [],
+      "organizationMemberships": [
+        {
+          "organizationId": "FINISH",
+          "status": "ACTIVE",
+          "membershipType": "PRIMARY"
+        }
+      ]
+    },
+    {
+      "id": "demo-vq-finish-019",
+      "employeeNumber": "DEMO-VQ-0022",
+      "name": "[DEMO] Viet QS Team Member 022",
+      "displayName": "[DEMO] Viet QS Team Member 022",
+      "email": "demo.vq.022@example.invalid",
+      "companyId": "VIET_QS",
+      "companyName": "VIETQS",
+      "departmentId": "FINISH",
+      "departmentName": "Finish",
+      "teamName": "Internal3",
+      "role": "WORKER",
+      "systemRole": "WORKER",
+      "permissionLevel": 2,
+      "organizationRank": "STAFF",
+      "jobTitle": "[DEMO] Team Member",
+      "employmentStatus": "ACTIVE",
+      "isActive": true,
+      "position": "[DEMO] Team Member",
+      "accessGrade": "GRADE_4",
+      "capabilities": [],
+      "organizationMemberships": [
+        {
+          "organizationId": "FINISH",
+          "status": "ACTIVE",
+          "membershipType": "PRIMARY"
+        }
+      ]
+    },
+    {
+      "id": "demo-vq-finish-020",
+      "employeeNumber": "DEMO-VQ-0023",
+      "name": "[DEMO] Viet QS Team Member 023",
+      "displayName": "[DEMO] Viet QS Team Member 023",
+      "email": "demo.vq.023@example.invalid",
+      "companyId": "VIET_QS",
+      "companyName": "VIETQS",
+      "departmentId": "FINISH",
+      "departmentName": "Finish",
+      "teamName": "Internal3",
+      "role": "WORKER",
+      "systemRole": "WORKER",
+      "permissionLevel": 2,
+      "organizationRank": "STAFF",
+      "jobTitle": "[DEMO] Team Member",
+      "employmentStatus": "ACTIVE",
+      "isActive": true,
+      "position": "[DEMO] Team Member",
+      "accessGrade": "GRADE_4",
+      "capabilities": [],
+      "organizationMemberships": [
+        {
+          "organizationId": "FINISH",
+          "status": "ACTIVE",
+          "membershipType": "PRIMARY"
+        }
+      ]
+    },
+    {
+      "id": "demo-vq-finish-021",
+      "employeeNumber": "DEMO-VQ-0024",
+      "name": "[DEMO] Viet QS Team Member 024",
+      "displayName": "[DEMO] Viet QS Team Member 024",
+      "email": "demo.vq.024@example.invalid",
+      "companyId": "VIET_QS",
+      "companyName": "VIETQS",
+      "departmentId": "FINISH",
+      "departmentName": "Finish",
+      "teamName": "Internal3",
+      "role": "WORKER",
+      "systemRole": "WORKER",
+      "permissionLevel": 2,
+      "organizationRank": "STAFF",
+      "jobTitle": "[DEMO] Team Member",
+      "employmentStatus": "ACTIVE",
+      "isActive": true,
+      "position": "[DEMO] Team Member",
+      "accessGrade": "GRADE_4",
+      "capabilities": [],
+      "organizationMemberships": [
+        {
+          "organizationId": "FINISH",
+          "status": "ACTIVE",
+          "membershipType": "PRIMARY"
+        }
+      ]
+    },
+    {
+      "id": "demo-vq-finish-022",
+      "employeeNumber": "DEMO-VQ-0025",
+      "name": "[DEMO] Viet QS Team Lead 025",
+      "displayName": "[DEMO] Viet QS Team Lead 025",
+      "email": "demo.vq.025@example.invalid",
+      "companyId": "VIET_QS",
+      "companyName": "VIETQS",
+      "departmentId": "FINISH",
+      "departmentName": "Finish",
+      "teamName": "P&O1",
+      "role": "PM",
+      "systemRole": "PM",
+      "permissionLevel": 3,
+      "organizationRank": "TEAM_LEADER",
+      "jobTitle": "[DEMO] Team Lead",
+      "employmentStatus": "ACTIVE",
+      "isActive": true,
+      "position": "[DEMO] Team Lead",
+      "accessGrade": "GRADE_2",
+      "capabilities": [],
+      "organizationMemberships": [
+        {
+          "organizationId": "FINISH",
+          "status": "ACTIVE",
+          "membershipType": "PRIMARY"
+        }
+      ]
+    },
+    {
+      "id": "demo-vq-finish-023",
+      "employeeNumber": "DEMO-VQ-0026",
+      "name": "[DEMO] Viet QS Deputy Lead 026",
+      "displayName": "[DEMO] Viet QS Deputy Lead 026",
+      "email": "demo.vq.026@example.invalid",
+      "companyId": "VIET_QS",
+      "companyName": "VIETQS",
+      "departmentId": "FINISH",
+      "departmentName": "Finish",
+      "teamName": "P&O1",
+      "role": "PM",
+      "systemRole": "PM",
+      "permissionLevel": 3,
+      "organizationRank": "DEPUTY_TEAM_LEADER",
+      "jobTitle": "[DEMO] Deputy Lead",
+      "employmentStatus": "ACTIVE",
+      "isActive": true,
+      "position": "[DEMO] Deputy Lead",
+      "accessGrade": "GRADE_3",
+      "capabilities": [],
+      "organizationMemberships": [
+        {
+          "organizationId": "FINISH",
+          "status": "ACTIVE",
+          "membershipType": "PRIMARY"
+        }
+      ]
+    },
+    {
+      "id": "demo-vq-finish-024",
+      "employeeNumber": "DEMO-VQ-0027",
+      "name": "[DEMO] Viet QS Team Member 027",
+      "displayName": "[DEMO] Viet QS Team Member 027",
+      "email": "demo.vq.027@example.invalid",
+      "companyId": "VIET_QS",
+      "companyName": "VIETQS",
+      "departmentId": "FINISH",
+      "departmentName": "Finish",
+      "teamName": "P&O1",
+      "role": "WORKER",
+      "systemRole": "WORKER",
+      "permissionLevel": 2,
+      "organizationRank": "STAFF",
+      "jobTitle": "[DEMO] Team Member",
+      "employmentStatus": "ACTIVE",
+      "isActive": true,
+      "position": "[DEMO] Team Member",
+      "accessGrade": "GRADE_4",
+      "capabilities": [],
+      "organizationMemberships": [
+        {
+          "organizationId": "FINISH",
+          "status": "ACTIVE",
+          "membershipType": "PRIMARY"
+        }
+      ]
+    },
+    {
+      "id": "demo-vq-finish-025",
+      "employeeNumber": "DEMO-VQ-0028",
+      "name": "[DEMO] Viet QS Team Member 028",
+      "displayName": "[DEMO] Viet QS Team Member 028",
+      "email": "demo.vq.028@example.invalid",
+      "companyId": "VIET_QS",
+      "companyName": "VIETQS",
+      "departmentId": "FINISH",
+      "departmentName": "Finish",
+      "teamName": "P&O1",
+      "role": "WORKER",
+      "systemRole": "WORKER",
+      "permissionLevel": 2,
+      "organizationRank": "STAFF",
+      "jobTitle": "[DEMO] Team Member",
+      "employmentStatus": "ACTIVE",
+      "isActive": true,
+      "position": "[DEMO] Team Member",
+      "accessGrade": "GRADE_4",
+      "capabilities": [],
+      "organizationMemberships": [
+        {
+          "organizationId": "FINISH",
+          "status": "ACTIVE",
+          "membershipType": "PRIMARY"
+        }
+      ]
+    },
+    {
+      "id": "demo-vq-finish-026",
+      "employeeNumber": "DEMO-VQ-0029",
+      "name": "[DEMO] Viet QS Team Lead 029",
+      "displayName": "[DEMO] Viet QS Team Lead 029",
+      "email": "demo.vq.029@example.invalid",
+      "companyId": "VIET_QS",
+      "companyName": "VIETQS",
+      "departmentId": "FINISH",
+      "departmentName": "Finish",
+      "teamName": "P&O2",
+      "role": "PM",
+      "systemRole": "PM",
+      "permissionLevel": 3,
+      "organizationRank": "TEAM_LEADER",
+      "jobTitle": "[DEMO] Team Lead",
+      "employmentStatus": "ACTIVE",
+      "isActive": true,
+      "position": "[DEMO] Team Lead",
+      "accessGrade": "GRADE_2",
+      "capabilities": [],
+      "organizationMemberships": [
+        {
+          "organizationId": "FINISH",
+          "status": "ACTIVE",
+          "membershipType": "PRIMARY"
+        }
+      ]
+    },
+    {
+      "id": "demo-vq-finish-027",
+      "employeeNumber": "DEMO-VQ-0030",
+      "name": "[DEMO] Viet QS Team Lead 030",
+      "displayName": "[DEMO] Viet QS Team Lead 030",
+      "email": "demo.vq.030@example.invalid",
+      "companyId": "VIET_QS",
+      "companyName": "VIETQS",
+      "departmentId": "FINISH",
+      "departmentName": "Finish",
+      "teamName": "P&O2",
+      "role": "PM",
+      "systemRole": "PM",
+      "permissionLevel": 3,
+      "organizationRank": "TEAM_LEADER",
+      "jobTitle": "[DEMO] Team Lead",
+      "employmentStatus": "ACTIVE",
+      "isActive": true,
+      "position": "[DEMO] Team Lead",
+      "accessGrade": "GRADE_2",
+      "capabilities": [],
+      "organizationMemberships": [
+        {
+          "organizationId": "FINISH",
+          "status": "ACTIVE",
+          "membershipType": "PRIMARY"
+        }
+      ]
+    },
+    {
+      "id": "demo-vq-finish-028",
+      "employeeNumber": "DEMO-VQ-0031",
+      "name": "[DEMO] Viet QS Team Member 031",
+      "displayName": "[DEMO] Viet QS Team Member 031",
+      "email": "demo.vq.031@example.invalid",
+      "companyId": "VIET_QS",
+      "companyName": "VIETQS",
+      "departmentId": "FINISH",
+      "departmentName": "Finish",
+      "teamName": "P&O2",
+      "role": "WORKER",
+      "systemRole": "WORKER",
+      "permissionLevel": 2,
+      "organizationRank": "STAFF",
+      "jobTitle": "[DEMO] Team Member",
+      "employmentStatus": "ACTIVE",
+      "isActive": true,
+      "position": "[DEMO] Team Member",
+      "accessGrade": "GRADE_4",
+      "capabilities": [],
+      "organizationMemberships": [
+        {
+          "organizationId": "FINISH",
+          "status": "ACTIVE",
+          "membershipType": "PRIMARY"
+        }
+      ]
+    },
+    {
+      "id": "demo-vq-finish-029",
+      "employeeNumber": "DEMO-VQ-0032",
+      "name": "[DEMO] Viet QS Team Member 032",
+      "displayName": "[DEMO] Viet QS Team Member 032",
+      "email": "demo.vq.032@example.invalid",
+      "companyId": "VIET_QS",
+      "companyName": "VIETQS",
+      "departmentId": "FINISH",
+      "departmentName": "Finish",
+      "teamName": "P&O2",
+      "role": "WORKER",
+      "systemRole": "WORKER",
+      "permissionLevel": 2,
+      "organizationRank": "STAFF",
+      "jobTitle": "[DEMO] Team Member",
+      "employmentStatus": "ACTIVE",
+      "isActive": true,
+      "position": "[DEMO] Team Member",
+      "accessGrade": "GRADE_4",
+      "capabilities": [],
+      "organizationMemberships": [
+        {
+          "organizationId": "FINISH",
+          "status": "ACTIVE",
+          "membershipType": "PRIMARY"
+        }
+      ]
+    },
+    {
+      "id": "demo-vq-finish-030",
+      "employeeNumber": "DEMO-VQ-0033",
+      "name": "[DEMO] Viet QS Team Member 033",
+      "displayName": "[DEMO] Viet QS Team Member 033",
+      "email": "demo.vq.033@example.invalid",
+      "companyId": "VIET_QS",
+      "companyName": "VIETQS",
+      "departmentId": "FINISH",
+      "departmentName": "Finish",
+      "teamName": "P&O2",
+      "role": "WORKER",
+      "systemRole": "WORKER",
+      "permissionLevel": 2,
+      "organizationRank": "STAFF",
+      "jobTitle": "[DEMO] Team Member",
+      "employmentStatus": "ACTIVE",
+      "isActive": true,
+      "position": "[DEMO] Team Member",
+      "accessGrade": "GRADE_4",
+      "capabilities": [],
+      "organizationMemberships": [
+        {
+          "organizationId": "FINISH",
+          "status": "ACTIVE",
+          "membershipType": "PRIMARY"
+        }
+      ]
+    },
+    {
+      "id": "demo-vq-structure-001",
+      "employeeNumber": "DEMO-VQ-0034",
+      "name": "[DEMO] Viet QS Team Lead 034",
+      "displayName": "[DEMO] Viet QS Team Lead 034",
+      "email": "demo.vq.034@example.invalid",
+      "companyId": "VIET_QS",
+      "companyName": "VIETQS",
+      "departmentId": "STRUCTURE",
+      "departmentName": "Structure",
+      "teamName": "Horizon1",
+      "role": "PM",
+      "systemRole": "PM",
+      "permissionLevel": 3,
+      "organizationRank": "TEAM_LEADER",
+      "jobTitle": "[DEMO] Team Lead",
+      "employmentStatus": "ACTIVE",
+      "isActive": true,
+      "position": "[DEMO] Team Lead",
+      "accessGrade": "GRADE_2",
+      "capabilities": [],
+      "organizationMemberships": [
+        {
+          "organizationId": "STRUCTURE",
+          "status": "ACTIVE",
+          "membershipType": "PRIMARY"
+        }
+      ]
+    },
+    {
+      "id": "demo-vq-structure-002",
+      "employeeNumber": "DEMO-VQ-0035",
+      "name": "[DEMO] Viet QS Team Lead 035",
+      "displayName": "[DEMO] Viet QS Team Lead 035",
+      "email": "demo.vq.035@example.invalid",
+      "companyId": "VIET_QS",
+      "companyName": "VIETQS",
+      "departmentId": "STRUCTURE",
+      "departmentName": "Structure",
+      "teamName": "Horizon1",
+      "role": "PM",
+      "systemRole": "PM",
+      "permissionLevel": 3,
+      "organizationRank": "TEAM_LEADER",
+      "jobTitle": "[DEMO] Team Lead",
+      "employmentStatus": "ACTIVE",
+      "isActive": true,
+      "position": "[DEMO] Team Lead",
+      "accessGrade": "GRADE_2",
+      "capabilities": [],
+      "organizationMemberships": [
+        {
+          "organizationId": "STRUCTURE",
+          "status": "ACTIVE",
+          "membershipType": "PRIMARY"
+        }
+      ]
+    },
+    {
+      "id": "demo-vq-structure-003",
+      "employeeNumber": "DEMO-VQ-0036",
+      "name": "[DEMO] Viet QS Deputy Lead 036",
+      "displayName": "[DEMO] Viet QS Deputy Lead 036",
+      "email": "demo.vq.036@example.invalid",
+      "companyId": "VIET_QS",
+      "companyName": "VIETQS",
+      "departmentId": "STRUCTURE",
+      "departmentName": "Structure",
+      "teamName": "Horizon1",
+      "role": "PM",
+      "systemRole": "PM",
+      "permissionLevel": 3,
+      "organizationRank": "DEPUTY_TEAM_LEADER",
+      "jobTitle": "[DEMO] Deputy Lead",
+      "employmentStatus": "ACTIVE",
+      "isActive": true,
+      "position": "[DEMO] Deputy Lead",
+      "accessGrade": "GRADE_3",
+      "capabilities": [],
+      "organizationMemberships": [
+        {
+          "organizationId": "STRUCTURE",
+          "status": "ACTIVE",
+          "membershipType": "PRIMARY"
+        }
+      ]
+    },
+    {
+      "id": "demo-vq-structure-004",
+      "employeeNumber": "DEMO-VQ-0037",
+      "name": "[DEMO] Viet QS Team Member 037",
+      "displayName": "[DEMO] Viet QS Team Member 037",
+      "email": "demo.vq.037@example.invalid",
+      "companyId": "VIET_QS",
+      "companyName": "VIETQS",
+      "departmentId": "STRUCTURE",
+      "departmentName": "Structure",
+      "teamName": "Horizon1",
+      "role": "WORKER",
+      "systemRole": "WORKER",
+      "permissionLevel": 2,
+      "organizationRank": "STAFF",
+      "jobTitle": "[DEMO] Team Member",
+      "employmentStatus": "ACTIVE",
+      "isActive": true,
+      "position": "[DEMO] Team Member",
+      "accessGrade": "GRADE_4",
+      "capabilities": [],
+      "organizationMemberships": [
+        {
+          "organizationId": "STRUCTURE",
+          "status": "ACTIVE",
+          "membershipType": "PRIMARY"
+        }
+      ]
+    },
+    {
+      "id": "demo-vq-structure-005",
+      "employeeNumber": "DEMO-VQ-0038",
+      "name": "[DEMO] Viet QS Team Member 038",
+      "displayName": "[DEMO] Viet QS Team Member 038",
+      "email": "demo.vq.038@example.invalid",
+      "companyId": "VIET_QS",
+      "companyName": "VIETQS",
+      "departmentId": "STRUCTURE",
+      "departmentName": "Structure",
+      "teamName": "Horizon1",
+      "role": "WORKER",
+      "systemRole": "WORKER",
+      "permissionLevel": 2,
+      "organizationRank": "STAFF",
+      "jobTitle": "[DEMO] Team Member",
+      "employmentStatus": "ACTIVE",
+      "isActive": true,
+      "position": "[DEMO] Team Member",
+      "accessGrade": "GRADE_4",
+      "capabilities": [],
+      "organizationMemberships": [
+        {
+          "organizationId": "STRUCTURE",
+          "status": "ACTIVE",
+          "membershipType": "PRIMARY"
+        }
+      ]
+    },
+    {
+      "id": "demo-vq-structure-006",
+      "employeeNumber": "DEMO-VQ-0039",
+      "name": "[DEMO] Viet QS Team Lead 039",
+      "displayName": "[DEMO] Viet QS Team Lead 039",
+      "email": "demo.vq.039@example.invalid",
+      "companyId": "VIET_QS",
+      "companyName": "VIETQS",
+      "departmentId": "STRUCTURE",
+      "departmentName": "Structure",
+      "teamName": "Horizon2",
+      "role": "PM",
+      "systemRole": "PM",
+      "permissionLevel": 3,
+      "organizationRank": "TEAM_LEADER",
+      "jobTitle": "[DEMO] Team Lead",
+      "employmentStatus": "ACTIVE",
+      "isActive": true,
+      "position": "[DEMO] Team Lead",
+      "accessGrade": "GRADE_2",
+      "capabilities": [],
+      "organizationMemberships": [
+        {
+          "organizationId": "STRUCTURE",
+          "status": "ACTIVE",
+          "membershipType": "PRIMARY"
+        }
+      ]
+    },
+    {
+      "id": "demo-vq-structure-007",
+      "employeeNumber": "DEMO-VQ-0040",
+      "name": "[DEMO] Viet QS Deputy Lead 040",
+      "displayName": "[DEMO] Viet QS Deputy Lead 040",
+      "email": "demo.vq.040@example.invalid",
+      "companyId": "VIET_QS",
+      "companyName": "VIETQS",
+      "departmentId": "STRUCTURE",
+      "departmentName": "Structure",
+      "teamName": "Horizon2",
+      "role": "PM",
+      "systemRole": "PM",
+      "permissionLevel": 3,
+      "organizationRank": "DEPUTY_TEAM_LEADER",
+      "jobTitle": "[DEMO] Deputy Lead",
+      "employmentStatus": "ACTIVE",
+      "isActive": true,
+      "position": "[DEMO] Deputy Lead",
+      "accessGrade": "GRADE_3",
+      "capabilities": [],
+      "organizationMemberships": [
+        {
+          "organizationId": "STRUCTURE",
+          "status": "ACTIVE",
+          "membershipType": "PRIMARY"
+        }
+      ]
+    },
+    {
+      "id": "demo-vq-structure-008",
+      "employeeNumber": "DEMO-VQ-0041",
+      "name": "[DEMO] Viet QS Team Member 041",
+      "displayName": "[DEMO] Viet QS Team Member 041",
+      "email": "demo.vq.041@example.invalid",
+      "companyId": "VIET_QS",
+      "companyName": "VIETQS",
+      "departmentId": "STRUCTURE",
+      "departmentName": "Structure",
+      "teamName": "Horizon2",
+      "role": "WORKER",
+      "systemRole": "WORKER",
+      "permissionLevel": 2,
+      "organizationRank": "STAFF",
+      "jobTitle": "[DEMO] Team Member",
+      "employmentStatus": "ACTIVE",
+      "isActive": true,
+      "position": "[DEMO] Team Member",
+      "accessGrade": "GRADE_4",
+      "capabilities": [],
+      "organizationMemberships": [
+        {
+          "organizationId": "STRUCTURE",
+          "status": "ACTIVE",
+          "membershipType": "PRIMARY"
+        }
+      ]
+    },
+    {
+      "id": "demo-vq-structure-009",
+      "employeeNumber": "DEMO-VQ-0042",
+      "name": "[DEMO] Viet QS Team Lead 042",
+      "displayName": "[DEMO] Viet QS Team Lead 042",
+      "email": "demo.vq.042@example.invalid",
+      "companyId": "VIET_QS",
+      "companyName": "VIETQS",
+      "departmentId": "STRUCTURE",
+      "departmentName": "Structure",
+      "teamName": "Horizon3",
+      "role": "PM",
+      "systemRole": "PM",
+      "permissionLevel": 3,
+      "organizationRank": "TEAM_LEADER",
+      "jobTitle": "[DEMO] Team Lead",
+      "employmentStatus": "ACTIVE",
+      "isActive": true,
+      "position": "[DEMO] Team Lead",
+      "accessGrade": "GRADE_2",
+      "capabilities": [],
+      "organizationMemberships": [
+        {
+          "organizationId": "STRUCTURE",
+          "status": "ACTIVE",
+          "membershipType": "PRIMARY"
+        }
+      ]
+    },
+    {
+      "id": "demo-vq-structure-010",
+      "employeeNumber": "DEMO-VQ-0043",
+      "name": "[DEMO] Viet QS Team Lead 043",
+      "displayName": "[DEMO] Viet QS Team Lead 043",
+      "email": "demo.vq.043@example.invalid",
+      "companyId": "VIET_QS",
+      "companyName": "VIETQS",
+      "departmentId": "STRUCTURE",
+      "departmentName": "Structure",
+      "teamName": "Horizon3",
+      "role": "PM",
+      "systemRole": "PM",
+      "permissionLevel": 3,
+      "organizationRank": "TEAM_LEADER",
+      "jobTitle": "[DEMO] Team Lead",
+      "employmentStatus": "ACTIVE",
+      "isActive": true,
+      "position": "[DEMO] Team Lead",
+      "accessGrade": "GRADE_2",
+      "capabilities": [],
+      "organizationMemberships": [
+        {
+          "organizationId": "STRUCTURE",
+          "status": "ACTIVE",
+          "membershipType": "PRIMARY"
+        }
+      ]
+    },
+    {
+      "id": "demo-vq-structure-011",
+      "employeeNumber": "DEMO-VQ-0044",
+      "name": "[DEMO] Viet QS Team Member 044",
+      "displayName": "[DEMO] Viet QS Team Member 044",
+      "email": "demo.vq.044@example.invalid",
+      "companyId": "VIET_QS",
+      "companyName": "VIETQS",
+      "departmentId": "STRUCTURE",
+      "departmentName": "Structure",
+      "teamName": "Horizon3",
+      "role": "WORKER",
+      "systemRole": "WORKER",
+      "permissionLevel": 2,
+      "organizationRank": "STAFF",
+      "jobTitle": "[DEMO] Team Member",
+      "employmentStatus": "ACTIVE",
+      "isActive": true,
+      "position": "[DEMO] Team Member",
+      "accessGrade": "GRADE_4",
+      "capabilities": [],
+      "organizationMemberships": [
+        {
+          "organizationId": "STRUCTURE",
+          "status": "ACTIVE",
+          "membershipType": "PRIMARY"
+        }
+      ]
+    },
+    {
+      "id": "demo-vq-structure-012",
+      "employeeNumber": "DEMO-VQ-0045",
+      "name": "[DEMO] Viet QS Team Lead 045",
+      "displayName": "[DEMO] Viet QS Team Lead 045",
+      "email": "demo.vq.045@example.invalid",
+      "companyId": "VIET_QS",
+      "companyName": "VIETQS",
+      "departmentId": "STRUCTURE",
+      "departmentName": "Structure",
+      "teamName": "Vertical1",
+      "role": "PM",
+      "systemRole": "PM",
+      "permissionLevel": 3,
+      "organizationRank": "TEAM_LEADER",
+      "jobTitle": "[DEMO] Team Lead",
+      "employmentStatus": "ACTIVE",
+      "isActive": true,
+      "position": "[DEMO] Team Lead",
+      "accessGrade": "GRADE_2",
+      "capabilities": [],
+      "organizationMemberships": [
+        {
+          "organizationId": "STRUCTURE",
+          "status": "ACTIVE",
+          "membershipType": "PRIMARY"
+        }
+      ]
+    },
+    {
+      "id": "demo-vq-structure-013",
+      "employeeNumber": "DEMO-VQ-0046",
+      "name": "[DEMO] Viet QS Deputy Lead 046",
+      "displayName": "[DEMO] Viet QS Deputy Lead 046",
+      "email": "demo.vq.046@example.invalid",
+      "companyId": "VIET_QS",
+      "companyName": "VIETQS",
+      "departmentId": "STRUCTURE",
+      "departmentName": "Structure",
+      "teamName": "Vertical1",
+      "role": "PM",
+      "systemRole": "PM",
+      "permissionLevel": 3,
+      "organizationRank": "DEPUTY_TEAM_LEADER",
+      "jobTitle": "[DEMO] Deputy Lead",
+      "employmentStatus": "ACTIVE",
+      "isActive": true,
+      "position": "[DEMO] Deputy Lead",
+      "accessGrade": "GRADE_3",
+      "capabilities": [],
+      "organizationMemberships": [
+        {
+          "organizationId": "STRUCTURE",
+          "status": "ACTIVE",
+          "membershipType": "PRIMARY"
+        }
+      ]
+    },
+    {
+      "id": "demo-vq-structure-014",
+      "employeeNumber": "DEMO-VQ-0047",
+      "name": "[DEMO] Viet QS Team Member 047",
+      "displayName": "[DEMO] Viet QS Team Member 047",
+      "email": "demo.vq.047@example.invalid",
+      "companyId": "VIET_QS",
+      "companyName": "VIETQS",
+      "departmentId": "STRUCTURE",
+      "departmentName": "Structure",
+      "teamName": "Vertical1",
+      "role": "WORKER",
+      "systemRole": "WORKER",
+      "permissionLevel": 2,
+      "organizationRank": "STAFF",
+      "jobTitle": "[DEMO] Team Member",
+      "employmentStatus": "ACTIVE",
+      "isActive": true,
+      "position": "[DEMO] Team Member",
+      "accessGrade": "GRADE_4",
+      "capabilities": [],
+      "organizationMemberships": [
+        {
+          "organizationId": "STRUCTURE",
+          "status": "ACTIVE",
+          "membershipType": "PRIMARY"
+        }
+      ]
+    },
+    {
+      "id": "demo-vq-structure-015",
+      "employeeNumber": "DEMO-VQ-0048",
+      "name": "[DEMO] Viet QS Team Lead 048",
+      "displayName": "[DEMO] Viet QS Team Lead 048",
+      "email": "demo.vq.048@example.invalid",
+      "companyId": "VIET_QS",
+      "companyName": "VIETQS",
+      "departmentId": "STRUCTURE",
+      "departmentName": "Structure",
+      "teamName": "Vertical2",
+      "role": "PM",
+      "systemRole": "PM",
+      "permissionLevel": 3,
+      "organizationRank": "TEAM_LEADER",
+      "jobTitle": "[DEMO] Team Lead",
+      "employmentStatus": "ACTIVE",
+      "isActive": true,
+      "position": "[DEMO] Team Lead",
+      "accessGrade": "GRADE_2",
+      "capabilities": [],
+      "organizationMemberships": [
+        {
+          "organizationId": "STRUCTURE",
+          "status": "ACTIVE",
+          "membershipType": "PRIMARY"
+        }
+      ]
+    },
+    {
+      "id": "demo-vq-structure-016",
+      "employeeNumber": "DEMO-VQ-0049",
+      "name": "[DEMO] Viet QS Deputy Lead 049",
+      "displayName": "[DEMO] Viet QS Deputy Lead 049",
+      "email": "demo.vq.049@example.invalid",
+      "companyId": "VIET_QS",
+      "companyName": "VIETQS",
+      "departmentId": "STRUCTURE",
+      "departmentName": "Structure",
+      "teamName": "Vertical2",
+      "role": "PM",
+      "systemRole": "PM",
+      "permissionLevel": 3,
+      "organizationRank": "DEPUTY_TEAM_LEADER",
+      "jobTitle": "[DEMO] Deputy Lead",
+      "employmentStatus": "ACTIVE",
+      "isActive": true,
+      "position": "[DEMO] Deputy Lead",
+      "accessGrade": "GRADE_3",
+      "capabilities": [],
+      "organizationMemberships": [
+        {
+          "organizationId": "STRUCTURE",
+          "status": "ACTIVE",
+          "membershipType": "PRIMARY"
+        }
+      ]
+    },
+    {
+      "id": "demo-vq-structure-017",
+      "employeeNumber": "DEMO-VQ-0050",
+      "name": "[DEMO] Viet QS Team Member 050",
+      "displayName": "[DEMO] Viet QS Team Member 050",
+      "email": "demo.vq.050@example.invalid",
+      "companyId": "VIET_QS",
+      "companyName": "VIETQS",
+      "departmentId": "STRUCTURE",
+      "departmentName": "Structure",
+      "teamName": "Vertical2",
+      "role": "WORKER",
+      "systemRole": "WORKER",
+      "permissionLevel": 2,
+      "organizationRank": "STAFF",
+      "jobTitle": "[DEMO] Team Member",
+      "employmentStatus": "ACTIVE",
+      "isActive": true,
+      "position": "[DEMO] Team Member",
+      "accessGrade": "GRADE_4",
+      "capabilities": [],
+      "organizationMemberships": [
+        {
+          "organizationId": "STRUCTURE",
+          "status": "ACTIVE",
+          "membershipType": "PRIMARY"
+        }
+      ]
+    },
+    {
+      "id": "demo-vq-structure-018",
+      "employeeNumber": "DEMO-VQ-0051",
+      "name": "[DEMO] Viet QS Team Lead 051",
+      "displayName": "[DEMO] Viet QS Team Lead 051",
+      "email": "demo.vq.051@example.invalid",
+      "companyId": "VIET_QS",
+      "companyName": "VIETQS",
+      "departmentId": "STRUCTURE",
+      "departmentName": "Structure",
+      "teamName": "Vertical3",
+      "role": "PM",
+      "systemRole": "PM",
+      "permissionLevel": 3,
+      "organizationRank": "TEAM_LEADER",
+      "jobTitle": "[DEMO] Team Lead",
+      "employmentStatus": "ACTIVE",
+      "isActive": true,
+      "position": "[DEMO] Team Lead",
+      "accessGrade": "GRADE_2",
+      "capabilities": [],
+      "organizationMemberships": [
+        {
+          "organizationId": "STRUCTURE",
+          "status": "ACTIVE",
+          "membershipType": "PRIMARY"
+        }
+      ]
+    },
+    {
+      "id": "demo-vq-structure-019",
+      "employeeNumber": "DEMO-VQ-0052",
+      "name": "[DEMO] Viet QS Deputy Lead 052",
+      "displayName": "[DEMO] Viet QS Deputy Lead 052",
+      "email": "demo.vq.052@example.invalid",
+      "companyId": "VIET_QS",
+      "companyName": "VIETQS",
+      "departmentId": "STRUCTURE",
+      "departmentName": "Structure",
+      "teamName": "Vertical3",
+      "role": "PM",
+      "systemRole": "PM",
+      "permissionLevel": 3,
+      "organizationRank": "DEPUTY_TEAM_LEADER",
+      "jobTitle": "[DEMO] Deputy Lead",
+      "employmentStatus": "ACTIVE",
+      "isActive": true,
+      "position": "[DEMO] Deputy Lead",
+      "accessGrade": "GRADE_3",
+      "capabilities": [],
+      "organizationMemberships": [
+        {
+          "organizationId": "STRUCTURE",
+          "status": "ACTIVE",
+          "membershipType": "PRIMARY"
+        }
+      ]
+    },
+    {
+      "id": "demo-vq-structure-020",
+      "employeeNumber": "DEMO-VQ-0053",
+      "name": "[DEMO] Viet QS Team Member 053",
+      "displayName": "[DEMO] Viet QS Team Member 053",
+      "email": "demo.vq.053@example.invalid",
+      "companyId": "VIET_QS",
+      "companyName": "VIETQS",
+      "departmentId": "STRUCTURE",
+      "departmentName": "Structure",
+      "teamName": "Vertical3",
+      "role": "WORKER",
+      "systemRole": "WORKER",
+      "permissionLevel": 2,
+      "organizationRank": "STAFF",
+      "jobTitle": "[DEMO] Team Member",
+      "employmentStatus": "ACTIVE",
+      "isActive": true,
+      "position": "[DEMO] Team Member",
+      "accessGrade": "GRADE_4",
+      "capabilities": [],
+      "organizationMemberships": [
+        {
+          "organizationId": "STRUCTURE",
+          "status": "ACTIVE",
+          "membershipType": "PRIMARY"
+        }
+      ]
+    },
+    {
+      "id": "demo-vq-structure-021",
+      "employeeNumber": "DEMO-VQ-0054",
+      "name": "[DEMO] Viet QS Team Member 054",
+      "displayName": "[DEMO] Viet QS Team Member 054",
+      "email": "demo.vq.054@example.invalid",
+      "companyId": "VIET_QS",
+      "companyName": "VIETQS",
+      "departmentId": "STRUCTURE",
+      "departmentName": "Structure",
+      "teamName": "Vertical3",
+      "role": "WORKER",
+      "systemRole": "WORKER",
+      "permissionLevel": 2,
+      "organizationRank": "STAFF",
+      "jobTitle": "[DEMO] Team Member",
+      "employmentStatus": "ACTIVE",
+      "isActive": true,
+      "position": "[DEMO] Team Member",
+      "accessGrade": "GRADE_4",
+      "capabilities": [],
+      "organizationMemberships": [
+        {
+          "organizationId": "STRUCTURE",
+          "status": "ACTIVE",
+          "membershipType": "PRIMARY"
+        }
+      ]
+    },
+    {
+      "id": "demo-vq-structure-022",
+      "employeeNumber": "DEMO-VQ-0055",
+      "name": "[DEMO] Viet QS Team Member 055",
+      "displayName": "[DEMO] Viet QS Team Member 055",
+      "email": "demo.vq.055@example.invalid",
+      "companyId": "VIET_QS",
+      "companyName": "VIETQS",
+      "departmentId": "STRUCTURE",
+      "departmentName": "Structure",
+      "teamName": "Vertical3",
+      "role": "WORKER",
+      "systemRole": "WORKER",
+      "permissionLevel": 2,
+      "organizationRank": "STAFF",
+      "jobTitle": "[DEMO] Team Member",
+      "employmentStatus": "ACTIVE",
+      "isActive": true,
+      "position": "[DEMO] Team Member",
+      "accessGrade": "GRADE_4",
+      "capabilities": [],
+      "organizationMemberships": [
+        {
+          "organizationId": "STRUCTURE",
+          "status": "ACTIVE",
+          "membershipType": "PRIMARY"
+        }
+      ]
+    },
+    {
+      "id": "demo-vq-civil-001",
+      "employeeNumber": "DEMO-VQ-0056",
+      "name": "[DEMO] Viet QS Team Member 056",
+      "displayName": "[DEMO] Viet QS Team Member 056",
+      "email": "demo.vq.056@example.invalid",
+      "companyId": "VIET_QS",
+      "companyName": "VIETQS",
+      "departmentId": "CIVIL_LANDSCAPE",
+      "departmentName": "Civil",
+      "teamName": "Civil",
+      "role": "WORKER",
+      "systemRole": "WORKER",
+      "permissionLevel": 2,
+      "organizationRank": "STAFF",
+      "jobTitle": "[DEMO] Team Member",
+      "employmentStatus": "ACTIVE",
+      "isActive": true,
+      "position": "[DEMO] Team Member",
+      "accessGrade": "GRADE_4",
+      "capabilities": [],
+      "organizationMemberships": [
+        {
+          "organizationId": "CIVIL_LANDSCAPE",
+          "status": "ACTIVE",
+          "membershipType": "PRIMARY"
+        }
+      ]
+    },
+    {
+      "id": "demo-vq-civil-002",
+      "employeeNumber": "DEMO-VQ-0057",
+      "name": "[DEMO] Viet QS Team Member 057",
+      "displayName": "[DEMO] Viet QS Team Member 057",
+      "email": "demo.vq.057@example.invalid",
+      "companyId": "VIET_QS",
+      "companyName": "VIETQS",
+      "departmentId": "CIVIL_LANDSCAPE",
+      "departmentName": "Civil",
+      "teamName": "Civil",
+      "role": "WORKER",
+      "systemRole": "WORKER",
+      "permissionLevel": 2,
+      "organizationRank": "STAFF",
+      "jobTitle": "[DEMO] Team Member",
+      "employmentStatus": "ACTIVE",
+      "isActive": true,
+      "position": "[DEMO] Team Member",
+      "accessGrade": "GRADE_4",
+      "capabilities": [],
+      "organizationMemberships": [
+        {
+          "organizationId": "CIVIL_LANDSCAPE",
+          "status": "ACTIVE",
+          "membershipType": "PRIMARY"
+        }
+      ]
+    },
+    {
+      "id": "demo-vq-development-001",
+      "employeeNumber": "DEMO-VQ-0058",
+      "name": "[DEMO] Viet QS Team Lead 058",
+      "displayName": "[DEMO] Viet QS Team Lead 058",
+      "email": "demo.vq.058@example.invalid",
+      "companyId": "VIET_QS",
+      "companyName": "VIETQS",
+      "departmentId": "DEVELOPMENT",
+      "departmentName": "개발 T/F",
+      "teamName": "Development",
+      "role": "PM",
+      "systemRole": "PM",
+      "permissionLevel": 3,
+      "organizationRank": "TEAM_LEADER",
+      "jobTitle": "[DEMO] Team Lead",
+      "employmentStatus": "ACTIVE",
+      "isActive": true,
+      "position": "[DEMO] Team Lead",
+      "accessGrade": "GRADE_2",
+      "capabilities": [],
+      "organizationMemberships": [
+        {
+          "organizationId": "DEVELOPMENT",
+          "status": "ACTIVE",
+          "membershipType": "PRIMARY"
+        }
+      ]
+    },
+    {
+      "id": "demo-vq-development-002",
+      "employeeNumber": "DEMO-VQ-0059",
+      "name": "[DEMO] Viet QS Team Member 059",
+      "displayName": "[DEMO] Viet QS Team Member 059",
+      "email": "demo.vq.059@example.invalid",
+      "companyId": "VIET_QS",
+      "companyName": "VIETQS",
+      "departmentId": "DEVELOPMENT",
+      "departmentName": "개발 T/F",
+      "teamName": "Development",
+      "role": "WORKER",
+      "systemRole": "WORKER",
+      "permissionLevel": 2,
+      "organizationRank": "STAFF",
+      "jobTitle": "[DEMO] Team Member",
+      "employmentStatus": "ACTIVE",
+      "isActive": true,
+      "position": "[DEMO] Team Member",
+      "accessGrade": "GRADE_4",
+      "capabilities": [],
+      "organizationMemberships": [
+        {
+          "organizationId": "DEVELOPMENT",
+          "status": "ACTIVE",
+          "membershipType": "PRIMARY"
+        }
+      ]
+    },
+    {
+      "id": "demo-vq-structure-023",
+      "name": "[DEMO] Viet QS Team Lead 060",
+      "displayName": "[DEMO] Viet QS Team Lead 060",
+      "companyId": "VIET_QS",
+      "companyName": "VIETQS",
+      "departmentId": "STRUCTURE",
+      "departmentName": "Structure",
+      "teamName": "Demo",
+      "role": "PM",
+      "systemRole": "PM",
+      "permissionLevel": 3,
+      "employmentStatus": "ACTIVE",
+      "isActive": true,
+      "organizationRank": "TEAM_LEADER",
+      "employeeNumber": "DEMO-VQ-0060",
+      "email": "demo.vq.060@example.invalid",
+      "jobTitle": "[DEMO] Team Lead",
+      "position": "[DEMO] Team Lead",
+      "accessGrade": "GRADE_2",
+      "capabilities": [],
+      "organizationMemberships": [
+        {
+          "organizationId": "STRUCTURE",
+          "status": "ACTIVE",
+          "membershipType": "PRIMARY"
+        }
+      ]
+    },
+    {
+      "id": "demo-vq-structure-024",
+      "name": "[DEMO] Viet QS Team Member 061",
+      "displayName": "[DEMO] Viet QS Team Member 061",
+      "companyId": "VIET_QS",
+      "companyName": "VIETQS",
+      "departmentId": "STRUCTURE",
+      "departmentName": "Structure",
+      "teamName": "Demo",
+      "role": "WORKER",
+      "systemRole": "WORKER",
+      "permissionLevel": 2,
+      "employmentStatus": "ACTIVE",
+      "isActive": true,
+      "organizationRank": "STAFF",
+      "employeeNumber": "DEMO-VQ-0061",
+      "email": "demo.vq.061@example.invalid",
+      "jobTitle": "[DEMO] Team Member",
+      "position": "[DEMO] Team Member",
+      "accessGrade": "GRADE_4",
+      "capabilities": [],
+      "organizationMemberships": [
+        {
+          "organizationId": "STRUCTURE",
+          "status": "ACTIVE",
+          "membershipType": "PRIMARY"
+        }
+      ]
+    }
+  ]
+}

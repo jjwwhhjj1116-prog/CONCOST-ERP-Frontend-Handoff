@@ -1,0 +1,328 @@
+{
+  "components": {
+    "schemas": {
+      "CalendarAttendeeDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "personnelCardId",
+          "response",
+          "required"
+        ],
+        "properties": {
+          "personnelCardId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "response": {
+            "type": "string",
+            "enum": [
+              "NEEDS_ACTION",
+              "ACCEPTED",
+              "DECLINED",
+              "TENTATIVE"
+            ]
+          },
+          "required": {
+            "type": "boolean"
+          }
+        }
+      },
+      "RecurrenceRuleDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "frequency",
+          "interval",
+          "timezone"
+        ],
+        "properties": {
+          "frequency": {
+            "type": "string",
+            "enum": [
+              "DAILY",
+              "WEEKLY",
+              "MONTHLY",
+              "YEARLY"
+            ]
+          },
+          "interval": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "until": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "count": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 1
+          },
+          "byWeekday": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "MO",
+                "TU",
+                "WE",
+                "TH",
+                "FR",
+                "SA",
+                "SU"
+              ]
+            }
+          },
+          "timezone": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      "CalendarEventDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "companyId",
+          "calendarId",
+          "scope",
+          "title",
+          "description",
+          "startsAt",
+          "endsAt",
+          "timezone",
+          "allDay",
+          "recurrence",
+          "attendees",
+          "status",
+          "projectId",
+          "revision",
+          "visibility"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "companyId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "calendarId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "scope": {
+            "$ref": "./collaboration-common.yaml#/components/schemas/CollaborationScope"
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "startsAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endsAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "timezone": {
+            "type": "string",
+            "minLength": 1
+          },
+          "allDay": {
+            "type": "boolean"
+          },
+          "recurrence": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/RecurrenceRuleDto"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "attendees": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CalendarAttendeeDto"
+            }
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "CONFIRMED",
+              "TENTATIVE",
+              "CANCELLED"
+            ]
+          },
+          "projectId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "visibility": {
+            "$ref": "#/components/schemas/CalendarVisibility"
+          }
+        }
+      },
+      "SaveCalendarEventRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "calendarId",
+          "scope",
+          "title",
+          "startsAt",
+          "endsAt",
+          "timezone",
+          "allDay",
+          "visibility"
+        ],
+        "properties": {
+          "calendarId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "scope": {
+            "$ref": "./collaboration-common.yaml#/components/schemas/CollaborationScope"
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "startsAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endsAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "timezone": {
+            "type": "string",
+            "minLength": 1
+          },
+          "allDay": {
+            "type": "boolean"
+          },
+          "recurrence": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/RecurrenceRuleDto"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "attendeePersonnelCardIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "uniqueItems": true
+          },
+          "projectId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "visibility": {
+            "$ref": "#/components/schemas/CalendarVisibility"
+          },
+          "recurrenceEditScope": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RecurrenceEditScope"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": "THIS_OCCURRENCE"
+          }
+        }
+      },
+      "CalendarResponseRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "expectedRevision",
+          "response"
+        ],
+        "properties": {
+          "expectedRevision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "response": {
+            "type": "string",
+            "enum": [
+              "ACCEPTED",
+              "DECLINED",
+              "TENTATIVE"
+            ]
+          }
+        }
+      },
+      "CalendarVisibility": {
+        "type": "string",
+        "enum": [
+          "PRIVATE",
+          "BUSY_ONLY",
+          "DETAILS_TO_SCOPED_MEMBERS",
+          "COMPANY_VISIBLE",
+          "RESTRICTED"
+        ]
+      },
+      "RecurrenceEditScope": {
+        "type": "string",
+        "enum": [
+          "THIS_OCCURRENCE",
+          "THIS_AND_FUTURE",
+          "ENTIRE_SERIES"
+        ]
+      }
+    }
+  },
+  "x-final-contract": {
+    "decisions": [
+      "COLLAB-DEC-09",
+      "COLLAB-DEC-10"
+    ],
+    "personalDefaultVisibility": "BUSY_ONLY",
+    "recurrenceEditDefault": "THIS_OCCURRENCE"
+  }
+}

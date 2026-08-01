@@ -1,0 +1,38 @@
+priority,module,frontend_route,frontend_boundary,operation_id,backend_owner,company_scope,revision,idempotency,provider_requirement,current_state
+P0,Project,/projects,PROJECT,listProjects,Viet QS Backend,required,response meta,no,none,BACKEND_REQUIRED
+P0,Project,/projects,PROJECT,getProject,Viet QS Backend,required,response meta,no,none,BACKEND_REQUIRED
+P0,Project Intake,/projects/intake,PROJECT,createProjectIntakeDraft,Viet QS Backend,required,required,required,none,BACKEND_REQUIRED
+P0,Project Intake,/projects/intake,PROJECT,submitProjectIntake,Viet QS Backend,required,required,required,none,BACKEND_REQUIRED
+P0,Drive,/drive,DRIVE,getDriveCapabilities,Viet QS Backend,required,response meta,no,Google Shared Drive,PROVIDER_REQUIRED
+P0,Drive,/drive,DRIVE,listDriveRoots,Viet QS Backend,required,response meta,no,Google Shared Drive,PROVIDER_REQUIRED
+P0,Drive,/drive,DRIVE,createUploadIntent,Viet QS Backend,required,required,required,Google Shared Drive,PROVIDER_REQUIRED
+P0,Drive,/drive,DRIVE,finalizeFile,Viet QS Backend,required,required,required,Google Shared Drive,PROVIDER_REQUIRED
+P0,Approval,/approvals,APPROVAL,listApprovalForms,Viet QS Backend,required,response meta,no,approval policy,BACKEND_REQUIRED
+P0,Approval,/approvals,APPROVAL,createApprovalDraft,Viet QS Backend,required,required,required,approval policy,BACKEND_REQUIRED
+P0,Approval,/approvals,APPROVAL,submitApprovalDraft,Viet QS Backend,required,required,required,approval policy,BACKEND_REQUIRED
+P0,Approval,/approvals,APPROVAL,decideApprovalStep,Viet QS Backend,required,required,required,approval policy,BACKEND_REQUIRED
+P0,Mail,/mail,MAIL,getMailCapabilities,Viet QS Backend,required,response meta,no,mail Provider,PROVIDER_REQUIRED
+P0,Mail,/mail,MAIL,listMailFolders,Viet QS Backend,required,response meta,no,mail Provider,PROVIDER_REQUIRED
+P0,Mail,/mail,MAIL,listMailMessages,Viet QS Backend,required,response meta,no,mail Provider,PROVIDER_REQUIRED
+P0,Mail,/mail,MAIL,createMailDraft,Viet QS Backend,required,required,required,mail Provider,PROVIDER_REQUIRED
+P0,Mail,/mail,MAIL,sendMailDraft,Viet QS Backend,required,required,required,mail Provider,PROVIDER_REQUIRED
+P0,Business Card,/sales/business-cards,BUSINESS_CARD,createBusinessCardCapture,Viet QS Backend,required,required,required,OCR Provider,PROVIDER_REQUIRED
+P0,Business Card,/sales/business-cards,BUSINESS_CARD,startBusinessCardOcr,Viet QS Backend,required,required,required,OCR Provider,PROVIDER_REQUIRED
+P0,Business Card,/sales/business-cards,BUSINESS_CARD,reviewBusinessCardOcr,Viet QS Backend,required,required,required,OCR Provider,BACKEND_REQUIRED
+P0,Business Card,/sales/business-cards,BUSINESS_CARD,createContactFromBusinessCard,Viet QS Backend,required,required,required,optional Google Contacts,BACKEND_REQUIRED
+P0,AI Assistant,/ai-assistant,AI_ASSISTANT,getAiCapabilities,Viet QS Backend,required,response meta,no,AI Provider,PROVIDER_REQUIRED
+P0,AI Assistant,/ai-assistant,AI_ASSISTANT,createAiTranscriptionJob,Viet QS Backend,required,required,required,STT Provider,PROVIDER_REQUIRED
+P0,AI Assistant,/ai-assistant,AI_ASSISTANT,createAiSummarizationJob,Viet QS Backend,required,required,required,AI Provider,PROVIDER_REQUIRED
+P0,AI Assistant,/ai-assistant,AI_ASSISTANT,createProjectMeetingMinute,Viet QS Backend,required,required,required,none,BACKEND_REQUIRED
+P1,Calendar,/calendar,CALENDAR,listCalendarEvents,Viet QS Backend,required,response meta,no,none,BACKEND_REQUIRED
+P1,Calendar,/calendar,CALENDAR,createCalendarEvent,Viet QS Backend,required,required,required,none,BACKEND_REQUIRED
+P1,Task,/tasks/my,TASK,listCollaborationTasks,Viet QS Backend,required,response meta,no,none,BACKEND_REQUIRED
+P1,Task,/tasks/my,TASK,createCollaborationTask,Viet QS Backend,required,required,required,none,BACKEND_REQUIRED
+P1,Task,/tasks/my,TASK,updateCollaborationTask,Viet QS Backend,required,required,required,none,BACKEND_REQUIRED
+P1,Notification,/notifications,NOTIFICATION,listNotifications,Viet QS Backend,required,response meta,no,delivery Provider deferred,BACKEND_REQUIRED
+P1,Notification,/notifications,NOTIFICATION,markNotificationRead,Viet QS Backend,required,required,required,none,BACKEND_REQUIRED
+P2,Sales,/sales,SALES,listOpportunities,Viet QS Backend,required,response meta,no,none,BACKEND_REQUIRED
+P2,Sales,/sales,SALES,createOpportunity,Viet QS Backend,required,required,required,none,BACKEND_REQUIRED
+P2,Finance,/finance,FINANCE,getFinanceDashboard,Viet QS Backend,required,response meta,no,finance Providers deferred,BACKEND_REQUIRED
+P2,Finance,/finance,FINANCE,listFinanceTransactions,Viet QS Backend,required,response meta,no,finance Providers deferred,BACKEND_REQUIRED
+P2,Finance,/finance,FINANCE,createFinanceTransaction,Viet QS Backend,required,required,required,finance Providers deferred,BACKEND_REQUIRED

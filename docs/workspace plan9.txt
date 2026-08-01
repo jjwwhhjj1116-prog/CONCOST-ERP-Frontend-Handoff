@@ -1,0 +1,896 @@
+# WORKSPACE PLAN 9 — 최종 통합 리포트 검증, Phase 진행 통제, QA/배포 증빙 강화 프롬프트
+
+이 프롬프트는 기존 `workspace plan1.txt`, `workspace plan2.txt`, `workspace plan3.txt`, `workspace plan4.txt`, `workspace plan5.txt`, `workspace plan6.txt`, `workspace plan7.txt`, `workspace plan8.txt` 이후에 추가되는 아홉 번째 보강 지시사항이다.
+
+이번 Plan 9의 목적은 신규 기능을 추가하는 것이 아니라, 현재 Workspace 프로젝트가 Plan 1~8 요구사항을 실제로 어느 범위까지 반영했는지 **보고서, 검증 증빙, QA 체크리스트, 배포 안정성, Phase 진행 통제 기준**으로 정리하는 것이다.
+
+사용자가 제공한 기존 통합 리포트는 주요 기능 요약으로는 적절하나, 다음 항목이 상대적으로 약하다.
+
+- MVP 구현 범위와 확장 범위 구분
+- 실제 데이터 저장 방식 / 로그인 / DB 전환 계획
+- 검색 / 필터 / SavedView 반영 여부
+- VN Excel 스케줄 데이터 검증 결과
+- Data Dictionary / Status Taxonomy / Permission Scope 검증 결과
+- 부재중 / 대리승인 / 업무 재배정 등 운영 예외처리
+- Change Request / VersionSnapshot / 변경 전후 비교
+- Soft Delete / Archive / Backup 정책
+- GitHub Pages 배포 안정성 검증
+- Lint / Build / Test / 커밋 해시 / 배포 URL 증빙
+- Phase 범위 통제 규칙
+
+Plan 9는 위 항목을 Antigravity가 단계별로 검토하고, 최종적으로 `Workspace 프로젝트 통합 리포트`를 보완하도록 지시한다.
+
+---
+
+## 0. Plan 9의 핵심 목적
+
+Antigravity는 Plan 1~8을 모두 읽은 뒤, 다음 기준에 따라 최종 리포트와 검증 체계를 보완해야 한다.
+
+1. 이미 구현된 기능과 설계만 반영된 기능을 구분한다.
+2. MVP 범위와 확장 범위를 명확히 구분한다.
+3. “완료”라는 표현은 실제 증빙이 있을 때만 사용한다.
+4. Lint / Build / Test 통과 여부는 실제 실행 결과와 함께 보고한다.
+5. Git 커밋 해시는 실제 커밋 후에만 보고한다.
+6. GitHub Pages 배포 완료는 실제 URL 검증 후에만 보고한다.
+7. 기존 리포트의 과장 표현을 보수적인 표현으로 수정한다.
+8. Plan 1~8의 누락 항목을 리포트에 추가한다.
+9. Phase 단위 작업 통제를 강화한다.
+10. 원격 push는 사용자 승인 전까지 절대 진행하지 않는다.
+
+---
+
+## 1. 절대 원칙
+
+Antigravity는 다음 원칙을 반드시 지켜라.
+
+- Plan 9는 Plan 1~8을 대체하지 않는다.
+- Plan 9는 Plan 1~8의 최종 검증 및 리포트 보강 지시사항이다.
+- Plan 4의 MVP 제한 원칙을 유지한다.
+- Plan 7의 데이터 사전, 권한 스코프, 테스트 매트릭스 원칙을 유지한다.
+- Plan 8의 평가 모듈은 HealthScore와 EvaluationScore를 분리한다.
+- 실제 검증 없이 “완벽히 통과”, “모두 적용”, “프로덕션 준비 완료”라고 쓰지 않는다.
+- 증빙이 없는 항목은 “설계 반영”, “구현 예정”, “검증 필요”로 표기한다.
+- Phase별 승인 없이 다음 Phase로 넘어가지 않는다.
+- 사용자 승인 없이 GitHub 원격 push를 하지 않는다.
+- 사용자 승인 없이 기존 리포트 파일을 덮어쓰지 않는다.
+- 기존 리포트를 수정할 경우 원본 백업 또는 별도 파일로 생성한다.
+
+---
+
+## 2. 기존 통합 리포트의 수정 기준
+
+사용자가 제공한 기존 리포트에는 다음 문장이 포함될 수 있다.
+
+```text
+지금까지의 모든 기능은 수차례의 Lint 검증 및 Next.js 정적 빌드(Export) 무결성 테스트를 완벽히 통과하였으며, 코드는 모두 origin/main (GitHub)에 동기화되어 실제 프로덕션 서버 및 GitHub Pages에 즉시 배포될 준비가 되어 있습니다.
+```
+
+이 문장은 실제 증빙이 없으면 너무 단정적이다.
+
+### 2-1. 증빙이 없는 경우 수정 문구
+
+실제 lint/build/test/push/deploy 증빙이 없다면 다음처럼 수정하라.
+
+```text
+현재 구현 범위는 주요 기능 단위 검증을 진행할 수 있는 구조로 정리되었으며, 최종 배포 전에는 lint/build 결과, Git 커밋 해시, GitHub Pages 배포 URL, 주요 화면별 QA 결과를 별도 체크리스트로 확인해야 합니다.
+```
+
+### 2-2. 증빙이 있는 경우 포함해야 할 정보
+
+실제로 검증이 완료된 경우에는 다음 정보를 리포트에 반드시 포함하라.
+
+```text
+- 최종 커밋 해시
+- 브랜치명
+- 실행한 명령어
+- lint 결과
+- build 결과
+- test 결과
+- GitHub Pages URL
+- GitHub Pages 검증 일시
+- 검증한 주요 화면 목록
+- 남은 리스크
+```
+
+### 2-3. 금지 표현
+
+증빙 없이 다음 표현을 사용하지 마라.
+
+```text
+완벽히 통과
+모두 반영 완료
+프로덕션 준비 완료
+즉시 배포 가능
+문제 없음
+리스크 없음
+```
+
+대신 다음 표현을 사용하라.
+
+```text
+검증 완료
+검증 필요
+설계 반영
+구현 완료
+추후 확장
+배포 전 확인 필요
+일부 리스크 존재
+```
+
+---
+
+## 3. 최종 리포트에 반드시 추가해야 할 섹션
+
+기존 리포트에 아래 섹션을 추가하거나, 별도 `docs/integrated-workspace-report.md` 문서로 작성한다.
+
+### 3-1. MVP 및 확장 범위 구분
+
+```text
+## MVP 및 확장 범위 구분
+
+### MVP 구현 완료 범위
+- 사용자 / 부서 / 프로젝트 / 업무 카드 기본 구조
+- 역할별 대시보드
+- 수주 프로젝트 등록
+- PM 배정
+- 일정 작성 및 승인/반려
+- 카드형 업무 보드
+- 진행률 수정
+- 기본 알림
+- 기본 AuditLog
+- 직원별 공정표
+- 권한별 데이터 노출 제한
+
+### 설계 반영 / 추후 구현 범위
+- 실제 클라이언트 포털
+- 실제 파일 스토리지 업로드
+- ERP / 그룹웨어 연동
+- 실제 DB 전환
+- 외부 알림 연동
+- 고급 평가 리포트 export
+- AI 자동 일정 배정
+```
+
+### 3-2. 데이터 저장 방식 및 실제 운영 전환 계획
+
+```text
+## 데이터 저장 방식 및 운영 전환 계획
+
+- 현재 데이터 방식: Mock / seed / local state / Zustand / localStorage 여부
+- 실제 DB 적용 필요 여부
+- 인증 방식: Mock user / 실제 로그인 여부
+- 권한 적용 위치: UI 제한 / selector / permission function
+- DB 후보: Supabase, PostgreSQL, Firebase, SQLite 등
+- 백업 및 복구 계획
+```
+
+### 3-3. 검색 / 필터 / SavedView
+
+```text
+## 검색 및 필터 체계
+
+- 글로벌 검색 대상
+- 고급 필터 항목
+- SavedView 지원 여부
+- 역할별 기본 뷰
+- 권한 없는 검색 결과 차단 방식
+```
+
+### 3-4. VN Excel 스케줄 데이터화 검증
+
+```text
+## VN 월별 스케줄표 데이터화
+
+- Excel 파일명
+- 확인한 시트 목록
+- Project List 활용 방식
+- Project / Scope 행 조합 방식
+- ScheduleAssignment 생성 방식
+- 연속 일정 TaskCard 묶음 처리
+- Off / Day / HALF Day 개인 일정 분리
+- sourceSheet / sourceMonth / sourceRow / sourceColumn 추적 정보
+- 샘플 데이터 검증 결과
+```
+
+### 3-5. 데이터 사전 및 상태값 표준화
+
+```text
+## 데이터 사전 및 상태값 표준화
+
+- Data Dictionary 문서 위치
+- Core MVP Entities
+- Extension Entities
+- Project.status
+- TaskCard.status
+- TaskCard.completionStatus
+- ApprovalRequest.status
+- Evaluation 관련 status
+- 일정 데이터 구분 기준
+- 이력 데이터 구분 기준
+```
+
+### 3-6. 운영 예외처리
+
+```text
+## 운영 예외처리
+
+- 부재중 사용자 업무 배정 경고
+- 대리 승인자 지정
+- 퇴사 / 비활성 직원 업무 재배정
+- PM 부재 시 임시 PM 지정
+- 중간관리자 부재 시 대리 승인
+- 대리 승인 AuditLog
+```
+
+### 3-7. 변경요청 및 변경 전후 비교
+
+```text
+## 변경요청 및 변경 이력
+
+- Change Request 유형
+- 승인 전 변경 미반영 원칙
+- 변경 전후 비교
+- VersionSnapshot
+- 복구 가능 구조
+- AuditLog 연동
+```
+
+### 3-8. 데이터 보존 / 삭제 / 백업 정책
+
+```text
+## 데이터 보존 및 백업 정책
+
+- Soft Delete 적용 대상
+- Archive 정책
+- 복구 권한
+- 삭제 / 복구 AuditLog
+- 배포 전 백업
+- 마이그레이션 전 백업
+- 첨부자료 visibility
+```
+
+### 3-9. QA 및 배포 검증
+
+```text
+## QA 및 배포 검증
+
+- lint 실행 결과
+- build 실행 결과
+- test 실행 결과
+- GitHub Pages base path 검증
+- 새로고침 404 검증
+- 정적 asset 경로 검증
+- 모바일 레이아웃 검증
+- 주요 라우트 검증
+- 최종 커밋 해시
+```
+
+---
+
+## 4. Phase 진행 통제 규칙
+
+Plan 9부터는 모든 Phase 진행 시 아래 규칙을 추가로 적용한다.
+
+### 4-1. Phase Lock 원칙
+
+현재 진행 중인 Phase 외의 기능을 구현하지 마라.
+
+예시:
+
+```text
+Phase 47에서는 리포트 누락 분석만 한다.
+Phase 48에서는 리포트 보강 문서 초안만 작성한다.
+Phase 49에서는 QA 체크리스트와 증빙 구조만 만든다.
+Phase 50에서는 실제 lint/build/deploy 검증만 수행한다.
+Phase 51에서는 최종 리포트를 정리한다.
+Phase 52에서는 Plan 1~9 전체 최종 승인 요청만 한다.
+```
+
+현재 Phase에서 다음 Phase 기능이 필요해 보이더라도 임의로 구현하지 말고 “다음 Phase 후보 작업”으로 기록한다.
+
+### 4-2. Phase 시작 전 필수 확인
+
+각 Phase 시작 전 다음을 보고하라.
+
+```text
+[Phase 시작 전 확인]
+
+1. 현재 진행할 Phase 번호
+2. 이 Phase의 목표
+3. 이 Phase의 구현 또는 문서화 범위
+4. 수정 가능한 파일 범위
+5. 수정하면 안 되는 파일 또는 기능
+6. 이전 Phase 완료 여부
+7. 이전 Phase 커밋 해시
+8. 현재 Git 상태
+9. 사용자의 명시적 승인 여부
+```
+
+사용자 승인 없이 Phase를 시작하지 마라.
+
+### 4-3. 분석 Phase와 구현 Phase 구분
+
+다음 Phase는 분석/검증 Phase다.
+
+```text
+Phase 47: 기존 리포트 누락 분석
+Phase 50: QA 및 배포 검증
+Phase 52: 최종 승인 요청
+```
+
+분석/검증 Phase에서는 코드 기능 추가를 하지 마라.
+
+### 4-4. 중복 Plan 파일 감지
+
+작업 폴더 안에 다음처럼 중복 Plan 파일이 있으면 사용자에게 확인하라.
+
+```text
+workspace plan1.txt
+workspace plan1(2).txt
+workspace plan1(3).txt
+workspace plan5.txt
+workspace plan5(2).txt
+```
+
+보고 형식:
+
+```text
+[중복 Plan 파일 감지]
+
+1. 감지한 중복 파일 목록
+2. 파일별 수정일
+3. 파일별 크기
+4. 어떤 파일을 기준으로 사용할지 사용자 확인 필요
+
+어떤 파일을 기준으로 진행할까요?
+```
+
+사용자가 기준 파일을 지정하기 전까지 최종 리포트 보강을 진행하지 마라.
+
+---
+
+# Phase 47 — 기존 통합 리포트 누락 분석 및 증빙 필요 항목 정리
+
+## 목표
+
+사용자가 제공한 `Workspace 프로젝트 통합 리포트 (Plan 1 ~ Plan 8)`을 기준으로, Plan 1~8 대비 빠진 항목과 증빙이 필요한 항목을 분석한다.
+
+## 작업
+
+- 기존 통합 리포트 내용 확인
+- Plan 1~8 요구사항과 비교
+- 구현 완료 / 설계 반영 / 추후 확장 / 검증 필요 항목 구분
+- 과장되거나 증빙 없는 표현 식별
+- 빠진 섹션 목록 작성
+- 리포트 보강 방향 제안
+- Phase 48에서 작성할 문서 구조 제안
+
+## 완료 조건
+
+- 기존 리포트의 누락 항목이 정리됨
+- 증빙이 필요한 항목이 정리됨
+- 보완할 목차가 정리됨
+- 사용자에게 Phase 48 진행 승인 요청
+
+## 자체검수 항목
+
+- Plan 1~8의 주요 요구사항이 비교 대상에 포함되었는가?
+- Plan 4의 MVP 제한이 반영되었는가?
+- Plan 5의 VN Excel seed 검증이 포함되었는가?
+- Plan 7의 Data Dictionary / Test Matrix가 포함되었는가?
+- Plan 8의 평가방식 통합이 포함되었는가?
+- 증빙 없는 완료 표현이 식별되었는가?
+
+## Git 커밋
+
+분석 Phase이므로 코드 변경이 없다면 커밋하지 않는다.  
+문서 파일을 생성한 경우에만 커밋한다.
+
+커밋 메시지:
+
+```text
+phase-47: analyze integrated report gaps and evidence requirements
+```
+
+## Phase 47 완료 후 출력 형식
+
+```text
+[Phase 47 완료 보고]
+
+1. 검토한 기존 리포트
+2. Plan 1~8 대비 누락 항목
+3. 증빙이 필요한 항목
+4. 수정이 필요한 표현
+5. 추가해야 할 리포트 섹션
+6. 구현 완료 / 설계 반영 / 추후 확장 / 검증 필요 구분
+7. 자체검수 결과
+8. Git 상태
+9. 커밋 메시지 및 커밋 해시 또는 커밋 생략 사유
+10. 다음 단계: Phase 48 진행 승인 요청
+
+Phase 48을 진행해도 될까요?
+```
+
+사용자가 승인하기 전까지 Phase 48을 시작하지 마라.
+
+---
+
+# Phase 48 — 보강 통합 리포트 문서 작성
+
+## 목표
+
+Phase 47에서 확인한 누락 항목을 반영하여, Plan 1~8 전체를 더 정확하게 설명하는 보강 통합 리포트를 작성한다.
+
+## 작업
+
+- `docs/integrated-workspace-report.md` 작성 또는 제안
+- 기존 리포트 내용 보존
+- 누락 섹션 추가
+- MVP / 확장 범위 구분
+- 데이터 저장 방식 및 운영 전환 계획 작성
+- VN Excel 스케줄 데이터화 섹션 작성
+- 운영 예외처리 섹션 작성
+- Change Request / VersionSnapshot 섹션 작성
+- Soft Delete / Archive / Backup 섹션 작성
+- QA / 배포 검증 섹션 작성
+- 평가방식 통합 섹션 보강
+- 증빙 없는 문구를 보수적 표현으로 수정
+
+## 권장 문서 위치
+
+```text
+docs/integrated-workspace-report.md
+```
+
+또는 기존 문서 구조에 맞춰 다음 위치를 사용할 수 있다.
+
+```text
+docs/reports/workspace-integrated-report.md
+```
+
+## 완료 조건
+
+- 보강 통합 리포트 초안 작성
+- Plan 1~8 주요 내용 반영
+- 증빙 없는 과장 표현 제거
+- MVP / 확장 범위 구분
+- 사용자에게 Phase 49 진행 승인 요청
+
+## 자체검수 항목
+
+- Plan 1 기본 업무 흐름이 설명되었는가?
+- Plan 2 고도화 기능이 설명되었는가?
+- Plan 3 권한/인사카드/개인일정이 설명되었는가?
+- Plan 4 운영 안정화가 설명되었는가?
+- Plan 5 VN Excel 데이터화가 설명되었는가?
+- Plan 6 보드 UI/HealthScore/Blocker가 설명되었는가?
+- Plan 7 연결성 보강이 설명되었는가?
+- Plan 8 평가방식 통합이 설명되었는가?
+- 검증 필요 항목이 검증 완료로 잘못 표현되지 않았는가?
+
+## Git 커밋
+
+커밋 메시지:
+
+```text
+phase-48: draft enhanced integrated workspace report
+```
+
+## Phase 48 완료 후 출력 형식
+
+```text
+[Phase 48 완료 보고]
+
+1. 작성한 리포트 파일
+2. 추가한 섹션
+3. 수정한 표현
+4. MVP / 확장 범위 구분 내용
+5. 검증 필요 항목
+6. 자체검수 결과
+7. Git 상태
+8. 커밋 메시지 및 커밋 해시
+9. 다음 단계: Phase 49 진행 승인 요청
+
+Phase 49를 진행해도 될까요?
+```
+
+사용자가 승인하기 전까지 Phase 49를 시작하지 마라.
+
+---
+
+# Phase 49 — QA 체크리스트 및 증빙 매트릭스 작성
+
+## 목표
+
+최종 리포트에 들어갈 QA 증빙을 체계적으로 수집할 수 있도록 체크리스트와 증빙 매트릭스를 작성한다.
+
+## 작업
+
+- `docs/qa-evidence-matrix.md` 작성
+- lint/build/test 증빙 항목 작성
+- 권한별 화면 테스트 항목 작성
+- 업무 흐름 테스트 항목 작성
+- VN Excel seed 테스트 항목 작성
+- 평가 계산 테스트 항목 작성
+- GitHub Pages 라우팅 테스트 항목 작성
+- 모바일 레이아웃 테스트 항목 작성
+- 각 테스트별 결과 기록 필드 작성
+- 각 테스트별 증빙 스크린샷 또는 로그 필드 작성
+
+## 권장 문서 위치
+
+```text
+docs/qa-evidence-matrix.md
+```
+
+## 증빙 매트릭스 필드
+
+```text
+Test ID
+Test Category
+Scenario
+Role
+Expected Result
+Actual Result
+Status
+Evidence
+Notes
+Verified At
+Verified By
+```
+
+## 완료 조건
+
+- QA 증빙 매트릭스 작성
+- Plan 1~8 주요 기능 테스트 항목 포함
+- 배포 검증 항목 포함
+- 평가방식 검증 항목 포함
+- 사용자에게 Phase 50 진행 승인 요청
+
+## 자체검수 항목
+
+- 권한 테스트가 포함되었는가?
+- 업무 흐름 테스트가 포함되었는가?
+- VN Excel seed 테스트가 포함되었는가?
+- 보드 UI 테스트가 포함되었는가?
+- 평가 계산 테스트가 포함되었는가?
+- GitHub Pages 라우팅 테스트가 포함되었는가?
+- 모바일 테스트가 포함되었는가?
+
+## Git 커밋
+
+커밋 메시지:
+
+```text
+phase-49: add qa evidence matrix for integrated report
+```
+
+## Phase 49 완료 후 출력 형식
+
+```text
+[Phase 49 완료 보고]
+
+1. 작성한 QA 증빙 매트릭스 파일
+2. 포함한 테스트 카테고리
+3. 주요 테스트 시나리오
+4. 증빙 기록 방식
+5. 자체검수 결과
+6. Git 상태
+7. 커밋 메시지 및 커밋 해시
+8. 다음 단계: Phase 50 진행 승인 요청
+
+Phase 50을 진행해도 될까요?
+```
+
+사용자가 승인하기 전까지 Phase 50을 시작하지 마라.
+
+---
+
+# Phase 50 — Lint / Build / Routing / GitHub Pages 배포 검증
+
+## 목표
+
+최종 리포트에 사용할 수 있는 실제 검증 결과를 확보한다.
+
+## 작업
+
+- 현재 package manager 확인
+- lint 명령 확인
+- build 명령 확인
+- test 명령 존재 여부 확인
+- `npm run lint` 또는 프로젝트에 맞는 lint 실행
+- `npm run build` 또는 프로젝트에 맞는 build 실행
+- test 명령이 있으면 실행
+- GitHub Pages base path 확인
+- 정적 asset 경로 확인
+- 새로고침 404 가능성 확인
+- 주요 라우트 확인
+- 모바일 레이아웃 확인 가능 여부 정리
+- 실행 결과를 QA 증빙 매트릭스에 반영
+
+## 주의사항
+
+- test 명령이 없으면 실패로 처리하지 말고 “test script 없음”으로 기록한다.
+- lint 명령이 없으면 “lint script 없음”으로 기록한다.
+- build 실패 시 원인을 정리하고 수정 여부를 사용자에게 확인한다.
+- 사용자 승인 없이 대규모 리팩터링을 하지 않는다.
+- 사용자 승인 없이 원격 push를 하지 않는다.
+
+## 완료 조건
+
+- lint/build/test 가능 여부 확인
+- 실행 결과 기록
+- GitHub Pages 관련 리스크 확인
+- QA 증빙 매트릭스 업데이트
+- 사용자에게 Phase 51 진행 승인 요청
+
+## 자체검수 항목
+
+- 실제 실행한 명령어를 기록했는가?
+- 성공/실패 결과를 숨기지 않았는가?
+- 실패한 경우 원인과 해결안을 기록했는가?
+- GitHub Pages base path를 확인했는가?
+- 배포 완료라고 단정하지 않았는가?
+
+## Git 커밋
+
+검증 결과 문서가 변경된 경우에만 커밋한다.
+
+커밋 메시지:
+
+```text
+phase-50: record lint build and deployment verification evidence
+```
+
+## Phase 50 완료 후 출력 형식
+
+```text
+[Phase 50 완료 보고]
+
+1. 실행한 명령어
+2. lint 결과
+3. build 결과
+4. test 결과
+5. GitHub Pages base path 확인 결과
+6. 라우팅 / asset 경로 리스크
+7. QA 증빙 매트릭스 반영 결과
+8. 자체검수 결과
+9. Git 상태
+10. 커밋 메시지 및 커밋 해시 또는 커밋 생략 사유
+11. 다음 단계: Phase 51 진행 승인 요청
+
+Phase 51을 진행해도 될까요?
+```
+
+사용자가 승인하기 전까지 Phase 51을 시작하지 마라.
+
+---
+
+# Phase 51 — 최종 통합 리포트 확정본 작성
+
+## 목표
+
+Phase 48의 보강 리포트와 Phase 49~50의 QA 증빙을 반영하여 최종 통합 리포트 확정본을 작성한다.
+
+## 작업
+
+- `docs/integrated-workspace-report.md` 업데이트
+- QA 증빙 결과 반영
+- 실제 커밋 해시 반영
+- 실제 lint/build/test 결과 반영
+- GitHub Pages 검증 결과 반영
+- 남은 리스크 작성
+- 구현 완료 / 설계 반영 / 추후 확장 / 검증 필요 구분 최종 정리
+- 결론 문구 보수적으로 정리
+
+## 완료 조건
+
+- 최종 통합 리포트가 실제 검증 결과를 포함함
+- 과장 표현 제거
+- Plan 1~8 전체 반영
+- QA 결과 반영
+- 남은 리스크 반영
+- 사용자에게 Phase 52 진행 승인 요청
+
+## 자체검수 항목
+
+- 증빙 없는 완료 표현이 남아 있지 않은가?
+- lint/build/test 결과가 실제 결과와 일치하는가?
+- GitHub Pages 검증 결과가 실제 확인 내용과 일치하는가?
+- Plan 1~8 항목이 빠지지 않았는가?
+- 구현 완료와 설계 반영이 구분되었는가?
+- 남은 리스크가 숨겨지지 않았는가?
+
+## Git 커밋
+
+커밋 메시지:
+
+```text
+phase-51: finalize integrated workspace report with qa evidence
+```
+
+## Phase 51 완료 후 출력 형식
+
+```text
+[Phase 51 완료 보고]
+
+1. 확정한 최종 리포트 파일
+2. 반영한 QA 증빙
+3. 반영한 lint/build/test 결과
+4. 반영한 GitHub Pages 검증 결과
+5. 구현 완료 / 설계 반영 / 추후 확장 / 검증 필요 구분
+6. 남은 리스크
+7. 자체검수 결과
+8. Git 상태
+9. 커밋 메시지 및 커밋 해시
+10. 다음 단계: Phase 52 진행 승인 요청
+
+Phase 52를 진행해도 될까요?
+```
+
+사용자가 승인하기 전까지 Phase 52를 시작하지 마라.
+
+---
+
+# Phase 52 — Plan 1~9 최종 통합 승인 요청 및 Push 전 점검
+
+## 목표
+
+Plan 1~9 전체 작업이 문서, QA, 검증 증빙 기준으로 정리되었는지 확인하고, GitHub 원격 push 전 최종 승인을 요청한다.
+
+## 작업
+
+- Plan 1~9 전체 반영 여부 확인
+- 최종 리포트 파일 확인
+- QA 증빙 매트릭스 확인
+- Git 상태 확인
+- 커밋 히스토리 확인
+- push 대상 브랜치 확인
+- 원격 저장소 확인
+- GitHub Pages URL 확인
+- push 전 리스크 작성
+- 사용자에게 원격 push 승인 요청
+
+## 완료 조건
+
+- Plan 1~9 전체 정리 완료
+- 최종 리포트 존재
+- QA 증빙 매트릭스 존재
+- Git 상태 확인 완료
+- 원격 저장소 확인 완료
+- 사용자에게 push 승인 요청
+
+## 자체검수 항목
+
+- 원격 저장소가 `https://github.com/eumditravel-oss/workspace`인지 확인
+- 브랜치가 의도한 브랜치인지 확인
+- 민감정보가 커밋되지 않았는지 확인
+- 불필요한 중복 plan 파일이 커밋되지 않았는지 확인
+- 빌드 결과물 커밋 여부가 의도와 맞는지 확인
+- push 전 사용자 승인을 요청했는지 확인
+
+## Git 커밋
+
+최종 문서 변경이 있으면 커밋한다.
+
+커밋 메시지:
+
+```text
+phase-52: prepare final integrated report for push approval
+```
+
+## Phase 52 완료 후 출력 형식
+
+```text
+[Phase 52 완료 보고]
+
+1. Plan 1~9 전체 반영 요약
+2. 최종 리포트 파일
+3. QA 증빙 매트릭스 파일
+4. 최종 Git 상태
+5. 커밋 목록 요약
+6. 원격 저장소 확인 결과
+7. GitHub Pages URL
+8. push 전 남은 리스크
+9. 사용자 승인 요청
+
+원격 저장소에 push를 진행해도 될까요?
+```
+
+사용자가 승인하기 전까지 원격 push를 하지 마라.
+
+---
+
+## 5. Plan 9 추가 무결성 검토 기준
+
+Phase 47 이후에는 다음 항목을 반드시 검토한다.
+
+### 5-1. 리포트 무결성
+
+- 구현 완료와 설계 반영이 구분되어 있는가?
+- 추후 확장 기능을 완료 기능처럼 표현하지 않았는가?
+- 검증 필요 항목이 명시되어 있는가?
+- 증빙 없는 완료 표현이 남아 있지 않은가?
+
+### 5-2. QA 증빙 무결성
+
+- lint/build/test 결과가 실제 실행 결과와 일치하는가?
+- 테스트 명령이 없을 경우 “없음”으로 기록했는가?
+- 실패한 검증을 숨기지 않았는가?
+- GitHub Pages 검증 결과가 실제 확인 내용과 일치하는가?
+
+### 5-3. Phase 통제 무결성
+
+- 현재 Phase 외 작업을 하지 않았는가?
+- 사용자 승인 없이 다음 Phase로 넘어가지 않았는가?
+- 분석 Phase에서 코드 기능 추가를 하지 않았는가?
+- 원격 push를 사용자 승인 없이 하지 않았는가?
+
+### 5-4. 배포 무결성
+
+- 원격 저장소가 올바른가?
+- base path가 검토되었는가?
+- 새로고침 404 가능성이 확인되었는가?
+- 정적 asset 경로가 확인되었는가?
+
+---
+
+## 6. 추가 금지사항
+
+- 증빙 없이 “완벽히 통과”라고 쓰지 마라.
+- push하지 않았는데 “origin/main 동기화 완료”라고 쓰지 마라.
+- GitHub Pages를 직접 확인하지 않고 “배포 완료”라고 쓰지 마라.
+- 추후 확장 기능을 구현 완료로 표시하지 마라.
+- 테스트하지 않은 기능을 검증 완료로 표시하지 마라.
+- 실패한 lint/build/test 결과를 숨기지 마라.
+- 중복 plan 파일을 임의로 선택하지 마라.
+- 사용자 승인 없이 Phase 48로 넘어가지 마라.
+- 사용자 승인 없이 GitHub 원격 push를 하지 마라.
+
+---
+
+## 7. 기존 프롬프트와의 연결 지시
+
+이 프롬프트는 기존 `workspace plan1.txt`, `workspace plan2.txt`, `workspace plan3.txt`, `workspace plan4.txt`, `workspace plan5.txt`, `workspace plan6.txt`, `workspace plan7.txt`, `workspace plan8.txt` 이후에 추가되는 아홉 번째 보강 프롬프트다.
+
+Antigravity는 다음 순서를 반드시 지켜야 한다.
+
+1. `workspace plan1.txt`를 먼저 읽는다.
+2. `workspace plan2.txt`를 읽는다.
+3. `workspace plan3.txt`를 읽는다.
+4. `workspace plan4.txt`를 읽는다.
+5. `workspace plan5.txt`를 읽는다.
+6. `workspace plan6.txt`를 읽는다.
+7. `workspace plan7.txt`를 읽는다.
+8. `workspace plan8.txt`를 읽는다.
+9. `workspace plan9.txt`를 읽는다.
+10. Plan 9를 최종 리포트 검증, QA 증빙, Phase 진행 통제 보강 지시로 해석한다.
+11. Phase 0 보고서에 Plan 9의 리포트/검증/Phase 통제 요구사항을 함께 반영한다.
+12. 기존 Phase 0~46의 흐름을 무너뜨리지 않는다.
+13. Plan 9의 실제 작업은 Phase 47 이후 확장 단계로 진행한다.
+14. 사용자 승인 없이 다음 Phase로 넘어가지 않는다.
+15. 사용자 승인 없이 원격 push를 하지 않는다.
+
+현재는 아직 구현을 시작하지 마라.
+
+먼저 `workspace plan1.txt`, `workspace plan2.txt`, `workspace plan3.txt`, `workspace plan4.txt`, `workspace plan5.txt`, `workspace plan6.txt`, `workspace plan7.txt`, `workspace plan8.txt`, `workspace plan9.txt` 전체를 읽고 Phase 0 분석부터 시작하라.
+
+Phase 0에서는 반드시 다음 항목을 추가 보고하라.
+
+```text
+[Phase 0 Plan 9 추가 보고 필수 항목]
+
+1. 기존 통합 리포트 존재 여부
+2. 기존 통합 리포트의 과장 표현 또는 증빙 필요 표현
+3. Plan 1~8 대비 리포트 누락 항목
+4. MVP / 확장 범위 구분 방식
+5. QA 증빙 매트릭스 작성 계획
+6. lint/build/test 검증 계획
+7. GitHub Pages 배포 검증 계획
+8. 최종 리포트 문서 위치 제안
+9. 중복 Plan 파일 감지 여부
+10. Phase Lock 적용 방식
+11. Phase 47~52 확장 작업 계획
+```
+
+사용자가 Phase 1 진행을 승인하기 전까지 실제 구현을 시작하지 마라.

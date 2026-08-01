@@ -1,0 +1,336 @@
+{
+  "components": {
+    "schemas": {
+      "WorkspaceListData": {
+        "type": "object",
+        "required": [
+          "currentCompanyId",
+          "workspaces",
+          "revision",
+          "preferences"
+        ],
+        "properties": {
+          "currentCompanyId": {
+            "type": "string"
+          },
+          "workspaces": {
+            "type": "array",
+            "items": {
+              "$ref": "../common/schemas.yaml#/components/schemas/WorkspaceDescriptor"
+            }
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "preferences": {
+            "$ref": "#/components/schemas/UserPreferenceDto"
+          }
+        }
+      },
+      "WorkspaceListResponse": {
+        "type": "object",
+        "required": [
+          "data",
+          "meta"
+        ],
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/WorkspaceListData"
+          },
+          "meta": {
+            "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+          }
+        }
+      },
+      "UpdateWorkspacePreferenceRequest": {
+        "type": "object",
+        "required": [
+          "companyId",
+          "locale"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "companyId": {
+            "type": "string"
+          },
+          "locale": {
+            "$ref": "../common/schemas.yaml#/components/schemas/Locale"
+          },
+          "theme": {
+            "type": "string",
+            "minLength": 1
+          },
+          "density": {
+            "type": "string",
+            "enum": [
+              "COMPACT",
+              "COMFORTABLE",
+              "SPACIOUS"
+            ]
+          },
+          "fontScale": {
+            "type": "number",
+            "minimum": 0.75,
+            "maximum": 2
+          },
+          "homeWidgets": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "uniqueItems": true
+          },
+          "defaultCompanyId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "favorites": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "uniqueItems": true
+          },
+          "sidebarState": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "boolean"
+            }
+          },
+          "defaultLandingModule": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      "CapabilitiesResponse": {
+        "type": "object",
+        "required": [
+          "data",
+          "meta"
+        ],
+        "properties": {
+          "data": {
+            "$ref": "../common/schemas.yaml#/components/schemas/SystemCapabilities"
+          },
+          "meta": {
+            "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+          }
+        }
+      },
+      "UserPreferenceDto": {
+        "type": "object",
+        "required": [
+          "defaultCompanyId",
+          "defaultLandingModule",
+          "density",
+          "favorites",
+          "fontScale",
+          "homeWidgets",
+          "locale",
+          "sidebarState",
+          "theme"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "locale": {
+            "$ref": "../common/schemas.yaml#/components/schemas/Locale"
+          },
+          "theme": {
+            "type": "string",
+            "minLength": 1
+          },
+          "density": {
+            "type": "string",
+            "enum": [
+              "COMPACT",
+              "COMFORTABLE",
+              "SPACIOUS"
+            ]
+          },
+          "fontScale": {
+            "type": "number",
+            "minimum": 0.75,
+            "maximum": 2
+          },
+          "homeWidgets": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "uniqueItems": true
+          },
+          "defaultCompanyId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "favorites": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "uniqueItems": true
+          },
+          "sidebarState": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "boolean"
+            }
+          },
+          "defaultLandingModule": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/api/v1/me/workspaces": {
+      "get": {
+        "operationId": "listMyWorkspaces",
+        "summary": "List authorized company workspaces",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Authorized workspaces",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "../common/errors.yaml#/components/responses/Unauthorized"
+          },
+          "500": {
+            "$ref": "../common/errors.yaml#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/api/v1/me/workspace-preference": {
+      "patch": {
+        "operationId": "updateWorkspacePreference",
+        "summary": "Atomically change current company and locale preference",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateWorkspacePreferenceRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated workspace",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceListResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../common/errors.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../common/errors.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../common/errors.yaml#/components/responses/Forbidden"
+          },
+          "409": {
+            "$ref": "../common/errors.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../common/errors.yaml#/components/responses/Unprocessable"
+          },
+          "500": {
+            "$ref": "../common/errors.yaml#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/api/v1/system/capabilities": {
+      "get": {
+        "operationId": "getSystemCapabilities",
+        "summary": "Read environment and provider capabilities",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Capabilities",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CapabilitiesResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "../common/errors.yaml#/components/responses/Unauthorized"
+          },
+          "500": {
+            "$ref": "../common/errors.yaml#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "../common/errors.yaml#/components/responses/ServiceUnavailable"
+          }
+        }
+      }
+    }
+  }
+}

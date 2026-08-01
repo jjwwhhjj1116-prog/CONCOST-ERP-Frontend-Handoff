@@ -1,0 +1,16 @@
+{
+  "schemaVersion": "1.0.0",
+  "exportedAt": "",
+  "exportedBy": "",
+  "source": "WEB_EXPORT",
+  "files": {
+    "orgStructure": "org-structure.json",
+    "personnelCards": "personnel-cards.json",
+    "clientProjects": "client-projects.json",
+    "internalProjects": "internal-projects.json",
+    "scheduleOverrides": "schedule-overrides.json",
+    "approvalWorkflows": "approval-workflows.json",
+    "workspaceSettings": "workspace-settings.json",
+    "revisionRequests": "revision-requests.json"
+  }
+}

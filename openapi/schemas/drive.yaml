@@ -1,0 +1,412 @@
+{
+  "components": {
+    "schemas": {
+      "DriveCapabilityDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "companyId",
+          "status",
+          "revision",
+          "providerState"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "companyId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "type": "string",
+            "minLength": 1
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "providerState": {
+            "type": "string",
+            "description": "",
+            "enum": [
+              "NOT_CONFIGURED",
+              "CONNECTING",
+              "READY",
+              "DEGRADED",
+              "FAILED",
+              "DISABLED"
+            ]
+          },
+          "sharedDriveSupported": {
+            "type": "boolean"
+          },
+          "publicLinkAllowed": {
+            "type": "boolean",
+            "const": false
+          }
+        },
+        "description": "DriveCapabilityDto contract DTO. ORM models are never exposed directly."
+      },
+      "DriveFolderDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "companyId",
+          "status",
+          "revision",
+          "providerBindingId",
+          "displayName"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "companyId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "type": "string",
+            "minLength": 1
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "providerBindingId": {
+            "type": "string",
+            "description": ""
+          },
+          "parentDriveItemId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": ""
+          },
+          "displayName": {
+            "type": "string",
+            "description": ""
+          },
+          "aclSummary": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "uniqueItems": true
+          }
+        },
+        "description": "DriveFolderDto contract DTO. ORM models are never exposed directly."
+      },
+      "DriveItemDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "companyId",
+          "status",
+          "revision",
+          "providerBindingId",
+          "displayName"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "companyId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "type": "string",
+            "minLength": 1
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "providerBindingId": {
+            "type": "string",
+            "description": ""
+          },
+          "fileId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": ""
+          },
+          "displayName": {
+            "type": "string",
+            "description": ""
+          },
+          "checksum": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": ""
+          },
+          "projectId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": ""
+          },
+          "claimId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": ""
+          }
+        },
+        "description": "DriveItemDto contract DTO. ORM models are never exposed directly."
+      },
+      "DrivePermissionDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "companyId",
+          "status",
+          "revision",
+          "driveItemId",
+          "principalType",
+          "principalId",
+          "access"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "companyId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "type": "string",
+            "minLength": 1
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "driveItemId": {
+            "type": "string",
+            "description": ""
+          },
+          "principalType": {
+            "type": "string",
+            "description": ""
+          },
+          "principalId": {
+            "type": "string",
+            "description": ""
+          },
+          "access": {
+            "type": "string",
+            "description": ""
+          }
+        },
+        "description": "DrivePermissionDto contract DTO. ORM models are never exposed directly."
+      },
+      "DriveBindingDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "companyId",
+          "status",
+          "revision",
+          "providerType",
+          "providerBindingId"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "companyId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "type": "string",
+            "minLength": 1
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "providerType": {
+            "type": "string",
+            "description": ""
+          },
+          "providerBindingId": {
+            "type": "string",
+            "description": ""
+          },
+          "organizationUnitId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": ""
+          },
+          "projectId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": ""
+          },
+          "claimId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": ""
+          }
+        },
+        "description": "DriveBindingDto contract DTO. ORM models are never exposed directly."
+      },
+      "DriveSyncJobDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "companyId",
+          "status",
+          "revision",
+          "providerBindingId"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "companyId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "type": "string",
+            "minLength": 1
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "providerBindingId": {
+            "type": "string",
+            "description": ""
+          },
+          "progressPercent": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "errorCount": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "description": "DriveSyncJobDto contract DTO. ORM models are never exposed directly."
+      },
+      "DriveSyncConflictDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "companyId",
+          "status",
+          "revision",
+          "driveItemId",
+          "conflictType"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "companyId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "type": "string",
+            "minLength": 1
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "driveItemId": {
+            "type": "string",
+            "description": ""
+          },
+          "conflictType": {
+            "type": "string",
+            "description": ""
+          },
+          "resolution": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": ""
+          }
+        },
+        "description": "DriveSyncConflictDto contract DTO. ORM models are never exposed directly."
+      },
+      "ProjectFolderIntentDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "projectId",
+          "projectNo",
+          "companyId",
+          "trigger",
+          "idempotencyKey",
+          "status"
+        ],
+        "properties": {
+          "projectId": {
+            "type": "string"
+          },
+          "projectNo": {
+            "type": "string"
+          },
+          "companyId": {
+            "type": "string"
+          },
+          "trigger": {
+            "type": "string",
+            "const": "PROJECT_ACTIVATED"
+          },
+          "idempotencyKey": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "PROCESSING",
+              "READY",
+              "FAILED"
+            ]
+          }
+        }
+      }
+    }
+  }
+}

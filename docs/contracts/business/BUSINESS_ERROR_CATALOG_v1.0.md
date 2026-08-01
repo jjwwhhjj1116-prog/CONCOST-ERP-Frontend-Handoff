@@ -1,0 +1,50 @@
+# Business Error Catalog
+
+| Code | HTTP | Retryable | KO/EN/VI messageKey | UI Action | Log | Audit | Security |
+|---|---|---|---|---|---|---|---|
+| CUSTOMER_DUPLICATE_CANDIDATE | 409 | false | errors.business.customer_duplicate_candidate | Show safe localized action | WARN | true | NORMAL |
+| CONTACT_DUPLICATE_CANDIDATE | 409 | false | errors.business.contact_duplicate_candidate | Show safe localized action | WARN | true | NORMAL |
+| CONTACT_MERGE_CONFLICT | 409 | false | errors.business.contact_merge_conflict | Show safe localized action | WARN | true | NORMAL |
+| LEAD_NOT_CONVERTIBLE | 409 | false | errors.business.lead_not_convertible | Show safe localized action | WARN | true | NORMAL |
+| OPPORTUNITY_INVALID_STAGE | 409 | false | errors.business.opportunity_invalid_stage | Show safe localized action | WARN | true | NORMAL |
+| ESTIMATE_REQUEST_ALREADY_LINKED | 409 | false | errors.business.estimate_request_already_linked | Show safe localized action | WARN | true | NORMAL |
+| OCR_PROVIDER_NOT_CONFIGURED | 503 | false | errors.business.ocr_provider_not_configured | Show safe localized action | WARN | false | NORMAL |
+| OCR_REVIEW_REQUIRED | 409 | false | errors.business.ocr_review_required | Show safe localized action | INFO | true | NORMAL |
+| CONTACT_SYNC_PROVIDER_NOT_CONFIGURED | 503 | false | errors.business.contact_sync_provider_not_configured | Show safe localized action | WARN | false | NORMAL |
+| CONTACT_SYNC_CONFLICT | 409 | true | errors.business.contact_sync_conflict | Retry or refresh capability | WARN | true | NORMAL |
+| FINANCE_PERMISSION_REQUIRED | 403 | false | errors.business.finance_permission_required | Show safe localized action | SECURITY | true | HIGH |
+| TRANSACTION_NOT_EDITABLE | 409 | false | errors.business.transaction_not_editable | Show safe localized action | WARN | true | NORMAL |
+| POSTED_TRANSACTION_IMMUTABLE | 409 | false | errors.business.posted_transaction_immutable | Show safe localized action | WARN | true | NORMAL |
+| ACCOUNTING_PERIOD_CLOSED | 409 | false | errors.business.accounting_period_closed | Show safe localized action | WARN | true | NORMAL |
+| TAX_INVOICE_PROVIDER_NOT_CONFIGURED | 503 | false | errors.business.tax_invoice_provider_not_configured | Show safe localized action | WARN | false | NORMAL |
+| TAX_INVOICE_VALIDATION_FAILED | 422 | false | errors.business.tax_invoice_validation_failed | Show safe localized action | WARN | true | NORMAL |
+| TAX_INVOICE_SUBMISSION_FAILED | 502 | true | errors.business.tax_invoice_submission_failed | Retry or refresh capability | ERROR | true | NORMAL |
+| PAYMENT_ALREADY_RECORDED | 409 | false | errors.business.payment_already_recorded | Show safe localized action | WARN | true | NORMAL |
+| BUDGET_EXCEEDED | 409 | false | errors.business.budget_exceeded | Show safe localized action | WARN | true | NORMAL |
+| BANK_PROVIDER_NOT_CONFIGURED | 503 | false | errors.business.bank_provider_not_configured | Show safe localized action | WARN | false | NORMAL |
+| CARD_PROVIDER_NOT_CONFIGURED | 503 | false | errors.business.card_provider_not_configured | Show safe localized action | WARN | false | NORMAL |
+| PERSONNEL_NOT_ASSIGNABLE | 409 | false | errors.business.personnel_not_assignable | Show safe localized action | WARN | true | NORMAL |
+| ORGANIZATION_MEMBERSHIP_CONFLICT | 409 | false | errors.business.organization_membership_conflict | Show safe localized action | WARN | true | NORMAL |
+| PRIMARY_MEMBERSHIP_REQUIRED | 422 | false | errors.business.primary_membership_required | Show safe localized action | WARN | true | NORMAL |
+| ROLE_ASSIGNMENT_FORBIDDEN | 403 | false | errors.business.role_assignment_forbidden | Show safe localized action | SECURITY | true | HIGH |
+| ACCOUNT_STATUS_INVALID | 409 | false | errors.business.account_status_invalid | Show safe localized action | WARN | true | NORMAL |
+| DELEGATION_INVALID | 422 | false | errors.business.delegation_invalid | Show safe localized action | WARN | true | NORMAL |
+| DEMO_ACCOUNT_FORBIDDEN | 403 | false | errors.business.demo_account_forbidden | Show safe localized action | SECURITY | true | HIGH |
+| DRIVE_PROVIDER_NOT_CONFIGURED | 503 | false | errors.business.drive_provider_not_configured | Show safe localized action | WARN | false | NORMAL |
+| DRIVE_FOLDER_BINDING_CONFLICT | 409 | false | errors.business.drive_folder_binding_conflict | Show safe localized action | WARN | true | NORMAL |
+| DRIVE_PERMISSION_FORBIDDEN | 403 | false | errors.business.drive_permission_forbidden | Show safe localized action | SECURITY | true | HIGH |
+| DRIVE_SYNC_FAILED | 502 | true | errors.business.drive_sync_failed | Retry or refresh capability | ERROR | true | NORMAL |
+| DRIVE_ITEM_NOT_READY | 409 | true | errors.business.drive_item_not_ready | Retry or refresh capability | WARN | true | NORMAL |
+| PUBLIC_LINK_FORBIDDEN | 403 | false | errors.business.public_link_forbidden | Show safe localized action | SECURITY | true | HIGH |
+| CLAIM_CONFLICT_CHECK_REQUIRED | 409 | false | errors.business.claim_conflict_check_required | Show safe localized action | WARN | true | NORMAL |
+| CLAIM_PERMISSION_REQUIRED | 403 | false | errors.business.claim_permission_required | Show safe localized action | SECURITY | true | HIGH |
+| EVIDENCE_NOT_READY | 409 | true | errors.business.evidence_not_ready | Retry or refresh capability | WARN | true | NORMAL |
+| EVIDENCE_LEGAL_HOLD | 423 | false | errors.business.evidence_legal_hold | Show safe localized action | SECURITY | true | HIGH |
+| EVIDENCE_CHAIN_INVALID | 409 | false | errors.business.evidence_chain_invalid | Show safe localized action | SECURITY | true | HIGH |
+| REPORT_NOT_ISSUABLE | 409 | false | errors.business.report_not_issuable | Show safe localized action | WARN | true | NORMAL |
+| REPORT_VERSION_IMMUTABLE | 409 | false | errors.business.report_version_immutable | Show safe localized action | WARN | true | NORMAL |
+| DEADLINE_CONFLICT | 409 | false | errors.business.deadline_conflict | Show safe localized action | WARN | true | NORMAL |
+| AI_PROVIDER_NOT_CONFIGURED | 503 | false | errors.business.ai_provider_not_configured | Show safe localized action | WARN | false | NORMAL |
+| AI_CITATION_REQUIRED | 422 | false | errors.business.ai_citation_required | Show safe localized action | WARN | true | NORMAL |
+| AI_PERMISSION_DENIED | 403 | false | errors.business.ai_permission_denied | Show safe localized action | SECURITY | true | HIGH |
+| SEARCH_PROVIDER_PARTIAL | 206 | true | errors.business.search_provider_partial | Retry or refresh capability | WARN | false | NORMAL |

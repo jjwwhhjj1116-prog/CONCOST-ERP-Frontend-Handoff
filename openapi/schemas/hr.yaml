@@ -1,0 +1,455 @@
+{
+  "components": {
+    "schemas": {
+      "OrganizationUnitDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "companyId",
+          "status",
+          "revision",
+          "code",
+          "displayName",
+          "kind"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "companyId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "type": "string",
+            "minLength": 1
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "code": {
+            "type": "string",
+            "description": ""
+          },
+          "displayName": {
+            "type": "string",
+            "description": ""
+          },
+          "kind": {
+            "type": "string",
+            "description": ""
+          },
+          "parentOrganizationUnitId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": ""
+          },
+          "projectAssignable": {
+            "type": "boolean"
+          }
+        },
+        "description": "OrganizationUnitDto contract DTO. ORM models are never exposed directly."
+      },
+      "PersonnelSummaryDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "companyId",
+          "status",
+          "revision",
+          "displayName",
+          "employmentStatus"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "companyId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "type": "string",
+            "minLength": 1
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "displayName": {
+            "type": "string",
+            "description": ""
+          },
+          "employmentStatus": {
+            "type": "string",
+            "description": ""
+          },
+          "primaryOrganizationUnitId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": ""
+          }
+        },
+        "description": "PersonnelSummaryDto contract DTO. ORM models are never exposed directly."
+      },
+      "PersonnelDetailDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "companyId",
+          "status",
+          "revision",
+          "displayName",
+          "employmentStatus"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "companyId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "type": "string",
+            "minLength": 1
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "displayName": {
+            "type": "string",
+            "description": ""
+          },
+          "employmentStatus": {
+            "type": "string",
+            "description": "",
+            "enum": [
+              "ACTIVE",
+              "ON_LEAVE",
+              "SUSPENDED",
+              "RESIGNED",
+              "RETIRED",
+              "CONTRACT_ENDED"
+            ]
+          },
+          "membershipIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "uniqueItems": true
+          },
+          "systemRoleIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "uniqueItems": true
+          }
+        },
+        "description": "PersonnelDetailDto contract DTO. ORM models are never exposed directly."
+      },
+      "OrganizationMembershipDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "companyId",
+          "status",
+          "revision",
+          "personnelId",
+          "organizationUnitId",
+          "membershipType",
+          "validFrom"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "companyId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "type": "string",
+            "minLength": 1
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "personnelId": {
+            "type": "string",
+            "description": ""
+          },
+          "organizationUnitId": {
+            "type": "string",
+            "description": ""
+          },
+          "membershipType": {
+            "type": "string",
+            "enum": [
+              "PRIMARY",
+              "SECONDARY",
+              "ACTING",
+              "TEMPORARY"
+            ]
+          },
+          "validFrom": {
+            "type": "string",
+            "description": ""
+          },
+          "validTo": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": ""
+          }
+        },
+        "description": "OrganizationMembershipDto contract DTO. ORM models are never exposed directly."
+      },
+      "BusinessRoleAssignmentDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "companyId",
+          "status",
+          "revision",
+          "personnelId",
+          "roleCode",
+          "scopeType",
+          "scopeId"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "companyId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "type": "string",
+            "minLength": 1
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "personnelId": {
+            "type": "string",
+            "description": ""
+          },
+          "roleCode": {
+            "type": "string",
+            "description": ""
+          },
+          "scopeType": {
+            "type": "string",
+            "description": ""
+          },
+          "scopeId": {
+            "type": "string",
+            "description": ""
+          }
+        },
+        "description": "BusinessRoleAssignmentDto contract DTO. ORM models are never exposed directly."
+      },
+      "AccountDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "companyId",
+          "status",
+          "revision",
+          "personnelId"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "companyId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "type": "string",
+            "minLength": 1
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "personnelId": {
+            "type": "string",
+            "description": ""
+          },
+          "allowedCompanyIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "uniqueItems": true
+          },
+          "lastLoginAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": ""
+          }
+        },
+        "description": "AccountDto contract DTO. ORM models are never exposed directly."
+      },
+      "DelegationDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "companyId",
+          "status",
+          "revision",
+          "delegatorPersonnelId",
+          "delegatePersonnelId",
+          "validFrom",
+          "validTo",
+          "reason"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "companyId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "type": "string",
+            "minLength": 1
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "delegatorPersonnelId": {
+            "type": "string",
+            "description": ""
+          },
+          "delegatePersonnelId": {
+            "type": "string",
+            "description": ""
+          },
+          "validFrom": {
+            "type": "string",
+            "description": ""
+          },
+          "validTo": {
+            "type": "string",
+            "description": ""
+          },
+          "reason": {
+            "type": "string",
+            "description": ""
+          }
+        },
+        "description": "DelegationDto contract DTO. ORM models are never exposed directly."
+      },
+      "LeaveReferenceDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "companyId",
+          "status",
+          "revision",
+          "personnelId",
+          "startsAt",
+          "endsAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "companyId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "type": "string",
+            "minLength": 1
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "personnelId": {
+            "type": "string",
+            "description": ""
+          },
+          "startsAt": {
+            "type": "string",
+            "description": ""
+          },
+          "endsAt": {
+            "type": "string",
+            "description": ""
+          },
+          "visibility": {
+            "type": "string"
+          }
+        },
+        "description": "LeaveReferenceDto contract DTO. ORM models are never exposed directly."
+      },
+      "HrSourceStatusDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "sourceSystem",
+          "sourceVersion",
+          "syncStatus",
+          "readOnly"
+        ],
+        "properties": {
+          "sourceSystem": {
+            "type": "string",
+            "enum": [
+              "GOU",
+              "EXCEL_IMPORT_SNAPSHOT",
+              "NEW_HR_BACKEND"
+            ]
+          },
+          "sourceVersion": {
+            "type": "string"
+          },
+          "syncStatus": {
+            "type": "string"
+          },
+          "readOnly": {
+            "type": "boolean"
+          }
+        }
+      }
+    }
+  }
+}

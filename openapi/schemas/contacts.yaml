@@ -1,0 +1,342 @@
+{
+  "components": {
+    "schemas": {
+      "ContactSummaryDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "companyId",
+          "status",
+          "revision",
+          "displayName"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "companyId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "type": "string",
+            "minLength": 1
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "displayName": {
+            "type": "string",
+            "description": ""
+          },
+          "customerId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": ""
+          },
+          "maskedEmail": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": ""
+          },
+          "maskedPhone": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": ""
+          }
+        },
+        "description": "ContactSummaryDto contract DTO. ORM models are never exposed directly."
+      },
+      "ContactDetailDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "companyId",
+          "status",
+          "revision",
+          "displayName"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "companyId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "type": "string",
+            "minLength": 1
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "displayName": {
+            "type": "string",
+            "description": ""
+          },
+          "customerId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": ""
+          },
+          "email": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": ""
+          },
+          "phone": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": ""
+          },
+          "consentStatus": {
+            "type": "string"
+          }
+        },
+        "description": "ContactDetailDto contract DTO. ORM models are never exposed directly."
+      },
+      "ContactDuplicateCandidateDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "companyId",
+          "status",
+          "revision",
+          "candidateContactId"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "companyId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "type": "string",
+            "minLength": 1
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "candidateContactId": {
+            "type": "string",
+            "description": ""
+          },
+          "matchSignals": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "uniqueItems": true
+          },
+          "score": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          }
+        },
+        "description": "ContactDuplicateCandidateDto contract DTO. ORM models are never exposed directly."
+      },
+      "ContactSyncStatusDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "companyId",
+          "status",
+          "revision"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "companyId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "type": "string",
+            "minLength": 1
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "contactId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": ""
+          },
+          "externalContactId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": ""
+          },
+          "syncDirection": {
+            "type": "string",
+            "enum": [
+              "ERP_TO_GOOGLE_OPT_IN",
+              "GOOGLE_TO_ERP_IMPORT_REVIEW"
+            ]
+          },
+          "providerState": {
+            "type": "string"
+          }
+        },
+        "description": "ContactSyncStatusDto contract DTO. ORM models are never exposed directly."
+      },
+      "BusinessCardCaptureDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "companyId",
+          "status",
+          "revision",
+          "fileId",
+          "humanReviewRequired"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "companyId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "type": "string",
+            "minLength": 1,
+            "enum": [
+              "LOCAL_SELECTED",
+              "UPLOADING",
+              "UPLOADED",
+              "OCR_QUEUED",
+              "OCR_PROCESSING",
+              "REVIEW_REQUIRED",
+              "DUPLICATE_REVIEW",
+              "READY_TO_CREATE",
+              "CREATED",
+              "SYNC_PENDING",
+              "SYNCED",
+              "FAILED",
+              "CANCELLED"
+            ]
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "fileId": {
+            "type": "string",
+            "description": ""
+          },
+          "ocrJobId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": ""
+          },
+          "humanReviewRequired": {
+            "type": "boolean",
+            "const": true
+          }
+        },
+        "description": "BusinessCardCaptureDto contract DTO. ORM models are never exposed directly."
+      },
+      "BusinessCardOcrResultDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "companyId",
+          "status",
+          "revision",
+          "captureId"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "companyId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "type": "string",
+            "minLength": 1
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "captureId": {
+            "type": "string",
+            "description": ""
+          },
+          "extractedFields": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "fieldConfidence": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "number"
+            }
+          },
+          "reviewedByPersonnelId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": ""
+          }
+        },
+        "description": "BusinessCardOcrResultDto contract DTO. ORM models are never exposed directly."
+      },
+      "ContactMergeStatus": {
+        "type": "string",
+        "enum": [
+          "REVIEW_REQUIRED",
+          "APPROVAL_PENDING",
+          "MERGED",
+          "REJECTED",
+          "CANCELLED"
+        ]
+      }
+    }
+  }
+}

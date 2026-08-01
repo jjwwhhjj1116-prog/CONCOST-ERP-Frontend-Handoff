@@ -1,0 +1,648 @@
+{
+  "paths": {
+    "/api/v1/notifications/capabilities": {
+      "get": {
+        "operationId": "getNotificationCapabilities",
+        "summary": "Get delivery provider capabilities",
+        "tags": [
+          "notifications"
+        ],
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful scoped response",
+            "headers": {
+              "ETag": {
+                "description": "Quoted resource revision where applicable",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/notifications.yaml#/components/schemas/NotificationPreferenceDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "evidence": "PROPOSAL",
+          "frontendStatus": "FRONTEND_DEMO_ONLY",
+          "permission": "NOTIFICATION_VIEW",
+          "companyScope": "X-Company-Id required; server validates allowedCompanyIds; no default-company fallback",
+          "organizationScope": "Server applies explicit scope and membership before materializing fields",
+          "projectScope": "Canonical projectId only; project-name joins forbidden",
+          "revision": "not required",
+          "idempotency": "not required",
+          "fileReference": "none",
+          "fileReadyGuard": "NOT_APPLICABLE_OR_DRAFT",
+          "providerCapability": "Server capability required; NOT_CONFIGURED must not report success",
+          "providerRequired": true,
+          "permissionBeforeProjection": true,
+          "notificationEvent": "none",
+          "gouCoexistence": "No dual-write; status is returned explicitly",
+          "dataOwnership": "SERVER_PERSISTENCE_REQUIRED_OR_READ_ONLY_MIRROR"
+        }
+      }
+    },
+    "/api/v1/notifications": {
+      "get": {
+        "operationId": "listNotifications",
+        "summary": "List in-app notification items",
+        "tags": [
+          "notifications"
+        ],
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful scoped response",
+            "headers": {
+              "ETag": {
+                "description": "Quoted resource revision where applicable",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "../schemas/notifications.yaml#/components/schemas/NotificationItemDto"
+                      }
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "evidence": "PROPOSAL",
+          "frontendStatus": "FRONTEND_DEMO_ONLY",
+          "permission": "NOTIFICATION_VIEW",
+          "companyScope": "X-Company-Id required; server validates allowedCompanyIds; no default-company fallback",
+          "organizationScope": "Server applies explicit scope and membership before materializing fields",
+          "projectScope": "Canonical projectId only; project-name joins forbidden",
+          "revision": "not required",
+          "idempotency": "not required",
+          "fileReference": "none",
+          "fileReadyGuard": "NOT_APPLICABLE_OR_DRAFT",
+          "providerCapability": "not required",
+          "providerRequired": false,
+          "permissionBeforeProjection": true,
+          "notificationEvent": "none",
+          "gouCoexistence": "No dual-write; status is returned explicitly",
+          "dataOwnership": "SERVER_PERSISTENCE_REQUIRED_OR_READ_ONLY_MIRROR"
+        }
+      }
+    },
+    "/api/v1/notifications/{id}/read": {
+      "patch": {
+        "operationId": "markNotificationRead",
+        "summary": "Mark one notification read",
+        "tags": [
+          "notifications"
+        ],
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful scoped response",
+            "headers": {
+              "ETag": {
+                "description": "Quoted resource revision where applicable",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/notifications.yaml#/components/schemas/NotificationItemDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "evidence": "PROPOSAL",
+          "frontendStatus": "FRONTEND_DEMO_ONLY",
+          "permission": "NOTIFICATION_VIEW",
+          "companyScope": "X-Company-Id required; server validates allowedCompanyIds; no default-company fallback",
+          "organizationScope": "Server applies explicit scope and membership before materializing fields",
+          "projectScope": "Canonical projectId only; project-name joins forbidden",
+          "revision": "If-Match required and conflict returns REVISION_CONFLICT",
+          "idempotency": "Idempotency-Key required and scoped by company, actor and operation",
+          "fileReference": "none",
+          "fileReadyGuard": "NOT_APPLICABLE_OR_DRAFT",
+          "providerCapability": "not required",
+          "providerRequired": false,
+          "permissionBeforeProjection": true,
+          "notificationEvent": "NOTIFICATION_READ",
+          "gouCoexistence": "No dual-write; status is returned explicitly",
+          "dataOwnership": "SERVER_PERSISTENCE_REQUIRED"
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/notifications.yaml#/components/schemas/NotificationItemDto"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/notifications/read-all": {
+      "post": {
+        "operationId": "markAllNotificationsRead",
+        "summary": "Mark current scoped items read",
+        "tags": [
+          "notifications"
+        ],
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful scoped response",
+            "headers": {
+              "ETag": {
+                "description": "Quoted resource revision where applicable",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/notifications.yaml#/components/schemas/NotificationItemDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "evidence": "PROPOSAL",
+          "frontendStatus": "FRONTEND_DEMO_ONLY",
+          "permission": "NOTIFICATION_VIEW",
+          "companyScope": "X-Company-Id required; server validates allowedCompanyIds; no default-company fallback",
+          "organizationScope": "Server applies explicit scope and membership before materializing fields",
+          "projectScope": "Canonical projectId only; project-name joins forbidden",
+          "revision": "not required",
+          "idempotency": "Idempotency-Key required and scoped by company, actor and operation",
+          "fileReference": "none",
+          "fileReadyGuard": "NOT_APPLICABLE_OR_DRAFT",
+          "providerCapability": "not required",
+          "providerRequired": false,
+          "permissionBeforeProjection": true,
+          "notificationEvent": "NOTIFICATIONS_READ_ALL",
+          "gouCoexistence": "No dual-write; status is returned explicitly",
+          "dataOwnership": "SERVER_PERSISTENCE_REQUIRED"
+        }
+      }
+    },
+    "/api/v1/notification-preferences": {
+      "get": {
+        "operationId": "getNotificationPreferences",
+        "summary": "Get personal delivery preferences",
+        "tags": [
+          "notifications"
+        ],
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful scoped response",
+            "headers": {
+              "ETag": {
+                "description": "Quoted resource revision where applicable",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/notifications.yaml#/components/schemas/NotificationPreferenceDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "evidence": "PROPOSAL",
+          "frontendStatus": "FRONTEND_DEMO_ONLY",
+          "permission": "NOTIFICATION_PREFERENCE_VIEW",
+          "companyScope": "X-Company-Id required; server validates allowedCompanyIds; no default-company fallback",
+          "organizationScope": "Server applies explicit scope and membership before materializing fields",
+          "projectScope": "Canonical projectId only; project-name joins forbidden",
+          "revision": "not required",
+          "idempotency": "not required",
+          "fileReference": "none",
+          "fileReadyGuard": "NOT_APPLICABLE_OR_DRAFT",
+          "providerCapability": "not required",
+          "providerRequired": false,
+          "permissionBeforeProjection": true,
+          "notificationEvent": "none",
+          "gouCoexistence": "No dual-write; status is returned explicitly",
+          "dataOwnership": "SERVER_PERSISTENCE_REQUIRED_OR_READ_ONLY_MIRROR"
+        }
+      },
+      "put": {
+        "operationId": "updateNotificationPreferences",
+        "summary": "Update delivery preferences only",
+        "tags": [
+          "notifications"
+        ],
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful scoped response",
+            "headers": {
+              "ETag": {
+                "description": "Quoted resource revision where applicable",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/notifications.yaml#/components/schemas/NotificationPreferenceDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../schemas/collaboration-common.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "evidence": "PROPOSAL",
+          "frontendStatus": "FRONTEND_DEMO_ONLY",
+          "permission": "NOTIFICATION_PREFERENCE_MANAGE",
+          "companyScope": "X-Company-Id required; server validates allowedCompanyIds; no default-company fallback",
+          "organizationScope": "Server applies explicit scope and membership before materializing fields",
+          "projectScope": "Canonical projectId only; project-name joins forbidden",
+          "revision": "If-Match required and conflict returns REVISION_CONFLICT",
+          "idempotency": "Idempotency-Key required and scoped by company, actor and operation",
+          "fileReference": "none",
+          "fileReadyGuard": "NOT_APPLICABLE_OR_DRAFT",
+          "providerCapability": "not required",
+          "providerRequired": false,
+          "permissionBeforeProjection": true,
+          "notificationEvent": "NOTIFICATION_PREFERENCES_UPDATED",
+          "gouCoexistence": "No dual-write; status is returned explicitly",
+          "dataOwnership": "SERVER_PERSISTENCE_REQUIRED"
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/notifications.yaml#/components/schemas/SaveNotificationPreferencesRequest"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "x-final-contract": {
+    "status": "COLLABORATION_CONTRACT_FROZEN_V1",
+    "decisions": [
+      "COLLAB-DEC-11",
+      "COLLAB-DEC-15"
+    ]
+  }
+}

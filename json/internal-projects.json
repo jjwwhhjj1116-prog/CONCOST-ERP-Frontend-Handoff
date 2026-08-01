@@ -1,0 +1,21 @@
+{
+  "schemaVersion": "1.0.0",
+  "internalProjects": [
+    {
+      "id": "ip-1",
+      "projectSourceType": "INTERNAL_DEVELOPMENT",
+      "title": "내부 시스템 고도화",
+      "description": "Antigravity 기반 스케줄러 기능 개선",
+      "priority": "HIGH",
+      "status": "IN_PROGRESS",
+      "departmentId": "DEVELOP",
+      "managerId": "u1-super",
+      "startDate": "2026-07-01",
+      "targetDate": "2026-07-31",
+      "progress": 25,
+      "archiveStatus": "ACTIVE",
+      "createdAt": "2026-07-01T00:00:00Z",
+      "updatedAt": "2026-07-08T00:00:00Z"
+    }
+  ]
+}

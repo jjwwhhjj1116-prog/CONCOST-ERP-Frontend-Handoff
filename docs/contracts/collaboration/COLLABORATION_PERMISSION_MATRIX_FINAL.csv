@@ -1,0 +1,31 @@
+Permission,Module,ActorRule,ServerScope,SecurityRequirement,FinalPolicy
+MAIL_VIEW,Mail,own mailbox or delegated mailbox capability,company + mailbox ownership/delegation,never expose unauthorized sender/subject,CONTRACT_DEFINED
+MAIL_COMPOSE,Mail,authenticated mailbox user,company + provider account,Draft only,CONTRACT_DEFINED
+MAIL_SEND,Mail,server capability,company + provider account + READY files,provider not configured blocks,CONTRACT_DEFINED
+MAIL_MANAGE,Mail,mailbox user,company + message ownership,bulk action individually authorized,CONTRACT_DEFINED
+APPROVAL_VIEW,Approval,drafter/current step/observer capability,company + org/project policy,names resolved from IDs,CONTRACT_DEFINED
+APPROVAL_CREATE,Approval,form capability,company + form scope,policy server resolved,CONTRACT_DEFINED
+APPROVAL_SUBMIT,Approval,draft owner or delegate,company + policy + revision,READY files,CONTRACT_DEFINED
+APPROVAL_DECIDE,Approval,active resolved approver/delegate,company + active step,no frontend fallback,CONTRACT_DEFINED
+APPROVAL_RECALL,Approval,drafter before first Decision; approved request afterward,company + document state,direct recall denied after first Decision,CONTRACT_DEFINED
+APPROVAL_DELEGATION_MANAGE,Approval,self request plus organization/policy approval; emergency admin with reason,company + allowed scope,maximum 30 days by default; no self or cross-company delegation,CONTRACT_DEFINED
+CALENDAR_VIEW,Calendar,scope member,company + explicit visibility,private details redacted,CONTRACT_DEFINED
+CALENDAR_CREATE,Calendar,calendar contributor,company + calendar scope,attendee existence checked,CONTRACT_DEFINED
+CALENDAR_EDIT,Calendar,owner/editor capability,company + recurrence scope,revision required,CONTRACT_DEFINED
+CALENDAR_RESPOND,Calendar,invited attendee,company + attendee identity,own response only,CONTRACT_DEFINED
+CALENDAR_VIEW_AVAILABILITY,Calendar,schedule planner capability,company + people scope,busy only,CONTRACT_DEFINED
+TASK_VIEW,Tasks,assignee/creator/team/project member,company + task scope,comments follow task,CONTRACT_DEFINED
+TASK_CREATE,Tasks,scope contributor,company + org/project capability,assignee must be in scope,CONTRACT_DEFINED
+TASK_EDIT,Tasks,creator/assignee/manager capability,company + task scope,revision required,CONTRACT_DEFINED
+TASK_TRANSITION,Tasks,state capability,company + task state,state machine enforced,CONTRACT_DEFINED
+TASK_COMMENT,Tasks,task viewer,company + task scope,immutable audit,CONTRACT_DEFINED
+BOARD_VIEW,Board,space viewer,company + org/project scope,unpublished status protected,CONTRACT_DEFINED
+BOARD_CREATE,Board,space contributor,company + board space,Draft first,CONTRACT_DEFINED
+BOARD_EDIT,Board,author/editor,company + board space,revision required,CONTRACT_DEFINED
+BOARD_PUBLISH,Board,publisher or reviewer policy,company + board space,no frontend-only publish,CONTRACT_DEFINED
+BOARD_DELETE,Board,author before publish or admin policy,company + state,published defaults archive,CONTRACT_DEFINED
+BOARD_READ_RECEIPTS_VIEW,Board,publisher/auditor capability,company + board space,minimize employee data,CONTRACT_DEFINED
+NOTIFICATION_VIEW,Notifications,recipient,company + recipient,resource permission rechecked,CONTRACT_DEFINED
+NOTIFICATION_PREFERENCE_VIEW,Notifications,self,company + recipient,preference cannot delete event,CONTRACT_DEFINED
+NOTIFICATION_PREFERENCE_MANAGE,Notifications,self,company + recipient,mandatory IN_APP may be locked,CONTRACT_DEFINED
+SEARCH_USE,Search,authenticated user,company + provider-level resource permission,filter before title/snippet/rank,CONTRACT_DEFINED

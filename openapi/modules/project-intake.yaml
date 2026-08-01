@@ -1,0 +1,1342 @@
+{
+  "paths": {
+    "/api/v1/project-intakes": {
+      "get": {
+        "operationId": "listProjectIntakes",
+        "summary": "List project intakes",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List project intakes",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Quoted integer revision when applicable."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "../schemas/project-intake.yaml#/components/schemas/ProjectIntakeSummaryDto"
+                      }
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../common/errors.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../common/errors.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../common/errors.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../common/errors.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../common/errors.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../common/errors.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../common/errors.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "purpose": "List project intakes",
+          "frontendScreen": "/projects/intake?tab=INTAKE",
+          "actor": "Scoped user",
+          "permission": "PROJECT_INTAKE_VIEW",
+          "companyScope": "X-Company-Id required; no default fallback",
+          "organizationScope": "Server resolved from active assignments and explicit capabilities",
+          "projectScope": "Canonical projectId and parent-resource authorization",
+          "requestHeaders": [
+            "Accept-Language",
+            "X-Request-Id",
+            "X-Company-Id"
+          ],
+          "stateTransition": "none",
+          "revision": "not required",
+          "idempotency": "not required",
+          "fileReference": "none",
+          "audit": "READ",
+          "notificationEvent": "none",
+          "mockScenarios": [
+            "success",
+            "empty",
+            "validation failure",
+            "unauthorized",
+            "company forbidden",
+            "action forbidden",
+            "revision conflict",
+            "server unavailable"
+          ],
+          "acceptanceTest": "listProjectIntakes: company scope, permission, response DTO, errors, and route behavior"
+        }
+      },
+      "post": {
+        "operationId": "createProjectIntakeDraft",
+        "summary": "Create server intake Draft and Project reservation",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Create server intake Draft and Project reservation",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Quoted integer revision when applicable."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/project-intake.yaml#/components/schemas/ProjectIntakeDetailDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../common/errors.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../common/errors.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../common/errors.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../common/errors.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../common/errors.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../common/errors.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../common/errors.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "purpose": "Create server intake Draft and Project reservation",
+          "frontendScreen": "/projects/intake?tab=INTAKE",
+          "actor": "Confirmed-plan actor",
+          "permission": "PROJECT_INTAKE_CREATE",
+          "companyScope": "X-Company-Id required; no default fallback",
+          "organizationScope": "Server resolved from active assignments and explicit capabilities",
+          "projectScope": "Canonical projectId and parent-resource authorization",
+          "requestHeaders": [
+            "Accept-Language",
+            "X-Request-Id",
+            "X-Company-Id",
+            "Idempotency-Key",
+            "X-CSRF-Token"
+          ],
+          "stateTransition": "none -> DRAFT / Project INTAKE_PREPARATION",
+          "revision": "not required",
+          "idempotency": "required",
+          "fileReference": "none",
+          "audit": "PROJECT_INTAKE_CREATED",
+          "notificationEvent": "PROJECT_INTAKE_CREATED",
+          "mockScenarios": [
+            "success",
+            "empty",
+            "validation failure",
+            "unauthorized",
+            "company forbidden",
+            "action forbidden",
+            "revision conflict",
+            "server unavailable"
+          ],
+          "acceptanceTest": "createProjectIntakeDraft: company scope, permission, response DTO, errors, and route behavior"
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/project-intake.yaml#/components/schemas/ProjectIntakeCreateRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/project-intakes/{id}": {
+      "get": {
+        "operationId": "getProjectIntake",
+        "summary": "Read project intake",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Read project intake",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Quoted integer revision when applicable."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/project-intake.yaml#/components/schemas/ProjectIntakeDetailDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../common/errors.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../common/errors.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../common/errors.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../common/errors.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../common/errors.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../common/errors.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../common/errors.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "purpose": "Read project intake",
+          "frontendScreen": "/projects/intake?tab=INTAKE",
+          "actor": "Scoped user",
+          "permission": "PROJECT_INTAKE_VIEW",
+          "companyScope": "X-Company-Id required; no default fallback",
+          "organizationScope": "Server resolved from active assignments and explicit capabilities",
+          "projectScope": "Canonical projectId and parent-resource authorization",
+          "requestHeaders": [
+            "Accept-Language",
+            "X-Request-Id",
+            "X-Company-Id"
+          ],
+          "stateTransition": "none",
+          "revision": "not required",
+          "idempotency": "not required",
+          "fileReference": "none",
+          "audit": "READ",
+          "notificationEvent": "none",
+          "mockScenarios": [
+            "success",
+            "empty",
+            "validation failure",
+            "unauthorized",
+            "company forbidden",
+            "action forbidden",
+            "revision conflict",
+            "server unavailable"
+          ],
+          "acceptanceTest": "getProjectIntake: company scope, permission, response DTO, errors, and route behavior"
+        }
+      }
+    },
+    "/api/v1/project-intakes/{id}/steps/{step}": {
+      "patch": {
+        "operationId": "saveProjectIntakeStep",
+        "summary": "Save one intake wizard step",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "name": "step",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Save one intake wizard step",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Quoted integer revision when applicable."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/project-intake.yaml#/components/schemas/ProjectIntakeDetailDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../common/errors.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../common/errors.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../common/errors.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../common/errors.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../common/errors.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../common/errors.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../common/errors.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "purpose": "Save one intake wizard step",
+          "frontendScreen": "/projects/intake?tab=INTAKE",
+          "actor": "Draft author",
+          "permission": "PROJECT_INTAKE_EDIT",
+          "companyScope": "X-Company-Id required; no default fallback",
+          "organizationScope": "Server resolved from active assignments and explicit capabilities",
+          "projectScope": "Canonical projectId and parent-resource authorization",
+          "requestHeaders": [
+            "Accept-Language",
+            "X-Request-Id",
+            "X-Company-Id",
+            "If-Match",
+            "X-CSRF-Token"
+          ],
+          "stateTransition": "DRAFT|CHANGES_REQUESTED -> same",
+          "revision": "required",
+          "idempotency": "not required",
+          "fileReference": "READY references for file fields",
+          "audit": "PROJECT_INTAKE_STEP_SAVED",
+          "notificationEvent": "none",
+          "mockScenarios": [
+            "success",
+            "empty",
+            "validation failure",
+            "unauthorized",
+            "company forbidden",
+            "action forbidden",
+            "revision conflict",
+            "server unavailable"
+          ],
+          "acceptanceTest": "saveProjectIntakeStep: company scope, permission, response DTO, errors, and route behavior"
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/project-common.yaml#/components/schemas/ProjectActionRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/project-intakes/{id}/submit": {
+      "post": {
+        "operationId": "submitProjectIntake",
+        "summary": "Submit project intake",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Submit project intake",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Quoted integer revision when applicable."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/project-intake.yaml#/components/schemas/ProjectIntakeDetailDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../common/errors.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../common/errors.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../common/errors.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../common/errors.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../common/errors.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../common/errors.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../common/errors.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "purpose": "Submit project intake",
+          "frontendScreen": "/projects/intake?tab=INTAKE",
+          "actor": "Authorized policy actor",
+          "permission": "PROJECT_INTAKE_SUBMIT",
+          "companyScope": "X-Company-Id required; no default fallback",
+          "organizationScope": "Server resolved from active assignments and explicit capabilities",
+          "projectScope": "Canonical projectId and parent-resource authorization",
+          "requestHeaders": [
+            "Accept-Language",
+            "X-Request-Id",
+            "X-Company-Id",
+            "If-Match",
+            "Idempotency-Key",
+            "X-CSRF-Token"
+          ],
+          "stateTransition": "DRAFT|CHANGES_REQUESTED -> SUBMITTED",
+          "revision": "required",
+          "idempotency": "required",
+          "fileReference": "All required files READY",
+          "audit": "SUBMITPROJECTINTAKE",
+          "notificationEvent": "PROJECT_INTAKE_SUBMITTED",
+          "mockScenarios": [
+            "success",
+            "empty",
+            "validation failure",
+            "unauthorized",
+            "company forbidden",
+            "action forbidden",
+            "revision conflict",
+            "server unavailable"
+          ],
+          "acceptanceTest": "submitProjectIntake: company scope, permission, response DTO, errors, and route behavior",
+          "submitGuard": "All four steps complete, required FileDto references READY, and at least one active same-company primary-team PM candidate."
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/project-common.yaml#/components/schemas/ProjectActionRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/project-intakes/{id}/review": {
+      "post": {
+        "operationId": "startProjectIntakeReview",
+        "summary": "Start project intake review",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Start project intake review",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Quoted integer revision when applicable."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/project-intake.yaml#/components/schemas/ProjectIntakeDetailDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../common/errors.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../common/errors.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../common/errors.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../common/errors.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../common/errors.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../common/errors.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../common/errors.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "purpose": "Start project intake review",
+          "frontendScreen": "/projects/intake?tab=INTAKE",
+          "actor": "Authorized policy actor",
+          "permission": "PROJECT_INTAKE_REVIEW",
+          "companyScope": "X-Company-Id required; no default fallback",
+          "organizationScope": "Server resolved from active assignments and explicit capabilities",
+          "projectScope": "Canonical projectId and parent-resource authorization",
+          "requestHeaders": [
+            "Accept-Language",
+            "X-Request-Id",
+            "X-Company-Id",
+            "If-Match",
+            "Idempotency-Key",
+            "X-CSRF-Token"
+          ],
+          "stateTransition": "SUBMITTED -> UNDER_REVIEW",
+          "revision": "required",
+          "idempotency": "required",
+          "fileReference": "none",
+          "audit": "STARTPROJECTINTAKEREVIEW",
+          "notificationEvent": "none",
+          "mockScenarios": [
+            "success",
+            "empty",
+            "validation failure",
+            "unauthorized",
+            "company forbidden",
+            "action forbidden",
+            "revision conflict",
+            "server unavailable"
+          ],
+          "acceptanceTest": "startProjectIntakeReview: company scope, permission, response DTO, errors, and route behavior"
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/project-common.yaml#/components/schemas/ProjectActionRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/project-intakes/{id}/request-changes": {
+      "post": {
+        "operationId": "requestProjectIntakeChanges",
+        "summary": "Request intake changes",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Request intake changes",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Quoted integer revision when applicable."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/project-intake.yaml#/components/schemas/ProjectIntakeDetailDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../common/errors.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../common/errors.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../common/errors.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../common/errors.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../common/errors.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../common/errors.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../common/errors.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "purpose": "Request intake changes",
+          "frontendScreen": "/projects/intake?tab=INTAKE",
+          "actor": "Authorized policy actor",
+          "permission": "PROJECT_INTAKE_REVIEW",
+          "companyScope": "X-Company-Id required; no default fallback",
+          "organizationScope": "Server resolved from active assignments and explicit capabilities",
+          "projectScope": "Canonical projectId and parent-resource authorization",
+          "requestHeaders": [
+            "Accept-Language",
+            "X-Request-Id",
+            "X-Company-Id",
+            "If-Match",
+            "Idempotency-Key",
+            "X-CSRF-Token"
+          ],
+          "stateTransition": "UNDER_REVIEW -> CHANGES_REQUESTED",
+          "revision": "required",
+          "idempotency": "required",
+          "fileReference": "none",
+          "audit": "REQUESTPROJECTINTAKECHANGES",
+          "notificationEvent": "PROJECT_INTAKE_CHANGES_REQUESTED",
+          "mockScenarios": [
+            "success",
+            "empty",
+            "validation failure",
+            "unauthorized",
+            "company forbidden",
+            "action forbidden",
+            "revision conflict",
+            "server unavailable"
+          ],
+          "acceptanceTest": "requestProjectIntakeChanges: company scope, permission, response DTO, errors, and route behavior"
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/project-common.yaml#/components/schemas/ProjectActionRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/project-intakes/{id}/resubmit": {
+      "post": {
+        "operationId": "resubmitProjectIntake",
+        "summary": "Resubmit corrected intake",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resubmit corrected intake",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Quoted integer revision when applicable."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/project-intake.yaml#/components/schemas/ProjectIntakeDetailDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../common/errors.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../common/errors.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../common/errors.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../common/errors.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../common/errors.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../common/errors.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../common/errors.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "purpose": "Resubmit corrected intake",
+          "frontendScreen": "/projects/intake?tab=INTAKE",
+          "actor": "Authorized policy actor",
+          "permission": "PROJECT_INTAKE_SUBMIT",
+          "companyScope": "X-Company-Id required; no default fallback",
+          "organizationScope": "Server resolved from active assignments and explicit capabilities",
+          "projectScope": "Canonical projectId and parent-resource authorization",
+          "requestHeaders": [
+            "Accept-Language",
+            "X-Request-Id",
+            "X-Company-Id",
+            "If-Match",
+            "Idempotency-Key",
+            "X-CSRF-Token"
+          ],
+          "stateTransition": "CHANGES_REQUESTED -> SUBMITTED",
+          "revision": "required",
+          "idempotency": "required",
+          "fileReference": "none",
+          "audit": "RESUBMITPROJECTINTAKE",
+          "notificationEvent": "PROJECT_INTAKE_SUBMITTED",
+          "mockScenarios": [
+            "success",
+            "empty",
+            "validation failure",
+            "unauthorized",
+            "company forbidden",
+            "action forbidden",
+            "revision conflict",
+            "server unavailable"
+          ],
+          "acceptanceTest": "resubmitProjectIntake: company scope, permission, response DTO, errors, and route behavior"
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/project-common.yaml#/components/schemas/ProjectActionRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/project-intakes/{id}/approve": {
+      "post": {
+        "operationId": "approveProjectIntake",
+        "summary": "Approve current intake policy step",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Approve current intake policy step",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Quoted integer revision when applicable."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/project-intake.yaml#/components/schemas/ProjectIntakeDetailDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../common/errors.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../common/errors.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../common/errors.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../common/errors.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../common/errors.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../common/errors.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../common/errors.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "purpose": "Approve current intake policy step",
+          "frontendScreen": "/projects/intake?tab=INTAKE",
+          "actor": "Authorized policy actor",
+          "permission": "PROJECT_INTAKE_APPROVE",
+          "companyScope": "X-Company-Id required; no default fallback",
+          "organizationScope": "Server resolved from active assignments and explicit capabilities",
+          "projectScope": "Canonical projectId and parent-resource authorization",
+          "requestHeaders": [
+            "Accept-Language",
+            "X-Request-Id",
+            "X-Company-Id",
+            "If-Match",
+            "Idempotency-Key",
+            "X-CSRF-Token"
+          ],
+          "stateTransition": "UNDER_REVIEW -> UNDER_REVIEW|APPROVED + canonical Project activation",
+          "revision": "required",
+          "idempotency": "required",
+          "fileReference": "All required files READY",
+          "audit": "APPROVEPROJECTINTAKE",
+          "notificationEvent": "PROJECT_ACTIVATED",
+          "mockScenarios": [
+            "success",
+            "empty",
+            "validation failure",
+            "unauthorized",
+            "company forbidden",
+            "action forbidden",
+            "revision conflict",
+            "server unavailable"
+          ],
+          "acceptanceTest": "approveProjectIntake: company scope, permission, response DTO, errors, and route behavior",
+          "projectNumber": "Final approval transaction activates the reserved projectId and issues projectNo from a company/year server sequence."
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/project-common.yaml#/components/schemas/ProjectActionRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/project-intakes/{id}/cancel": {
+      "post": {
+        "operationId": "cancelProjectIntake",
+        "summary": "Cancel project intake",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Cancel project intake",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Quoted integer revision when applicable."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/project-intake.yaml#/components/schemas/ProjectIntakeDetailDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../common/errors.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../common/errors.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../common/errors.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../common/errors.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../common/errors.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../common/errors.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../common/errors.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "purpose": "Cancel project intake",
+          "frontendScreen": "/projects/intake?tab=INTAKE",
+          "actor": "Authorized policy actor",
+          "permission": "PROJECT_INTAKE_CANCEL",
+          "companyScope": "X-Company-Id required; no default fallback",
+          "organizationScope": "Server resolved from active assignments and explicit capabilities",
+          "projectScope": "Canonical projectId and parent-resource authorization",
+          "requestHeaders": [
+            "Accept-Language",
+            "X-Request-Id",
+            "X-Company-Id",
+            "If-Match",
+            "Idempotency-Key",
+            "X-CSRF-Token"
+          ],
+          "stateTransition": "DRAFT|CHANGES_REQUESTED -> CANCELLED",
+          "revision": "required",
+          "idempotency": "required",
+          "fileReference": "none",
+          "audit": "CANCELPROJECTINTAKE",
+          "notificationEvent": "none",
+          "mockScenarios": [
+            "success",
+            "empty",
+            "validation failure",
+            "unauthorized",
+            "company forbidden",
+            "action forbidden",
+            "revision conflict",
+            "server unavailable"
+          ],
+          "acceptanceTest": "cancelProjectIntake: company scope, permission, response DTO, errors, and route behavior"
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/project-common.yaml#/components/schemas/ProjectActionRequest"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,194 @@
+{
+  "schemaVersion": "2.0.0-synthetic",
+  "source": "synthetic://concost-erp-personnel-v1",
+  "synthetic": true,
+  "generatedAt": "2026-08-01T00:00:00.000Z",
+  "personnel": [
+    {
+      "id": "demo-cc-admin-001",
+      "employeeNumber": "DEMO-CC-0001",
+      "name": "[DEMO] CONCOST Executive 001",
+      "displayName": "[DEMO] CONCOST Executive 001",
+      "email": "demo.cc.001@example.invalid",
+      "companyId": "CON_COST",
+      "companyName": "CON-COST",
+      "departmentId": "EXECUTIVE",
+      "departmentName": "임원",
+      "teamName": "",
+      "role": "SUPER_ADMIN",
+      "systemRole": "SUPER_ADMIN",
+      "permissionLevel": 5,
+      "organizationRank": "CEO",
+      "jobTitle": "[DEMO] Executive",
+      "employmentStatus": "ACTIVE",
+      "isActive": true,
+      "position": "[DEMO] Executive",
+      "accessGrade": "ADMIN",
+      "capabilities": [
+        "FINANCE_ACCESS"
+      ],
+      "organizationMemberships": [
+        {
+          "organizationId": "EXECUTIVE",
+          "status": "ACTIVE",
+          "membershipType": "PRIMARY"
+        }
+      ]
+    },
+    {
+      "id": "demo-cc-executive-002",
+      "employeeNumber": "DEMO-CC-0002",
+      "name": "[DEMO] CONCOST Executive 002",
+      "displayName": "[DEMO] CONCOST Executive 002",
+      "email": "demo.cc.002@example.invalid",
+      "companyId": "CON_COST",
+      "companyName": "CON-COST",
+      "departmentId": "EXECUTIVE",
+      "departmentName": "임원",
+      "teamName": "",
+      "role": "SUPER_ADMIN",
+      "systemRole": "SUPER_ADMIN",
+      "permissionLevel": 5,
+      "organizationRank": "COO",
+      "jobTitle": "[DEMO] Executive",
+      "employmentStatus": "ACTIVE",
+      "isActive": true,
+      "position": "[DEMO] Executive",
+      "accessGrade": "GRADE_1",
+      "capabilities": [
+        "FINANCE_ACCESS"
+      ],
+      "organizationMemberships": [
+        {
+          "organizationId": "EXECUTIVE",
+          "status": "ACTIVE",
+          "membershipType": "PRIMARY"
+        }
+      ]
+    },
+    {
+      "id": "demo-cc-management-001",
+      "employeeNumber": "DEMO-CC-0003",
+      "name": "[DEMO] CONCOST Executive 003",
+      "displayName": "[DEMO] CONCOST Executive 003",
+      "email": "demo.cc.003@example.invalid",
+      "companyId": "CON_COST",
+      "companyName": "CON-COST",
+      "departmentId": "MANAGEMENT_SUPPORT",
+      "departmentName": "경영지원본부",
+      "teamName": "",
+      "role": "DEPARTMENT_MANAGER",
+      "systemRole": "DEPARTMENT_MANAGER",
+      "permissionLevel": 4,
+      "organizationRank": "VICE_PRESIDENT",
+      "jobTitle": "[DEMO] Executive",
+      "employmentStatus": "ACTIVE",
+      "isActive": true,
+      "position": "[DEMO] Executive",
+      "accessGrade": "GRADE_1",
+      "capabilities": [
+        "FINANCE_ACCESS"
+      ],
+      "organizationMemberships": [
+        {
+          "organizationId": "MANAGEMENT_SUPPORT",
+          "status": "ACTIVE",
+          "membershipType": "PRIMARY"
+        }
+      ]
+    },
+    {
+      "id": "demo-cc-management-002",
+      "employeeNumber": "DEMO-CC-0004",
+      "name": "[DEMO] CONCOST Manager 004",
+      "displayName": "[DEMO] CONCOST Manager 004",
+      "email": "demo.cc.004@example.invalid",
+      "companyId": "CON_COST",
+      "companyName": "CON-COST",
+      "departmentId": "MANAGEMENT_SUPPORT",
+      "departmentName": "경영지원본부",
+      "teamName": "",
+      "role": "DEPARTMENT_MANAGER",
+      "systemRole": "DEPARTMENT_MANAGER",
+      "permissionLevel": 4,
+      "organizationRank": "MANAGER",
+      "jobTitle": "[DEMO] Manager",
+      "employmentStatus": "ACTIVE",
+      "isActive": true,
+      "position": "[DEMO] Manager",
+      "accessGrade": "GRADE_2",
+      "capabilities": [
+        "FINANCE_ACCESS"
+      ],
+      "organizationMemberships": [
+        {
+          "organizationId": "MANAGEMENT_SUPPORT",
+          "status": "ACTIVE",
+          "membershipType": "PRIMARY"
+        }
+      ]
+    },
+    {
+      "id": "demo-cc-management-003",
+      "employeeNumber": "DEMO-CC-0005",
+      "name": "[DEMO] CONCOST Team Member 005",
+      "displayName": "[DEMO] CONCOST Team Member 005",
+      "email": "demo.cc.005@example.invalid",
+      "companyId": "CON_COST",
+      "companyName": "CON-COST",
+      "departmentId": "MANAGEMENT_SUPPORT",
+      "departmentName": "경영지원본부",
+      "teamName": "",
+      "role": "WORKER",
+      "systemRole": "WORKER",
+      "permissionLevel": 2,
+      "organizationRank": "STAFF",
+      "jobTitle": "[DEMO] Team Member",
+      "employmentStatus": "ACTIVE",
+      "isActive": true,
+      "position": "[DEMO] Team Member",
+      "accessGrade": "GRADE_4",
+      "capabilities": [
+        "FINANCE_ACCESS"
+      ],
+      "organizationMemberships": [
+        {
+          "organizationId": "MANAGEMENT_SUPPORT",
+          "status": "ACTIVE",
+          "membershipType": "PRIMARY"
+        }
+      ]
+    },
+    {
+      "id": "demo-cc-management-004",
+      "employeeNumber": "DEMO-CC-0006",
+      "name": "[DEMO] CONCOST Team Member 006",
+      "displayName": "[DEMO] CONCOST Team Member 006",
+      "email": "demo.cc.006@example.invalid",
+      "companyId": "CON_COST",
+      "companyName": "CON-COST",
+      "departmentId": "MANAGEMENT_SUPPORT",
+      "departmentName": "경영지원본부",
+      "teamName": "",
+      "role": "WORKER",
+      "systemRole": "WORKER",
+      "permissionLevel": 2,
+      "organizationRank": "STAFF",
+      "jobTitle": "[DEMO] Team Member",
+      "employmentStatus": "ACTIVE",
+      "isActive": true,
+      "position": "[DEMO] Team Member",
+      "accessGrade": "GRADE_4",
+      "capabilities": [
+        "FINANCE_ACCESS"
+      ],
+      "organizationMemberships": [
+        {
+          "organizationId": "MANAGEMENT_SUPPORT",
+          "status": "ACTIVE",
+          "membershipType": "PRIMARY"
+        }
+      ]
+    }
+  ]
+}

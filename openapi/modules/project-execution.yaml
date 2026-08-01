@@ -1,0 +1,654 @@
+{
+  "paths": {
+    "/api/v1/project-execution-plans": {
+      "post": {
+        "operationId": "createProjectExecutionPlan",
+        "summary": "Create execution plan from WON decision",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Create execution plan from WON decision",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Quoted integer revision when applicable."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/project-intake.yaml#/components/schemas/ProjectExecutionPlanDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../common/errors.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../common/errors.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../common/errors.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../common/errors.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../common/errors.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../common/errors.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../common/errors.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "purpose": "Create execution plan from WON decision",
+          "frontendScreen": "Future execution-plan screen",
+          "actor": "Commercial/planning actor",
+          "permission": "EXECUTION_PLAN_CREATE",
+          "companyScope": "X-Company-Id required; no default fallback",
+          "organizationScope": "Server resolved from active assignments and explicit capabilities",
+          "projectScope": "Canonical projectId and parent-resource authorization",
+          "requestHeaders": [
+            "Accept-Language",
+            "X-Request-Id",
+            "X-Company-Id",
+            "Idempotency-Key",
+            "X-CSRF-Token"
+          ],
+          "stateTransition": "none -> DRAFT",
+          "revision": "not required",
+          "idempotency": "required",
+          "fileReference": "none",
+          "audit": "EXECUTION_PLAN_CREATED",
+          "notificationEvent": "none",
+          "mockScenarios": [
+            "success",
+            "empty",
+            "validation failure",
+            "unauthorized",
+            "company forbidden",
+            "action forbidden",
+            "revision conflict",
+            "server unavailable"
+          ],
+          "acceptanceTest": "createProjectExecutionPlan: company scope, permission, response DTO, errors, and route behavior"
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/project-intake.yaml#/components/schemas/ExecutionPlanWriteRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/project-execution-plans/{id}": {
+      "get": {
+        "operationId": "getProjectExecutionPlan",
+        "summary": "Read execution plan",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Read execution plan",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Quoted integer revision when applicable."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/project-intake.yaml#/components/schemas/ProjectExecutionPlanDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../common/errors.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../common/errors.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../common/errors.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../common/errors.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../common/errors.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../common/errors.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../common/errors.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "purpose": "Read execution plan",
+          "frontendScreen": "Future execution-plan screen",
+          "actor": "Scoped user",
+          "permission": "EXECUTION_PLAN_VIEW",
+          "companyScope": "X-Company-Id required; no default fallback",
+          "organizationScope": "Server resolved from active assignments and explicit capabilities",
+          "projectScope": "Canonical projectId and parent-resource authorization",
+          "requestHeaders": [
+            "Accept-Language",
+            "X-Request-Id",
+            "X-Company-Id"
+          ],
+          "stateTransition": "none",
+          "revision": "not required",
+          "idempotency": "not required",
+          "fileReference": "none",
+          "audit": "READ",
+          "notificationEvent": "none",
+          "mockScenarios": [
+            "success",
+            "empty",
+            "validation failure",
+            "unauthorized",
+            "company forbidden",
+            "action forbidden",
+            "revision conflict",
+            "server unavailable"
+          ],
+          "acceptanceTest": "getProjectExecutionPlan: company scope, permission, response DTO, errors, and route behavior"
+        }
+      },
+      "patch": {
+        "operationId": "updateProjectExecutionPlan",
+        "summary": "Update organization and team plan",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Update organization and team plan",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Quoted integer revision when applicable."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/project-intake.yaml#/components/schemas/ProjectExecutionPlanDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../common/errors.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../common/errors.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../common/errors.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../common/errors.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../common/errors.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../common/errors.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../common/errors.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "purpose": "Update organization and team plan",
+          "frontendScreen": "Future execution-plan screen",
+          "actor": "Planning actor",
+          "permission": "EXECUTION_PLAN_EDIT",
+          "companyScope": "X-Company-Id required; no default fallback",
+          "organizationScope": "Server resolved from active assignments and explicit capabilities",
+          "projectScope": "Canonical projectId and parent-resource authorization",
+          "requestHeaders": [
+            "Accept-Language",
+            "X-Request-Id",
+            "X-Company-Id",
+            "If-Match",
+            "X-CSRF-Token"
+          ],
+          "stateTransition": "DRAFT -> DRAFT",
+          "revision": "required",
+          "idempotency": "not required",
+          "fileReference": "none",
+          "audit": "EXECUTION_PLAN_UPDATED",
+          "notificationEvent": "none",
+          "mockScenarios": [
+            "success",
+            "empty",
+            "validation failure",
+            "unauthorized",
+            "company forbidden",
+            "action forbidden",
+            "revision conflict",
+            "server unavailable"
+          ],
+          "acceptanceTest": "updateProjectExecutionPlan: company scope, permission, response DTO, errors, and route behavior"
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/project-intake.yaml#/components/schemas/ExecutionPlanWriteRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/project-execution-plans/{id}/confirm": {
+      "post": {
+        "operationId": "confirmProjectExecutionPlan",
+        "summary": "Confirm execution plan",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Confirm execution plan",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Quoted integer revision when applicable."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/project-intake.yaml#/components/schemas/ProjectExecutionPlanDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../common/errors.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../common/errors.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../common/errors.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../common/errors.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../common/errors.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../common/errors.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../common/errors.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "purpose": "Confirm execution plan",
+          "frontendScreen": "Future execution-plan screen",
+          "actor": "Actor with backend-returned canConfirmExecutionPlan capability",
+          "permission": "EXECUTION_PLAN_CONFIRM",
+          "companyScope": "X-Company-Id required; no default fallback",
+          "organizationScope": "Server resolved from active assignments and explicit capabilities",
+          "projectScope": "Canonical projectId and parent-resource authorization",
+          "requestHeaders": [
+            "Accept-Language",
+            "X-Request-Id",
+            "X-Company-Id",
+            "If-Match",
+            "Idempotency-Key",
+            "X-CSRF-Token"
+          ],
+          "stateTransition": "DRAFT -> CONFIRMED",
+          "revision": "required",
+          "idempotency": "required",
+          "fileReference": "none",
+          "audit": "CONFIRMPROJECTEXECUTIONPLAN",
+          "notificationEvent": "none",
+          "mockScenarios": [
+            "success",
+            "empty",
+            "validation failure",
+            "unauthorized",
+            "company forbidden",
+            "action forbidden",
+            "revision conflict",
+            "server unavailable"
+          ],
+          "acceptanceTest": "confirmProjectExecutionPlan: company scope, permission, response DTO, errors, and route behavior",
+          "capability": "canConfirmExecutionPlan=true; no title/role-name inference; admin override requires reason and audit."
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/project-common.yaml#/components/schemas/ProjectActionRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/project-execution-plans/{id}/cancel": {
+      "post": {
+        "operationId": "cancelProjectExecutionPlan",
+        "summary": "Cancel execution plan",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Cancel execution plan",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Quoted integer revision when applicable."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/project-intake.yaml#/components/schemas/ProjectExecutionPlanDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../common/errors.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../common/errors.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../common/errors.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../common/errors.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../common/errors.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../common/errors.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../common/errors.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "purpose": "Cancel execution plan",
+          "frontendScreen": "Future execution-plan screen",
+          "actor": "Authorized planning actor",
+          "permission": "EXECUTION_PLAN_CANCEL",
+          "companyScope": "X-Company-Id required; no default fallback",
+          "organizationScope": "Server resolved from active assignments and explicit capabilities",
+          "projectScope": "Canonical projectId and parent-resource authorization",
+          "requestHeaders": [
+            "Accept-Language",
+            "X-Request-Id",
+            "X-Company-Id",
+            "If-Match",
+            "Idempotency-Key",
+            "X-CSRF-Token"
+          ],
+          "stateTransition": "DRAFT -> CANCELLED",
+          "revision": "required",
+          "idempotency": "required",
+          "fileReference": "none",
+          "audit": "CANCELPROJECTEXECUTIONPLAN",
+          "notificationEvent": "none",
+          "mockScenarios": [
+            "success",
+            "empty",
+            "validation failure",
+            "unauthorized",
+            "company forbidden",
+            "action forbidden",
+            "revision conflict",
+            "server unavailable"
+          ],
+          "acceptanceTest": "cancelProjectExecutionPlan: company scope, permission, response DTO, errors, and route behavior"
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/project-common.yaml#/components/schemas/ProjectActionRequest"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

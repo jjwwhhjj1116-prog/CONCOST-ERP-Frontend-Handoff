@@ -1,0 +1,175 @@
+{
+  "components": {
+    "schemas": {
+      "BusinessSearchResultDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "companyId",
+          "status",
+          "revision",
+          "sourceType",
+          "sourceId",
+          "title",
+          "route",
+          "sourceSystem"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "companyId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "type": "string",
+            "minLength": 1
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "sourceType": {
+            "type": "string",
+            "description": ""
+          },
+          "sourceId": {
+            "type": "string",
+            "description": ""
+          },
+          "title": {
+            "type": "string",
+            "description": ""
+          },
+          "subtitle": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": ""
+          },
+          "safeSnippet": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": ""
+          },
+          "route": {
+            "type": "string",
+            "description": ""
+          },
+          "projectId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": ""
+          },
+          "sourceSystem": {
+            "type": "string",
+            "description": ""
+          },
+          "readOnly": {
+            "type": "boolean"
+          }
+        },
+        "description": "BusinessSearchResultDto contract DTO. ORM models are never exposed directly."
+      },
+      "BusinessSearchProviderStatusDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "companyId",
+          "status",
+          "revision",
+          "providerKey",
+          "available",
+          "failureIsolated"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "companyId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "type": "string",
+            "minLength": 1
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "providerKey": {
+            "type": "string",
+            "description": ""
+          },
+          "available": {
+            "type": "boolean"
+          },
+          "failureIsolated": {
+            "type": "boolean",
+            "const": true
+          }
+        },
+        "description": "BusinessSearchProviderStatusDto contract DTO. ORM models are never exposed directly."
+      },
+      "BusinessSearchResponseDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "companyId",
+          "status",
+          "revision",
+          "query",
+          "results",
+          "providerStatuses"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "companyId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "type": "string",
+            "minLength": 1
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "query": {
+            "type": "string",
+            "description": ""
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BusinessSearchResultDto"
+            }
+          },
+          "providerStatuses": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BusinessSearchProviderStatusDto"
+            }
+          }
+        },
+        "description": "BusinessSearchResponseDto contract DTO. ORM models are never exposed directly."
+      }
+    }
+  }
+}

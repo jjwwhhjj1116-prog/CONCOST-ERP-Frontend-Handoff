@@ -1,0 +1,578 @@
+{
+  "components": {
+    "schemas": {
+      "ExecutionPlanUnitDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "$ref": "../common/schemas.yaml#/components/schemas/OpaqueId"
+          },
+          "organizationUnitId": {
+            "$ref": "../common/schemas.yaml#/components/schemas/OpaqueId"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "PRIMARY_ORGANIZATION",
+              "PRIMARY_TEAM",
+              "PARTICIPANT_TEAM",
+              "SUPPORT_ORGANIZATION"
+            ]
+          },
+          "sortOrder": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "id",
+          "organizationUnitId",
+          "role",
+          "sortOrder"
+        ]
+      },
+      "ProjectExecutionPlanDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "$ref": "../common/schemas.yaml#/components/schemas/OpaqueId"
+          },
+          "companyId": {
+            "$ref": "../common/schemas.yaml#/components/schemas/OpaqueId"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "DRAFT",
+              "CONFIRMED",
+              "CONSUMED",
+              "CANCELLED"
+            ]
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "createdAt": {
+            "$ref": "../common/schemas.yaml#/components/schemas/UtcTimestamp"
+          },
+          "updatedAt": {
+            "$ref": "../common/schemas.yaml#/components/schemas/UtcTimestamp"
+          },
+          "permissions": {
+            "$ref": "../common/schemas.yaml#/components/schemas/PermissionCapabilities"
+          },
+          "commercialDecisionId": {
+            "$ref": "../common/schemas.yaml#/components/schemas/OpaqueId"
+          },
+          "units": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ExecutionPlanUnitDto"
+            }
+          },
+          "pmCandidatePersonnelCardId": {
+            "oneOf": [
+              {
+                "$ref": "../common/schemas.yaml#/components/schemas/OpaqueId"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "canConfirmExecutionPlan": {
+            "type": "boolean",
+            "description": "Server capability; the frontend never infers it from a title or role label."
+          }
+        },
+        "required": [
+          "id",
+          "companyId",
+          "commercialDecisionId",
+          "status",
+          "revision",
+          "units",
+          "permissions",
+          "canConfirmExecutionPlan"
+        ]
+      },
+      "ProjectIntakeStep1Dto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "projectName": {
+            "type": "string"
+          },
+          "projectCodeCandidate": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "workNature": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "uniqueItems": true
+          },
+          "workScopes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "uniqueItems": true
+          },
+          "sourceEstimateRequestId": {
+            "$ref": "../common/schemas.yaml#/components/schemas/OpaqueId"
+          },
+          "sourceEstimateSubmissionId": {
+            "$ref": "../common/schemas.yaml#/components/schemas/OpaqueId"
+          },
+          "changeReason": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "projectName",
+          "workNature",
+          "workScopes",
+          "sourceEstimateRequestId",
+          "sourceEstimateSubmissionId"
+        ]
+      },
+      "ProjectIntakeStep2Dto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "materials": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "category": {
+                  "type": "string"
+                },
+                "memo": {
+                  "type": "string"
+                },
+                "fileIds": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "../common/schemas.yaml#/components/schemas/OpaqueId"
+                  },
+                  "uniqueItems": true
+                },
+                "files": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "../common/files.yaml#/components/schemas/FileDto"
+                  }
+                }
+              },
+              "required": [
+                "category",
+                "memo",
+                "fileIds"
+              ],
+              "x-submit-file-constraint": "Every required file reference must have status READY."
+            }
+          }
+        },
+        "required": [
+          "materials"
+        ]
+      },
+      "ProjectIntakeStep3Dto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "plannedStartDate": {
+            "$ref": "../common/schemas.yaml#/components/schemas/LocalDate"
+          },
+          "plannedDeliveryDate": {
+            "$ref": "../common/schemas.yaml#/components/schemas/LocalDate"
+          },
+          "primaryOrganizationUnitId": {
+            "$ref": "../common/schemas.yaml#/components/schemas/OpaqueId"
+          },
+          "primaryTeamUnitId": {
+            "$ref": "../common/schemas.yaml#/components/schemas/OpaqueId"
+          },
+          "participantTeamUnitIds": {
+            "type": "array",
+            "items": {
+              "$ref": "../common/schemas.yaml#/components/schemas/OpaqueId"
+            },
+            "uniqueItems": true
+          },
+          "supportOrganizationUnitIds": {
+            "type": "array",
+            "items": {
+              "$ref": "../common/schemas.yaml#/components/schemas/OpaqueId"
+            },
+            "uniqueItems": true
+          },
+          "pmCandidatePersonnelCardId": {
+            "oneOf": [
+              {
+                "$ref": "../common/schemas.yaml#/components/schemas/OpaqueId"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "deprecated": true
+          },
+          "teamScopes": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "organizationUnitId": {
+                  "$ref": "../common/schemas.yaml#/components/schemas/OpaqueId"
+                },
+                "scope": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "organizationUnitId",
+                "scope"
+              ]
+            }
+          },
+          "pmCandidatePersonnelCardIds": {
+            "type": "array",
+            "items": {
+              "$ref": "../common/schemas.yaml#/components/schemas/OpaqueId"
+            },
+            "uniqueItems": true,
+            "description": "At least one active same-company candidate is required before Intake submit."
+          }
+        },
+        "required": [
+          "plannedStartDate",
+          "plannedDeliveryDate",
+          "primaryOrganizationUnitId",
+          "primaryTeamUnitId",
+          "participantTeamUnitIds",
+          "supportOrganizationUnitIds",
+          "teamScopes"
+        ],
+        "x-submit-constraint": {
+          "field": "pmCandidatePersonnelCardIds",
+          "minItems": 1,
+          "validationPoint": "Project Intake submit"
+        }
+      },
+      "ProjectIntakeStep4Dto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "contacts": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "displayName": {
+                  "type": "string"
+                },
+                "role": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "phone": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "email": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "required": [
+                "displayName"
+              ]
+            }
+          },
+          "workDescription": {
+            "type": "string"
+          },
+          "specialRequests": {
+            "type": "string"
+          },
+          "awardRequestText": {
+            "type": "string"
+          },
+          "requestNoteFileIds": {
+            "type": "array",
+            "items": {
+              "$ref": "../common/schemas.yaml#/components/schemas/OpaqueId"
+            },
+            "uniqueItems": true
+          }
+        },
+        "required": [
+          "contacts",
+          "workDescription",
+          "specialRequests",
+          "awardRequestText",
+          "requestNoteFileIds"
+        ]
+      },
+      "ProjectIntakeSummaryDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "$ref": "../common/schemas.yaml#/components/schemas/OpaqueId"
+          },
+          "companyId": {
+            "$ref": "../common/schemas.yaml#/components/schemas/OpaqueId"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "DRAFT",
+              "SUBMITTED",
+              "UNDER_REVIEW",
+              "CHANGES_REQUESTED",
+              "APPROVED",
+              "CANCELLED"
+            ]
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "createdAt": {
+            "$ref": "../common/schemas.yaml#/components/schemas/UtcTimestamp"
+          },
+          "updatedAt": {
+            "$ref": "../common/schemas.yaml#/components/schemas/UtcTimestamp"
+          },
+          "permissions": {
+            "$ref": "../common/schemas.yaml#/components/schemas/PermissionCapabilities"
+          },
+          "projectId": {
+            "$ref": "../common/schemas.yaml#/components/schemas/OpaqueId"
+          },
+          "executionPlanId": {
+            "$ref": "../common/schemas.yaml#/components/schemas/OpaqueId"
+          },
+          "currentStep": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 4
+          },
+          "projectName": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "companyId",
+          "projectId",
+          "executionPlanId",
+          "status",
+          "revision",
+          "currentStep",
+          "projectName",
+          "permissions"
+        ]
+      },
+      "ProjectIntakeDetailDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "$ref": "../common/schemas.yaml#/components/schemas/OpaqueId"
+          },
+          "companyId": {
+            "$ref": "../common/schemas.yaml#/components/schemas/OpaqueId"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "DRAFT",
+              "SUBMITTED",
+              "UNDER_REVIEW",
+              "CHANGES_REQUESTED",
+              "APPROVED",
+              "CANCELLED"
+            ]
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "createdAt": {
+            "$ref": "../common/schemas.yaml#/components/schemas/UtcTimestamp"
+          },
+          "updatedAt": {
+            "$ref": "../common/schemas.yaml#/components/schemas/UtcTimestamp"
+          },
+          "permissions": {
+            "$ref": "../common/schemas.yaml#/components/schemas/PermissionCapabilities"
+          },
+          "projectId": {
+            "$ref": "../common/schemas.yaml#/components/schemas/OpaqueId"
+          },
+          "executionPlanId": {
+            "$ref": "../common/schemas.yaml#/components/schemas/OpaqueId"
+          },
+          "currentStep": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 4
+          },
+          "projectName": {
+            "type": "string"
+          },
+          "step1": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ProjectIntakeStep1Dto"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "step2": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ProjectIntakeStep2Dto"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "step3": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ProjectIntakeStep3Dto"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "step4": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ProjectIntakeStep4Dto"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "approvalPolicy": {
+            "$ref": "../schemas/project-common.yaml#/components/schemas/ApprovalPolicySummaryDto"
+          },
+          "intakeNo": {
+            "type": "string",
+            "minLength": 1
+          },
+          "projectNo": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "companyId",
+          "projectId",
+          "executionPlanId",
+          "status",
+          "revision",
+          "currentStep",
+          "projectName",
+          "permissions",
+          "approvalPolicy",
+          "intakeNo",
+          "projectNo"
+        ]
+      },
+      "ExecutionPlanWriteRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "commercialDecisionId": {
+            "$ref": "../common/schemas.yaml#/components/schemas/OpaqueId"
+          },
+          "units": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ExecutionPlanUnitDto"
+            }
+          },
+          "pmCandidatePersonnelCardId": {
+            "oneOf": [
+              {
+                "$ref": "../common/schemas.yaml#/components/schemas/OpaqueId"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "deprecated": true,
+            "description": "Compatibility field only; use pmCandidatePersonnelCardIds."
+          },
+          "pmCandidatePersonnelCardIds": {
+            "type": "array",
+            "items": {
+              "$ref": "../common/schemas.yaml#/components/schemas/OpaqueId"
+            },
+            "uniqueItems": true
+          }
+        },
+        "required": [
+          "commercialDecisionId",
+          "units"
+        ]
+      },
+      "ProjectIntakeCreateRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "executionPlanId": {
+            "$ref": "../common/schemas.yaml#/components/schemas/OpaqueId"
+          },
+          "sourceDecisionId": {
+            "$ref": "../common/schemas.yaml#/components/schemas/OpaqueId"
+          },
+          "initialStep": {
+            "type": "integer",
+            "const": 1
+          }
+        },
+        "required": [
+          "executionPlanId",
+          "sourceDecisionId",
+          "initialStep"
+        ]
+      }
+    }
+  }
+}

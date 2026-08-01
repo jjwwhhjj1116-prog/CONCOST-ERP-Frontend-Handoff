@@ -1,0 +1,28 @@
+Resource,Action,Server Scope,Frontend Capability,Backend Enforcement,Evidence
+Estimate Request,VIEW,Company + assigned commercial scope,permissions.canView,GET request list/detail,FRONTEND_VERIFIED / PROPOSAL
+Estimate Request,CREATE,Commercial authorized user,permissions.canCreate,POST request,PROPOSAL
+Estimate Request,EDIT,Owner or scoped manager,permissions.canEdit,PATCH + revision,PROPOSAL
+Estimate Sheet,SUBMIT,Sheet editor,permissions.canSubmit,Submit transition,PROPOSAL
+Estimate Sheet,APPROVE,Resolved approval policy actor,permissions.canApprove,Approve transition,POLICY_FROZEN
+Commercial Decision,APPROVE,Commercial decision authority,permissions.canDecide,Decision command,USER_REQUIRED
+Estimate Business Data,VIEW,Company-scoped estimate/business-data reader,permissions.canView,Scoped records/reports,PROPOSAL
+Estimate Business Data,MANAGE/EXPORT,Explicit business-data manager/exporter,permissions.canManage|canExport,Revisioned CRUD and audited export request,PROPOSAL
+Execution Plan,EDIT,Decision owner or project-planning actor,permissions.canEdit,PATCH units,PROPOSAL
+Execution Plan,APPROVE,Explicit plan confirmer,permissions.canConfirm,Confirm command,USER_REQUIRED
+Project Intake,CREATE,Confirmed-plan actor,permissions.canCreate,Idempotent create,POLICY_FROZEN
+Project Intake,EDIT,Author while DRAFT/CHANGES_REQUESTED,permissions.canEdit,PATCH step + revision,POLICY_FROZEN
+Project Intake,SUBMIT,Author,permissions.canSubmit,Completeness validation,POLICY_FROZEN
+Project Intake,REVIEW,Server-resolved policy reviewer,permissions.canReview,Review command,POLICY_FROZEN
+Project Intake,APPROVE,Server-resolved policy actor,permissions.canApprove,Approval command,POLICY_FROZEN
+Project,VIEW,Company + active assignment or explicit company manager,permissions.canView,Scoped list/detail,POLICY_FROZEN
+Project,ASSIGN,Scoped organization manager/authorized planner,permissions.canAssign,Assignment command,PROPOSAL
+PM Schedule,EDIT,Assigned PM or scheduling manager,permissions.canEdit,PATCH draft,PROPOSAL
+PM Schedule,APPROVE,Explicit schedule approver,permissions.canApprove,Approve/reject command,USER_REQUIRED
+Question,CREATE,Assigned project participant,permissions.canCreateQuestion,POST question,PROPOSAL
+Question,RESOLVE,Assignee or scoped manager,permissions.canResolve,Resolve/reopen command,PROPOSAL
+QC,MANAGE,QC assignee/manager,permissions.canManageQc,QC update/send/export,PROPOSAL
+Work Log,CREATE,Assigned personnel/PM,permissions.canCreate,POST work log,PROPOSAL
+Delivery,APPROVE,Explicit delivery approver,permissions.canApprove,Approve/deliver command,USER_REQUIRED
+Profitability,VIEW,SUMMARY for PM; DETAIL for primary-organization manager and finance; RESTRICTED for executive/audit grants,permissions.canView,Individual salary and individual labor-cost records excluded from PM response,POLICY_FROZEN
+Profitability,EDIT,Explicit finance/PM capability,permissions.canEdit,PATCH + revision,PROPOSAL
+File,DOWNLOAD,Fresh parent-resource authorization,permissions.canDownload,Short-lived reference,COMMON_CONTRACT

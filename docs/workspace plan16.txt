@@ -1,0 +1,1112 @@
+# WORKSPACE PLAN 16 — 마스터 리포트 V2와 실제 화면 불일치 복구, JSON/인사카드/조직/보드/대시보드 실반영 검증 프롬프트
+
+이 프롬프트는 기존 `workspace plan1.txt`부터 `workspace plan15.txt` 이후에 추가되는 열여섯 번째 보강 지시사항이다.
+
+Plan 16의 목적은 새로운 기능을 무작정 늘리는 것이 아니라, Antigravity가 제출한 `workspace_master_report_v2.md`에서 “반영 완료” 또는 “구현 완료”처럼 표현된 항목이 실제 화면과 코드에서 제대로 반영되지 않은 문제를 바로잡는 것이다.
+
+사용자가 제공한 현재 화면 기준으로 다음 문제가 다시 확인된다.
+
+1. `납품일 임박도 현황`에서 `미정` 컬럼이 우측으로 밀려 있고, 불필요한 가로 스크롤 또는 남는 여백 문제가 남아 있다.
+2. 대시보드에 아직 `진행 중 프로젝트 요약` 문구가 남아 있으며, `월별 프로젝트 요약`과 월별 드롭다운이 명확히 적용되지 않았다.
+3. 더미데이터가 계속 실사용 화면에 노출되고 있다.
+4. 웹에서 수정한 자료를 JSON으로 저장하고 `/json` 폴더를 통해 Antigravity가 다시 반영하는 흐름이 실제 사용 가능한 수준인지 불명확하다.
+5. 인사카드 편집/저장 기능이 실제 일정표 기준 데이터로 연결되었는지 불명확하다.
+6. CON-COST / Viet_QS 조직구조와 세부 부서가 실제 UI와 데이터 구조에 반영되었는지 불명확하다.
+7. `수주 프로젝트` 하위의 `개발팀 작업` 카테고리가 실제로 적용되었는지 불명확하다.
+8. 프로젝트 보드 컬럼의 `수주/대기 → 작업 착수 전`, `수정` 컬럼 추가가 실제 화면에 반영되었는지 불명확하다.
+9. 마스터 리포트 V2는 “반영됨”이라고 말하지만, 실제 화면 스크린샷과 불일치가 있으므로 완료 증빙으로 볼 수 없다.
+
+따라서 Plan 16은 **마스터 리포트와 실제 화면/코드 간 불일치 복구 전용 Plan**이다.
+
+---
+
+## 0. Plan 16의 핵심 원칙
+
+Antigravity는 Plan 16에서 아래 원칙을 반드시 지켜야 한다.
+
+1. `workspace_master_report_v2.md`는 완료 증빙이 아니라 점검 대상이다.
+2. 실제 코드, route, store, selector, 화면 텍스트, CSS, JSON 파일 존재 여부를 확인한 뒤 완료 여부를 판단한다.
+3. 화면에 반영되지 않은 항목은 리포트에 완료라고 적혀 있어도 미완료로 본다.
+4. 더미데이터는 실사용 모드에서 기본 노출하지 않는다.
+5. JSON 저장은 실제 GitHub Pages에서 저장소 파일을 직접 수정하는 것으로 표현하지 않는다.
+6. 정적 웹 환경에서는 `JSON 내보내기/download`와 `/json` 폴더 수동 반영 흐름을 명확히 안내한다.
+7. 인사카드는 단순 명단이 아니라 일정표/권한/조직/결재의 기준 데이터로 사용한다.
+8. 조직구조는 CON-COST와 Viet_QS의 실제 역할 차이를 반영해야 한다.
+9. 보드/대시보드의 문구, 컬럼, 필터는 실제 화면에서 확인 가능해야 한다.
+10. 완료 보고에는 반드시 실제 수정 파일, 확인 화면, lint/build 결과, 남은 리스크를 포함한다.
+
+---
+
+## 1. Plan 1~15 및 마스터 리포트 V2와의 무결성 검토
+
+### 1-1. 마스터 리포트 V2의 현재 주장
+
+`workspace_master_report_v2.md`에는 다음과 같은 내용이 포함되어 있을 수 있다.
+
+```text
+- CON-COST 및 Viet_QS 조직 구조 반영
+- 인사카드(Personnel Card) 연동
+- 외부 수주와 내부 개발 프로젝트 분리
+- 보드 4단 컬럼: 작업 착수 전 → 진행 중 → 수정 → 완료
+- 납품일 임박도 현황 Grid 레이아웃 최적화
+- JSON Handoff
+```
+
+그러나 사용자의 실제 화면에서는 위 내용이 완전히 적용되지 않은 것으로 보인다.
+
+따라서 Plan 16에서는 다음 원칙을 적용한다.
+
+```text
+문서상 완료 ≠ 실제 완료
+코드상 타입 존재 ≠ UI 반영 완료
+UI 문구 변경 ≠ 데이터 흐름 완성
+JSON 파일 존재 ≠ import/export 완료
+```
+
+### 1-2. Plan 13의 요구사항 관리 원칙과의 관계
+
+Plan 13에서 작은 수정은 Patch로 처리하라고 했지만, 이번 건은 단순 patch가 아니다.
+
+이유:
+
+- 마스터 리포트와 실제 화면 사이에 체계적 불일치가 있다.
+- JSON 저장, 인사카드, 조직구조, 프로젝트 카테고리, 보드 컬럼, 대시보드, CSS 레이아웃이 서로 연결되어 있다.
+- 실사용 데이터 전환과 권한/일정표 기반 데이터에 영향을 준다.
+
+따라서 Plan 16은 **Discrepancy Recovery Plan**, 즉 불일치 복구 Plan으로 분리한다.
+
+---
+
+## 2. 소스 오브 트루스 우선순위
+
+Plan 16에서 완료 여부를 판단할 때 우선순위는 다음과 같다.
+
+```text
+1. 실제 실행 화면
+2. 실제 코드
+3. 실제 store/selector/type
+4. 실제 JSON 파일 및 script
+5. lint/build 결과
+6. 마스터 리포트
+```
+
+마스터 리포트는 가장 낮은 신뢰도의 요약 문서로만 본다.
+
+---
+
+## 3. 반드시 복구해야 할 항목
+
+### 3-1. 실사용 모드 더미데이터 제거
+
+요구사항:
+
+```text
+이제 더미데이터들은 날릴 것.
+실사용 모드에서 demo/seed 프로젝트가 실제 데이터처럼 보이면 안 됨.
+```
+
+구현 원칙:
+
+- 실사용 모드에서는 기본 데이터 소스를 `JSON 운영 데이터`로 둔다.
+- JSON 운영 데이터가 없으면 빈 상태를 보여준다.
+- demo/seed 데이터는 운영 검증 모드 또는 개발 모드에서만 선택 가능하게 한다.
+- 현재 데이터 소스를 화면에 표시한다.
+
+데이터 소스:
+
+```ts
+DataSourceMode =
+  | "JSON_OPERATION_DATA"
+  | "EXCEL_IMPORT_DATA"
+  | "DEMO_SEED_DATA"
+  | "EMPTY";
+```
+
+기본값:
+
+```text
+실사용 모드: JSON_OPERATION_DATA → 없으면 EMPTY
+운영 검증 모드: DEMO_SEED_DATA 선택 가능
+```
+
+금지:
+
+- JSON이 없다고 조용히 demo data로 fallback하지 마라.
+- 실사용 모드에서 demo 프로젝트를 실제 프로젝트처럼 표시하지 마라.
+
+---
+
+### 3-2. JSON 저장/불러오기/Handoff 실사용 구조
+
+요구사항:
+
+```text
+웹에서 편집한 만큼 수정한 자료를 저장할 수 있게 버튼 추가.
+저장한 다음 별도 /json 폴더에 올리고 Antigravity가 읽어 반영 가능하게 구성.
+```
+
+정적 웹 환경 원칙:
+
+```text
+GitHub Pages에서는 웹에서 repo 파일을 직접 수정할 수 없다.
+따라서 “저장”은 파일 다운로드/export로 구현한다.
+사용자가 해당 JSON을 /json 폴더에 복사하고,
+Antigravity가 이를 import script로 읽어 반영한다.
+```
+
+필수 UI:
+
+```text
+JSON으로 내보내기
+JSON 불러오기 미리보기
+적용 전 검증
+현재 데이터 소스 표시
+/json 폴더 반영 안내
+```
+
+필수 파일 구조:
+
+```text
+json/
+  organization.json
+  personnel-cards.json
+  projects.json
+  project-categories.json
+  revision-requests.json
+  workspace-settings.json
+  schedule-visibility-rules.json
+  approval-workflow-templates.json
+  README.md
+```
+
+필수 script:
+
+```text
+scripts/validate-json-data.ts
+scripts/import-json-data.ts
+scripts/export-current-state.ts
+```
+
+필수 안내 문구:
+
+```text
+현재 정적 배포 환경에서는 웹에서 수정한 데이터를 JSON 파일로 내보낸 뒤,
+프로젝트의 /json 폴더에 저장하고 Antigravity에게 반영을 요청해야 합니다.
+```
+
+---
+
+### 3-3. 인사카드 웹 편집 및 일정표 기준 데이터 연결
+
+요구사항:
+
+```text
+인사카드를 웹에서 수정 가능하게 한다.
+인사카드를 JSON으로 저장한다.
+해당 인사카드를 기반으로 일정표를 짠다.
+```
+
+필수 구현:
+
+- 인사카드 관리 화면
+- 직원 추가/수정/비활성화
+- 회사/부서/세부부서/팀 선택
+- 직급/직책/역할 선택
+- 일정 조회 권한 설정
+- 결재 상위자 연결
+- JSON export/import
+- 직원 일정표가 PersonnelCard 기준으로 행 생성
+
+PersonnelCard canonical field:
+
+```ts
+PersonnelCard {
+  id: string
+  employeeNumber?: string
+  companyId: "con-cost" | "viet-qs"
+  companyName: "CON-COST" | "Viet_QS"
+  departmentId: "finishing" | "structure" | "civil" | "develop"
+  departmentName: "마감" | "구조" | "토목" | "개발"
+  subDepartmentId?: string
+  subDepartmentName?: string
+  teamId?: string
+  teamName?: string
+  name: string
+  displayName: string
+  koreanAlias?: string
+  vietnameseName?: string
+  email?: string
+  systemRole: "SUPER_ADMIN" | "DEPARTMENT_MANAGER" | "PM" | "WORKER"
+  organizationRank: "CEO" | "VICE_PRESIDENT" | "MANAGER" | "PM" | "TEAM_LEADER" | "DEPUTY_TEAM_LEADER" | "STAFF" | "TRAINEE"
+  jobTitle?: string
+  managerId?: string
+  pmId?: string
+  employmentStatus: "ACTIVE" | "INACTIVE" | "ON_LEAVE" | "RESIGNED"
+  canDirectEstimate?: boolean
+  canManageSchedule?: boolean
+  canApprove?: boolean
+  canViewTeamSchedule?: boolean
+  canViewDepartmentSchedule?: boolean
+  canViewAllSchedule?: boolean
+  createdAt: string
+  updatedAt: string
+}
+```
+
+주의:
+
+- `systemRole`과 `organizationRank`를 혼동하지 마라.
+- CON-COST 직원은 PM이면서 산출 작업자 역할을 겸할 수 있다.
+- Viet_QS 팀장은 PM 역할이 아니라 현장/부서 실행 리더일 수 있다.
+
+---
+
+### 3-4. 회사/부서/세부부서 조직구조 실제 반영
+
+조직 상위 구조:
+
+```text
+CEO
+Vice President
+```
+
+회사:
+
+```text
+CON-COST
+Viet_QS
+```
+
+공통 부서:
+
+```text
+마감
+구조
+토목
+개발
+```
+
+CON-COST 특성:
+
+```text
+중간관리자와 PM 중심.
+일부는 업무를 배우는 단계라 직접 산출 업무도 수행 가능.
+```
+
+Viet_QS 특성:
+
+```text
+CON-COST 중간관리자와 PM의 업무 지시를 받아 실행.
+각 부서에는 팀장, 부팀장, 사원 구조.
+```
+
+Viet_QS 세부부서:
+
+```text
+마감:
+- Internal1
+- Internal2
+- Internal3
+- External
+- Partition&Opening
+
+구조:
+- Vertical
+- Horizontal&Foundation
+
+토목:
+- Civil
+
+개발:
+- Develop
+```
+
+필수 JSON:
+
+```text
+json/organization.json
+```
+
+필수 검증:
+
+- 모든 PersonnelCard는 유효한 companyId/departmentId/subDepartmentId를 참조해야 한다.
+- Viet_QS 세부부서 외의 임의 문자열을 허용하지 않는다.
+- CON-COST와 Viet_QS의 role/rank 의미를 구분한다.
+
+---
+
+### 3-5. `수주 프로젝트` 하위 `개발팀 작업` 카테고리
+
+요구사항:
+
+```text
+수주프로젝트 하단에 개발팀 작업 카테고리 추가.
+개발팀 작업은 수주 받은 프로젝트가 아니라 내부 진행 업무.
+```
+
+Canonical enum:
+
+```ts
+ProjectSourceType = "CLIENT_ORDER" | "INTERNAL_DEVELOPMENT";
+```
+
+Legacy alias 처리:
+
+```text
+CLIENT_PROJECT → CLIENT_ORDER
+DEVELOPMENT_WORK → INTERNAL_DEVELOPMENT
+```
+
+UI 구조:
+
+```text
+수주 프로젝트
+  - 외부 수주 프로젝트
+  - 개발팀 작업
+```
+
+원칙:
+
+- 내부 개발팀 작업은 수주 실적에 포함하지 않는다.
+- 내부 개발팀 작업도 일정표, 결재, 알림, 진행률, 담당자 배정은 사용할 수 있다.
+- 내부 개발팀 작업은 deliveryDate 대신 targetReleaseDate를 사용할 수 있다.
+
+---
+
+### 3-6. 프로젝트 보드 컬럼 및 문구 실반영
+
+현재 화면에서 반드시 확인할 항목:
+
+```text
+수주/대기 문구가 남아 있으면 미완료.
+```
+
+변경 후 컬럼:
+
+```text
+작업 착수 전
+진행 중
+수정
+완료
+```
+
+내부 enum 권장:
+
+```ts
+ProjectBoardColumn =
+  | "PRE_WORK"
+  | "IN_PROGRESS"
+  | "REVISION"
+  | "COMPLETED";
+```
+
+`수정` 컬럼 의미:
+
+```text
+기존 납품/완료된 프로젝트가 클라이언트 요청으로 재작업 또는 수정 진행되는 상태.
+```
+
+RevisionRequest:
+
+```ts
+RevisionRequest {
+  id: string
+  projectId: string
+  requestedBy?: string
+  clientName?: string
+  title: string
+  description: string
+  reason: string
+  requestedDate: string
+  targetDate?: string
+  status: "DRAFT" | "REQUESTED" | "PM_REVIEWING" | "MANAGER_REVIEWING" | "APPROVED" | "REJECTED" | "IN_REVISION" | "COMPLETED" | "CANCELLED"
+  impactScope?: string
+  relatedTaskIds?: string[]
+  approvalRequestId?: string
+  createdAt: string
+  updatedAt: string
+}
+```
+
+PostDeliveryWorkRequest와 구분:
+
+```text
+PostDeliveryWorkRequest: 내부 판단 또는 작업자 요청으로 추가 업무가 필요한 경우.
+RevisionRequest: 클라이언트 요청으로 기존 작업물 수정/재작업이 필요한 경우.
+```
+
+---
+
+### 3-7. 납품일 임박도 현황 레이아웃 실수정
+
+현재 문제:
+
+```text
+미정 컬럼이 화면 오른쪽으로 밀리고, 좌우 공간이 남는데도 스크롤이 필요해 보임.
+```
+
+수정 원칙:
+
+- 4개 컬럼은 컨테이너 안에서 균등 배치한다.
+- 전체 보드에 불필요한 horizontal scroll을 넣지 않는다.
+- 각 컬럼 내부 카드 리스트만 세로 스크롤한다.
+- 1440px 이상 desktop 화면에서는 4개 컬럼이 한 화면에 보여야 한다.
+- 사이드바 너비와 함께 계산한다.
+
+권장 CSS:
+
+```css
+.delivery-board-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+.delivery-board-column {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.delivery-board-card-list {
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+```
+
+반응형:
+
+```text
+>= 1280px: 4열
+768px ~ 1279px: 2열
+< 768px: 1열
+```
+
+금지:
+
+- column에 `min-width: 300px` 이상을 고정해서 전체 overflow를 만들지 마라.
+- wrapper에 불필요한 `overflow-x: auto`를 넣지 마라.
+- 오른쪽 빈 공간을 방치하지 마라.
+
+---
+
+### 3-8. 대시보드 `월별 프로젝트 요약` 실반영
+
+현재 화면 문제:
+
+```text
+진행 중 프로젝트 요약 문구가 남아 있음.
+```
+
+변경:
+
+```text
+진행 중 프로젝트 요약 → 월별 프로젝트 요약
+```
+
+필수 UI:
+
+```text
+[월 선택 드롭다운]
+전체 월
+2026년 1월
+2026년 2월
+...
+```
+
+월별 프로젝트 요약 컬럼:
+
+```text
+프로젝트명
+구분: 외부 수주 / 개발팀 작업
+상태
+공정률
+납품 예정일 또는 목표일
+월별 투입 인원
+월별 TaskCard 수
+수정 요청 수
+지연 여부
+```
+
+월 필터 기준:
+
+- CLIENT_ORDER: deliveryDate 또는 ScheduleAssignment 월 기준
+- INTERNAL_DEVELOPMENT: targetReleaseDate 또는 ScheduleAssignment 월 기준
+- 권한별 visible project selector 적용
+
+---
+
+## 4. Phase 114 — 마스터 리포트 V2와 실제 화면/코드 불일치 분석
+
+### 목표
+
+`workspace_master_report_v2.md`와 실제 화면/코드를 비교하여, 문서상 반영되었다고 주장하지만 실제로 미반영된 항목을 정확히 식별한다.
+
+### 작업
+
+- `workspace_master_report_v2.md` 읽기
+- 현재 route 목록 확인
+- 현재 sidebar/menu 확인
+- 현재 Project Board 컴포넌트 확인
+- 현재 Dashboard 컴포넌트 확인
+- 현재 DataSource 관련 코드 확인
+- 현재 JSON 폴더 및 script 확인
+- 현재 PersonnelCard 화면/타입 확인
+- 현재 Organization 타입/데이터 확인
+- 현재 RevisionRequest 타입/화면 확인
+- 현재 delivery board CSS 확인
+- 현재 dashboard monthly filter 확인
+
+### 완료 조건
+
+- 문서상 완료와 실제 구현의 차이 목록 작성
+- Plan 16에서 수정할 파일 범위 확정
+- 사용자에게 Phase 115 진행 승인 요청
+
+### Git 커밋
+
+분석 Phase이므로 코드 변경이 없다면 커밋하지 않는다.
+
+```text
+phase-114: analyze discrepancies between master report v2 and actual implementation
+```
+
+### Phase 114 완료 후 출력 형식
+
+```text
+[Phase 114 완료 보고]
+
+1. 검토한 마스터 리포트 V2 항목
+2. 실제 코드에서 확인한 항목
+3. 실제 화면에서 미반영된 항목
+4. 문서상 완료였으나 실제 미완료인 항목
+5. 수정 대상 파일 범위
+6. Plan 1~15와의 충돌 가능성
+7. Phase 115~122 작업 계획
+8. Git 상태
+9. 커밋 메시지 및 커밋 해시 또는 커밋 생략 사유
+10. 다음 단계: Phase 115 진행 승인 요청
+
+Phase 115를 진행해도 될까요?
+```
+
+사용자가 승인하기 전까지 Phase 115를 시작하지 마라.
+
+---
+
+## 5. Phase 115 — DataSourceMode 및 더미데이터 비활성화 실반영
+
+### 목표
+
+실사용 모드에서 더미데이터를 기본 노출하지 않고, JSON 운영 데이터 또는 빈 상태를 기준으로 화면을 구성한다.
+
+### 작업
+
+- DataSourceMode 타입 추가/정리
+- 실사용 모드 기본값을 JSON_OPERATION_DATA로 설정
+- JSON 데이터 없을 때 EMPTY 상태 표시
+- 운영 검증 모드에서만 DEMO_SEED_DATA 선택 가능
+- 화면 상단 또는 설정에 현재 데이터 소스 표시
+- demo fallback 경고 표시
+- 기존 seed import 위치 정리
+
+### 완료 조건
+
+- 실사용 모드에서 더미데이터가 기본 노출되지 않음
+- JSON 없으면 빈 상태와 안내 문구 표시
+- 운영 검증 모드에서는 demo data 선택 가능
+- 빌드 오류 없음
+
+### Git 커밋
+
+```text
+phase-115: enforce data source mode and disable demo data in daily mode
+```
+
+### Phase 115 완료 후 출력 형식
+
+```text
+[Phase 115 완료 보고]
+
+1. DataSourceMode 구조
+2. 실사용 모드 데이터 소스 기본값
+3. JSON 없음 상태 처리
+4. demo data 제한 방식
+5. 자체검수 결과
+6. lint/build 결과
+7. 커밋 메시지 및 커밋 해시
+8. 다음 단계: Phase 116 진행 승인 요청
+
+Phase 116을 진행해도 될까요?
+```
+
+---
+
+## 6. Phase 116 — JSON Handoff 실제 export/import 구조 구현
+
+### 목표
+
+웹에서 편집한 데이터를 JSON으로 내보내고, `/json` 폴더의 파일을 Antigravity가 읽어 반영할 수 있게 한다.
+
+### 작업
+
+- `/json` 폴더 생성
+- json README 작성
+- organization.json 템플릿
+- personnel-cards.json 템플릿
+- projects.json 템플릿
+- workspace-settings.json 템플릿
+- JSON export 버튼
+- JSON import preview UI
+- validate-json-data script
+- import-json-data script
+- export-current-state script
+- JSON schema version 필드 적용
+
+### 완료 조건
+
+- JSON 내보내기 가능
+- JSON 불러오기 미리보기 가능
+- `/json` 폴더 구조 존재
+- Antigravity가 읽을 수 있는 script 존재
+- 빌드 오류 없음
+
+### Git 커밋
+
+```text
+phase-116: implement json handoff export import and validation scripts
+```
+
+### Phase 116 완료 후 출력 형식
+
+```text
+[Phase 116 완료 보고]
+
+1. 생성한 /json 파일 구조
+2. 구현한 JSON export 기능
+3. 구현한 JSON import preview 기능
+4. 구현한 validation/import/export scripts
+5. 정적 배포 환경 안내 문구
+6. 자체검수 결과
+7. lint/build 결과
+8. 커밋 메시지 및 커밋 해시
+9. 다음 단계: Phase 117 진행 승인 요청
+
+Phase 117을 진행해도 될까요?
+```
+
+---
+
+## 7. Phase 117 — 인사카드 관리 화면 및 조직구조 실제 연결
+
+### 목표
+
+인사카드를 웹에서 수정하고 JSON으로 저장할 수 있게 하며, 인사카드를 일정표/권한/조직의 기준 데이터로 연결한다.
+
+### 작업
+
+- PersonnelCard canonical field 정리
+- Organization 타입 정리
+- CEO/Vice President 구조 추가
+- CON-COST / Viet_QS 회사 구조 추가
+- 공통 부서 추가
+- Viet_QS 세부부서 추가
+- 인사카드 관리 route/menu 추가
+- 직원 추가/수정/비활성화
+- 회사/부서/세부부서/팀 선택
+- systemRole/organizationRank 분리
+- 일정 조회 권한 flag 편집
+- JSON export/import 연결
+- 직원 일정표가 PersonnelCard ACTIVE 직원 기준으로 생성되도록 연결
+
+### 완료 조건
+
+- 인사카드 화면에서 직원 편집 가능
+- 조직구조 반영
+- 인사카드 JSON 저장 가능
+- 직원 일정표가 인사카드 기준으로 구성
+- 빌드 오류 없음
+
+### Git 커밋
+
+```text
+phase-117: connect personnel cards organization and schedule basis
+```
+
+### Phase 117 완료 후 출력 형식
+
+```text
+[Phase 117 완료 보고]
+
+1. 구현한 PersonnelCard 구조
+2. 구현한 Organization 구조
+3. CON-COST / Viet_QS 반영 결과
+4. Viet_QS 세부부서 반영 결과
+5. 인사카드 관리 화면
+6. 일정표 연결 방식
+7. 자체검수 결과
+8. lint/build 결과
+9. 커밋 메시지 및 커밋 해시
+10. 다음 단계: Phase 118 진행 승인 요청
+
+Phase 118을 진행해도 될까요?
+```
+
+---
+
+## 8. Phase 118 — 외부 수주 프로젝트 / 개발팀 작업 카테고리 분리
+
+### 목표
+
+`수주 프로젝트` 하위에 `개발팀 작업` 카테고리를 추가하고, 외부 수주와 내부 개발 업무를 분리한다.
+
+### 작업
+
+- ProjectSourceType canonical enum 정리
+- CLIENT_ORDER / INTERNAL_DEVELOPMENT 적용
+- legacy alias 처리
+- 수주 프로젝트 하위 탭 추가
+- 외부 수주 프로젝트 탭
+- 개발팀 작업 탭
+- INTERNAL_DEVELOPMENT는 수주 실적 제외
+- targetReleaseDate 추가
+- dashboard/board/schedule selector에 sourceType 반영
+
+### 완료 조건
+
+- 개발팀 작업 카테고리 표시
+- 수주 실적과 내부 개발 작업 분리
+- 개발팀 작업도 일정/결재/알림 사용 가능
+- 빌드 오류 없음
+
+### Git 커밋
+
+```text
+phase-118: separate client orders and internal development work category
+```
+
+### Phase 118 완료 후 출력 형식
+
+```text
+[Phase 118 완료 보고]
+
+1. ProjectSourceType 구조
+2. 수주 프로젝트 하위 탭 구조
+3. 개발팀 작업 처리 방식
+4. 수주 실적 제외 방식
+5. selector 반영 결과
+6. 자체검수 결과
+7. lint/build 결과
+8. 커밋 메시지 및 커밋 해시
+9. 다음 단계: Phase 119 진행 승인 요청
+
+Phase 119를 진행해도 될까요?
+```
+
+---
+
+## 9. Phase 119 — 프로젝트 보드 컬럼명/수정 컬럼/RevisionRequest 실반영
+
+### 목표
+
+프로젝트 보드에 `작업 착수 전`, `진행 중`, `수정`, `완료` 컬럼을 실제 화면에 반영한다.
+
+### 작업
+
+- `수주/대기` UI label 전부 제거
+- `작업 착수 전`으로 변경
+- `수정` 컬럼 추가
+- RevisionRequest 타입/selector 구현
+- RevisionRequest 생성/승인/진행/완료 흐름
+- RevisionRequest 상태일 때 수정 컬럼 표시
+- PostDeliveryWorkRequest와 구분
+- AuditLog/Notification 연결
+
+### 완료 조건
+
+- 화면에 `수주/대기` 문구가 남아 있지 않음
+- 화면에 `수정` 컬럼 표시
+- 클라이언트 재작업 요청은 RevisionRequest로 관리
+- 빌드 오류 없음
+
+### Git 커밋
+
+```text
+phase-119: apply project board labels and revision column workflow
+```
+
+### Phase 119 완료 후 출력 형식
+
+```text
+[Phase 119 완료 보고]
+
+1. 변경한 보드 컬럼명
+2. 추가한 수정 컬럼
+3. RevisionRequest 구조
+4. PostDeliveryWorkRequest와의 구분
+5. 알림/이력 처리
+6. 자체검수 결과
+7. lint/build 결과
+8. 커밋 메시지 및 커밋 해시
+9. 다음 단계: Phase 120 진행 승인 요청
+
+Phase 120을 진행해도 될까요?
+```
+
+---
+
+## 10. Phase 120 — 납품일 임박도 현황 레이아웃/가로 스크롤 완전 수정
+
+### 목표
+
+`미정` 컬럼이 화면 밖으로 밀리는 문제를 수정하고, desktop 화면에서 4개 컬럼이 한 화면에 보이도록 한다.
+
+### 작업
+
+- delivery board wrapper CSS 확인
+- column fixed min-width 제거
+- grid repeat(4, minmax(0, 1fr)) 적용
+- wrapper overflow-x 제거
+- column 내부만 세로 스크롤
+- 사이드바 너비 반영
+- responsive 4/2/1열 적용
+- 실제 화면 스크린샷 기준 검증
+
+### 완료 조건
+
+- 1440px 이상에서 4개 컬럼 전체 표시
+- 미정 컬럼이 우측으로 밀리지 않음
+- 불필요한 horizontal scroll 없음
+- 빌드 오류 없음
+
+### Git 커밋
+
+```text
+phase-120: fix delivery urgency board overflow and responsive grid
+```
+
+### Phase 120 완료 후 출력 형식
+
+```text
+[Phase 120 완료 보고]
+
+1. 수정한 CSS/레이아웃 파일
+2. 적용한 grid 구조
+3. desktop 4열 검증 결과
+4. tablet/mobile 반응형 결과
+5. 자체검수 결과
+6. lint/build 결과
+7. 커밋 메시지 및 커밋 해시
+8. 다음 단계: Phase 121 진행 승인 요청
+
+Phase 121을 진행해도 될까요?
+```
+
+---
+
+## 11. Phase 121 — 월별 프로젝트 요약 및 월별 드롭다운 실반영
+
+### 목표
+
+대시보드의 `진행 중 프로젝트 요약`을 `월별 프로젝트 요약`으로 변경하고, 월별 필터 드롭다운을 실제로 동작하게 한다.
+
+### 작업
+
+- dashboard section title 변경
+- 월 선택 드롭다운 추가
+- 전체 월 옵션
+- 실제 데이터 월 옵션 자동 생성
+- CLIENT_ORDER / INTERNAL_DEVELOPMENT 구분 표시
+- deliveryDate / targetReleaseDate / ScheduleAssignment 기준 월 필터
+- 수정 요청 수 표시
+- 지연/납품경과/수정/진행중 표시
+- 권한별 visible project selector 적용
+
+### 완료 조건
+
+- `진행 중 프로젝트 요약` 문구 제거
+- `월별 프로젝트 요약` 표시
+- 월별 드롭다운 동작
+- 권한별 월별 요약 정상
+- 빌드 오류 없음
+
+### Git 커밋
+
+```text
+phase-121: apply monthly project summary dashboard with filters
+```
+
+### Phase 121 완료 후 출력 형식
+
+```text
+[Phase 121 완료 보고]
+
+1. 변경한 대시보드 섹션명
+2. 구현한 월별 드롭다운
+3. 월별 필터 기준
+4. 프로젝트 구분 표시
+5. 권한별 필터 적용 결과
+6. 자체검수 결과
+7. lint/build 결과
+8. 커밋 메시지 및 커밋 해시
+9. 다음 단계: Phase 122 진행 승인 요청
+
+Phase 122를 진행해도 될까요?
+```
+
+---
+
+## 12. Phase 122 — Plan 16 최종 실제화면 QA 및 마스터 리포트 정정
+
+### 목표
+
+Plan 16의 모든 복구 항목이 실제 코드와 화면에 반영되었는지 검증하고, 마스터 리포트 V2의 완료 표현을 실제 결과에 맞게 정정한다.
+
+### 전체 테스트 시나리오
+
+1. 실사용 모드에서 demo data 기본 노출 여부 확인
+2. JSON 데이터 없을 때 empty state 확인
+3. 현재 데이터 소스 표시 확인
+4. JSON export 버튼 확인
+5. JSON import preview 확인
+6. /json 폴더 구조 확인
+7. validate-json-data script 확인
+8. import-json-data script 확인
+9. personnel-cards.json 구조 확인
+10. organization.json 구조 확인
+11. 인사카드 생성/수정 확인
+12. 인사카드 기반 직원 일정표 확인
+13. CEO/Vice President 구조 확인
+14. CON-COST / Viet_QS 확인
+15. Viet_QS 세부부서 확인
+16. 수주 프로젝트 하위 개발팀 작업 확인
+17. INTERNAL_DEVELOPMENT 수주 실적 제외 확인
+18. 프로젝트 보드 `작업 착수 전` 문구 확인
+19. 프로젝트 보드 `수정` 컬럼 확인
+20. RevisionRequest 흐름 확인
+21. 납품일 임박도 현황 4열 표시 확인
+22. 미정 컬럼이 화면 안에 표시되는지 확인
+23. 불필요한 horizontal scroll 제거 확인
+24. 대시보드 `월별 프로젝트 요약` 문구 확인
+25. 월별 드롭다운 작동 확인
+26. 권한별 월별 요약 확인
+27. QA Evidence Matrix 업데이트
+28. 마스터 리포트 V2 정정
+29. lint 실행
+30. build 실행
+31. Git 상태 확인
+
+### 완료 조건
+
+- 마스터 리포트 V2와 실제 화면 불일치가 해소됨
+- JSON/인사카드/조직구조/개발팀 작업/수정 컬럼/월별 요약이 실제로 반영됨
+- 납품일 임박도 레이아웃 문제가 해결됨
+- QA Evidence Matrix와 마스터 리포트가 정정됨
+- 사용자 승인 없이 push하지 않음
+
+### Git 커밋
+
+```text
+phase-122: complete plan16 discrepancy recovery and master report correction
+```
+
+### Phase 122 완료 후 출력 형식
+
+```text
+[Phase 122 완료 보고]
+
+1. Plan 16 구현 요약
+2. 마스터 리포트 V2 불일치 복구 결과
+3. 더미데이터 비활성화 검증 결과
+4. JSON Handoff 검증 결과
+5. 인사카드/조직구조 검증 결과
+6. 개발팀 작업 카테고리 검증 결과
+7. 프로젝트 보드 컬럼/수정 컬럼 검증 결과
+8. 납품일 임박도 레이아웃 검증 결과
+9. 월별 프로젝트 요약 검증 결과
+10. QA Matrix / 마스터 리포트 정정 결과
+11. lint/build 결과
+12. 커밋 메시지 및 커밋 해시
+13. 남은 리스크
+14. GitHub push 승인 요청
+
+원격 저장소에 push를 진행해도 될까요?
+```
+
+사용자가 승인하기 전까지 push하지 마라.
+
+---
+
+## 13. Plan 16 추가 금지사항
+
+- 마스터 리포트에 적혀 있다는 이유만으로 완료 처리하지 마라.
+- 실제 화면에서 확인하지 않고 완료라고 보고하지 마라.
+- 실사용 모드에서 demo data를 실제 데이터처럼 보여주지 마라.
+- JSON 저장 기능을 실제 서버 저장처럼 오해하게 만들지 마라.
+- GitHub Pages에서 웹이 repo 파일을 직접 수정할 수 있다고 가정하지 마라.
+- 인사카드를 일정표와 연결하지 않은 채 UI만 만들지 마라.
+- 조직구조 없이 role 문자열만으로 권한을 처리하지 마라.
+- 개발팀 작업을 수주 실적에 섞지 마라.
+- RevisionRequest와 PostDeliveryWorkRequest를 혼동하지 마라.
+- `수주/대기` 문구를 남기지 마라.
+- `진행 중 프로젝트 요약` 문구를 남기지 마라.
+- 납품일 임박도 현황에서 `미정` 컬럼이 화면 밖으로 밀리게 하지 마라.
+- 사용자 승인 없이 Phase 115로 넘어가지 마라.
+- 사용자 승인 없이 GitHub 원격 push를 하지 마라.
+
+---
+
+## 14. 기존 프롬프트와의 연결 지시
+
+이 프롬프트는 기존 `workspace plan1.txt`부터 `workspace plan15.txt` 이후에 추가되는 열여섯 번째 보강 프롬프트다.
+
+Antigravity는 다음 순서를 반드시 지켜야 한다.
+
+1. `workspace plan1.txt`를 먼저 읽는다.
+2. `workspace plan2.txt`를 읽는다.
+3. `workspace plan3.txt`를 읽는다.
+4. `workspace plan4.txt`를 읽는다.
+5. `workspace plan5.txt`를 읽는다.
+6. `workspace plan6.txt`를 읽는다.
+7. `workspace plan7.txt`를 읽는다.
+8. `workspace plan8.txt`를 읽는다.
+9. `workspace plan9.txt`를 읽는다.
+10. `workspace plan10.txt`를 읽는다.
+11. `workspace plan11.txt`를 읽는다.
+12. `workspace plan12.txt`를 읽는다.
+13. `workspace plan13.txt`를 읽는다.
+14. `workspace plan14.txt`를 읽는다.
+15. `workspace plan15.txt`를 읽는다.
+16. `workspace plan16.txt`를 읽는다.
+17. `workspace_master_report_v2.md`는 완료 증빙이 아니라 실제 반영 여부 점검 대상으로 읽는다.
+18. Plan 16을 마스터 리포트 V2와 실제 화면/코드 불일치 복구 Plan으로 해석한다.
+19. 기존 Phase 0~113의 흐름을 무너뜨리지 않는다.
+20. Plan 16의 실제 작업은 Phase 114 이후 확장 단계로 진행한다.
+21. 사용자 승인 없이 다음 Phase로 넘어가지 않는다.
+22. 사용자 승인 없이 원격 push를 하지 않는다.
+
+현재는 아직 구현을 시작하지 마라.
+
+먼저 전체 Plan과 `workspace_master_report_v2.md`, 그리고 실제 화면/코드를 비교하고 Phase 114 분석부터 시작하라.
+
+Phase 0 또는 Phase 114에서는 반드시 다음 항목을 추가 보고하라.
+
+```text
+[Plan 16 추가 보고 필수 항목]
+
+1. 마스터 리포트 V2에서 완료로 표현된 항목
+2. 실제 화면에서 미반영된 항목
+3. 실제 코드에서 미반영된 항목
+4. 더미데이터 노출 현황
+5. JSON Handoff 실제 구현 여부
+6. 인사카드 관리 실제 구현 여부
+7. 조직구조 실제 반영 여부
+8. 개발팀 작업 카테고리 실제 반영 여부
+9. 프로젝트 보드 컬럼명/수정 컬럼 실제 반영 여부
+10. 납품일 임박도 현황 레이아웃 실제 상태
+11. 월별 프로젝트 요약 실제 반영 여부
+12. Plan 1~15와의 충돌 가능성
+13. Phase 114~122 작업 계획
+```

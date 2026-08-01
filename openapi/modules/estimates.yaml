@@ -1,0 +1,3259 @@
+{
+  "paths": {
+    "/api/v1/estimate-requests": {
+      "get": {
+        "operationId": "listEstimateRequests",
+        "summary": "List estimate requests",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ownerId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List estimate requests",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Quoted integer revision when applicable."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "../schemas/estimates.yaml#/components/schemas/EstimateRequestSummaryDto"
+                      }
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../common/errors.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../common/errors.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../common/errors.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../common/errors.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../common/errors.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../common/errors.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../common/errors.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "purpose": "List estimate requests",
+          "frontendScreen": "/projects/intake?tab=REQUEST",
+          "actor": "Scoped user",
+          "permission": "ESTIMATE_REQUEST_VIEW",
+          "companyScope": "X-Company-Id required; no default fallback",
+          "organizationScope": "Server resolved from active assignments and explicit capabilities",
+          "projectScope": "Canonical projectId and parent-resource authorization",
+          "requestHeaders": [
+            "Accept-Language",
+            "X-Request-Id",
+            "X-Company-Id"
+          ],
+          "stateTransition": "none",
+          "revision": "not required",
+          "idempotency": "not required",
+          "fileReference": "none",
+          "audit": "READ",
+          "notificationEvent": "none",
+          "mockScenarios": [
+            "success",
+            "empty",
+            "validation failure",
+            "unauthorized",
+            "company forbidden",
+            "action forbidden",
+            "revision conflict",
+            "server unavailable"
+          ],
+          "acceptanceTest": "listEstimateRequests: company scope, permission, response DTO, errors, and route behavior"
+        }
+      },
+      "post": {
+        "operationId": "createEstimateRequest",
+        "summary": "Create estimate request",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Create estimate request",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Quoted integer revision when applicable."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/estimates.yaml#/components/schemas/EstimateRequestDetailDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../common/errors.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../common/errors.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../common/errors.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../common/errors.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../common/errors.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../common/errors.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../common/errors.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "purpose": "Create estimate request",
+          "frontendScreen": "/projects/intake?tab=REQUEST",
+          "actor": "Commercial user",
+          "permission": "ESTIMATE_REQUEST_CREATE",
+          "companyScope": "X-Company-Id required; no default fallback",
+          "organizationScope": "Server resolved from active assignments and explicit capabilities",
+          "projectScope": "Canonical projectId and parent-resource authorization",
+          "requestHeaders": [
+            "Accept-Language",
+            "X-Request-Id",
+            "X-Company-Id",
+            "Idempotency-Key",
+            "X-CSRF-Token"
+          ],
+          "stateTransition": "none",
+          "revision": "not required",
+          "idempotency": "required",
+          "fileReference": "none",
+          "audit": "ESTIMATE_REQUEST_CREATED",
+          "notificationEvent": "none",
+          "mockScenarios": [
+            "success",
+            "empty",
+            "validation failure",
+            "unauthorized",
+            "company forbidden",
+            "action forbidden",
+            "revision conflict",
+            "server unavailable"
+          ],
+          "acceptanceTest": "createEstimateRequest: company scope, permission, response DTO, errors, and route behavior"
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/estimates.yaml#/components/schemas/EstimateRequestWriteRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/estimate-requests/{id}": {
+      "get": {
+        "operationId": "getEstimateRequest",
+        "summary": "Read estimate request",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Read estimate request",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Quoted integer revision when applicable."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/estimates.yaml#/components/schemas/EstimateRequestDetailDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../common/errors.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../common/errors.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../common/errors.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../common/errors.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../common/errors.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../common/errors.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../common/errors.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "purpose": "Read estimate request",
+          "frontendScreen": "/projects/intake?tab=REQUEST",
+          "actor": "Scoped user",
+          "permission": "ESTIMATE_REQUEST_VIEW",
+          "companyScope": "X-Company-Id required; no default fallback",
+          "organizationScope": "Server resolved from active assignments and explicit capabilities",
+          "projectScope": "Canonical projectId and parent-resource authorization",
+          "requestHeaders": [
+            "Accept-Language",
+            "X-Request-Id",
+            "X-Company-Id"
+          ],
+          "stateTransition": "none",
+          "revision": "not required",
+          "idempotency": "not required",
+          "fileReference": "none",
+          "audit": "READ",
+          "notificationEvent": "none",
+          "mockScenarios": [
+            "success",
+            "empty",
+            "validation failure",
+            "unauthorized",
+            "company forbidden",
+            "action forbidden",
+            "revision conflict",
+            "server unavailable"
+          ],
+          "acceptanceTest": "getEstimateRequest: company scope, permission, response DTO, errors, and route behavior"
+        }
+      },
+      "patch": {
+        "operationId": "updateEstimateRequest",
+        "summary": "Update estimate request",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Update estimate request",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Quoted integer revision when applicable."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/estimates.yaml#/components/schemas/EstimateRequestDetailDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../common/errors.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../common/errors.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../common/errors.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../common/errors.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../common/errors.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../common/errors.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../common/errors.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "purpose": "Update estimate request",
+          "frontendScreen": "/projects/intake?tab=REQUEST",
+          "actor": "Owner or manager",
+          "permission": "ESTIMATE_REQUEST_EDIT",
+          "companyScope": "X-Company-Id required; no default fallback",
+          "organizationScope": "Server resolved from active assignments and explicit capabilities",
+          "projectScope": "Canonical projectId and parent-resource authorization",
+          "requestHeaders": [
+            "Accept-Language",
+            "X-Request-Id",
+            "X-Company-Id",
+            "If-Match",
+            "X-CSRF-Token"
+          ],
+          "stateTransition": "none",
+          "revision": "required",
+          "idempotency": "not required",
+          "fileReference": "none",
+          "audit": "ESTIMATE_REQUEST_UPDATED",
+          "notificationEvent": "none",
+          "mockScenarios": [
+            "success",
+            "empty",
+            "validation failure",
+            "unauthorized",
+            "company forbidden",
+            "action forbidden",
+            "revision conflict",
+            "server unavailable"
+          ],
+          "acceptanceTest": "updateEstimateRequest: company scope, permission, response DTO, errors, and route behavior"
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/estimates.yaml#/components/schemas/EstimateRequestWriteRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/estimate-requests/{id}/transition": {
+      "post": {
+        "operationId": "transitionEstimateRequest",
+        "summary": "Transition estimate request workflow",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Transition estimate request workflow",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Quoted integer revision when applicable."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/estimates.yaml#/components/schemas/EstimateRequestDetailDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../common/errors.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../common/errors.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../common/errors.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../common/errors.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../common/errors.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../common/errors.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../common/errors.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "purpose": "Transition estimate request workflow",
+          "frontendScreen": "/projects/intake?tab=REQUEST",
+          "actor": "Authorized request actor",
+          "permission": "ESTIMATE_REQUEST_MANAGE",
+          "companyScope": "X-Company-Id required; no default fallback",
+          "organizationScope": "Server resolved from active assignments and explicit capabilities",
+          "projectScope": "Canonical projectId and parent-resource authorization",
+          "requestHeaders": [
+            "Accept-Language",
+            "X-Request-Id",
+            "X-Company-Id",
+            "If-Match",
+            "Idempotency-Key",
+            "X-CSRF-Token"
+          ],
+          "stateTransition": "DRAFT -> INQUIRY_RECEIVED -> QUOTE_PREPARING -> QUOTE_SENT -> NEGOTIATING",
+          "revision": "required",
+          "idempotency": "required",
+          "fileReference": "none",
+          "audit": "ESTIMATE_REQUEST_TRANSITIONED",
+          "notificationEvent": "none",
+          "mockScenarios": [
+            "success",
+            "empty",
+            "validation failure",
+            "unauthorized",
+            "company forbidden",
+            "action forbidden",
+            "revision conflict",
+            "server unavailable"
+          ],
+          "acceptanceTest": "transitionEstimateRequest: company scope, permission, response DTO, errors, and route behavior"
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/project-common.yaml#/components/schemas/ProjectActionRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/estimate-requests/{id}/activities": {
+      "get": {
+        "operationId": "listEstimateActivities",
+        "summary": "List estimate activity history",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List estimate activity history",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Quoted integer revision when applicable."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/estimates.yaml#/components/schemas/EstimateRequestDetailDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../common/errors.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../common/errors.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../common/errors.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../common/errors.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../common/errors.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../common/errors.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../common/errors.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "purpose": "List estimate activity history",
+          "frontendScreen": "/projects/intake?tab=REQUEST",
+          "actor": "Scoped user",
+          "permission": "ESTIMATE_REQUEST_VIEW",
+          "companyScope": "X-Company-Id required; no default fallback",
+          "organizationScope": "Server resolved from active assignments and explicit capabilities",
+          "projectScope": "Canonical projectId and parent-resource authorization",
+          "requestHeaders": [
+            "Accept-Language",
+            "X-Request-Id",
+            "X-Company-Id"
+          ],
+          "stateTransition": "none",
+          "revision": "not required",
+          "idempotency": "not required",
+          "fileReference": "none",
+          "audit": "READ",
+          "notificationEvent": "none",
+          "mockScenarios": [
+            "success",
+            "empty",
+            "validation failure",
+            "unauthorized",
+            "company forbidden",
+            "action forbidden",
+            "revision conflict",
+            "server unavailable"
+          ],
+          "acceptanceTest": "listEstimateActivities: company scope, permission, response DTO, errors, and route behavior"
+        }
+      },
+      "post": {
+        "operationId": "createEstimateActivity",
+        "summary": "Add estimate consultation activity",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Add estimate consultation activity",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Quoted integer revision when applicable."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/estimates.yaml#/components/schemas/EstimateRequestDetailDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../common/errors.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../common/errors.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../common/errors.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../common/errors.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../common/errors.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../common/errors.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../common/errors.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "purpose": "Add estimate consultation activity",
+          "frontendScreen": "/projects/intake?tab=REQUEST",
+          "actor": "Owner or manager",
+          "permission": "ESTIMATE_REQUEST_EDIT",
+          "companyScope": "X-Company-Id required; no default fallback",
+          "organizationScope": "Server resolved from active assignments and explicit capabilities",
+          "projectScope": "Canonical projectId and parent-resource authorization",
+          "requestHeaders": [
+            "Accept-Language",
+            "X-Request-Id",
+            "X-Company-Id",
+            "Idempotency-Key",
+            "X-CSRF-Token"
+          ],
+          "stateTransition": "none",
+          "revision": "not required",
+          "idempotency": "required",
+          "fileReference": "none",
+          "audit": "ESTIMATE_ACTIVITY_CREATED",
+          "notificationEvent": "none",
+          "mockScenarios": [
+            "success",
+            "empty",
+            "validation failure",
+            "unauthorized",
+            "company forbidden",
+            "action forbidden",
+            "revision conflict",
+            "server unavailable"
+          ],
+          "acceptanceTest": "createEstimateActivity: company scope, permission, response DTO, errors, and route behavior"
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/project-common.yaml#/components/schemas/ProjectActionRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/estimate-requests/{id}/files": {
+      "post": {
+        "operationId": "attachEstimateRequestFile",
+        "summary": "Attach READY file reference",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Attach READY file reference",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Quoted integer revision when applicable."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/estimates.yaml#/components/schemas/EstimateRequestDetailDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../common/errors.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../common/errors.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../common/errors.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../common/errors.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../common/errors.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../common/errors.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../common/errors.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "purpose": "Attach READY file reference",
+          "frontendScreen": "/projects/intake?tab=REQUEST",
+          "actor": "Owner or manager",
+          "permission": "ESTIMATE_REQUEST_EDIT",
+          "companyScope": "X-Company-Id required; no default fallback",
+          "organizationScope": "Server resolved from active assignments and explicit capabilities",
+          "projectScope": "Canonical projectId and parent-resource authorization",
+          "requestHeaders": [
+            "Accept-Language",
+            "X-Request-Id",
+            "X-Company-Id",
+            "If-Match",
+            "Idempotency-Key",
+            "X-CSRF-Token"
+          ],
+          "stateTransition": "none",
+          "revision": "required",
+          "idempotency": "required",
+          "fileReference": "ESTIMATE_SOURCE READY",
+          "audit": "ESTIMATE_FILE_ATTACHED",
+          "notificationEvent": "none",
+          "mockScenarios": [
+            "success",
+            "empty",
+            "validation failure",
+            "unauthorized",
+            "company forbidden",
+            "action forbidden",
+            "revision conflict",
+            "server unavailable"
+          ],
+          "acceptanceTest": "attachEstimateRequestFile: company scope, permission, response DTO, errors, and route behavior"
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/project-common.yaml#/components/schemas/ProjectActionRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/estimate-requests/{id}/estimate-sheets": {
+      "post": {
+        "operationId": "createEstimateSheet",
+        "summary": "Create estimate sheet",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Create estimate sheet",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Quoted integer revision when applicable."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/estimates.yaml#/components/schemas/EstimateSheetDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../common/errors.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../common/errors.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../common/errors.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../common/errors.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../common/errors.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../common/errors.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../common/errors.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "purpose": "Create estimate sheet",
+          "frontendScreen": "/projects/intake/estimate",
+          "actor": "Estimator",
+          "permission": "ESTIMATE_SHEET_CREATE",
+          "companyScope": "X-Company-Id required; no default fallback",
+          "organizationScope": "Server resolved from active assignments and explicit capabilities",
+          "projectScope": "Canonical projectId and parent-resource authorization",
+          "requestHeaders": [
+            "Accept-Language",
+            "X-Request-Id",
+            "X-Company-Id",
+            "Idempotency-Key",
+            "X-CSRF-Token"
+          ],
+          "stateTransition": "none -> DRAFT",
+          "revision": "not required",
+          "idempotency": "required",
+          "fileReference": "none",
+          "audit": "ESTIMATE_SHEET_CREATED",
+          "notificationEvent": "none",
+          "mockScenarios": [
+            "success",
+            "empty",
+            "validation failure",
+            "unauthorized",
+            "company forbidden",
+            "action forbidden",
+            "revision conflict",
+            "server unavailable"
+          ],
+          "acceptanceTest": "createEstimateSheet: company scope, permission, response DTO, errors, and route behavior"
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/estimates.yaml#/components/schemas/EstimateSheetWriteRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/estimate-requests/{id}/decision": {
+      "post": {
+        "operationId": "recordCommercialDecision",
+        "summary": "Record commercial decision",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Record commercial decision",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Quoted integer revision when applicable."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/estimates.yaml#/components/schemas/CommercialDecisionDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../common/errors.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../common/errors.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../common/errors.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../common/errors.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../common/errors.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../common/errors.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../common/errors.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "purpose": "Record commercial decision",
+          "frontendScreen": "/projects/intake?tab=REQUEST",
+          "actor": "Decision authority",
+          "permission": "COMMERCIAL_DECISION_APPROVE",
+          "companyScope": "X-Company-Id required; no default fallback",
+          "organizationScope": "Server resolved from active assignments and explicit capabilities",
+          "projectScope": "Canonical projectId and parent-resource authorization",
+          "requestHeaders": [
+            "Accept-Language",
+            "X-Request-Id",
+            "X-Company-Id",
+            "If-Match",
+            "Idempotency-Key",
+            "X-CSRF-Token"
+          ],
+          "stateTransition": "PRE_EXECUTION_PLAN: audited cancel/hold/reopen; POST_EXECUTION_PLAN: cancel plan/intake then correction; ACTIVE_PROJECT: project cancellation or contract-change workflow",
+          "revision": "required",
+          "idempotency": "required",
+          "fileReference": "none",
+          "audit": "COMMERCIAL_DECISION_RECORDED",
+          "notificationEvent": "COMMERCIAL_DECISION_RECORDED",
+          "mockScenarios": [
+            "success",
+            "empty",
+            "validation failure",
+            "unauthorized",
+            "company forbidden",
+            "action forbidden",
+            "revision conflict",
+            "server unavailable"
+          ],
+          "acceptanceTest": "recordCommercialDecision: company scope, permission, response DTO, errors, and route behavior",
+          "correctionWorkflow": "Reason, revision, idempotency and source lineage are mandatory."
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/project-common.yaml#/components/schemas/ProjectActionRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/estimate-sheets/{id}": {
+      "get": {
+        "operationId": "getEstimateSheet",
+        "summary": "Read estimate sheet",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Read estimate sheet",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Quoted integer revision when applicable."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/estimates.yaml#/components/schemas/EstimateSheetDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../common/errors.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../common/errors.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../common/errors.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../common/errors.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../common/errors.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../common/errors.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../common/errors.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "purpose": "Read estimate sheet",
+          "frontendScreen": "/projects/intake/estimate",
+          "actor": "Scoped user",
+          "permission": "ESTIMATE_SHEET_VIEW",
+          "companyScope": "X-Company-Id required; no default fallback",
+          "organizationScope": "Server resolved from active assignments and explicit capabilities",
+          "projectScope": "Canonical projectId and parent-resource authorization",
+          "requestHeaders": [
+            "Accept-Language",
+            "X-Request-Id",
+            "X-Company-Id"
+          ],
+          "stateTransition": "none",
+          "revision": "not required",
+          "idempotency": "not required",
+          "fileReference": "none",
+          "audit": "READ",
+          "notificationEvent": "none",
+          "mockScenarios": [
+            "success",
+            "empty",
+            "validation failure",
+            "unauthorized",
+            "company forbidden",
+            "action forbidden",
+            "revision conflict",
+            "server unavailable"
+          ],
+          "acceptanceTest": "getEstimateSheet: company scope, permission, response DTO, errors, and route behavior"
+        }
+      },
+      "patch": {
+        "operationId": "updateEstimateSheetDraft",
+        "summary": "Save estimate sheet draft",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Save estimate sheet draft",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Quoted integer revision when applicable."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/estimates.yaml#/components/schemas/EstimateSheetDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../common/errors.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../common/errors.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../common/errors.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../common/errors.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../common/errors.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../common/errors.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../common/errors.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "purpose": "Save estimate sheet draft",
+          "frontendScreen": "/projects/intake/estimate",
+          "actor": "Estimator",
+          "permission": "ESTIMATE_SHEET_EDIT",
+          "companyScope": "X-Company-Id required; no default fallback",
+          "organizationScope": "Server resolved from active assignments and explicit capabilities",
+          "projectScope": "Canonical projectId and parent-resource authorization",
+          "requestHeaders": [
+            "Accept-Language",
+            "X-Request-Id",
+            "X-Company-Id",
+            "If-Match",
+            "X-CSRF-Token"
+          ],
+          "stateTransition": "DRAFT -> DRAFT",
+          "revision": "required",
+          "idempotency": "not required",
+          "fileReference": "none",
+          "audit": "ESTIMATE_SHEET_SAVED",
+          "notificationEvent": "none",
+          "mockScenarios": [
+            "success",
+            "empty",
+            "validation failure",
+            "unauthorized",
+            "company forbidden",
+            "action forbidden",
+            "revision conflict",
+            "server unavailable"
+          ],
+          "acceptanceTest": "updateEstimateSheetDraft: company scope, permission, response DTO, errors, and route behavior"
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/estimates.yaml#/components/schemas/EstimateSheetWriteRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/estimate-sheets/{id}/review": {
+      "post": {
+        "operationId": "submitEstimateSheetReview",
+        "summary": "Submit estimate sheet for review",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Submit estimate sheet for review",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Quoted integer revision when applicable."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/estimates.yaml#/components/schemas/EstimateSheetDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../common/errors.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../common/errors.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../common/errors.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../common/errors.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../common/errors.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../common/errors.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../common/errors.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "purpose": "Submit estimate sheet for review",
+          "frontendScreen": "/projects/intake/estimate",
+          "actor": "Authorized actor",
+          "permission": "ESTIMATE_SHEET_SUBMIT",
+          "companyScope": "X-Company-Id required; no default fallback",
+          "organizationScope": "Server resolved from active assignments and explicit capabilities",
+          "projectScope": "Canonical projectId and parent-resource authorization",
+          "requestHeaders": [
+            "Accept-Language",
+            "X-Request-Id",
+            "X-Company-Id",
+            "If-Match",
+            "Idempotency-Key",
+            "X-CSRF-Token"
+          ],
+          "stateTransition": "DRAFT -> INTERNAL_REVIEW",
+          "revision": "required",
+          "idempotency": "required",
+          "fileReference": "none",
+          "audit": "SUBMITESTIMATESHEETREVIEW",
+          "notificationEvent": "none",
+          "mockScenarios": [
+            "success",
+            "empty",
+            "validation failure",
+            "unauthorized",
+            "company forbidden",
+            "action forbidden",
+            "revision conflict",
+            "server unavailable"
+          ],
+          "acceptanceTest": "submitEstimateSheetReview: company scope, permission, response DTO, errors, and route behavior"
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/project-common.yaml#/components/schemas/ProjectActionRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/estimate-sheets/{id}/approve": {
+      "post": {
+        "operationId": "approveEstimateSheet",
+        "summary": "Approve estimate sheet",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Approve estimate sheet",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Quoted integer revision when applicable."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/estimates.yaml#/components/schemas/EstimateSheetDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../common/errors.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../common/errors.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../common/errors.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../common/errors.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../common/errors.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../common/errors.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../common/errors.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "purpose": "Approve estimate sheet",
+          "frontendScreen": "/projects/intake/estimate",
+          "actor": "Authorized actor",
+          "permission": "ESTIMATE_SHEET_APPROVE",
+          "companyScope": "X-Company-Id required; no default fallback",
+          "organizationScope": "Server resolved from active assignments and explicit capabilities",
+          "projectScope": "Canonical projectId and parent-resource authorization",
+          "requestHeaders": [
+            "Accept-Language",
+            "X-Request-Id",
+            "X-Company-Id",
+            "If-Match",
+            "Idempotency-Key",
+            "X-CSRF-Token"
+          ],
+          "stateTransition": "INTERNAL_REVIEW -> APPROVED",
+          "revision": "required",
+          "idempotency": "required",
+          "fileReference": "none",
+          "audit": "APPROVEESTIMATESHEET",
+          "notificationEvent": "none",
+          "mockScenarios": [
+            "success",
+            "empty",
+            "validation failure",
+            "unauthorized",
+            "company forbidden",
+            "action forbidden",
+            "revision conflict",
+            "server unavailable"
+          ],
+          "acceptanceTest": "approveEstimateSheet: company scope, permission, response DTO, errors, and route behavior"
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/project-common.yaml#/components/schemas/ProjectActionRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/estimate-sheets/{id}/issue": {
+      "post": {
+        "operationId": "issueEstimateSheet",
+        "summary": "Issue approved estimate sheet",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Issue approved estimate sheet",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Quoted integer revision when applicable."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/estimates.yaml#/components/schemas/EstimateSubmissionDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../common/errors.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../common/errors.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../common/errors.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../common/errors.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../common/errors.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../common/errors.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../common/errors.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "purpose": "Issue approved estimate sheet",
+          "frontendScreen": "/projects/intake/estimate",
+          "actor": "Authorized actor",
+          "permission": "ESTIMATE_SHEET_ISSUE",
+          "companyScope": "X-Company-Id required; no default fallback",
+          "organizationScope": "Server resolved from active assignments and explicit capabilities",
+          "projectScope": "Canonical projectId and parent-resource authorization",
+          "requestHeaders": [
+            "Accept-Language",
+            "X-Request-Id",
+            "X-Company-Id",
+            "If-Match",
+            "Idempotency-Key",
+            "X-CSRF-Token"
+          ],
+          "stateTransition": "APPROVED -> ISSUED; prior current ISSUED -> SUPERSEDED",
+          "revision": "required",
+          "idempotency": "required",
+          "fileReference": "ESTIMATE_DOCUMENT READY",
+          "audit": "ESTIMATE_SHEET_ISSUED",
+          "notificationEvent": "ESTIMATE_ISSUED",
+          "mockScenarios": [
+            "success",
+            "empty",
+            "validation failure",
+            "unauthorized",
+            "company forbidden",
+            "action forbidden",
+            "revision conflict",
+            "server unavailable"
+          ],
+          "acceptanceTest": "issueEstimateSheet: company scope, permission, response DTO, errors, and route behavior",
+          "immutableVersion": "Issued version and binary document are immutable; new issue creates a new version."
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/project-common.yaml#/components/schemas/ProjectActionRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/estimate-sheets/{id}/revisions": {
+      "post": {
+        "operationId": "createEstimateSheetRevision",
+        "summary": "Create revision from issued sheet",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Create revision from issued sheet",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Quoted integer revision when applicable."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/estimates.yaml#/components/schemas/EstimateSheetDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../common/errors.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../common/errors.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../common/errors.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../common/errors.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../common/errors.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../common/errors.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../common/errors.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "purpose": "Create revision from issued sheet",
+          "frontendScreen": "/projects/intake/estimate",
+          "actor": "Authorized actor",
+          "permission": "ESTIMATE_SHEET_EDIT",
+          "companyScope": "X-Company-Id required; no default fallback",
+          "organizationScope": "Server resolved from active assignments and explicit capabilities",
+          "projectScope": "Canonical projectId and parent-resource authorization",
+          "requestHeaders": [
+            "Accept-Language",
+            "X-Request-Id",
+            "X-Company-Id",
+            "If-Match",
+            "Idempotency-Key",
+            "X-CSRF-Token"
+          ],
+          "stateTransition": "ISSUED|APPROVED -> prior SUPERSEDED + new DRAFT version",
+          "revision": "required",
+          "idempotency": "required",
+          "fileReference": "none",
+          "audit": "CREATEESTIMATESHEETREVISION",
+          "notificationEvent": "none",
+          "mockScenarios": [
+            "success",
+            "empty",
+            "validation failure",
+            "unauthorized",
+            "company forbidden",
+            "action forbidden",
+            "revision conflict",
+            "server unavailable"
+          ],
+          "acceptanceTest": "createEstimateSheetRevision: company scope, permission, response DTO, errors, and route behavior",
+          "immutableVersion": "No overwrite or delete of an issued version."
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/project-common.yaml#/components/schemas/ProjectActionRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/estimate-submissions": {
+      "get": {
+        "operationId": "listEstimateSubmissions",
+        "summary": "List estimate submissions",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "requestId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List estimate submissions",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Quoted integer revision when applicable."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "../schemas/estimates.yaml#/components/schemas/EstimateSubmissionDto"
+                      }
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../common/errors.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../common/errors.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../common/errors.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../common/errors.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../common/errors.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../common/errors.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../common/errors.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "purpose": "List estimate submissions",
+          "frontendScreen": "/projects/intake/estimates",
+          "actor": "Scoped user",
+          "permission": "ESTIMATE_SUBMISSION_VIEW",
+          "companyScope": "X-Company-Id required; no default fallback",
+          "organizationScope": "Server resolved from active assignments and explicit capabilities",
+          "projectScope": "Canonical projectId and parent-resource authorization",
+          "requestHeaders": [
+            "Accept-Language",
+            "X-Request-Id",
+            "X-Company-Id"
+          ],
+          "stateTransition": "none",
+          "revision": "not required",
+          "idempotency": "not required",
+          "fileReference": "none",
+          "audit": "READ",
+          "notificationEvent": "none",
+          "mockScenarios": [
+            "success",
+            "empty",
+            "validation failure",
+            "unauthorized",
+            "company forbidden",
+            "action forbidden",
+            "revision conflict",
+            "server unavailable"
+          ],
+          "acceptanceTest": "listEstimateSubmissions: company scope, permission, response DTO, errors, and route behavior"
+        }
+      }
+    },
+    "/api/v1/estimate-submissions/{id}/document-reference": {
+      "get": {
+        "operationId": "getEstimateDocumentReference",
+        "summary": "Get authorized estimate document reference",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Get authorized estimate document reference",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Quoted integer revision when applicable."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/estimates.yaml#/components/schemas/EstimateSubmissionDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../common/errors.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../common/errors.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../common/errors.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../common/errors.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../common/errors.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../common/errors.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../common/errors.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "purpose": "Get authorized estimate document reference",
+          "frontendScreen": "/projects/intake/estimates",
+          "actor": "Scoped user",
+          "permission": "ESTIMATE_DOCUMENT_DOWNLOAD",
+          "companyScope": "X-Company-Id required; no default fallback",
+          "organizationScope": "Server resolved from active assignments and explicit capabilities",
+          "projectScope": "Canonical projectId and parent-resource authorization",
+          "requestHeaders": [
+            "Accept-Language",
+            "X-Request-Id",
+            "X-Company-Id"
+          ],
+          "stateTransition": "none",
+          "revision": "not required",
+          "idempotency": "not required",
+          "fileReference": "ESTIMATE_DOCUMENT READY",
+          "audit": "ESTIMATE_DOCUMENT_DOWNLOADED",
+          "notificationEvent": "none",
+          "mockScenarios": [
+            "success",
+            "empty",
+            "validation failure",
+            "unauthorized",
+            "company forbidden",
+            "action forbidden",
+            "revision conflict",
+            "server unavailable"
+          ],
+          "acceptanceTest": "getEstimateDocumentReference: company scope, permission, response DTO, errors, and route behavior"
+        }
+      }
+    },
+    "/api/v1/estimate-business-records": {
+      "get": {
+        "operationId": "listEstimateBusinessRecords",
+        "summary": "List estimate and business-performance records",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "recordType",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "projectId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "periodKey",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List estimate and business-performance records",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Quoted integer revision when applicable."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "../schemas/estimates.yaml#/components/schemas/EstimateBusinessRecordDto"
+                      }
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../common/errors.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../common/errors.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../common/errors.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../common/errors.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../common/errors.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../common/errors.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../common/errors.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "purpose": "List estimate and business-performance records",
+          "frontendScreen": "/projects/intake/database",
+          "actor": "Scoped user",
+          "permission": "ESTIMATE_BUSINESS_DATA_VIEW",
+          "companyScope": "X-Company-Id required; no default fallback",
+          "organizationScope": "Server resolved from active assignments and explicit capabilities",
+          "projectScope": "Canonical projectId and parent-resource authorization",
+          "requestHeaders": [
+            "Accept-Language",
+            "X-Request-Id",
+            "X-Company-Id"
+          ],
+          "stateTransition": "none",
+          "revision": "not required",
+          "idempotency": "not required",
+          "fileReference": "none",
+          "audit": "READ",
+          "notificationEvent": "none",
+          "mockScenarios": [
+            "success",
+            "empty",
+            "validation failure",
+            "unauthorized",
+            "company forbidden",
+            "action forbidden",
+            "revision conflict",
+            "server unavailable"
+          ],
+          "acceptanceTest": "listEstimateBusinessRecords: company scope, permission, response DTO, errors, and route behavior",
+          "officialUiName": "수주·실적 데이터 관리",
+          "forbiddenMeaning": "Not a database server, SQL console, table editor or DB administration surface."
+        }
+      },
+      "post": {
+        "operationId": "createEstimateBusinessRecord",
+        "summary": "Create estimate or business-performance record",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Create estimate or business-performance record",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Quoted integer revision when applicable."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/estimates.yaml#/components/schemas/EstimateBusinessRecordDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../common/errors.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../common/errors.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../common/errors.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../common/errors.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../common/errors.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../common/errors.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../common/errors.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "purpose": "Create estimate or business-performance record",
+          "frontendScreen": "/projects/intake/database",
+          "actor": "Business-data manager",
+          "permission": "ESTIMATE_BUSINESS_DATA_MANAGE",
+          "companyScope": "X-Company-Id required; no default fallback",
+          "organizationScope": "Server resolved from active assignments and explicit capabilities",
+          "projectScope": "Canonical projectId and parent-resource authorization",
+          "requestHeaders": [
+            "Accept-Language",
+            "X-Request-Id",
+            "X-Company-Id",
+            "Idempotency-Key",
+            "X-CSRF-Token"
+          ],
+          "stateTransition": "none -> ACTIVE",
+          "revision": "not required",
+          "idempotency": "required",
+          "fileReference": "none",
+          "audit": "ESTIMATE_BUSINESS_RECORD_CREATED",
+          "notificationEvent": "none",
+          "mockScenarios": [
+            "success",
+            "empty",
+            "validation failure",
+            "unauthorized",
+            "company forbidden",
+            "action forbidden",
+            "revision conflict",
+            "server unavailable"
+          ],
+          "acceptanceTest": "createEstimateBusinessRecord: company scope, permission, response DTO, errors, and route behavior"
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/estimates.yaml#/components/schemas/EstimateBusinessRecordWriteRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/estimate-business-records/{id}": {
+      "get": {
+        "operationId": "getEstimateBusinessRecord",
+        "summary": "Read estimate or business-performance record",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Read estimate or business-performance record",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Quoted integer revision when applicable."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/estimates.yaml#/components/schemas/EstimateBusinessRecordDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../common/errors.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../common/errors.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../common/errors.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../common/errors.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../common/errors.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../common/errors.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../common/errors.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "purpose": "Read estimate or business-performance record",
+          "frontendScreen": "/projects/intake/database",
+          "actor": "Scoped user",
+          "permission": "ESTIMATE_BUSINESS_DATA_VIEW",
+          "companyScope": "X-Company-Id required; no default fallback",
+          "organizationScope": "Server resolved from active assignments and explicit capabilities",
+          "projectScope": "Canonical projectId and parent-resource authorization",
+          "requestHeaders": [
+            "Accept-Language",
+            "X-Request-Id",
+            "X-Company-Id"
+          ],
+          "stateTransition": "none",
+          "revision": "not required",
+          "idempotency": "not required",
+          "fileReference": "none",
+          "audit": "READ",
+          "notificationEvent": "none",
+          "mockScenarios": [
+            "success",
+            "empty",
+            "validation failure",
+            "unauthorized",
+            "company forbidden",
+            "action forbidden",
+            "revision conflict",
+            "server unavailable"
+          ],
+          "acceptanceTest": "getEstimateBusinessRecord: company scope, permission, response DTO, errors, and route behavior"
+        }
+      },
+      "patch": {
+        "operationId": "updateEstimateBusinessRecord",
+        "summary": "Update estimate or business-performance record",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Update estimate or business-performance record",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Quoted integer revision when applicable."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/estimates.yaml#/components/schemas/EstimateBusinessRecordDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../common/errors.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../common/errors.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../common/errors.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../common/errors.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../common/errors.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../common/errors.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../common/errors.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "purpose": "Update estimate or business-performance record",
+          "frontendScreen": "/projects/intake/database",
+          "actor": "Business-data manager",
+          "permission": "ESTIMATE_BUSINESS_DATA_MANAGE",
+          "companyScope": "X-Company-Id required; no default fallback",
+          "organizationScope": "Server resolved from active assignments and explicit capabilities",
+          "projectScope": "Canonical projectId and parent-resource authorization",
+          "requestHeaders": [
+            "Accept-Language",
+            "X-Request-Id",
+            "X-Company-Id",
+            "If-Match",
+            "X-CSRF-Token"
+          ],
+          "stateTransition": "ACTIVE -> ACTIVE",
+          "revision": "required",
+          "idempotency": "not required",
+          "fileReference": "none",
+          "audit": "ESTIMATE_BUSINESS_RECORD_UPDATED",
+          "notificationEvent": "none",
+          "mockScenarios": [
+            "success",
+            "empty",
+            "validation failure",
+            "unauthorized",
+            "company forbidden",
+            "action forbidden",
+            "revision conflict",
+            "server unavailable"
+          ],
+          "acceptanceTest": "updateEstimateBusinessRecord: company scope, permission, response DTO, errors, and route behavior"
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/estimates.yaml#/components/schemas/EstimateBusinessRecordWriteRequest"
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "archiveEstimateBusinessRecord",
+        "summary": "Archive estimate or business-performance record",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Archive estimate or business-performance record",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Quoted integer revision when applicable."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/estimates.yaml#/components/schemas/EstimateBusinessRecordDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../common/errors.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../common/errors.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../common/errors.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../common/errors.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../common/errors.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../common/errors.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../common/errors.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "purpose": "Archive estimate or business-performance record",
+          "frontendScreen": "/projects/intake/database",
+          "actor": "Business-data manager",
+          "permission": "ESTIMATE_BUSINESS_DATA_MANAGE",
+          "companyScope": "X-Company-Id required; no default fallback",
+          "organizationScope": "Server resolved from active assignments and explicit capabilities",
+          "projectScope": "Canonical projectId and parent-resource authorization",
+          "requestHeaders": [
+            "Accept-Language",
+            "X-Request-Id",
+            "X-Company-Id",
+            "If-Match",
+            "Idempotency-Key",
+            "X-CSRF-Token"
+          ],
+          "stateTransition": "ACTIVE -> ARCHIVED",
+          "revision": "required",
+          "idempotency": "required",
+          "fileReference": "none",
+          "audit": "ESTIMATE_BUSINESS_RECORD_ARCHIVED",
+          "notificationEvent": "none",
+          "mockScenarios": [
+            "success",
+            "empty",
+            "validation failure",
+            "unauthorized",
+            "company forbidden",
+            "action forbidden",
+            "revision conflict",
+            "server unavailable"
+          ],
+          "acceptanceTest": "archiveEstimateBusinessRecord: company scope, permission, response DTO, errors, and route behavior"
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/project-common.yaml#/components/schemas/ProjectActionRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/estimate-business-data/reports": {
+      "get": {
+        "operationId": "getEstimateBusinessReport",
+        "summary": "Read estimate and business-performance report",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "reportType",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "periodKey",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Read estimate and business-performance report",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Quoted integer revision when applicable."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/estimates.yaml#/components/schemas/EstimateBusinessReportDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../common/errors.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../common/errors.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../common/errors.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../common/errors.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../common/errors.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../common/errors.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../common/errors.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "purpose": "Read estimate and business-performance report",
+          "frontendScreen": "/projects/intake/database",
+          "actor": "Scoped user",
+          "permission": "ESTIMATE_BUSINESS_DATA_VIEW",
+          "companyScope": "X-Company-Id required; no default fallback",
+          "organizationScope": "Server resolved from active assignments and explicit capabilities",
+          "projectScope": "Canonical projectId and parent-resource authorization",
+          "requestHeaders": [
+            "Accept-Language",
+            "X-Request-Id",
+            "X-Company-Id"
+          ],
+          "stateTransition": "none",
+          "revision": "not required",
+          "idempotency": "not required",
+          "fileReference": "none",
+          "audit": "ESTIMATE_BUSINESS_REPORT_VIEWED",
+          "notificationEvent": "none",
+          "mockScenarios": [
+            "success",
+            "empty",
+            "validation failure",
+            "unauthorized",
+            "company forbidden",
+            "action forbidden",
+            "revision conflict",
+            "server unavailable"
+          ],
+          "acceptanceTest": "getEstimateBusinessReport: company scope, permission, response DTO, errors, and route behavior"
+        }
+      }
+    },
+    "/api/v1/estimate-business-data/export-requests": {
+      "post": {
+        "operationId": "createEstimateBusinessExportRequest",
+        "summary": "Request audited estimate/business-data export",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Request audited estimate/business-data export",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Quoted integer revision when applicable."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/estimates.yaml#/components/schemas/EstimateBusinessReportDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../common/errors.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../common/errors.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../common/errors.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../common/errors.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../common/errors.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../common/errors.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../common/errors.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "purpose": "Request audited estimate/business-data export",
+          "frontendScreen": "/projects/intake/database",
+          "actor": "Authorized exporter",
+          "permission": "ESTIMATE_BUSINESS_DATA_EXPORT",
+          "companyScope": "X-Company-Id required; no default fallback",
+          "organizationScope": "Server resolved from active assignments and explicit capabilities",
+          "projectScope": "Canonical projectId and parent-resource authorization",
+          "requestHeaders": [
+            "Accept-Language",
+            "X-Request-Id",
+            "X-Company-Id",
+            "Idempotency-Key",
+            "X-CSRF-Token"
+          ],
+          "stateTransition": "none",
+          "revision": "not required",
+          "idempotency": "required",
+          "fileReference": "Generated export must use common FileDto lifecycle",
+          "audit": "ESTIMATE_BUSINESS_EXPORT_REQUESTED",
+          "notificationEvent": "none",
+          "mockScenarios": [
+            "success",
+            "empty",
+            "validation failure",
+            "unauthorized",
+            "company forbidden",
+            "action forbidden",
+            "revision conflict",
+            "server unavailable"
+          ],
+          "acceptanceTest": "createEstimateBusinessExportRequest: company scope, permission, response DTO, errors, and route behavior"
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/estimates.yaml#/components/schemas/EstimateBusinessExportRequest"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,88 @@
+{
+  "components": {
+    "securitySchemes": {
+      "sessionCookie": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "__Host-erp_session",
+        "description": "Secure HttpOnly HTTPS server session cookie. SameSite and Cookie Domain are deployment-reviewed; frontend JavaScript cannot read it."
+      }
+    },
+    "parameters": {
+      "AcceptLanguage": {
+        "name": "Accept-Language",
+        "in": "header",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "enum": [
+            "ko-KR",
+            "en-US",
+            "vi-VN"
+          ],
+          "default": "ko-KR"
+        }
+      },
+      "CompanyId": {
+        "name": "X-Company-Id",
+        "in": "header",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "RequestId": {
+        "name": "X-Request-Id",
+        "in": "header",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        }
+      },
+      "IdempotencyKey": {
+        "name": "Idempotency-Key",
+        "in": "header",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "minLength": 16,
+          "maxLength": 200
+        }
+      },
+      "IfMatch": {
+        "name": "If-Match",
+        "in": "header",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "pattern": "^\"\\d+\"$"
+        }
+      },
+      "SandboxEnvironment": {
+        "name": "X-Environment",
+        "in": "header",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "enum": [
+            "sandbox"
+          ]
+        }
+      },
+      "CsrfToken": {
+        "name": "X-CSRF-Token",
+        "in": "header",
+        "required": true,
+        "description": "CSRF proof for authenticated mutations. Exact issuance mechanism is fixed in deployment handoff.",
+        "schema": {
+          "type": "string",
+          "minLength": 16,
+          "maxLength": 500
+        }
+      }
+    }
+  }
+}

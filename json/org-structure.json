@@ -1,0 +1,25 @@
+{
+  "schemaVersion": "1.0.0",
+  "companies": [
+    { "id": "CON_COST", "name": "CON-COST", "country": "KR" },
+    { "id": "VIET_QS", "name": "Viet_QS", "country": "VN" }
+  ],
+  "departments": [
+    { "id": "CON_COST_FINISH", "companyId": "CON_COST", "key": "FINISH", "name": "마감" },
+    { "id": "CON_COST_STRUCTURE", "companyId": "CON_COST", "key": "STRUCTURE", "name": "구조" },
+    { "id": "CON_COST_CIVIL", "companyId": "CON_COST", "key": "CIVIL", "name": "토목" },
+    { "id": "CON_COST_DEVELOP", "companyId": "CON_COST", "key": "DEVELOP", "name": "개발" },
+    { "id": "VIET_QS_FINISH", "companyId": "VIET_QS", "key": "FINISH", "name": "마감" },
+    { "id": "VIET_QS_STRUCTURE", "companyId": "VIET_QS", "key": "STRUCTURE", "name": "구조" },
+    { "id": "VIET_QS_CIVIL", "companyId": "VIET_QS", "key": "CIVIL", "name": "토목" }
+  ],
+  "subDepartments": [
+    { "id": "VIET_QS_FINISH_INTERNAL1", "companyId": "VIET_QS", "departmentKey": "FINISH", "name": "Internal1" },
+    { "id": "VIET_QS_FINISH_INTERNAL2", "companyId": "VIET_QS", "departmentKey": "FINISH", "name": "Internal2" },
+    { "id": "VIET_QS_FINISH_INTERNAL3", "companyId": "VIET_QS", "departmentKey": "FINISH", "name": "Internal3" },
+    { "id": "VIET_QS_FINISH_EXTERNAL", "companyId": "VIET_QS", "departmentKey": "FINISH", "name": "External" },
+    { "id": "VIET_QS_FINISH_PARTITION", "companyId": "VIET_QS", "departmentKey": "FINISH", "name": "Partition&Opening" },
+    { "id": "VIET_QS_STRUCTURE_VERTICAL", "companyId": "VIET_QS", "departmentKey": "STRUCTURE", "name": "Vertical" },
+    { "id": "VIET_QS_STRUCTURE_HORIZONTAL", "companyId": "VIET_QS", "departmentKey": "STRUCTURE", "name": "Horizontal&Foundation" }
+  ]
+}

@@ -1,0 +1,1970 @@
+{
+  "paths": {
+    "/api/v1/projects": {
+      "get": {
+        "operationId": "listProjects",
+        "summary": "List assignment-scoped projects",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "organizationUnitId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "health",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "pmPersonnelCardId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List assignment-scoped projects",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Quoted integer revision when applicable."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "../schemas/project-common.yaml#/components/schemas/ProjectSummaryDto"
+                      }
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../common/errors.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../common/errors.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../common/errors.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../common/errors.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../common/errors.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../common/errors.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../common/errors.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "purpose": "List assignment-scoped projects",
+          "frontendScreen": "/projects",
+          "actor": "Scoped user",
+          "permission": "PROJECT_VIEW",
+          "companyScope": "X-Company-Id required; no default fallback",
+          "organizationScope": "Server resolved from active assignments and explicit capabilities",
+          "projectScope": "Canonical projectId and parent-resource authorization",
+          "requestHeaders": [
+            "Accept-Language",
+            "X-Request-Id",
+            "X-Company-Id"
+          ],
+          "stateTransition": "none",
+          "revision": "not required",
+          "idempotency": "not required",
+          "fileReference": "none",
+          "audit": "READ",
+          "notificationEvent": "none",
+          "mockScenarios": [
+            "success",
+            "empty",
+            "validation failure",
+            "unauthorized",
+            "company forbidden",
+            "action forbidden",
+            "revision conflict",
+            "server unavailable"
+          ],
+          "acceptanceTest": "listProjects: company scope, permission, response DTO, errors, and route behavior"
+        }
+      }
+    },
+    "/api/v1/projects/{id}": {
+      "get": {
+        "operationId": "getProject",
+        "summary": "Read canonical project detail",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Read canonical project detail",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Quoted integer revision when applicable."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/project-common.yaml#/components/schemas/ProjectDetailDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../common/errors.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../common/errors.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../common/errors.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../common/errors.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../common/errors.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../common/errors.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../common/errors.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "purpose": "Read canonical project detail",
+          "frontendScreen": "/projects?workflow={id}",
+          "actor": "Scoped user",
+          "permission": "PROJECT_VIEW",
+          "companyScope": "X-Company-Id required; no default fallback",
+          "organizationScope": "Server resolved from active assignments and explicit capabilities",
+          "projectScope": "Canonical projectId and parent-resource authorization",
+          "requestHeaders": [
+            "Accept-Language",
+            "X-Request-Id",
+            "X-Company-Id"
+          ],
+          "stateTransition": "none",
+          "revision": "not required",
+          "idempotency": "not required",
+          "fileReference": "none",
+          "audit": "READ",
+          "notificationEvent": "none",
+          "mockScenarios": [
+            "success",
+            "empty",
+            "validation failure",
+            "unauthorized",
+            "company forbidden",
+            "action forbidden",
+            "revision conflict",
+            "server unavailable"
+          ],
+          "acceptanceTest": "getProject: company scope, permission, response DTO, errors, and route behavior"
+        }
+      }
+    },
+    "/api/v1/projects/{id}/assignments": {
+      "get": {
+        "operationId": "listProjectAssignments",
+        "summary": "List project assignments",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List project assignments",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Quoted integer revision when applicable."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "../schemas/project-common.yaml#/components/schemas/ProjectAssignmentDto"
+                      }
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../common/errors.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../common/errors.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../common/errors.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../common/errors.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../common/errors.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../common/errors.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../common/errors.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "purpose": "List project assignments",
+          "frontendScreen": "/projects?workflow={id}",
+          "actor": "Scoped user",
+          "permission": "PROJECT_VIEW",
+          "companyScope": "X-Company-Id required; no default fallback",
+          "organizationScope": "Server resolved from active assignments and explicit capabilities",
+          "projectScope": "Canonical projectId and parent-resource authorization",
+          "requestHeaders": [
+            "Accept-Language",
+            "X-Request-Id",
+            "X-Company-Id"
+          ],
+          "stateTransition": "none",
+          "revision": "not required",
+          "idempotency": "not required",
+          "fileReference": "none",
+          "audit": "READ",
+          "notificationEvent": "none",
+          "mockScenarios": [
+            "success",
+            "empty",
+            "validation failure",
+            "unauthorized",
+            "company forbidden",
+            "action forbidden",
+            "revision conflict",
+            "server unavailable"
+          ],
+          "acceptanceTest": "listProjectAssignments: company scope, permission, response DTO, errors, and route behavior"
+        }
+      },
+      "post": {
+        "operationId": "createProjectAssignment",
+        "summary": "Create project assignment",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Create project assignment",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Quoted integer revision when applicable."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/project-common.yaml#/components/schemas/ProjectAssignmentDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../common/errors.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../common/errors.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../common/errors.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../common/errors.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../common/errors.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../common/errors.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../common/errors.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "purpose": "Create project assignment",
+          "frontendScreen": "/projects?workflow={id}",
+          "actor": "Authorized manager",
+          "permission": "PROJECT_ASSIGN",
+          "companyScope": "X-Company-Id required; no default fallback",
+          "organizationScope": "Server resolved from active assignments and explicit capabilities",
+          "projectScope": "Canonical projectId and parent-resource authorization",
+          "requestHeaders": [
+            "Accept-Language",
+            "X-Request-Id",
+            "X-Company-Id",
+            "If-Match",
+            "Idempotency-Key",
+            "X-CSRF-Token"
+          ],
+          "stateTransition": "none",
+          "revision": "required",
+          "idempotency": "required",
+          "fileReference": "none",
+          "audit": "PROJECT_ASSIGNED",
+          "notificationEvent": "PROJECT_ASSIGNED",
+          "mockScenarios": [
+            "success",
+            "empty",
+            "validation failure",
+            "unauthorized",
+            "company forbidden",
+            "action forbidden",
+            "revision conflict",
+            "server unavailable"
+          ],
+          "acceptanceTest": "createProjectAssignment: company scope, permission, response DTO, errors, and route behavior"
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/project-common.yaml#/components/schemas/ProjectActionRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/projects/{id}/participants": {
+      "get": {
+        "operationId": "listProjectParticipants",
+        "summary": "List visible project participants",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List visible project participants",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Quoted integer revision when applicable."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "../schemas/project-common.yaml#/components/schemas/ProjectParticipantDto"
+                      }
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../common/errors.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../common/errors.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../common/errors.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../common/errors.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../common/errors.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../common/errors.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../common/errors.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "purpose": "List visible project participants",
+          "frontendScreen": "/projects?workflow={id}",
+          "actor": "Scoped user",
+          "permission": "PROJECT_VIEW",
+          "companyScope": "X-Company-Id required; no default fallback",
+          "organizationScope": "Server resolved from active assignments and explicit capabilities",
+          "projectScope": "Canonical projectId and parent-resource authorization",
+          "requestHeaders": [
+            "Accept-Language",
+            "X-Request-Id",
+            "X-Company-Id"
+          ],
+          "stateTransition": "none",
+          "revision": "not required",
+          "idempotency": "not required",
+          "fileReference": "none",
+          "audit": "READ",
+          "notificationEvent": "none",
+          "mockScenarios": [
+            "success",
+            "empty",
+            "validation failure",
+            "unauthorized",
+            "company forbidden",
+            "action forbidden",
+            "revision conflict",
+            "server unavailable"
+          ],
+          "acceptanceTest": "listProjectParticipants: company scope, permission, response DTO, errors, and route behavior"
+        }
+      }
+    },
+    "/api/v1/projects/{id}/lifecycle": {
+      "post": {
+        "operationId": "transitionProjectLifecycle",
+        "summary": "Transition project lifecycle",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Transition project lifecycle",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Quoted integer revision when applicable."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/project-common.yaml#/components/schemas/ProjectDetailDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../common/errors.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../common/errors.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../common/errors.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../common/errors.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../common/errors.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../common/errors.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../common/errors.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "purpose": "Transition project lifecycle",
+          "frontendScreen": "/projects?workflow={id}",
+          "actor": "Authorized project manager",
+          "permission": "PROJECT_MANAGE",
+          "companyScope": "X-Company-Id required; no default fallback",
+          "organizationScope": "Server resolved from active assignments and explicit capabilities",
+          "projectScope": "Canonical projectId and parent-resource authorization",
+          "requestHeaders": [
+            "Accept-Language",
+            "X-Request-Id",
+            "X-Company-Id",
+            "If-Match",
+            "Idempotency-Key",
+            "X-CSRF-Token"
+          ],
+          "stateTransition": "explicit lifecycle transition",
+          "revision": "required",
+          "idempotency": "required",
+          "fileReference": "none",
+          "audit": "TRANSITIONPROJECTLIFECYCLE",
+          "notificationEvent": "none",
+          "mockScenarios": [
+            "success",
+            "empty",
+            "validation failure",
+            "unauthorized",
+            "company forbidden",
+            "action forbidden",
+            "revision conflict",
+            "server unavailable"
+          ],
+          "acceptanceTest": "transitionProjectLifecycle: company scope, permission, response DTO, errors, and route behavior",
+          "completionGate": "Assignments closed/excluded, final QC approved, final delivery ACKNOWLEDGED, zero critical blockers, work-log review, finance close/waiver, PM and primary-organization approval.",
+          "archiveGate": "COMPLETED, no reopen/redelivery, retention ready, policy waiting period (default 30 days), authorized audited action; ARCHIVED is read-only."
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/project-common.yaml#/components/schemas/ProjectActionRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/projects/{id}/health": {
+      "post": {
+        "operationId": "updateProjectHealth",
+        "summary": "Update project health",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Update project health",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Quoted integer revision when applicable."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/project-common.yaml#/components/schemas/ProjectDetailDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../common/errors.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../common/errors.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../common/errors.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../common/errors.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../common/errors.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../common/errors.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../common/errors.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "purpose": "Update project health",
+          "frontendScreen": "/projects?workflow={id}",
+          "actor": "Authorized project manager",
+          "permission": "PROJECT_MANAGE",
+          "companyScope": "X-Company-Id required; no default fallback",
+          "organizationScope": "Server resolved from active assignments and explicit capabilities",
+          "projectScope": "Canonical projectId and parent-resource authorization",
+          "requestHeaders": [
+            "Accept-Language",
+            "X-Request-Id",
+            "X-Company-Id",
+            "If-Match",
+            "Idempotency-Key",
+            "X-CSRF-Token"
+          ],
+          "stateTransition": "health only",
+          "revision": "required",
+          "idempotency": "required",
+          "fileReference": "none",
+          "audit": "UPDATEPROJECTHEALTH",
+          "notificationEvent": "none",
+          "mockScenarios": [
+            "success",
+            "empty",
+            "validation failure",
+            "unauthorized",
+            "company forbidden",
+            "action forbidden",
+            "revision conflict",
+            "server unavailable"
+          ],
+          "acceptanceTest": "updateProjectHealth: company scope, permission, response DTO, errors, and route behavior"
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/project-common.yaml#/components/schemas/ProjectActionRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/projects/{id}/timeline": {
+      "get": {
+        "operationId": "listProjectTimeline",
+        "summary": "List project activity timeline",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List project activity timeline",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Quoted integer revision when applicable."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "../schemas/project-common.yaml#/components/schemas/ProjectTimelineItemDto"
+                      }
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../common/errors.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../common/errors.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../common/errors.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../common/errors.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../common/errors.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../common/errors.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../common/errors.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "purpose": "List project activity timeline",
+          "frontendScreen": "/projects?workflow={id}",
+          "actor": "Scoped user",
+          "permission": "PROJECT_VIEW",
+          "companyScope": "X-Company-Id required; no default fallback",
+          "organizationScope": "Server resolved from active assignments and explicit capabilities",
+          "projectScope": "Canonical projectId and parent-resource authorization",
+          "requestHeaders": [
+            "Accept-Language",
+            "X-Request-Id",
+            "X-Company-Id"
+          ],
+          "stateTransition": "none",
+          "revision": "not required",
+          "idempotency": "not required",
+          "fileReference": "none",
+          "audit": "READ",
+          "notificationEvent": "none",
+          "mockScenarios": [
+            "success",
+            "empty",
+            "validation failure",
+            "unauthorized",
+            "company forbidden",
+            "action forbidden",
+            "revision conflict",
+            "server unavailable"
+          ],
+          "acceptanceTest": "listProjectTimeline: company scope, permission, response DTO, errors, and route behavior"
+        }
+      }
+    },
+    "/api/v1/projects/{id}/pm-schedule": {
+      "get": {
+        "operationId": "getProjectPmSchedule",
+        "summary": "Read PM schedule",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Read PM schedule",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Quoted integer revision when applicable."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/project-common.yaml#/components/schemas/ProjectScheduleDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../common/errors.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../common/errors.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../common/errors.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../common/errors.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../common/errors.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../common/errors.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../common/errors.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "purpose": "Read PM schedule",
+          "frontendScreen": "/schedules?view=PM_MANAGEMENT",
+          "actor": "Scoped user",
+          "permission": "PROJECT_SCHEDULE_VIEW",
+          "companyScope": "X-Company-Id required; no default fallback",
+          "organizationScope": "Server resolved from active assignments and explicit capabilities",
+          "projectScope": "Canonical projectId and parent-resource authorization",
+          "requestHeaders": [
+            "Accept-Language",
+            "X-Request-Id",
+            "X-Company-Id"
+          ],
+          "stateTransition": "none",
+          "revision": "not required",
+          "idempotency": "not required",
+          "fileReference": "none",
+          "audit": "READ",
+          "notificationEvent": "none",
+          "mockScenarios": [
+            "success",
+            "empty",
+            "validation failure",
+            "unauthorized",
+            "company forbidden",
+            "action forbidden",
+            "revision conflict",
+            "server unavailable"
+          ],
+          "acceptanceTest": "getProjectPmSchedule: company scope, permission, response DTO, errors, and route behavior"
+        }
+      },
+      "patch": {
+        "operationId": "saveProjectPmSchedule",
+        "summary": "Save PM schedule draft",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Save PM schedule draft",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Quoted integer revision when applicable."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/project-common.yaml#/components/schemas/ProjectScheduleDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../common/errors.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../common/errors.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../common/errors.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../common/errors.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../common/errors.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../common/errors.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../common/errors.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "purpose": "Save PM schedule draft",
+          "frontendScreen": "/schedules?view=PM_MANAGEMENT",
+          "actor": "Assigned PM or scheduler",
+          "permission": "PROJECT_SCHEDULE_EDIT",
+          "companyScope": "X-Company-Id required; no default fallback",
+          "organizationScope": "Server resolved from active assignments and explicit capabilities",
+          "projectScope": "Canonical projectId and parent-resource authorization",
+          "requestHeaders": [
+            "Accept-Language",
+            "X-Request-Id",
+            "X-Company-Id",
+            "If-Match",
+            "X-CSRF-Token"
+          ],
+          "stateTransition": "DRAFTING -> DRAFTING",
+          "revision": "required",
+          "idempotency": "not required",
+          "fileReference": "none",
+          "audit": "PM_SCHEDULE_SAVED",
+          "notificationEvent": "none",
+          "mockScenarios": [
+            "success",
+            "empty",
+            "validation failure",
+            "unauthorized",
+            "company forbidden",
+            "action forbidden",
+            "revision conflict",
+            "server unavailable"
+          ],
+          "acceptanceTest": "saveProjectPmSchedule: company scope, permission, response DTO, errors, and route behavior"
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/project-common.yaml#/components/schemas/ProjectActionRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/projects/{id}/pm-schedule/assign": {
+      "post": {
+        "operationId": "assignProjectPmResources",
+        "summary": "Assign PM and resources",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Assign PM and resources",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Quoted integer revision when applicable."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/project-common.yaml#/components/schemas/ProjectScheduleDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../common/errors.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../common/errors.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../common/errors.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../common/errors.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../common/errors.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../common/errors.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../common/errors.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "purpose": "Assign PM and resources",
+          "frontendScreen": "/schedules?view=PM_MANAGEMENT",
+          "actor": "Authorized actor",
+          "permission": "PROJECT_ASSIGN",
+          "companyScope": "X-Company-Id required; no default fallback",
+          "organizationScope": "Server resolved from active assignments and explicit capabilities",
+          "projectScope": "Canonical projectId and parent-resource authorization",
+          "requestHeaders": [
+            "Accept-Language",
+            "X-Request-Id",
+            "X-Company-Id",
+            "If-Match",
+            "Idempotency-Key",
+            "X-CSRF-Token"
+          ],
+          "stateTransition": "PENDING_ASSIGNMENT -> PM_ASSIGNED",
+          "revision": "required",
+          "idempotency": "required",
+          "fileReference": "none",
+          "audit": "ASSIGNPROJECTPMRESOURCES",
+          "notificationEvent": "PROJECT_ASSIGNED",
+          "mockScenarios": [
+            "success",
+            "empty",
+            "validation failure",
+            "unauthorized",
+            "company forbidden",
+            "action forbidden",
+            "revision conflict",
+            "server unavailable"
+          ],
+          "acceptanceTest": "assignProjectPmResources: company scope, permission, response DTO, errors, and route behavior"
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/project-common.yaml#/components/schemas/ProjectActionRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/projects/{id}/pm-schedule/submit": {
+      "post": {
+        "operationId": "submitProjectPmSchedule",
+        "summary": "Submit PM schedule",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Submit PM schedule",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Quoted integer revision when applicable."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/project-common.yaml#/components/schemas/ProjectScheduleDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../common/errors.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../common/errors.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../common/errors.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../common/errors.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../common/errors.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../common/errors.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../common/errors.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "purpose": "Submit PM schedule",
+          "frontendScreen": "/schedules?view=PM_MANAGEMENT",
+          "actor": "Authorized actor",
+          "permission": "PROJECT_SCHEDULE_SUBMIT",
+          "companyScope": "X-Company-Id required; no default fallback",
+          "organizationScope": "Server resolved from active assignments and explicit capabilities",
+          "projectScope": "Canonical projectId and parent-resource authorization",
+          "requestHeaders": [
+            "Accept-Language",
+            "X-Request-Id",
+            "X-Company-Id",
+            "If-Match",
+            "Idempotency-Key",
+            "X-CSRF-Token"
+          ],
+          "stateTransition": "DRAFTING -> SUBMITTED",
+          "revision": "required",
+          "idempotency": "required",
+          "fileReference": "none",
+          "audit": "SUBMITPROJECTPMSCHEDULE",
+          "notificationEvent": "PM_SCHEDULE_REQUESTED",
+          "mockScenarios": [
+            "success",
+            "empty",
+            "validation failure",
+            "unauthorized",
+            "company forbidden",
+            "action forbidden",
+            "revision conflict",
+            "server unavailable"
+          ],
+          "acceptanceTest": "submitProjectPmSchedule: company scope, permission, response DTO, errors, and route behavior",
+          "submitGuard": "At least one active same-company assigned PM is required."
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/project-common.yaml#/components/schemas/ProjectActionRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/projects/{id}/pm-schedule/approve": {
+      "post": {
+        "operationId": "approveProjectPmSchedule",
+        "summary": "Approve PM schedule",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Approve PM schedule",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Quoted integer revision when applicable."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/project-common.yaml#/components/schemas/ProjectScheduleDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../common/errors.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../common/errors.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../common/errors.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../common/errors.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../common/errors.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../common/errors.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../common/errors.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "purpose": "Approve PM schedule",
+          "frontendScreen": "/schedules?view=PM_MANAGEMENT",
+          "actor": "Authorized actor",
+          "permission": "PROJECT_SCHEDULE_APPROVE",
+          "companyScope": "X-Company-Id required; no default fallback",
+          "organizationScope": "Server resolved from active assignments and explicit capabilities",
+          "projectScope": "Canonical projectId and parent-resource authorization",
+          "requestHeaders": [
+            "Accept-Language",
+            "X-Request-Id",
+            "X-Company-Id",
+            "If-Match",
+            "Idempotency-Key",
+            "X-CSRF-Token"
+          ],
+          "stateTransition": "SUBMITTED -> APPROVED",
+          "revision": "required",
+          "idempotency": "required",
+          "fileReference": "none",
+          "audit": "APPROVEPROJECTPMSCHEDULE",
+          "notificationEvent": "PM_SCHEDULE_APPROVED",
+          "mockScenarios": [
+            "success",
+            "empty",
+            "validation failure",
+            "unauthorized",
+            "company forbidden",
+            "action forbidden",
+            "revision conflict",
+            "server unavailable"
+          ],
+          "acceptanceTest": "approveProjectPmSchedule: company scope, permission, response DTO, errors, and route behavior",
+          "approvalGuard": "At least one active same-company assigned PM is required."
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/project-common.yaml#/components/schemas/ProjectActionRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/projects/{id}/pm-schedule/reject": {
+      "post": {
+        "operationId": "rejectProjectPmSchedule",
+        "summary": "Reject PM schedule",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Reject PM schedule",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Quoted integer revision when applicable."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/project-common.yaml#/components/schemas/ProjectScheduleDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../common/errors.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../common/errors.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../common/errors.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../common/errors.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../common/errors.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../common/errors.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../common/errors.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "purpose": "Reject PM schedule",
+          "frontendScreen": "/schedules?view=PM_MANAGEMENT",
+          "actor": "Authorized actor",
+          "permission": "PROJECT_SCHEDULE_APPROVE",
+          "companyScope": "X-Company-Id required; no default fallback",
+          "organizationScope": "Server resolved from active assignments and explicit capabilities",
+          "projectScope": "Canonical projectId and parent-resource authorization",
+          "requestHeaders": [
+            "Accept-Language",
+            "X-Request-Id",
+            "X-Company-Id",
+            "If-Match",
+            "Idempotency-Key",
+            "X-CSRF-Token"
+          ],
+          "stateTransition": "SUBMITTED -> REJECTED",
+          "revision": "required",
+          "idempotency": "required",
+          "fileReference": "none",
+          "audit": "REJECTPROJECTPMSCHEDULE",
+          "notificationEvent": "none",
+          "mockScenarios": [
+            "success",
+            "empty",
+            "validation failure",
+            "unauthorized",
+            "company forbidden",
+            "action forbidden",
+            "revision conflict",
+            "server unavailable"
+          ],
+          "acceptanceTest": "rejectProjectPmSchedule: company scope, permission, response DTO, errors, and route behavior"
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/project-common.yaml#/components/schemas/ProjectActionRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/projects/{id}/pm-schedule/revisions": {
+      "get": {
+        "operationId": "listProjectPmScheduleRevisions",
+        "summary": "List PM schedule revisions",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List PM schedule revisions",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Quoted integer revision when applicable."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "../schemas/project-common.yaml#/components/schemas/ProjectScheduleDto"
+                      }
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../common/errors.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../common/errors.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../common/errors.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../common/errors.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../common/errors.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../common/errors.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../common/errors.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "purpose": "List PM schedule revisions",
+          "frontendScreen": "/schedules?view=PM_MANAGEMENT",
+          "actor": "Scoped user",
+          "permission": "PROJECT_SCHEDULE_VIEW",
+          "companyScope": "X-Company-Id required; no default fallback",
+          "organizationScope": "Server resolved from active assignments and explicit capabilities",
+          "projectScope": "Canonical projectId and parent-resource authorization",
+          "requestHeaders": [
+            "Accept-Language",
+            "X-Request-Id",
+            "X-Company-Id"
+          ],
+          "stateTransition": "none",
+          "revision": "not required",
+          "idempotency": "not required",
+          "fileReference": "none",
+          "audit": "READ",
+          "notificationEvent": "none",
+          "mockScenarios": [
+            "success",
+            "empty",
+            "validation failure",
+            "unauthorized",
+            "company forbidden",
+            "action forbidden",
+            "revision conflict",
+            "server unavailable"
+          ],
+          "acceptanceTest": "listProjectPmScheduleRevisions: company scope, permission, response DTO, errors, and route behavior"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,5415 @@
+{
+  "paths": {
+    "/api/v1/projects/{projectId}/questions": {
+      "get": {
+        "operationId": "listProjectQuestions",
+        "summary": "List project questions",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List project questions",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Quoted integer revision when applicable."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "../schemas/project-operations.yaml#/components/schemas/ProjectQuestionDto"
+                      }
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../common/errors.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../common/errors.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../common/errors.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../common/errors.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../common/errors.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../common/errors.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../common/errors.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "purpose": "List project questions",
+          "frontendScreen": "/projects/questions",
+          "actor": "Project participant",
+          "permission": "PROJECT_QUESTION_VIEW",
+          "companyScope": "X-Company-Id required; no default fallback",
+          "organizationScope": "Server resolved from active assignments and explicit capabilities",
+          "projectScope": "Canonical projectId and parent-resource authorization",
+          "requestHeaders": [
+            "Accept-Language",
+            "X-Request-Id",
+            "X-Company-Id"
+          ],
+          "stateTransition": "none",
+          "revision": "not required",
+          "idempotency": "not required",
+          "fileReference": "none",
+          "audit": "READ",
+          "notificationEvent": "none",
+          "mockScenarios": [
+            "success",
+            "empty",
+            "validation failure",
+            "unauthorized",
+            "company forbidden",
+            "action forbidden",
+            "revision conflict",
+            "server unavailable"
+          ],
+          "acceptanceTest": "listProjectQuestions: company scope, permission, response DTO, errors, and route behavior"
+        }
+      },
+      "post": {
+        "operationId": "createProjectQuestion",
+        "summary": "Create project question",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Create project question",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Quoted integer revision when applicable."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/project-operations.yaml#/components/schemas/ProjectQuestionDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../common/errors.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../common/errors.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../common/errors.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../common/errors.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../common/errors.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../common/errors.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../common/errors.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "purpose": "Create project question",
+          "frontendScreen": "/projects/questions",
+          "actor": "Project participant",
+          "permission": "PROJECT_QUESTION_CREATE",
+          "companyScope": "X-Company-Id required; no default fallback",
+          "organizationScope": "Server resolved from active assignments and explicit capabilities",
+          "projectScope": "Canonical projectId and parent-resource authorization",
+          "requestHeaders": [
+            "Accept-Language",
+            "X-Request-Id",
+            "X-Company-Id",
+            "Idempotency-Key",
+            "X-CSRF-Token"
+          ],
+          "stateTransition": "none -> OPEN",
+          "revision": "not required",
+          "idempotency": "required",
+          "fileReference": "none",
+          "audit": "PROJECT_QUESTION_CREATED",
+          "notificationEvent": "none",
+          "mockScenarios": [
+            "success",
+            "empty",
+            "validation failure",
+            "unauthorized",
+            "company forbidden",
+            "action forbidden",
+            "revision conflict",
+            "server unavailable"
+          ],
+          "acceptanceTest": "createProjectQuestion: company scope, permission, response DTO, errors, and route behavior",
+          "visibility": "ASSIGNED_USERS|PROJECT_TEAM|PRIMARY_TEAM|PARTICIPATING_TEAMS|PRIMARY_ORGANIZATION|RESTRICTED_REVIEWERS; default PROJECT_TEAM."
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/project-operations.yaml#/components/schemas/OperationWriteRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/project-questions/{id}": {
+      "get": {
+        "operationId": "getProjectQuestion",
+        "summary": "Read project question",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Read project question",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Quoted integer revision when applicable."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/project-operations.yaml#/components/schemas/ProjectQuestionDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../common/errors.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../common/errors.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../common/errors.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../common/errors.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../common/errors.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../common/errors.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../common/errors.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "purpose": "Read project question",
+          "frontendScreen": "/projects/questions",
+          "actor": "Scoped user",
+          "permission": "PROJECT_QUESTION_VIEW",
+          "companyScope": "X-Company-Id required; no default fallback",
+          "organizationScope": "Server resolved from active assignments and explicit capabilities",
+          "projectScope": "Canonical projectId and parent-resource authorization",
+          "requestHeaders": [
+            "Accept-Language",
+            "X-Request-Id",
+            "X-Company-Id"
+          ],
+          "stateTransition": "none",
+          "revision": "not required",
+          "idempotency": "not required",
+          "fileReference": "none",
+          "audit": "READ",
+          "notificationEvent": "none",
+          "mockScenarios": [
+            "success",
+            "empty",
+            "validation failure",
+            "unauthorized",
+            "company forbidden",
+            "action forbidden",
+            "revision conflict",
+            "server unavailable"
+          ],
+          "acceptanceTest": "getProjectQuestion: company scope, permission, response DTO, errors, and route behavior"
+        }
+      },
+      "patch": {
+        "operationId": "updateProjectQuestion",
+        "summary": "Update project question",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Update project question",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Quoted integer revision when applicable."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/project-operations.yaml#/components/schemas/ProjectQuestionDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../common/errors.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../common/errors.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../common/errors.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../common/errors.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../common/errors.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../common/errors.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../common/errors.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "purpose": "Update project question",
+          "frontendScreen": "/projects/questions",
+          "actor": "Author or assignee",
+          "permission": "PROJECT_QUESTION_EDIT",
+          "companyScope": "X-Company-Id required; no default fallback",
+          "organizationScope": "Server resolved from active assignments and explicit capabilities",
+          "projectScope": "Canonical projectId and parent-resource authorization",
+          "requestHeaders": [
+            "Accept-Language",
+            "X-Request-Id",
+            "X-Company-Id",
+            "If-Match",
+            "X-CSRF-Token"
+          ],
+          "stateTransition": "none",
+          "revision": "required",
+          "idempotency": "not required",
+          "fileReference": "none",
+          "audit": "PROJECT_QUESTION_UPDATED",
+          "notificationEvent": "none",
+          "mockScenarios": [
+            "success",
+            "empty",
+            "validation failure",
+            "unauthorized",
+            "company forbidden",
+            "action forbidden",
+            "revision conflict",
+            "server unavailable"
+          ],
+          "acceptanceTest": "updateProjectQuestion: company scope, permission, response DTO, errors, and route behavior"
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/project-operations.yaml#/components/schemas/OperationWriteRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/project-questions/{id}/assign": {
+      "post": {
+        "operationId": "assignProjectQuestion",
+        "summary": "Assign project question",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Assign project question",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Quoted integer revision when applicable."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/project-operations.yaml#/components/schemas/ProjectQuestionDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../common/errors.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../common/errors.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../common/errors.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../common/errors.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../common/errors.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../common/errors.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../common/errors.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "purpose": "Assign project question",
+          "frontendScreen": "/projects/questions",
+          "actor": "Authorized project actor",
+          "permission": "PROJECT_QUESTION_MANAGE",
+          "companyScope": "X-Company-Id required; no default fallback",
+          "organizationScope": "Server resolved from active assignments and explicit capabilities",
+          "projectScope": "Canonical projectId and parent-resource authorization",
+          "requestHeaders": [
+            "Accept-Language",
+            "X-Request-Id",
+            "X-Company-Id",
+            "If-Match",
+            "Idempotency-Key",
+            "X-CSRF-Token"
+          ],
+          "stateTransition": "OPEN|REOPENED -> ASSIGNED",
+          "revision": "required",
+          "idempotency": "required",
+          "fileReference": "none",
+          "audit": "ASSIGNPROJECTQUESTION",
+          "notificationEvent": "PROJECT_QUESTION_ASSIGNED",
+          "mockScenarios": [
+            "success",
+            "empty",
+            "validation failure",
+            "unauthorized",
+            "company forbidden",
+            "action forbidden",
+            "revision conflict",
+            "server unavailable"
+          ],
+          "acceptanceTest": "assignProjectQuestion: company scope, permission, response DTO, errors, and route behavior"
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/project-operations.yaml#/components/schemas/OperationWriteRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/project-questions/{id}/comments": {
+      "post": {
+        "operationId": "commentProjectQuestion",
+        "summary": "Comment on project question",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Comment on project question",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Quoted integer revision when applicable."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/project-operations.yaml#/components/schemas/ProjectQuestionDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../common/errors.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../common/errors.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../common/errors.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../common/errors.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../common/errors.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../common/errors.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../common/errors.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "purpose": "Comment on project question",
+          "frontendScreen": "/projects/questions",
+          "actor": "Authorized project actor",
+          "permission": "PROJECT_QUESTION_MANAGE",
+          "companyScope": "X-Company-Id required; no default fallback",
+          "organizationScope": "Server resolved from active assignments and explicit capabilities",
+          "projectScope": "Canonical projectId and parent-resource authorization",
+          "requestHeaders": [
+            "Accept-Language",
+            "X-Request-Id",
+            "X-Company-Id",
+            "If-Match",
+            "Idempotency-Key",
+            "X-CSRF-Token"
+          ],
+          "stateTransition": "same",
+          "revision": "required",
+          "idempotency": "required",
+          "fileReference": "none",
+          "audit": "COMMENTPROJECTQUESTION",
+          "notificationEvent": "none",
+          "mockScenarios": [
+            "success",
+            "empty",
+            "validation failure",
+            "unauthorized",
+            "company forbidden",
+            "action forbidden",
+            "revision conflict",
+            "server unavailable"
+          ],
+          "acceptanceTest": "commentProjectQuestion: company scope, permission, response DTO, errors, and route behavior"
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/project-operations.yaml#/components/schemas/OperationWriteRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/project-questions/{id}/files": {
+      "post": {
+        "operationId": "attachProjectQuestionFile",
+        "summary": "Attach READY question file",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Attach READY question file",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Quoted integer revision when applicable."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/project-operations.yaml#/components/schemas/ProjectQuestionDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../common/errors.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../common/errors.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../common/errors.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../common/errors.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../common/errors.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../common/errors.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../common/errors.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "purpose": "Attach READY question file",
+          "frontendScreen": "/projects/questions",
+          "actor": "Authorized project actor",
+          "permission": "PROJECT_QUESTION_MANAGE",
+          "companyScope": "X-Company-Id required; no default fallback",
+          "organizationScope": "Server resolved from active assignments and explicit capabilities",
+          "projectScope": "Canonical projectId and parent-resource authorization",
+          "requestHeaders": [
+            "Accept-Language",
+            "X-Request-Id",
+            "X-Company-Id",
+            "If-Match",
+            "Idempotency-Key",
+            "X-CSRF-Token"
+          ],
+          "stateTransition": "same",
+          "revision": "required",
+          "idempotency": "required",
+          "fileReference": "QUESTION_ATTACHMENT READY",
+          "audit": "ATTACHPROJECTQUESTIONFILE",
+          "notificationEvent": "none",
+          "mockScenarios": [
+            "success",
+            "empty",
+            "validation failure",
+            "unauthorized",
+            "company forbidden",
+            "action forbidden",
+            "revision conflict",
+            "server unavailable"
+          ],
+          "acceptanceTest": "attachProjectQuestionFile: company scope, permission, response DTO, errors, and route behavior"
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/project-operations.yaml#/components/schemas/OperationWriteRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/project-questions/{id}/resolve": {
+      "post": {
+        "operationId": "resolveProjectQuestion",
+        "summary": "Resolve project question",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resolve project question",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Quoted integer revision when applicable."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/project-operations.yaml#/components/schemas/ProjectQuestionDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../common/errors.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../common/errors.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../common/errors.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../common/errors.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../common/errors.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../common/errors.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../common/errors.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "purpose": "Resolve project question",
+          "frontendScreen": "/projects/questions",
+          "actor": "Authorized project actor",
+          "permission": "PROJECT_QUESTION_MANAGE",
+          "companyScope": "X-Company-Id required; no default fallback",
+          "organizationScope": "Server resolved from active assignments and explicit capabilities",
+          "projectScope": "Canonical projectId and parent-resource authorization",
+          "requestHeaders": [
+            "Accept-Language",
+            "X-Request-Id",
+            "X-Company-Id",
+            "If-Match",
+            "Idempotency-Key",
+            "X-CSRF-Token"
+          ],
+          "stateTransition": "IN_PROGRESS|ASSIGNED -> RESOLVED",
+          "revision": "required",
+          "idempotency": "required",
+          "fileReference": "none",
+          "audit": "RESOLVEPROJECTQUESTION",
+          "notificationEvent": "none",
+          "mockScenarios": [
+            "success",
+            "empty",
+            "validation failure",
+            "unauthorized",
+            "company forbidden",
+            "action forbidden",
+            "revision conflict",
+            "server unavailable"
+          ],
+          "acceptanceTest": "resolveProjectQuestion: company scope, permission, response DTO, errors, and route behavior"
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/project-operations.yaml#/components/schemas/OperationWriteRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/project-questions/{id}/reopen": {
+      "post": {
+        "operationId": "reopenProjectQuestion",
+        "summary": "Reopen resolved question",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Reopen resolved question",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Quoted integer revision when applicable."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/project-operations.yaml#/components/schemas/ProjectQuestionDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../common/errors.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../common/errors.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../common/errors.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../common/errors.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../common/errors.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../common/errors.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../common/errors.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "purpose": "Reopen resolved question",
+          "frontendScreen": "/projects/questions",
+          "actor": "Authorized project actor",
+          "permission": "PROJECT_QUESTION_MANAGE",
+          "companyScope": "X-Company-Id required; no default fallback",
+          "organizationScope": "Server resolved from active assignments and explicit capabilities",
+          "projectScope": "Canonical projectId and parent-resource authorization",
+          "requestHeaders": [
+            "Accept-Language",
+            "X-Request-Id",
+            "X-Company-Id",
+            "If-Match",
+            "Idempotency-Key",
+            "X-CSRF-Token"
+          ],
+          "stateTransition": "RESOLVED|CLOSED -> REOPENED",
+          "revision": "required",
+          "idempotency": "required",
+          "fileReference": "none",
+          "audit": "REOPENPROJECTQUESTION",
+          "notificationEvent": "PROJECT_QUESTION_ASSIGNED",
+          "mockScenarios": [
+            "success",
+            "empty",
+            "validation failure",
+            "unauthorized",
+            "company forbidden",
+            "action forbidden",
+            "revision conflict",
+            "server unavailable"
+          ],
+          "acceptanceTest": "reopenProjectQuestion: company scope, permission, response DTO, errors, and route behavior"
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/project-operations.yaml#/components/schemas/OperationWriteRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/question-templates": {
+      "get": {
+        "operationId": "listQuestionTemplates",
+        "summary": "List question and QC templates",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "organizationUnitId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List question and QC templates",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Quoted integer revision when applicable."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "../schemas/project-operations.yaml#/components/schemas/ProjectQcDto"
+                      }
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../common/errors.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../common/errors.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../common/errors.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../common/errors.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../common/errors.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../common/errors.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../common/errors.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "purpose": "List question and QC templates",
+          "frontendScreen": "/projects/questions",
+          "actor": "Scoped user",
+          "permission": "PROJECT_QC_VIEW",
+          "companyScope": "X-Company-Id required; no default fallback",
+          "organizationScope": "Server resolved from active assignments and explicit capabilities",
+          "projectScope": "Canonical projectId and parent-resource authorization",
+          "requestHeaders": [
+            "Accept-Language",
+            "X-Request-Id",
+            "X-Company-Id"
+          ],
+          "stateTransition": "none",
+          "revision": "not required",
+          "idempotency": "not required",
+          "fileReference": "none",
+          "audit": "READ",
+          "notificationEvent": "none",
+          "mockScenarios": [
+            "success",
+            "empty",
+            "validation failure",
+            "unauthorized",
+            "company forbidden",
+            "action forbidden",
+            "revision conflict",
+            "server unavailable"
+          ],
+          "acceptanceTest": "listQuestionTemplates: company scope, permission, response DTO, errors, and route behavior"
+        }
+      }
+    },
+    "/api/v1/projects/{projectId}/qc": {
+      "get": {
+        "operationId": "getProjectQc",
+        "summary": "Read project QC workspace",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Read project QC workspace",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Quoted integer revision when applicable."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/project-operations.yaml#/components/schemas/ProjectQcDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../common/errors.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../common/errors.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../common/errors.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../common/errors.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../common/errors.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../common/errors.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../common/errors.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "purpose": "Read project QC workspace",
+          "frontendScreen": "/projects/questions",
+          "actor": "Scoped user",
+          "permission": "PROJECT_QC_VIEW",
+          "companyScope": "X-Company-Id required; no default fallback",
+          "organizationScope": "Server resolved from active assignments and explicit capabilities",
+          "projectScope": "Canonical projectId and parent-resource authorization",
+          "requestHeaders": [
+            "Accept-Language",
+            "X-Request-Id",
+            "X-Company-Id"
+          ],
+          "stateTransition": "none",
+          "revision": "not required",
+          "idempotency": "not required",
+          "fileReference": "none",
+          "audit": "READ",
+          "notificationEvent": "none",
+          "mockScenarios": [
+            "success",
+            "empty",
+            "validation failure",
+            "unauthorized",
+            "company forbidden",
+            "action forbidden",
+            "revision conflict",
+            "server unavailable"
+          ],
+          "acceptanceTest": "getProjectQc: company scope, permission, response DTO, errors, and route behavior"
+        }
+      },
+      "patch": {
+        "operationId": "updateProjectQc",
+        "summary": "Update project QC checklist",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Update project QC checklist",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Quoted integer revision when applicable."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/project-operations.yaml#/components/schemas/ProjectQcDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../common/errors.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../common/errors.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../common/errors.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../common/errors.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../common/errors.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../common/errors.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../common/errors.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "purpose": "Update project QC checklist",
+          "frontendScreen": "/projects/questions",
+          "actor": "QC assignee or manager",
+          "permission": "PROJECT_QC_MANAGE",
+          "companyScope": "X-Company-Id required; no default fallback",
+          "organizationScope": "Server resolved from active assignments and explicit capabilities",
+          "projectScope": "Canonical projectId and parent-resource authorization",
+          "requestHeaders": [
+            "Accept-Language",
+            "X-Request-Id",
+            "X-Company-Id",
+            "If-Match",
+            "X-CSRF-Token"
+          ],
+          "stateTransition": "OPEN|CHANGES_REQUESTED -> IN_PROGRESS",
+          "revision": "required",
+          "idempotency": "not required",
+          "fileReference": "none",
+          "audit": "PROJECT_QC_UPDATED",
+          "notificationEvent": "none",
+          "mockScenarios": [
+            "success",
+            "empty",
+            "validation failure",
+            "unauthorized",
+            "company forbidden",
+            "action forbidden",
+            "revision conflict",
+            "server unavailable"
+          ],
+          "acceptanceTest": "updateProjectQc: company scope, permission, response DTO, errors, and route behavior"
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/project-operations.yaml#/components/schemas/OperationWriteRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/projects/{projectId}/qc/request-review": {
+      "post": {
+        "operationId": "requestProjectQcReview",
+        "summary": "Request QC review",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Request QC review",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Quoted integer revision when applicable."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/project-operations.yaml#/components/schemas/ProjectQcDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../common/errors.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../common/errors.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../common/errors.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../common/errors.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../common/errors.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../common/errors.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../common/errors.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "purpose": "Request QC review",
+          "frontendScreen": "/projects/questions",
+          "actor": "Authorized QC actor",
+          "permission": "PROJECT_QC_MANAGE",
+          "companyScope": "X-Company-Id required; no default fallback",
+          "organizationScope": "Server resolved from active assignments and explicit capabilities",
+          "projectScope": "Canonical projectId and parent-resource authorization",
+          "requestHeaders": [
+            "Accept-Language",
+            "X-Request-Id",
+            "X-Company-Id",
+            "If-Match",
+            "Idempotency-Key",
+            "X-CSRF-Token"
+          ],
+          "stateTransition": "IN_PROGRESS -> REVIEW_REQUESTED",
+          "revision": "required",
+          "idempotency": "required",
+          "fileReference": "QC_EVIDENCE READY",
+          "audit": "REQUESTPROJECTQCREVIEW",
+          "notificationEvent": "QC_REQUESTED",
+          "mockScenarios": [
+            "success",
+            "empty",
+            "validation failure",
+            "unauthorized",
+            "company forbidden",
+            "action forbidden",
+            "revision conflict",
+            "server unavailable"
+          ],
+          "acceptanceTest": "requestProjectQcReview: company scope, permission, response DTO, errors, and route behavior"
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/project-operations.yaml#/components/schemas/OperationWriteRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/projects/{projectId}/qc/approve": {
+      "post": {
+        "operationId": "approveProjectQc",
+        "summary": "Approve project QC",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Approve project QC",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Quoted integer revision when applicable."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/project-operations.yaml#/components/schemas/ProjectQcDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../common/errors.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../common/errors.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../common/errors.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../common/errors.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../common/errors.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../common/errors.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../common/errors.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "purpose": "Approve project QC",
+          "frontendScreen": "/projects/questions",
+          "actor": "Authorized QC actor",
+          "permission": "PROJECT_QC_MANAGE",
+          "companyScope": "X-Company-Id required; no default fallback",
+          "organizationScope": "Server resolved from active assignments and explicit capabilities",
+          "projectScope": "Canonical projectId and parent-resource authorization",
+          "requestHeaders": [
+            "Accept-Language",
+            "X-Request-Id",
+            "X-Company-Id",
+            "If-Match",
+            "Idempotency-Key",
+            "X-CSRF-Token"
+          ],
+          "stateTransition": "REVIEW_REQUESTED -> APPROVED",
+          "revision": "required",
+          "idempotency": "required",
+          "fileReference": "QC_EVIDENCE READY",
+          "audit": "APPROVEPROJECTQC",
+          "notificationEvent": "none",
+          "mockScenarios": [
+            "success",
+            "empty",
+            "validation failure",
+            "unauthorized",
+            "company forbidden",
+            "action forbidden",
+            "revision conflict",
+            "server unavailable"
+          ],
+          "acceptanceTest": "approveProjectQc: company scope, permission, response DTO, errors, and route behavior",
+          "approvalPolicy": "Technical project: primary-team manager review then technical-HQ manager final approval. Claim/development projects use their responsible manager. Backend returns policy; no fallback actor.",
+          "missingApprover": "VALIDATION_FAILED with details.reasonCode=APPROVER_NOT_CONFIGURED"
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/project-operations.yaml#/components/schemas/OperationWriteRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/projects/{projectId}/qc/send": {
+      "post": {
+        "operationId": "sendProjectQc",
+        "summary": "Record QC sent to client",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Record QC sent to client",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Quoted integer revision when applicable."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/project-operations.yaml#/components/schemas/ProjectQcDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../common/errors.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../common/errors.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../common/errors.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../common/errors.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../common/errors.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../common/errors.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../common/errors.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "purpose": "Record QC sent to client",
+          "frontendScreen": "/projects/questions",
+          "actor": "Authorized QC actor",
+          "permission": "PROJECT_QC_MANAGE",
+          "companyScope": "X-Company-Id required; no default fallback",
+          "organizationScope": "Server resolved from active assignments and explicit capabilities",
+          "projectScope": "Canonical projectId and parent-resource authorization",
+          "requestHeaders": [
+            "Accept-Language",
+            "X-Request-Id",
+            "X-Company-Id",
+            "If-Match",
+            "Idempotency-Key",
+            "X-CSRF-Token"
+          ],
+          "stateTransition": "APPROVED -> SENT",
+          "revision": "required",
+          "idempotency": "required",
+          "fileReference": "none",
+          "audit": "SENDPROJECTQC",
+          "notificationEvent": "none",
+          "mockScenarios": [
+            "success",
+            "empty",
+            "validation failure",
+            "unauthorized",
+            "company forbidden",
+            "action forbidden",
+            "revision conflict",
+            "server unavailable"
+          ],
+          "acceptanceTest": "sendProjectQc: company scope, permission, response DTO, errors, and route behavior"
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/project-operations.yaml#/components/schemas/OperationWriteRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/projects/{projectId}/qc/export-request": {
+      "post": {
+        "operationId": "requestProjectQcExport",
+        "summary": "Request QC export document",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Request QC export document",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Quoted integer revision when applicable."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/project-operations.yaml#/components/schemas/ProjectQcDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../common/errors.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../common/errors.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../common/errors.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../common/errors.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../common/errors.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../common/errors.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../common/errors.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "purpose": "Request QC export document",
+          "frontendScreen": "/projects/questions",
+          "actor": "Authorized QC actor",
+          "permission": "PROJECT_QC_MANAGE",
+          "companyScope": "X-Company-Id required; no default fallback",
+          "organizationScope": "Server resolved from active assignments and explicit capabilities",
+          "projectScope": "Canonical projectId and parent-resource authorization",
+          "requestHeaders": [
+            "Accept-Language",
+            "X-Request-Id",
+            "X-Company-Id",
+            "If-Match",
+            "Idempotency-Key",
+            "X-CSRF-Token"
+          ],
+          "stateTransition": "same",
+          "revision": "required",
+          "idempotency": "required",
+          "fileReference": "none",
+          "audit": "REQUESTPROJECTQCEXPORT",
+          "notificationEvent": "none",
+          "mockScenarios": [
+            "success",
+            "empty",
+            "validation failure",
+            "unauthorized",
+            "company forbidden",
+            "action forbidden",
+            "revision conflict",
+            "server unavailable"
+          ],
+          "acceptanceTest": "requestProjectQcExport: company scope, permission, response DTO, errors, and route behavior"
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/project-operations.yaml#/components/schemas/OperationWriteRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/projects/{projectId}/work-logs": {
+      "get": {
+        "operationId": "listProjectWorkLogs",
+        "summary": "List project work logs",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List project work logs",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Quoted integer revision when applicable."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "../schemas/project-operations.yaml#/components/schemas/ProjectWorkLogDto"
+                      }
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../common/errors.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../common/errors.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../common/errors.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../common/errors.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../common/errors.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../common/errors.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../common/errors.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "purpose": "List project work logs",
+          "frontendScreen": "/projects/daily-reports",
+          "actor": "Project participant",
+          "permission": "PROJECT_WORK_LOG_VIEW",
+          "companyScope": "X-Company-Id required; no default fallback",
+          "organizationScope": "Server resolved from active assignments and explicit capabilities",
+          "projectScope": "Canonical projectId and parent-resource authorization",
+          "requestHeaders": [
+            "Accept-Language",
+            "X-Request-Id",
+            "X-Company-Id"
+          ],
+          "stateTransition": "none",
+          "revision": "not required",
+          "idempotency": "not required",
+          "fileReference": "none",
+          "audit": "READ",
+          "notificationEvent": "none",
+          "mockScenarios": [
+            "success",
+            "empty",
+            "validation failure",
+            "unauthorized",
+            "company forbidden",
+            "action forbidden",
+            "revision conflict",
+            "server unavailable"
+          ],
+          "acceptanceTest": "listProjectWorkLogs: company scope, permission, response DTO, errors, and route behavior"
+        }
+      },
+      "post": {
+        "operationId": "createProjectWorkLog",
+        "summary": "Create project work log",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Create project work log",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Quoted integer revision when applicable."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/project-operations.yaml#/components/schemas/ProjectWorkLogDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../common/errors.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../common/errors.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../common/errors.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../common/errors.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../common/errors.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../common/errors.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../common/errors.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "purpose": "Create project work log",
+          "frontendScreen": "/projects/daily-reports",
+          "actor": "Assigned personnel",
+          "permission": "PROJECT_WORK_LOG_CREATE",
+          "companyScope": "X-Company-Id required; no default fallback",
+          "organizationScope": "Server resolved from active assignments and explicit capabilities",
+          "projectScope": "Canonical projectId and parent-resource authorization",
+          "requestHeaders": [
+            "Accept-Language",
+            "X-Request-Id",
+            "X-Company-Id",
+            "Idempotency-Key",
+            "X-CSRF-Token"
+          ],
+          "stateTransition": "none -> DRAFT",
+          "revision": "not required",
+          "idempotency": "required",
+          "fileReference": "WORK_LOG_ATTACHMENT READY references",
+          "audit": "PROJECT_WORK_LOG_CREATED",
+          "notificationEvent": "none",
+          "mockScenarios": [
+            "success",
+            "empty",
+            "validation failure",
+            "unauthorized",
+            "company forbidden",
+            "action forbidden",
+            "revision conflict",
+            "server unavailable"
+          ],
+          "acceptanceTest": "createProjectWorkLog: company scope, permission, response DTO, errors, and route behavior",
+          "workLogPolicy": "Project-level log is required on active workdays; PM or designated team representative may author; missing logs warn and are reviewed at completion."
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/project-operations.yaml#/components/schemas/OperationWriteRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/project-work-logs/{id}": {
+      "patch": {
+        "operationId": "updateProjectWorkLog",
+        "summary": "Update project work log",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Update project work log",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Quoted integer revision when applicable."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/project-operations.yaml#/components/schemas/ProjectWorkLogDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../common/errors.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../common/errors.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../common/errors.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../common/errors.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../common/errors.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../common/errors.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../common/errors.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "purpose": "Update project work log",
+          "frontendScreen": "/projects/daily-reports",
+          "actor": "Author",
+          "permission": "PROJECT_WORK_LOG_EDIT",
+          "companyScope": "X-Company-Id required; no default fallback",
+          "organizationScope": "Server resolved from active assignments and explicit capabilities",
+          "projectScope": "Canonical projectId and parent-resource authorization",
+          "requestHeaders": [
+            "Accept-Language",
+            "X-Request-Id",
+            "X-Company-Id",
+            "If-Match",
+            "X-CSRF-Token"
+          ],
+          "stateTransition": "DRAFT -> DRAFT",
+          "revision": "required",
+          "idempotency": "not required",
+          "fileReference": "none",
+          "audit": "PROJECT_WORK_LOG_UPDATED",
+          "notificationEvent": "none",
+          "mockScenarios": [
+            "success",
+            "empty",
+            "validation failure",
+            "unauthorized",
+            "company forbidden",
+            "action forbidden",
+            "revision conflict",
+            "server unavailable"
+          ],
+          "acceptanceTest": "updateProjectWorkLog: company scope, permission, response DTO, errors, and route behavior"
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/project-operations.yaml#/components/schemas/OperationWriteRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/project-work-logs/{id}/files": {
+      "post": {
+        "operationId": "attachProjectWorkLogFile",
+        "summary": "Attach READY work-log file",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Attach READY work-log file",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Quoted integer revision when applicable."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/project-operations.yaml#/components/schemas/ProjectWorkLogDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../common/errors.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../common/errors.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../common/errors.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../common/errors.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../common/errors.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../common/errors.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../common/errors.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "purpose": "Attach READY work-log file",
+          "frontendScreen": "/projects/daily-reports",
+          "actor": "Author",
+          "permission": "PROJECT_WORK_LOG_EDIT",
+          "companyScope": "X-Company-Id required; no default fallback",
+          "organizationScope": "Server resolved from active assignments and explicit capabilities",
+          "projectScope": "Canonical projectId and parent-resource authorization",
+          "requestHeaders": [
+            "Accept-Language",
+            "X-Request-Id",
+            "X-Company-Id",
+            "If-Match",
+            "Idempotency-Key",
+            "X-CSRF-Token"
+          ],
+          "stateTransition": "DRAFT -> DRAFT",
+          "revision": "required",
+          "idempotency": "required",
+          "fileReference": "WORK_LOG_ATTACHMENT READY",
+          "audit": "PROJECT_WORK_LOG_FILE_ATTACHED",
+          "notificationEvent": "none",
+          "mockScenarios": [
+            "success",
+            "empty",
+            "validation failure",
+            "unauthorized",
+            "company forbidden",
+            "action forbidden",
+            "revision conflict",
+            "server unavailable"
+          ],
+          "acceptanceTest": "attachProjectWorkLogFile: company scope, permission, response DTO, errors, and route behavior"
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/project-operations.yaml#/components/schemas/OperationWriteRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/project-work-logs/{id}/submit": {
+      "post": {
+        "operationId": "submitProjectWorkLog",
+        "summary": "Submit project work log",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Submit project work log",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Quoted integer revision when applicable."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/project-operations.yaml#/components/schemas/ProjectWorkLogDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../common/errors.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../common/errors.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../common/errors.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../common/errors.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../common/errors.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../common/errors.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../common/errors.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "purpose": "Submit project work log",
+          "frontendScreen": "/projects/daily-reports",
+          "actor": "Authorized actor",
+          "permission": "PROJECT_WORK_LOG_APPROVE",
+          "companyScope": "X-Company-Id required; no default fallback",
+          "organizationScope": "Server resolved from active assignments and explicit capabilities",
+          "projectScope": "Canonical projectId and parent-resource authorization",
+          "requestHeaders": [
+            "Accept-Language",
+            "X-Request-Id",
+            "X-Company-Id",
+            "If-Match",
+            "Idempotency-Key",
+            "X-CSRF-Token"
+          ],
+          "stateTransition": "DRAFT -> SUBMITTED",
+          "revision": "required",
+          "idempotency": "required",
+          "fileReference": "none",
+          "audit": "SUBMITPROJECTWORKLOG",
+          "notificationEvent": "none",
+          "mockScenarios": [
+            "success",
+            "empty",
+            "validation failure",
+            "unauthorized",
+            "company forbidden",
+            "action forbidden",
+            "revision conflict",
+            "server unavailable"
+          ],
+          "acceptanceTest": "submitProjectWorkLog: company scope, permission, response DTO, errors, and route behavior"
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/project-operations.yaml#/components/schemas/OperationWriteRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/project-work-logs/{id}/approve": {
+      "post": {
+        "operationId": "approveProjectWorkLog",
+        "summary": "Approve project work log step",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Approve project work log step",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Quoted integer revision when applicable."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/project-operations.yaml#/components/schemas/ProjectWorkLogDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../common/errors.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../common/errors.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../common/errors.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../common/errors.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../common/errors.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../common/errors.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../common/errors.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "purpose": "Approve project work log step",
+          "frontendScreen": "/projects/daily-reports",
+          "actor": "Authorized actor",
+          "permission": "PROJECT_WORK_LOG_APPROVE",
+          "companyScope": "X-Company-Id required; no default fallback",
+          "organizationScope": "Server resolved from active assignments and explicit capabilities",
+          "projectScope": "Canonical projectId and parent-resource authorization",
+          "requestHeaders": [
+            "Accept-Language",
+            "X-Request-Id",
+            "X-Company-Id",
+            "If-Match",
+            "Idempotency-Key",
+            "X-CSRF-Token"
+          ],
+          "stateTransition": "SUBMITTED|PM_APPROVED -> PM_APPROVED|MANAGEMENT_APPROVED",
+          "revision": "required",
+          "idempotency": "required",
+          "fileReference": "none",
+          "audit": "APPROVEPROJECTWORKLOG",
+          "notificationEvent": "none",
+          "mockScenarios": [
+            "success",
+            "empty",
+            "validation failure",
+            "unauthorized",
+            "company forbidden",
+            "action forbidden",
+            "revision conflict",
+            "server unavailable"
+          ],
+          "acceptanceTest": "approveProjectWorkLog: company scope, permission, response DTO, errors, and route behavior"
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/project-operations.yaml#/components/schemas/OperationWriteRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/projects/{projectId}/meeting-minutes": {
+      "get": {
+        "operationId": "listProjectMeetingMinutes",
+        "summary": "List project meeting minutes",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List project meeting minutes",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Quoted integer revision when applicable."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "../schemas/project-operations.yaml#/components/schemas/ProjectMeetingMinuteDto"
+                      }
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../common/errors.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../common/errors.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../common/errors.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../common/errors.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../common/errors.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../common/errors.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../common/errors.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "purpose": "List project meeting minutes",
+          "frontendScreen": "/projects?workflow={projectId}",
+          "actor": "Project participant",
+          "permission": "PROJECT_MEETING_VIEW",
+          "companyScope": "X-Company-Id required; no default fallback",
+          "organizationScope": "Server resolved from active assignments and explicit capabilities",
+          "projectScope": "Canonical projectId and parent-resource authorization",
+          "requestHeaders": [
+            "Accept-Language",
+            "X-Request-Id",
+            "X-Company-Id"
+          ],
+          "stateTransition": "none",
+          "revision": "not required",
+          "idempotency": "not required",
+          "fileReference": "none",
+          "audit": "READ",
+          "notificationEvent": "none",
+          "mockScenarios": [
+            "success",
+            "empty",
+            "validation failure",
+            "unauthorized",
+            "company forbidden",
+            "action forbidden",
+            "revision conflict",
+            "server unavailable"
+          ],
+          "acceptanceTest": "listProjectMeetingMinutes: company scope, permission, response DTO, errors, and route behavior"
+        }
+      },
+      "post": {
+        "operationId": "createProjectMeetingMinute",
+        "summary": "Create project meeting minute",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Create project meeting minute",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Quoted integer revision when applicable."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/project-operations.yaml#/components/schemas/ProjectMeetingMinuteDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../common/errors.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../common/errors.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../common/errors.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../common/errors.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../common/errors.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../common/errors.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../common/errors.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "purpose": "Create project meeting minute",
+          "frontendScreen": "/projects?workflow={projectId}",
+          "actor": "Project participant",
+          "permission": "PROJECT_MEETING_CREATE",
+          "companyScope": "X-Company-Id required; no default fallback",
+          "organizationScope": "Server resolved from active assignments and explicit capabilities",
+          "projectScope": "Canonical projectId and parent-resource authorization",
+          "requestHeaders": [
+            "Accept-Language",
+            "X-Request-Id",
+            "X-Company-Id",
+            "Idempotency-Key",
+            "X-CSRF-Token"
+          ],
+          "stateTransition": "none -> DRAFT",
+          "revision": "not required",
+          "idempotency": "required",
+          "fileReference": "none",
+          "audit": "PROJECT_MEETING_CREATED",
+          "notificationEvent": "none",
+          "mockScenarios": [
+            "success",
+            "empty",
+            "validation failure",
+            "unauthorized",
+            "company forbidden",
+            "action forbidden",
+            "revision conflict",
+            "server unavailable"
+          ],
+          "acceptanceTest": "createProjectMeetingMinute: company scope, permission, response DTO, errors, and route behavior"
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/project-operations.yaml#/components/schemas/OperationWriteRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/project-meeting-minutes/{id}": {
+      "get": {
+        "operationId": "getProjectMeetingMinute",
+        "summary": "Read project meeting minute",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Read project meeting minute",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Quoted integer revision when applicable."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/project-operations.yaml#/components/schemas/ProjectMeetingMinuteDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../common/errors.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../common/errors.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../common/errors.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../common/errors.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../common/errors.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../common/errors.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../common/errors.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "purpose": "Read project meeting minute",
+          "frontendScreen": "/projects?workflow={projectId}",
+          "actor": "Project participant",
+          "permission": "PROJECT_MEETING_VIEW",
+          "companyScope": "X-Company-Id required; no default fallback",
+          "organizationScope": "Server resolved from active assignments and explicit capabilities",
+          "projectScope": "Canonical projectId and parent-resource authorization",
+          "requestHeaders": [
+            "Accept-Language",
+            "X-Request-Id",
+            "X-Company-Id"
+          ],
+          "stateTransition": "none",
+          "revision": "not required",
+          "idempotency": "not required",
+          "fileReference": "none",
+          "audit": "READ",
+          "notificationEvent": "none",
+          "mockScenarios": [
+            "success",
+            "empty",
+            "validation failure",
+            "unauthorized",
+            "company forbidden",
+            "action forbidden",
+            "revision conflict",
+            "server unavailable"
+          ],
+          "acceptanceTest": "getProjectMeetingMinute: company scope, permission, response DTO, errors, and route behavior"
+        }
+      },
+      "patch": {
+        "operationId": "updateProjectMeetingMinute",
+        "summary": "Update project meeting minute",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Update project meeting minute",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Quoted integer revision when applicable."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/project-operations.yaml#/components/schemas/ProjectMeetingMinuteDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../common/errors.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../common/errors.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../common/errors.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../common/errors.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../common/errors.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../common/errors.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../common/errors.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "purpose": "Update project meeting minute",
+          "frontendScreen": "/projects?workflow={projectId}",
+          "actor": "Author or project manager",
+          "permission": "PROJECT_MEETING_EDIT",
+          "companyScope": "X-Company-Id required; no default fallback",
+          "organizationScope": "Server resolved from active assignments and explicit capabilities",
+          "projectScope": "Canonical projectId and parent-resource authorization",
+          "requestHeaders": [
+            "Accept-Language",
+            "X-Request-Id",
+            "X-Company-Id",
+            "If-Match",
+            "X-CSRF-Token"
+          ],
+          "stateTransition": "DRAFT -> DRAFT|PUBLISHED",
+          "revision": "required",
+          "idempotency": "not required",
+          "fileReference": "none",
+          "audit": "PROJECT_MEETING_UPDATED",
+          "notificationEvent": "none",
+          "mockScenarios": [
+            "success",
+            "empty",
+            "validation failure",
+            "unauthorized",
+            "company forbidden",
+            "action forbidden",
+            "revision conflict",
+            "server unavailable"
+          ],
+          "acceptanceTest": "updateProjectMeetingMinute: company scope, permission, response DTO, errors, and route behavior"
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/project-operations.yaml#/components/schemas/OperationWriteRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/project-meeting-minutes/{id}/files": {
+      "post": {
+        "operationId": "attachProjectMeetingFile",
+        "summary": "Attach READY meeting file",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Attach READY meeting file",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Quoted integer revision when applicable."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/project-operations.yaml#/components/schemas/ProjectMeetingMinuteDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../common/errors.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../common/errors.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../common/errors.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../common/errors.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../common/errors.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../common/errors.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../common/errors.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "purpose": "Attach READY meeting file",
+          "frontendScreen": "/projects?workflow={projectId}",
+          "actor": "Author or project manager",
+          "permission": "PROJECT_MEETING_EDIT",
+          "companyScope": "X-Company-Id required; no default fallback",
+          "organizationScope": "Server resolved from active assignments and explicit capabilities",
+          "projectScope": "Canonical projectId and parent-resource authorization",
+          "requestHeaders": [
+            "Accept-Language",
+            "X-Request-Id",
+            "X-Company-Id",
+            "If-Match",
+            "Idempotency-Key",
+            "X-CSRF-Token"
+          ],
+          "stateTransition": "same",
+          "revision": "required",
+          "idempotency": "required",
+          "fileReference": "MEETING_ATTACHMENT READY",
+          "audit": "PROJECT_MEETING_FILE_ATTACHED",
+          "notificationEvent": "none",
+          "mockScenarios": [
+            "success",
+            "empty",
+            "validation failure",
+            "unauthorized",
+            "company forbidden",
+            "action forbidden",
+            "revision conflict",
+            "server unavailable"
+          ],
+          "acceptanceTest": "attachProjectMeetingFile: company scope, permission, response DTO, errors, and route behavior"
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/project-operations.yaml#/components/schemas/OperationWriteRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/projects/{projectId}/deliveries": {
+      "get": {
+        "operationId": "listProjectDeliveries",
+        "summary": "List project delivery rounds",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List project delivery rounds",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Quoted integer revision when applicable."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "../schemas/project-operations.yaml#/components/schemas/ProjectDeliveryDto"
+                      }
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../common/errors.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../common/errors.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../common/errors.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../common/errors.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../common/errors.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../common/errors.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../common/errors.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "purpose": "List project delivery rounds",
+          "frontendScreen": "/projects/data-management?view=DELIVERY",
+          "actor": "Scoped user",
+          "permission": "PROJECT_DELIVERY_VIEW",
+          "companyScope": "X-Company-Id required; no default fallback",
+          "organizationScope": "Server resolved from active assignments and explicit capabilities",
+          "projectScope": "Canonical projectId and parent-resource authorization",
+          "requestHeaders": [
+            "Accept-Language",
+            "X-Request-Id",
+            "X-Company-Id"
+          ],
+          "stateTransition": "none",
+          "revision": "not required",
+          "idempotency": "not required",
+          "fileReference": "none",
+          "audit": "READ",
+          "notificationEvent": "none",
+          "mockScenarios": [
+            "success",
+            "empty",
+            "validation failure",
+            "unauthorized",
+            "company forbidden",
+            "action forbidden",
+            "revision conflict",
+            "server unavailable"
+          ],
+          "acceptanceTest": "listProjectDeliveries: company scope, permission, response DTO, errors, and route behavior"
+        }
+      },
+      "post": {
+        "operationId": "createProjectDeliveryDraft",
+        "summary": "Create delivery or re-delivery Draft",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Create delivery or re-delivery Draft",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Quoted integer revision when applicable."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/project-operations.yaml#/components/schemas/ProjectDeliveryDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../common/errors.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../common/errors.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../common/errors.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../common/errors.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../common/errors.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../common/errors.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../common/errors.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "purpose": "Create delivery or re-delivery Draft",
+          "frontendScreen": "/projects/data-management?view=DELIVERY",
+          "actor": "Delivery manager",
+          "permission": "PROJECT_DELIVERY_EDIT",
+          "companyScope": "X-Company-Id required; no default fallback",
+          "organizationScope": "Server resolved from active assignments and explicit capabilities",
+          "projectScope": "Canonical projectId and parent-resource authorization",
+          "requestHeaders": [
+            "Accept-Language",
+            "X-Request-Id",
+            "X-Company-Id",
+            "Idempotency-Key",
+            "X-CSRF-Token"
+          ],
+          "stateTransition": "none -> DRAFT",
+          "revision": "not required",
+          "idempotency": "required",
+          "fileReference": "none",
+          "audit": "PROJECT_DELIVERY_CREATED",
+          "notificationEvent": "none",
+          "mockScenarios": [
+            "success",
+            "empty",
+            "validation failure",
+            "unauthorized",
+            "company forbidden",
+            "action forbidden",
+            "revision conflict",
+            "server unavailable"
+          ],
+          "acceptanceTest": "createProjectDeliveryDraft: company scope, permission, response DTO, errors, and route behavior"
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/project-operations.yaml#/components/schemas/OperationWriteRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/project-deliveries/{id}": {
+      "get": {
+        "operationId": "getProjectDelivery",
+        "summary": "Read project delivery",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Read project delivery",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Quoted integer revision when applicable."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/project-operations.yaml#/components/schemas/ProjectDeliveryDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../common/errors.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../common/errors.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../common/errors.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../common/errors.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../common/errors.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../common/errors.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../common/errors.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "purpose": "Read project delivery",
+          "frontendScreen": "/projects/data-management?view=DELIVERY",
+          "actor": "Scoped user",
+          "permission": "PROJECT_DELIVERY_VIEW",
+          "companyScope": "X-Company-Id required; no default fallback",
+          "organizationScope": "Server resolved from active assignments and explicit capabilities",
+          "projectScope": "Canonical projectId and parent-resource authorization",
+          "requestHeaders": [
+            "Accept-Language",
+            "X-Request-Id",
+            "X-Company-Id"
+          ],
+          "stateTransition": "none",
+          "revision": "not required",
+          "idempotency": "not required",
+          "fileReference": "none",
+          "audit": "READ",
+          "notificationEvent": "none",
+          "mockScenarios": [
+            "success",
+            "empty",
+            "validation failure",
+            "unauthorized",
+            "company forbidden",
+            "action forbidden",
+            "revision conflict",
+            "server unavailable"
+          ],
+          "acceptanceTest": "getProjectDelivery: company scope, permission, response DTO, errors, and route behavior"
+        }
+      }
+    },
+    "/api/v1/project-deliveries/{id}/submit": {
+      "post": {
+        "operationId": "submitProjectDelivery",
+        "summary": "Submit project delivery",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Submit project delivery",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Quoted integer revision when applicable."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/project-operations.yaml#/components/schemas/ProjectDeliveryDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../common/errors.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../common/errors.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../common/errors.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../common/errors.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../common/errors.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../common/errors.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../common/errors.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "purpose": "Submit project delivery",
+          "frontendScreen": "/projects/data-management?view=DELIVERY",
+          "actor": "Authorized actor",
+          "permission": "PROJECT_DELIVERY_MANAGE",
+          "companyScope": "X-Company-Id required; no default fallback",
+          "organizationScope": "Server resolved from active assignments and explicit capabilities",
+          "projectScope": "Canonical projectId and parent-resource authorization",
+          "requestHeaders": [
+            "Accept-Language",
+            "X-Request-Id",
+            "X-Company-Id",
+            "If-Match",
+            "Idempotency-Key",
+            "X-CSRF-Token"
+          ],
+          "stateTransition": "DRAFT -> SUBMITTED",
+          "revision": "required",
+          "idempotency": "required",
+          "fileReference": "DELIVERY_PACKAGE READY",
+          "audit": "SUBMITPROJECTDELIVERY",
+          "notificationEvent": "DELIVERY_DUE",
+          "mockScenarios": [
+            "success",
+            "empty",
+            "validation failure",
+            "unauthorized",
+            "company forbidden",
+            "action forbidden",
+            "revision conflict",
+            "server unavailable"
+          ],
+          "acceptanceTest": "submitProjectDelivery: company scope, permission, response DTO, errors, and route behavior"
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/project-operations.yaml#/components/schemas/OperationWriteRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/project-deliveries/{id}/approve": {
+      "post": {
+        "operationId": "approveProjectDelivery",
+        "summary": "Approve project delivery",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Approve project delivery",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Quoted integer revision when applicable."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/project-operations.yaml#/components/schemas/ProjectDeliveryDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../common/errors.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../common/errors.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../common/errors.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../common/errors.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../common/errors.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../common/errors.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../common/errors.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "purpose": "Approve project delivery",
+          "frontendScreen": "/projects/data-management?view=DELIVERY",
+          "actor": "Authorized actor",
+          "permission": "PROJECT_DELIVERY_MANAGE",
+          "companyScope": "X-Company-Id required; no default fallback",
+          "organizationScope": "Server resolved from active assignments and explicit capabilities",
+          "projectScope": "Canonical projectId and parent-resource authorization",
+          "requestHeaders": [
+            "Accept-Language",
+            "X-Request-Id",
+            "X-Company-Id",
+            "If-Match",
+            "Idempotency-Key",
+            "X-CSRF-Token"
+          ],
+          "stateTransition": "SUBMITTED -> APPROVED",
+          "revision": "required",
+          "idempotency": "required",
+          "fileReference": "DELIVERY_PACKAGE READY",
+          "audit": "APPROVEPROJECTDELIVERY",
+          "notificationEvent": "none",
+          "mockScenarios": [
+            "success",
+            "empty",
+            "validation failure",
+            "unauthorized",
+            "company forbidden",
+            "action forbidden",
+            "revision conflict",
+            "server unavailable"
+          ],
+          "acceptanceTest": "approveProjectDelivery: company scope, permission, response DTO, errors, and route behavior"
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/project-operations.yaml#/components/schemas/OperationWriteRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/project-deliveries/{id}/deliver": {
+      "post": {
+        "operationId": "deliverProjectPackage",
+        "summary": "Record package delivered",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Record package delivered",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Quoted integer revision when applicable."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/project-operations.yaml#/components/schemas/ProjectDeliveryDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../common/errors.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../common/errors.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../common/errors.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../common/errors.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../common/errors.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../common/errors.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../common/errors.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "purpose": "Record package delivered",
+          "frontendScreen": "/projects/data-management?view=DELIVERY",
+          "actor": "Authorized actor",
+          "permission": "PROJECT_DELIVERY_MANAGE",
+          "companyScope": "X-Company-Id required; no default fallback",
+          "organizationScope": "Server resolved from active assignments and explicit capabilities",
+          "projectScope": "Canonical projectId and parent-resource authorization",
+          "requestHeaders": [
+            "Accept-Language",
+            "X-Request-Id",
+            "X-Company-Id",
+            "If-Match",
+            "Idempotency-Key",
+            "X-CSRF-Token"
+          ],
+          "stateTransition": "APPROVED|DELIVERY_PREPARED -> DELIVERED -> ACKNOWLEDGEMENT_PENDING",
+          "revision": "required",
+          "idempotency": "required",
+          "fileReference": "DELIVERY_PACKAGE READY",
+          "audit": "DELIVERPROJECTPACKAGE",
+          "notificationEvent": "DELIVERY_COMPLETED",
+          "mockScenarios": [
+            "success",
+            "empty",
+            "validation failure",
+            "unauthorized",
+            "company forbidden",
+            "action forbidden",
+            "revision conflict",
+            "server unavailable"
+          ],
+          "acceptanceTest": "deliverProjectPackage: company scope, permission, response DTO, errors, and route behavior",
+          "acknowledgement": "Delivery does not imply acknowledgement."
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/project-operations.yaml#/components/schemas/OperationWriteRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/project-deliveries/{id}/acknowledge": {
+      "post": {
+        "operationId": "acknowledgeProjectDelivery",
+        "summary": "Acknowledge delivery receipt",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Acknowledge delivery receipt",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Quoted integer revision when applicable."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/project-operations.yaml#/components/schemas/ProjectDeliveryDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../common/errors.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../common/errors.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../common/errors.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../common/errors.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../common/errors.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../common/errors.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../common/errors.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "purpose": "Acknowledge delivery receipt",
+          "frontendScreen": "/projects/data-management?view=DELIVERY",
+          "actor": "Authorized actor",
+          "permission": "PROJECT_DELIVERY_MANAGE",
+          "companyScope": "X-Company-Id required; no default fallback",
+          "organizationScope": "Server resolved from active assignments and explicit capabilities",
+          "projectScope": "Canonical projectId and parent-resource authorization",
+          "requestHeaders": [
+            "Accept-Language",
+            "X-Request-Id",
+            "X-Company-Id",
+            "If-Match",
+            "Idempotency-Key",
+            "X-CSRF-Token"
+          ],
+          "stateTransition": "DELIVERED|ACKNOWLEDGEMENT_PENDING -> ACKNOWLEDGED|REJECTED",
+          "revision": "required",
+          "idempotency": "required",
+          "fileReference": "none",
+          "audit": "ACKNOWLEDGEPROJECTDELIVERY",
+          "notificationEvent": "DELIVERY_COMPLETED",
+          "mockScenarios": [
+            "success",
+            "empty",
+            "validation failure",
+            "unauthorized",
+            "company forbidden",
+            "action forbidden",
+            "revision conflict",
+            "server unavailable"
+          ],
+          "acceptanceTest": "acknowledgeProjectDelivery: company scope, permission, response DTO, errors, and route behavior",
+          "evidence": "Recipient, method, timestamps, version, reference, actor and audit are required."
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/project-operations.yaml#/components/schemas/OperationWriteRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/project-deliveries/{id}/redelivery": {
+      "post": {
+        "operationId": "createProjectRedelivery",
+        "summary": "Create immutable child re-delivery round",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Create immutable child re-delivery round",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Quoted integer revision when applicable."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/project-operations.yaml#/components/schemas/ProjectDeliveryDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../common/errors.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../common/errors.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../common/errors.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../common/errors.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../common/errors.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../common/errors.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../common/errors.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "purpose": "Create immutable child re-delivery round",
+          "frontendScreen": "/projects/data-management?view=DELIVERY",
+          "actor": "Delivery manager",
+          "permission": "PROJECT_DELIVERY_EDIT",
+          "companyScope": "X-Company-Id required; no default fallback",
+          "organizationScope": "Server resolved from active assignments and explicit capabilities",
+          "projectScope": "Canonical projectId and parent-resource authorization",
+          "requestHeaders": [
+            "Accept-Language",
+            "X-Request-Id",
+            "X-Company-Id",
+            "If-Match",
+            "Idempotency-Key",
+            "X-CSRF-Token"
+          ],
+          "stateTransition": "Existing immutable version -> SUPERSEDED; new version -> DRAFT",
+          "revision": "required",
+          "idempotency": "required",
+          "fileReference": "none",
+          "audit": "PROJECT_REDELIVERY_CREATED",
+          "notificationEvent": "none",
+          "mockScenarios": [
+            "success",
+            "empty",
+            "validation failure",
+            "unauthorized",
+            "company forbidden",
+            "action forbidden",
+            "revision conflict",
+            "server unavailable"
+          ],
+          "acceptanceTest": "createProjectRedelivery: company scope, permission, response DTO, errors, and route behavior",
+          "immutableVersion": "Reason and change summary required; prior package and acknowledgement history retained."
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/project-operations.yaml#/components/schemas/OperationWriteRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/project-deliveries/{id}/package-reference": {
+      "get": {
+        "operationId": "getDeliveryPackageReference",
+        "summary": "Get authorized delivery package reference",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Get authorized delivery package reference",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Quoted integer revision when applicable."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/project-operations.yaml#/components/schemas/ProjectDeliveryDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../common/errors.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../common/errors.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../common/errors.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../common/errors.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../common/errors.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../common/errors.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../common/errors.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "purpose": "Get authorized delivery package reference",
+          "frontendScreen": "/projects/data-management?view=DELIVERY",
+          "actor": "Scoped user",
+          "permission": "PROJECT_DELIVERY_DOWNLOAD",
+          "companyScope": "X-Company-Id required; no default fallback",
+          "organizationScope": "Server resolved from active assignments and explicit capabilities",
+          "projectScope": "Canonical projectId and parent-resource authorization",
+          "requestHeaders": [
+            "Accept-Language",
+            "X-Request-Id",
+            "X-Company-Id"
+          ],
+          "stateTransition": "none",
+          "revision": "not required",
+          "idempotency": "not required",
+          "fileReference": "DELIVERY_PACKAGE READY",
+          "audit": "DELIVERY_PACKAGE_DOWNLOADED",
+          "notificationEvent": "none",
+          "mockScenarios": [
+            "success",
+            "empty",
+            "validation failure",
+            "unauthorized",
+            "company forbidden",
+            "action forbidden",
+            "revision conflict",
+            "server unavailable"
+          ],
+          "acceptanceTest": "getDeliveryPackageReference: company scope, permission, response DTO, errors, and route behavior"
+        }
+      }
+    },
+    "/api/v1/projects/{projectId}/profitability": {
+      "get": {
+        "operationId": "getProjectProfitability",
+        "summary": "Read restricted project profitability",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Read restricted project profitability",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Quoted integer revision when applicable."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/project-operations.yaml#/components/schemas/ProjectProfitabilityDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../common/errors.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../common/errors.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../common/errors.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../common/errors.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../common/errors.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../common/errors.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../common/errors.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "purpose": "Read restricted project profitability",
+          "frontendScreen": "/projects?workflow={projectId}&tab=PROFIT",
+          "actor": "Explicitly authorized user",
+          "permission": "PROJECT_PROFITABILITY_VIEW",
+          "companyScope": "X-Company-Id required; no default fallback",
+          "organizationScope": "Server resolved from active assignments and explicit capabilities",
+          "projectScope": "Canonical projectId and parent-resource authorization",
+          "requestHeaders": [
+            "Accept-Language",
+            "X-Request-Id",
+            "X-Company-Id"
+          ],
+          "stateTransition": "none",
+          "revision": "not required",
+          "idempotency": "not required",
+          "fileReference": "none",
+          "audit": "READ",
+          "notificationEvent": "none",
+          "mockScenarios": [
+            "success",
+            "empty",
+            "validation failure",
+            "unauthorized",
+            "company forbidden",
+            "action forbidden",
+            "revision conflict",
+            "server unavailable"
+          ],
+          "acceptanceTest": "getProjectProfitability: company scope, permission, response DTO, errors, and route behavior",
+          "accessPolicy": "Backend capability selects SUMMARY, DETAIL or RESTRICTED. PM never receives individual salary or individual labor-cost records."
+        }
+      },
+      "patch": {
+        "operationId": "updateProjectProfitability",
+        "summary": "Update project profitability draft",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Update project profitability draft",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Quoted integer revision when applicable."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/project-operations.yaml#/components/schemas/ProjectProfitabilityDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../common/errors.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../common/errors.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../common/errors.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../common/errors.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../common/errors.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../common/errors.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../common/errors.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "purpose": "Update project profitability draft",
+          "frontendScreen": "/projects?workflow={projectId}&tab=PROFIT",
+          "actor": "Explicitly authorized user",
+          "permission": "PROJECT_PROFITABILITY_EDIT",
+          "companyScope": "X-Company-Id required; no default fallback",
+          "organizationScope": "Server resolved from active assignments and explicit capabilities",
+          "projectScope": "Canonical projectId and parent-resource authorization",
+          "requestHeaders": [
+            "Accept-Language",
+            "X-Request-Id",
+            "X-Company-Id",
+            "If-Match",
+            "X-CSRF-Token"
+          ],
+          "stateTransition": "DRAFT|CALCULATED -> CALCULATED",
+          "revision": "required",
+          "idempotency": "not required",
+          "fileReference": "PROFITABILITY_SUPPORT READY references",
+          "audit": "PROJECT_PROFITABILITY_UPDATED",
+          "notificationEvent": "none",
+          "mockScenarios": [
+            "success",
+            "empty",
+            "validation failure",
+            "unauthorized",
+            "company forbidden",
+            "action forbidden",
+            "revision conflict",
+            "server unavailable"
+          ],
+          "acceptanceTest": "updateProjectProfitability: company scope, permission, response DTO, errors, and route behavior"
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/project-operations.yaml#/components/schemas/OperationWriteRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/projects/{projectId}/profitability/snapshots": {
+      "post": {
+        "operationId": "snapshotProjectProfitability",
+        "summary": "Create immutable profitability snapshot",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Create immutable profitability snapshot",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Quoted integer revision when applicable."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/project-operations.yaml#/components/schemas/ProjectProfitabilityDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../common/errors.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../common/errors.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../common/errors.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../common/errors.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../common/errors.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../common/errors.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../common/errors.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "purpose": "Create immutable profitability snapshot",
+          "frontendScreen": "/projects?workflow={projectId}&tab=PROFIT",
+          "actor": "Explicitly authorized user",
+          "permission": "PROJECT_PROFITABILITY_SNAPSHOT",
+          "companyScope": "X-Company-Id required; no default fallback",
+          "organizationScope": "Server resolved from active assignments and explicit capabilities",
+          "projectScope": "Canonical projectId and parent-resource authorization",
+          "requestHeaders": [
+            "Accept-Language",
+            "X-Request-Id",
+            "X-Company-Id",
+            "If-Match",
+            "Idempotency-Key",
+            "X-CSRF-Token"
+          ],
+          "stateTransition": "REVIEWED -> SNAPSHOTTED",
+          "revision": "required",
+          "idempotency": "required",
+          "fileReference": "none",
+          "audit": "PROJECT_PROFITABILITY_SNAPSHOTTED",
+          "notificationEvent": "none",
+          "mockScenarios": [
+            "success",
+            "empty",
+            "validation failure",
+            "unauthorized",
+            "company forbidden",
+            "action forbidden",
+            "revision conflict",
+            "server unavailable"
+          ],
+          "acceptanceTest": "snapshotProjectProfitability: company scope, permission, response DTO, errors, and route behavior"
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/project-operations.yaml#/components/schemas/OperationWriteRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/project-notifications": {
+      "get": {
+        "operationId": "listProjectNotifications",
+        "summary": "List project notifications",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "projectId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "unreadOnly",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List project notifications",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Quoted integer revision when applicable."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "../schemas/project-common.yaml#/components/schemas/ProjectNotificationDto"
+                      }
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../common/errors.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../common/errors.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../common/errors.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../common/errors.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../common/errors.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../common/errors.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../common/errors.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "purpose": "List project notifications",
+          "frontendScreen": "Notification center",
+          "actor": "Authenticated user",
+          "permission": "PROJECT_NOTIFICATION_VIEW",
+          "companyScope": "X-Company-Id required; no default fallback",
+          "organizationScope": "Server resolved from active assignments and explicit capabilities",
+          "projectScope": "Canonical projectId and parent-resource authorization",
+          "requestHeaders": [
+            "Accept-Language",
+            "X-Request-Id",
+            "X-Company-Id"
+          ],
+          "stateTransition": "none",
+          "revision": "not required",
+          "idempotency": "not required",
+          "fileReference": "none",
+          "audit": "READ",
+          "notificationEvent": "none",
+          "mockScenarios": [
+            "success",
+            "empty",
+            "validation failure",
+            "unauthorized",
+            "company forbidden",
+            "action forbidden",
+            "revision conflict",
+            "server unavailable"
+          ],
+          "acceptanceTest": "listProjectNotifications: company scope, permission, response DTO, errors, and route behavior",
+          "defaultDelivery": "Required actors and explicit assignees receive IN_APP. Ordinary whole-team broadcast is OFF by default; EMAIL/BROWSER/MOBILE are opt-in. Event/audit retention is independent."
+        }
+      }
+    },
+    "/api/v1/project-notifications/{id}/read": {
+      "post": {
+        "operationId": "markProjectNotificationRead",
+        "summary": "Mark notification delivery as read",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "../common/security.yaml#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CompanyId"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "../common/security.yaml#/components/parameters/CsrfToken"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Mark notification delivery as read",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Quoted integer revision when applicable."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "$ref": "../schemas/project-common.yaml#/components/schemas/ProjectNotificationDto"
+                    },
+                    "meta": {
+                      "$ref": "../common/schemas.yaml#/components/schemas/ApiMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "../common/errors.yaml#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "../common/errors.yaml#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "../common/errors.yaml#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "../common/errors.yaml#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "../common/errors.yaml#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "../common/errors.yaml#/components/responses/Unprocessable"
+          },
+          "503": {
+            "$ref": "../common/errors.yaml#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-contract": {
+          "purpose": "Mark notification delivery as read",
+          "frontendScreen": "Notification center",
+          "actor": "Notification recipient",
+          "permission": "PROJECT_NOTIFICATION_VIEW",
+          "companyScope": "X-Company-Id required; no default fallback",
+          "organizationScope": "Server resolved from active assignments and explicit capabilities",
+          "projectScope": "Canonical projectId and parent-resource authorization",
+          "requestHeaders": [
+            "Accept-Language",
+            "X-Request-Id",
+            "X-Company-Id",
+            "Idempotency-Key",
+            "X-CSRF-Token"
+          ],
+          "stateTransition": "UNREAD -> READ delivery state only",
+          "revision": "not required",
+          "idempotency": "required",
+          "fileReference": "none",
+          "audit": "PROJECT_NOTIFICATION_READ",
+          "notificationEvent": "none",
+          "mockScenarios": [
+            "success",
+            "empty",
+            "validation failure",
+            "unauthorized",
+            "company forbidden",
+            "action forbidden",
+            "revision conflict",
+            "server unavailable"
+          ],
+          "acceptanceTest": "markProjectNotificationRead: company scope, permission, response DTO, errors, and route behavior"
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/project-common.yaml#/components/schemas/ProjectActionRequest"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

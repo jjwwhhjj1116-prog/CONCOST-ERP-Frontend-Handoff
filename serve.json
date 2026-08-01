@@ -1,0 +1,15 @@
+{
+    "cleanUrls": true,
+    "directoryListing": false,
+    "rewrites": [
+          { "source": "/workspace", "destination": "/workspace/index.html" },
+          { "source": "/workspace/", "destination": "/workspace/index.html" },
+          { "source": "/workspace/approvals", "destination": "/workspace/approvals.html" },
+          { "source": "/workspace/conflicts", "destination": "/workspace/conflicts.html" },
+          { "source": "/workspace/evaluation", "destination": "/workspace/evaluation.html" },
+          { "source": "/workspace/notifications", "destination": "/workspace/notifications.html" },
+          { "source": "/workspace/projects", "destination": "/workspace/projects.html" },
+          { "source": "/workspace/schedules", "destination": "/workspace/schedules.html" },
+          { "source": "/workspace/settings", "destination": "/workspace/settings.html" }
+    ]
+}
