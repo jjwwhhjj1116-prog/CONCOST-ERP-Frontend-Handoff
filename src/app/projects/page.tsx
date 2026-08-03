@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useProjectStore } from '@/store/projectStore';
 import { useTaskStore } from '@/store/taskStore';
@@ -19,7 +18,7 @@ import { useAuditStore } from '@/store/auditStore';
 import { TaskStatus, Project, ApprovalRequest } from '@/types/models';
 import { DetailedLineStage, getProjectBoardColumn } from '@/lib/selectors';
 import { canViewProject, canViewTask, canEditProject } from '@/lib/permissions';
-import { FileText, ArrowLeft, ChevronRight, History, Wrench, Activity, AlertTriangle, CheckCircle2, Clock3, Layers3, FileSpreadsheet, ClipboardCheck, CalendarRange, PackageCheck, CircleDollarSign } from 'lucide-react';
+import { ArrowLeft, ChevronRight, History, Wrench, Activity, AlertTriangle, CheckCircle2, Clock3, Layers3, FileText } from 'lucide-react';
 import { Badge } from '@/components/ui/Badge';
 import { useTranslationStore } from '@/store/translationStore';
 import { useTranslation } from '@/lib/localization';
@@ -27,15 +26,14 @@ import { ProjectOperationModal } from '@/components/projects/ProjectOperationMod
 import { ProjectMilestoneModal } from '@/components/projects/ProjectMilestoneModal';
 import { PROJECT_WORKFLOW_TABS, ProjectWorkflowTab } from '@/lib/projectWorkflow';
 import { useProjectWorkflowOverviewSync } from '@/hooks/useProjectWorkflow';
-import { getTechnicalDepartmentLabel, getTechnicalDepartmentScope, matchesTechnicalDepartment } from '@/lib/departmentScope';
-import { ProjectHandoffBridge } from '@/components/handoff/ProjectHandoffBridge';
+import { getProjectBoardScope, getProjectBoardScopeLabel, matchesProjectBoardScope } from '@/lib/projectExecutionUnits';
 
 export type ExtendedViewType = BoardViewType | 'PART' | 'HISTORY';
 
 export default function ProjectBoardPage() {
   const searchParams = useSearchParams();
-  const departmentScope = getTechnicalDepartmentScope(searchParams.get('department'));
-  const departmentLabel = getTechnicalDepartmentLabel(departmentScope);
+  const projectScope = getProjectBoardScope(searchParams.get('group'), searchParams.get('unit'), searchParams.get('department'));
+  const projectScopeLabel = getProjectBoardScopeLabel(projectScope);
   const projects = useProjectStore(state => state.projects);
   const revisionRequests = useProjectStore(state => state.revisionRequests);
   const postDeliveryWorkRequests = useProjectStore(state => state.postDeliveryWorkRequests);
@@ -100,7 +98,7 @@ export default function ProjectBoardPage() {
   if (!currentUser) return <div className="py-10 text-center text-[var(--color-text-sub)]">{t('header.loginRequired')}</div>;
 
   const accessibleProjects = projects.filter(p => {
-    if (!matchesTechnicalDepartment(departmentScope, p)) return false;
+    if (!matchesProjectBoardScope(p, projectScope)) return false;
     if (canViewProject(currentUser, p)) return true;
     if (currentUser.role === 'WORKER') {
       return tasks.some(t => t.projectId === p.id && t.assigneeId === currentUser.id && !t.isDeleted);
@@ -219,7 +217,7 @@ export default function ProjectBoardPage() {
             <div className="relative z-10">
               <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[.2em] text-[#527266]"><span className="grid h-7 w-7 place-items-center rounded-lg bg-[#dff2ea] shadow-sm"><Layers3 className="h-4 w-4" /></span> Technical HQ workspace</div>
               <h1 className="mt-3 text-2xl font-black tracking-tight sm:text-[30px]">
-                {departmentScope ? `기술본부 프로젝트 · ${departmentLabel}` : '기술본부 전체 프로젝트'}
+                {projectScopeLabel}
               </h1>
               <p className="mt-2 max-w-2xl text-sm font-semibold leading-6 text-slate-600">견적·접수부터 PM 배정, 일정 승인, 작업·QC·납품까지 OFFDAY2의 전체 흐름을 한 화면에서 관리합니다.</p>
             </div>
@@ -237,23 +235,6 @@ export default function ProjectBoardPage() {
             </div>
           </div>
         </section>
-      )}
-      {!selectedProjectId && (
-        <nav aria-label="OFFDAY2 프로젝트 업무 흐름" className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4 2xl:grid-cols-7">
-          <WorkflowLink href="/projects/intake?tab=CLIENT_ORDER" icon={FileText} step="01" label="견적 의뢰" detail="접수·상담·수주" />
-          <WorkflowLink href="/projects/intake/estimates" icon={FileSpreadsheet} step="02" label="견적서 관리" detail="4종 양식·제출" />
-          <WorkflowLink href="/projects/intake" icon={ClipboardCheck} step="03" label="프로젝트 접수" detail="인계·자료 확인" />
-          <WorkflowLink href="/schedules" icon={CalendarRange} step="04" label="PM 배정·일정" detail="2안 작성·승인" />
-          <WorkflowButton onClick={() => filteredProjects[0] && openWorkflow(filteredProjects[0].id, 'QC')} disabled={!filteredProjects.length} icon={CheckCircle2} step="05" label="작업·QC" detail="체크·질의·전달" />
-          <WorkflowButton onClick={() => filteredProjects[0] && openWorkflow(filteredProjects[0].id, 'DELIVERY')} disabled={!filteredProjects.length} icon={PackageCheck} step="06" label="납품·업무일지" detail="파일·승인·기록" />
-          <WorkflowButton onClick={() => filteredProjects[0] && openWorkflow(filteredProjects[0].id, 'PROFIT')} disabled={!filteredProjects.length} icon={CircleDollarSign} step="07" label="수지분석" detail="계약·투입·손익" />
-        </nav>
-      )}
-      {!selectedProjectId && (
-        <ProjectHandoffBridge
-          projects={filteredProjects}
-          onOpenWorkflow={openWorkflow}
-        />
       )}
       {/* Unified Header matching Dashboard */}
       <div className="cc-panel flex flex-col justify-between gap-4 p-4 md:flex-row md:items-center sm:p-5">
@@ -285,7 +266,7 @@ export default function ProjectBoardPage() {
             <>
               <h1 className="text-xl font-black text-[var(--color-text-main)] tracking-tight">프로젝트 실행 보드</h1>
               <p className="text-[var(--color-text-sub)] text-sm mt-1 font-medium">
-                {departmentLabel} · 상태, 담당 PM, 납품일 기준으로 빠르게 확인합니다.
+                {projectScopeLabel} · 상태, 담당 PM, 납품일 기준으로 빠르게 확인합니다.
               </p>
             </>
           )}
@@ -600,12 +581,4 @@ export default function ProjectBoardPage() {
       )}
     </div>
   );
-}
-
-function WorkflowLink({ href, icon: Icon, step, label, detail }: { href: string; icon: React.ElementType; step: string; label: string; detail: string }) {
-  return <Link href={href} className="group flex min-h-[82px] items-center gap-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-3 shadow-sm hover:-translate-y-1 hover:border-[#eb6300]/40 hover:shadow-lg"><span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-[#fff0e4] text-[#cf4d00]"><Icon className="h-5 w-5" /></span><span className="min-w-0"><small className="text-[9px] font-black text-[#eb6300]">STEP {step}</small><strong className="block truncate text-xs font-black text-[var(--color-text-main)]">{label}</strong><span className="block truncate text-[9px] font-semibold text-[var(--color-text-sub)]">{detail}</span></span></Link>;
-}
-
-function WorkflowButton({ onClick, disabled, icon: Icon, step, label, detail }: { onClick: () => void; disabled: boolean; icon: React.ElementType; step: string; label: string; detail: string }) {
-  return <button type="button" onClick={onClick} disabled={disabled} className="group flex min-h-[82px] items-center gap-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-3 text-left shadow-sm hover:-translate-y-1 hover:border-[#eb6300]/40 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-45"><span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-[#eef2ff] text-[#4e6fd8]"><Icon className="h-5 w-5" /></span><span className="min-w-0"><small className="text-[9px] font-black text-[#4e6fd8]">STEP {step}</small><strong className="block truncate text-xs font-black text-[var(--color-text-main)]">{label}</strong><span className="block truncate text-[9px] font-semibold text-[var(--color-text-sub)]">{detail}</span></span></button>;
 }

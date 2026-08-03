@@ -62,7 +62,7 @@ const projectNavigation: NavigationItem[] = [
   {
     id: 'project-management', label: '프로젝트 관리', icon: FolderKanban, roles: allRoles, minLevel: 3,
     children: [
-      { id: 'estimate-requests', label: '견적 의뢰관리', href: '/projects/intake?tab=CLIENT_ORDER', roles: leaders },
+      { id: 'estimate-requests', label: '견적 의뢰관리', href: '/projects/estimate-requests', roles: leaders },
       { id: 'estimate-sheets', label: '견적서 관리', href: '/projects/intake/estimates', roles: leaders },
       { id: 'estimate-db', label: 'DB관리', href: '/projects/intake/database', roles: leaders },
     ],
@@ -71,10 +71,10 @@ const projectNavigation: NavigationItem[] = [
   {
     id: 'technical-projects', label: '기술본부 프로젝트', icon: FolderKanban, roles: allRoles,
     children: [
-      { id: 'technical-all-projects', label: '전체 프로젝트', href: '/projects', roles: allRoles },
-      { id: 'finish-projects', label: '마감팀', href: '/projects?department=FINISH', roles: allRoles },
-      { id: 'structure-projects', label: '구조팀', href: '/projects?department=STRUCTURE', roles: allRoles },
-      { id: 'civil-projects', label: '토목&조경팀', href: '/projects?department=CIVIL_LANDSCAPE', roles: allRoles },
+      { id: 'technical-all-projects', label: '전체 프로젝트', href: '/projects?group=TECHNICAL', roles: allRoles },
+      { id: 'finish-projects', label: '마감팀', href: '/projects?unit=FINISH', roles: allRoles },
+      { id: 'structure-projects', label: '구조팀', href: '/projects?unit=STRUCTURE', roles: allRoles },
+      { id: 'civil-projects', label: '토목&조경팀', href: '/projects?unit=CIVIL_LANDSCAPE', roles: allRoles },
       { id: 'technical-meetings', label: '회의록', href: '/projects/data-management?view=MEETINGS&department=TECHNICAL', roles: allRoles },
       { id: 'technical-drive', label: '기술본부 자료실', href: '/drive?folder=TECHNICAL', roles: allRoles },
     ],
@@ -82,7 +82,7 @@ const projectNavigation: NavigationItem[] = [
   {
     id: 'claim-center-projects', label: '클레임센터 프로젝트', icon: FolderKanban, roles: allRoles,
     children: [
-      { id: 'claim-all-projects', label: '전체 프로젝트', href: '/projects?department=CLAIM', roles: allRoles },
+      { id: 'claim-all-projects', label: '전체 프로젝트', href: '/projects?group=CLAIM', roles: allRoles },
       { id: 'claim-drive', label: '클레임센터 자료실', href: '/drive?folder=CLAIM', roles: allRoles },
       { id: 'claim-meetings', label: '회의록', href: '/projects/data-management?view=MEETINGS&department=CLAIM', roles: allRoles },
     ],
@@ -90,7 +90,7 @@ const projectNavigation: NavigationItem[] = [
   {
     id: 'development-team-projects', label: '개발팀 프로젝트', icon: FolderKanban, roles: allRoles,
     children: [
-      { id: 'development-all-projects', label: '전체 프로젝트', href: '/projects?department=DEVELOPMENT', roles: allRoles },
+      { id: 'development-all-projects', label: '전체 프로젝트', href: '/projects?group=DEVELOPMENT', roles: allRoles },
       { id: 'development-drive', label: '개발팀 자료실', href: '/drive?folder=DEVELOPMENT', roles: allRoles },
       { id: 'development-meetings', label: '회의록', href: '/projects/data-management?view=MEETINGS&department=DEVELOPMENT', roles: allRoles },
     ],
