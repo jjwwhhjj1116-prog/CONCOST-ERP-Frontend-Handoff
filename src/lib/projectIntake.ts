@@ -40,6 +40,9 @@ export const createBlankProjectIntakeDraft = (
     unitPrice: '',
     businessTypes: [],
     scopes: [],
+    targetUnitIds: [],
+    primaryUnitId: null,
+    unitScopes: [],
     contacts: [{
       id: `${intakeId}-contact-1`,
       name: '',
@@ -155,6 +158,9 @@ export const buildProjectIntakeDraft = (intake: ProjectIntake): ProjectIntakeDra
     unitPrice: text(project.unitWork),
     businessTypes: text(project.estimateType) ? [text(project.estimateType)] : [],
     scopes: scope ? scope.split(/[,/\n]/).map((item) => item.trim()).filter(Boolean) : [],
+    targetUnitIds: [],
+    primaryUnitId: null,
+    unitScopes: [],
     contacts: contactName || project.phone || project.email ? [{
       id: 'contact-1',
       name: contactName,

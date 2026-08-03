@@ -101,6 +101,26 @@ export type EstimateRequestStatus =
 
 export type CommercialDecisionType = 'WON' | 'LOST' | 'CANCELLED' | 'ON_HOLD';
 
+export type ProjectExecutionUnitId = 'FINISH' | 'STRUCTURE' | 'CIVIL_LANDSCAPE' | 'CLAIM' | 'DEVELOPMENT';
+export type ProjectExecutionUnitAssignmentRole = 'PRIMARY' | 'PARTICIPATING';
+export type ProjectExecutionUnitAssignmentStatus = 'AWARD_CONFIRMED' | 'INTAKE_IN_PROGRESS' | 'START_PLANNED' | 'ACTIVE' | 'COMPLETED';
+
+export interface ProjectExecutionUnitAssignment {
+  id: string;
+  projectId: string;
+  unitId: ProjectExecutionUnitId;
+  role: ProjectExecutionUnitAssignmentRole;
+  status: ProjectExecutionUnitAssignmentStatus;
+  scope?: string | null;
+  assignedAt: string;
+  assignedBy: UserId;
+}
+
+export interface ProjectExecutionUnitScope {
+  unitId: ProjectExecutionUnitId;
+  scope: string;
+}
+
 export interface CommercialDecision {
   id: string;
   estimateRequestId: string;
@@ -169,6 +189,9 @@ export interface ProjectIntakeDraft {
   unitPrice: string;
   businessTypes: string[];
   scopes: string[];
+  targetUnitIds: ProjectExecutionUnitId[];
+  primaryUnitId: ProjectExecutionUnitId | null;
+  unitScopes: ProjectExecutionUnitScope[];
   contacts: ProjectIntakeContact[];
   materials: ProjectIntakeMaterial[];
   expectedStartDate: string;
@@ -251,8 +274,11 @@ export interface CommercialDecisionProject {
   companyId: string;
   name: string;
   status: string;
-  managerId: string;
-  pmId: string;
+  managerId?: string | null;
+  pmId?: string | null;
+  primaryUnitId?: ProjectExecutionUnitId | null;
+  assignedUnitIds?: ProjectExecutionUnitId[];
+  executionAssignments?: ProjectExecutionUnitAssignment[];
   orderIndex: number;
   createdAt: string;
   updatedAt: string;
@@ -309,6 +335,8 @@ export interface EstimateRequest {
   email?: string | null;
   ownerId?: UserId | null;
   departmentId: DepartmentId;
+  targetUnitIds?: ProjectExecutionUnitId[];
+  primaryUnitId?: ProjectExecutionUnitId | null;
   requestDate: string;
   memo?: string | null;
   rawMemo?: string | null;
@@ -327,6 +355,9 @@ export interface EstimateRequest {
   estimateType?: string | null;
   estimateId?: string | null;
   projectId?: string | null;
+  projectIntakeId?: string | null;
+  commercialDecisionId?: string | null;
+  executionAssignments?: ProjectExecutionUnitAssignment[];
   version: number;
   createdBy: UserId;
   updatedBy: UserId;
@@ -1001,6 +1032,13 @@ export interface Project {
   priority: 'URGENT' | 'HIGH' | 'NORMAL' | 'LOW';
   status: ProjectStatus;
   departmentId: DepartmentId;
+  primaryUnitId?: ProjectExecutionUnitId | null;
+  assignedUnitIds?: ProjectExecutionUnitId[];
+  executionAssignments?: ProjectExecutionUnitAssignment[];
+  estimateRequestId?: string | null;
+  projectIntakeId?: string | null;
+  commercialDecisionId?: string | null;
+  companyId?: string;
   managerId?: UserId;
   pmId?: UserId;
   startDate?: string;
