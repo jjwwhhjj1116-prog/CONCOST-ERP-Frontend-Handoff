@@ -12,6 +12,8 @@ import {
   validateSecretReferences,
 } from '@/lib/projectIntake';
 import { getProjectIntakePersistenceMode } from '@/lib/runtimeExecutionMode';
+import { buildEstimatePipelineDbInput } from '@/lib/estimatePipelineDatabase';
+import { useEstimateDatabaseStore } from '@/store/estimateDatabaseStore';
 import { useEstimateRequestStore } from '@/store/estimateRequestStore';
 import { useProjectStore } from '@/store/projectStore';
 import { useProjectPmScheduleStore } from '@/store/projectPmScheduleStore';
@@ -51,13 +53,34 @@ const replace = (items: ProjectIntake[], intake: ProjectIntake) =>
 const findSourceRequest = (intake: ProjectIntake) =>
   useEstimateRequestStore.getState().requests.find((request) => request.id === intake.estimateRequestId);
 
+const upsertLocalPipelineRecord = async (
+  intake: ProjectIntake,
+  draft: ProjectIntakeDraft,
+  status: ProjectIntakeStatus,
+  actorId: string,
+  occurredAt: string,
+) => {
+  const request = findSourceRequest(intake);
+  if (!request) return;
+  await useEstimateDatabaseStore.getState().upsertPipelineRecord(
+    buildEstimatePipelineDbInput(request, {
+      stage: 'INTAKE',
+      projectId: intake.projectId,
+      intakeId: intake.id,
+      intakeStatus: status,
+      intakeDraft: draft,
+      occurredAt,
+    }),
+    actorId,
+  );
+};
+
 const localPermissions = (intake: ProjectIntake, actor: IntakeActor) => {
   const source = findSourceRequest(intake);
   const isAdmin = ['SUPER_ADMIN', 'SYSTEM_ADMIN'].includes(actor.role);
   const isManager = actor.role === 'DEPARTMENT_MANAGER' && source?.departmentId === actor.departmentId;
-  const isOwner = actor.role === 'PM' && source?.ownerId === actor.id;
   return {
-    canEdit: intake.status !== 'ACCEPTED' && (isAdmin || isManager || isOwner),
+    canEdit: intake.status !== 'ACCEPTED' && (isAdmin || isManager),
     canReview: intake.status !== 'ACCEPTED' && (isAdmin || isManager),
   };
 };
@@ -93,7 +116,12 @@ const localHistory = (
 });
 
 const mergeIntakesFromRequests = (existing: ProjectIntake[], actor: IntakeActor) => {
-  const byId = new Map(existing.map((item) => [item.id, item]));
+  const retained = existing.filter((item) => {
+    if (item.status !== 'DRAFT' || item.estimateRequestId || item.commercialDecisionId || !item.projectId.startsWith('pending-project-')) return true;
+    const draft = item.draft || buildProjectIntakeDraft(item);
+    return Boolean(draft.projectName.trim() || draft.projectNo.trim() || (item.histories?.length || 0));
+  });
+  const byId = new Map(retained.map((item) => [item.id, item]));
   useEstimateRequestStore.getState().requests.forEach((request) => {
     if (!request.projectIntake) return;
     if (!byId.has(request.projectIntake.id)) byId.set(request.projectIntake.id, request.projectIntake);
@@ -235,6 +263,7 @@ export const useProjectIntakeStore = create<ProjectIntakeState>()(persist((set, 
       histories: [localHistory(current, 'DRAFT_SAVED', actor.id, current.status, current.status, changes), ...(current.histories || [])],
     }, actor);
     set((state) => ({ intakes: replace(state.intakes, updated) }));
+    await upsertLocalPipelineRecord(updated, draft, updated.status, actor.id, timestamp);
     return updated;
   },
 
@@ -273,6 +302,7 @@ export const useProjectIntakeStore = create<ProjectIntakeState>()(persist((set, 
       histories: [localHistory(current, 'REVIEWED', actor.id, current.status, 'REVIEWED', { note }), ...(current.histories || [])],
     }, actor);
     set((state) => ({ intakes: replace(state.intakes, updated) }));
+    await upsertLocalPipelineRecord(updated, draft, updated.status, actor.id, timestamp);
     return updated;
   },
 
@@ -297,7 +327,13 @@ export const useProjectIntakeStore = create<ProjectIntakeState>()(persist((set, 
     const missing = evaluateProjectIntakeCompleteness(draft);
     if (missing.length) throw new Error(`Project intake is incomplete: ${missing.join(', ')}`);
     const timestamp = now();
-    useProjectStore.getState().updateProjectField(current.projectId, 'status', 'MANAGER_REVIEW');
+    const projectStore = useProjectStore.getState();
+    projectStore.replaceProjects(projectStore.projects.map((project) => project.id === current.projectId ? {
+      ...project,
+      status: 'MANAGER_REVIEW',
+      executionAssignments: (project.executionAssignments || []).map((assignment) => ({ ...assignment, status: 'START_PLANNED' as const })),
+      updatedAt: timestamp,
+    } : project));
     await useProjectPmScheduleStore.getState().sync(actor);
     const updated = {
       ...current,
@@ -312,6 +348,7 @@ export const useProjectIntakeStore = create<ProjectIntakeState>()(persist((set, 
       histories: [localHistory(current, 'ACCEPTED', actor.id, current.status, 'ACCEPTED', { note, projectStatus: 'MANAGER_REVIEW' }), ...(current.histories || [])],
     };
     set((state) => ({ intakes: replace(state.intakes, updated) }));
+    await upsertLocalPipelineRecord(updated, draft, updated.status, actor.id, timestamp);
     return updated;
   },
 }), {

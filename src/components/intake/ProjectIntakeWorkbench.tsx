@@ -25,6 +25,7 @@ import { resolveProjectIntakeSelection } from '@/lib/projectIntakeMode';
 import { getProjectIntakeCreateBlockedCopy } from '@/lib/runtimeBoundaryCopy';
 import { useProjectIntakeStore } from '@/store/projectIntakeStore';
 import { useUiStore } from '@/store/uiStore';
+import { ProjectExecutionUnitSelector } from '@/components/intake/ProjectExecutionUnitSelector';
 import {
   PersonnelCard,
   ProjectIntakeContact,
@@ -106,31 +107,9 @@ export function ProjectIntakeWorkbench({ currentUser, t, view = 'CREATE', reques
   const [message, setMessage] = useState('');
   const [actionError, setActionError] = useState('');
   const [activeStep, setActiveStep] = useState(1);
-  const createRouteInitialized = useRef(false);
   const activeCreateDraftId = useRef('');
 
   useEffect(() => { void sync(actor); }, [actor, sync]);
-
-  useEffect(() => {
-    if (view !== 'CREATE' || requestedIntakeId || loading || persistenceMode !== 'LOCAL_DEMO' || createRouteInitialized.current) return;
-    const timeout = window.setTimeout(() => {
-      if (createRouteInitialized.current) return;
-      createRouteInitialized.current = true;
-      try {
-        const created = createDraft(actor);
-        activeCreateDraftId.current = created.id;
-        setCreatedDraftId(created.id);
-        setSelectedId(created.id);
-        setDraft(buildProjectIntakeDraft(created));
-        setActiveStep(1);
-        setMessage('새 프로젝트 접수를 시작했습니다.');
-        setActionError('');
-      } catch (caught) {
-        setActionError(caught instanceof Error ? caught.message : t('projectIntake.error.generic'));
-      }
-    }, 0);
-    return () => window.clearTimeout(timeout);
-  }, [actor, createDraft, loading, persistenceMode, requestedIntakeId, t, view]);
 
   const filtered = useMemo(() => intakes.filter((intake) => {
     if (statusFilter !== 'ALL' && intake.status !== statusFilter) return false;
@@ -457,6 +436,9 @@ export function ProjectIntakeWorkbench({ currentUser, t, view = 'CREATE', reques
                       <span className="mb-1 block">{t('projectIntake.field.scopes')}</span>
                       <input disabled={readOnly} value={draft.scopes.join(', ')} onChange={(event) => updateDraft('scopes', event.target.value.split(',').map((item) => item.trim()).filter(Boolean))} className={inputClass} />
                     </label>
+                  </div>
+                  <div className="mt-3">
+                    <ProjectExecutionUnitSelector value={draft.targetUnitIds} primaryUnitId={draft.primaryUnitId} disabled={readOnly} onChange={(targetUnitIds, primaryUnitId) => { updateDraft('targetUnitIds', targetUnitIds); updateDraft('primaryUnitId', primaryUnitId); }} />
                   </div>
                   <div className="mt-3 grid gap-3 md:grid-cols-2">
                     {(['workContent', 'notes'] as const).map((key) => (

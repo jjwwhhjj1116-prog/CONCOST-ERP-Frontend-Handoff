@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { FormEvent, useEffect, useMemo, useState } from 'react';
 import {
   BadgeCheck,
@@ -21,10 +22,11 @@ import {
   Search,
   PauseCircle,
   Trash2,
-  UserRound,
 } from 'lucide-react';
-import { getUserDisplayName, useTranslation } from '@/lib/localization';
+import { useTranslation } from '@/lib/localization';
+import { projectBoardHref } from '@/lib/projectExecutionUnits';
 import { useEstimateRequestStore } from '@/store/estimateRequestStore';
+import { ProjectExecutionUnitSelector } from '@/components/intake/ProjectExecutionUnitSelector';
 import {
   CommercialDecisionInput,
   CommercialDecisionType,
@@ -32,6 +34,7 @@ import {
   EstimateRequestActivityKind,
   EstimateRequestStatus,
   PersonnelCard,
+  ProjectExecutionUnitId,
 } from '@/types/models';
 
 type Translate = ReturnType<typeof useTranslation>;
@@ -73,7 +76,6 @@ const activityText = (t: Translate, kind: EstimateRequestActivityKind) => t(`est
 
 type Props = {
   currentUser: PersonnelCard;
-  users: PersonnelCard[];
   t: Translate;
 };
 
@@ -85,7 +87,8 @@ const emptyDraft = {
   contactDepartment: '',
   phone: '',
   email: '',
-  ownerId: '',
+  targetUnitIds: [] as ProjectExecutionUnitId[],
+  primaryUnitId: null as ProjectExecutionUnitId | null,
   memo: '',
   scope: '',
   usage: '',
@@ -94,7 +97,8 @@ const emptyDraft = {
   firstDelivery: '',
 };
 
-export function EstimateRequestWorkbench({ currentUser, users, t }: Props) {
+export function EstimateRequestWorkbench({ currentUser, t }: Props) {
+  const router = useRouter();
   const {
     requests,
     persistenceMode,
@@ -128,12 +132,6 @@ export function EstimateRequestWorkbench({ currentUser, users, t }: Props) {
   const [message, setMessage] = useState<string | null>(null);
 
   useEffect(() => { void sync(); }, [sync]);
-  const eligibleOwners = users.filter((user) => {
-    if (user.isActive === false || !['PM', 'DEPARTMENT_MANAGER'].includes(user.role)) return false;
-    if (currentUser.role === 'PM') return user.id === currentUser.id;
-    if (['SUPER_ADMIN', 'SYSTEM_ADMIN'].includes(currentUser.role)) return true;
-    return user.departmentId === currentUser.departmentId;
-  });
   const filtered = useMemo(() => {
     const normalized = query.trim().toLowerCase();
     return requests.filter((request) => {
@@ -148,7 +146,7 @@ export function EstimateRequestWorkbench({ currentUser, users, t }: Props) {
   const canManage = (request: EstimateRequest) => {
     if (['SUPER_ADMIN', 'SYSTEM_ADMIN'].includes(currentUser.role)) return true;
     if (currentUser.role === 'DEPARTMENT_MANAGER') return request.departmentId === currentUser.departmentId;
-    return currentUser.role === 'PM' && request.ownerId === currentUser.id;
+    return currentUser.role === 'PM' && request.departmentId === currentUser.departmentId;
   };
 
   const run = async (operation: () => Promise<void>, success: string) => {
@@ -169,7 +167,6 @@ export function EstimateRequestWorkbench({ currentUser, users, t }: Props) {
     await run(async () => {
       const created = await createRequest({
         ...draft,
-        ownerId: draft.ownerId || null,
         departmentId: currentUser.departmentId,
         projectName: draft.projectName.trim(),
       }, currentUser.id);
@@ -194,12 +191,10 @@ export function EstimateRequestWorkbench({ currentUser, users, t }: Props) {
       const result = await recordDecision(selected.id, decisionDraft, currentUser.id);
       setSelectedId(result.request.id);
       setDecisionDraft({ decision: 'WON', reason: '', agreedAmount: '', agreedScope: '', agreedSchedule: '', startCondition: '' });
+      if (decisionDraft.decision === 'WON' && result.intake) {
+        router.push(`/projects/intake?intakeId=${encodeURIComponent(result.intake.id)}`);
+      }
     }, decisionDraft.decision === 'WON' ? t('estimateRequest.decisionWon') : t('estimateRequest.decisionSaved'));
-  };
-
-  const handleOwner = async (ownerId: string) => {
-    if (!selected) return;
-    await run(async () => { await updateRequest(selected.id, { ownerId: ownerId || null }, currentUser.id); }, t('estimateRequest.saved'));
   };
 
   const handleEdit = async (updates: Partial<EstimateRequest>) => {
@@ -263,19 +258,14 @@ export function EstimateRequestWorkbench({ currentUser, users, t }: Props) {
             <Field label={t('estimateRequest.usage')} value={draft.usage} onChange={(value) => setDraft({ ...draft, usage: value })} />
             <Field label={t('estimateRequest.areaPy')} value={draft.areaPy} onChange={(value) => setDraft({ ...draft, areaPy: value })} />
             <Field label={t('estimateRequest.floors')} value={draft.floors} onChange={(value) => setDraft({ ...draft, floors: value })} />
-            <label className="text-sm"><span className="mb-1 block font-medium">{t('estimateRequest.owner')}</span>
-              <select value={draft.ownerId} onChange={(event) => setDraft({ ...draft, ownerId: event.target.value })} className="w-full rounded border bg-[var(--color-surface)] p-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]">
-                <option value="">{t('estimateRequest.unassigned')}</option>
-                {eligibleOwners.map((user) => <option key={user.id} value={user.id}>{getUserDisplayName(user)}</option>)}
-              </select>
-            </label>
+            <div className="md:col-span-2 xl:col-span-4"><ProjectExecutionUnitSelector value={draft.targetUnitIds} primaryUnitId={draft.primaryUnitId} onChange={(targetUnitIds, primaryUnitId) => setDraft({ ...draft, targetUnitIds, primaryUnitId })} /></div>
             <label className="text-sm md:col-span-2 xl:col-span-3"><span className="mb-1 block font-medium">{t('estimateRequest.memo')}</span>
               <textarea rows={2} value={draft.memo} onChange={(event) => setDraft({ ...draft, memo: event.target.value })} className="w-full rounded border bg-[var(--color-surface)] p-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]" />
             </label>
           </div>
           <div className="mt-4 flex justify-end gap-2">
             <button type="button" onClick={() => setShowCreate(false)} className="rounded border px-4 py-2 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]">{t('common.cancel')}</button>
-            <button type="submit" disabled={busy || !draft.projectName.trim()} className="inline-flex items-center gap-2 rounded bg-[var(--color-primary)] px-4 py-2 text-sm font-semibold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] disabled:opacity-50"><Save className="size-4" />{t('common.save')}</button>
+            <button type="submit" disabled={busy || !draft.projectName.trim() || draft.targetUnitIds.length === 0 || !draft.primaryUnitId} className="inline-flex items-center gap-2 rounded bg-[var(--color-primary)] px-4 py-2 text-sm font-semibold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] disabled:opacity-50"><Save className="size-4" />{t('common.save')}</button>
           </div>
         </form>
       )}
@@ -326,12 +316,7 @@ export function EstimateRequestWorkbench({ currentUser, users, t }: Props) {
 
               <RequestEditForm key={selected.id} request={selected} disabled={!canManage(selected) || busy} t={t} onSave={handleEdit} />
 
-              <label className="block text-sm"><span className="mb-1 flex items-center gap-2 font-medium"><UserRound className="size-4" />{t('estimateRequest.owner')}</span>
-                <select value={selected.ownerId || ''} disabled={!canManage(selected) || busy} onChange={(event) => void handleOwner(event.target.value)} className="w-full rounded border bg-[var(--color-surface)] p-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] disabled:opacity-50">
-                  <option value="">{t('estimateRequest.unassigned')}</option>
-                  {eligibleOwners.map((user) => <option key={user.id} value={user.id}>{getUserDisplayName(user)}</option>)}
-                </select>
-              </label>
+              <ProjectExecutionUnitSelector value={selected.targetUnitIds || []} primaryUnitId={selected.primaryUnitId || null} disabled={!canManage(selected) || busy || Boolean(selected.projectId)} onChange={(targetUnitIds, primaryUnitId) => void handleEdit({ targetUnitIds, primaryUnitId })} />
 
               <section aria-labelledby="commercial-decision-title" className="border-y py-4">
                 <div className="flex flex-wrap items-start justify-between gap-3">
@@ -340,7 +325,7 @@ export function EstimateRequestWorkbench({ currentUser, users, t }: Props) {
                     <p className="mt-1 text-xs text-[var(--color-text-sub)]">{t('estimateRequest.decisionDescription')}</p>
                   </div>
                   {selected.projectId && (
-                    <Link href="/projects" className="inline-flex items-center gap-2 border px-3 py-2 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]">
+                    <Link href={projectBoardHref(selected.targetUnitIds || [])} className="inline-flex items-center gap-2 border px-3 py-2 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]">
                       <BadgeCheck className="size-4" />{t('estimateRequest.openProject')}
                     </Link>
                   )}

@@ -1,7 +1,9 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { estimateSheetApi, EstimateSheetApiError } from '@/lib/estimateSheetApi';
+import { buildEstimatePipelineDbInput } from '@/lib/estimatePipelineDatabase';
 import { ESTIMATE_TEMPLATE_SPECS } from '@/lib/estimateSheetTemplates';
+import { useEstimateDatabaseStore } from '@/store/estimateDatabaseStore';
 import { useEstimateRequestStore } from '@/store/estimateRequestStore';
 import {
   EstimateSheet,
@@ -58,6 +60,21 @@ const submissionSummary = (requestId: string, sheet: EstimateSheet) => {
   };
 };
 
+const upsertLocalPipelineRecord = async (requestId: string, sheet: EstimateSheet, actorId: string) => {
+  const request = useEstimateRequestStore.getState().requests.find((item) => item.id === requestId);
+  if (!request) return;
+  await useEstimateDatabaseStore.getState().upsertPipelineRecord(
+    buildEstimatePipelineDbInput(request, {
+      stage: 'SHEET',
+      estimateSheetId: sheet.id,
+      estimateSheetStatus: sheet.status,
+      estimateSheetVersion: sheet.currentVersion,
+      occurredAt: sheet.updatedAt,
+    }),
+    actorId,
+  );
+};
+
 export const useEstimateSheetStore = create<EstimateSheetStore>()(persist((set, get) => ({
   sheets: {},
   persistenceMode: 'CHECKING',
@@ -107,6 +124,7 @@ export const useEstimateSheetStore = create<EstimateSheetStore>()(persist((set, 
       estimateType: type,
       status: 'ESTIMATE_DRAFTING',
     }, actorId);
+    await upsertLocalPipelineRecord(requestId, sheet, actorId);
     return sheet;
   },
 
@@ -130,6 +148,7 @@ export const useEstimateSheetStore = create<EstimateSheetStore>()(persist((set, 
       versions: [{ id: id('estimate-version'), estimateSheetId: current.id, version: versionNumber, templateVersion: current.template.version, templateHash: hash, state, createdBy: actorId, createdAt: now }, ...current.versions],
     };
     set((value) => ({ sheets: replace(value.sheets, requestId, sheet) }));
+    await upsertLocalPipelineRecord(requestId, sheet, actorId);
     return sheet;
   },
 
@@ -155,6 +174,7 @@ export const useEstimateSheetStore = create<EstimateSheetStore>()(persist((set, 
     };
     const sheet = { ...current, status: 'SUBMITTED' as const, updatedBy: actorId, updatedAt: now, submissions: [submission, ...(current.submissions || [])] };
     set((value) => ({ sheets: replace(value.sheets, requestId, sheet) }));
+    await upsertLocalPipelineRecord(requestId, sheet, actorId);
     return sheet;
   },
 
@@ -183,6 +203,7 @@ export const useEstimateSheetStore = create<EstimateSheetStore>()(persist((set, 
     };
     set((value) => ({ sheets: replace(value.sheets, requestId, sheet) }));
     await useEstimateRequestStore.getState().changeStatus(requestId, 'WAITING', actorId);
+    await upsertLocalPipelineRecord(requestId, sheet, actorId);
     return sheet;
   },
 
@@ -212,6 +233,7 @@ export const useEstimateSheetStore = create<EstimateSheetStore>()(persist((set, 
     const sheet = { ...current, status: 'DRAFT' as const, currentVersion: nextVersion, updatedBy: actorId, updatedAt: now, versions: [next, ...current.versions] };
     set((value) => ({ sheets: replace(value.sheets, requestId, sheet) }));
     await useEstimateRequestStore.getState().changeStatus(requestId, 'ESTIMATE_DRAFTING', actorId);
+    await upsertLocalPipelineRecord(requestId, sheet, actorId);
     return sheet;
   },
 

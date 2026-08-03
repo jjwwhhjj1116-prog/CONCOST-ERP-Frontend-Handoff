@@ -117,44 +117,10 @@ function IntakePageContent() {
   return (
     <div className="w-full min-w-0 mx-auto space-y-6 md:space-y-8 animate-in fade-in duration-500">
       
-      {/* Tabs */}
-      <div className="grid grid-cols-1 gap-2 mb-4 sm:grid-cols-3 sm:gap-3 lg:flex lg:gap-4">
-        <button
-          onClick={() => { setActiveTab('INTERNAL_DEVELOPMENT'); setShowForm(false); }}
-          className={`w-full px-3 py-2 text-sm font-medium rounded-md transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] lg:w-auto lg:px-4 ${
-            activeTab === 'INTERNAL_DEVELOPMENT'
-              ? 'bg-blue-600 text-white shadow-md'
-              : 'bg-[var(--color-bg-sub)] text-[var(--color-text-sub)] hover:bg-gray-200'
-          }`}
-        >
-          {t('devTaskListManagement')}
-        </button>
-        <button
-          onClick={() => { setActiveTab('CLIENT_ORDER'); setShowForm(false); }}
-          className={`w-full px-3 py-2 text-sm font-medium rounded-md transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] lg:w-auto lg:px-4 ${
-            activeTab === 'CLIENT_ORDER'
-              ? 'bg-[var(--color-primary)] text-[var(--color-surface)] shadow-md'
-              : 'bg-[var(--color-bg-sub)] text-[var(--color-text-sub)] hover:bg-gray-200'
-          }`}
-        >
-          {t('orderProjectManagement')}
-        </button>
-        <button
-          onClick={() => { setActiveTab('PROJECT_INTAKE'); setShowForm(false); }}
-          className={`w-full px-3 py-2 text-sm font-medium rounded-md transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] lg:w-auto lg:px-4 ${
-            activeTab === 'PROJECT_INTAKE'
-              ? 'bg-emerald-600 text-white shadow-md'
-              : 'bg-[var(--color-bg-sub)] text-[var(--color-text-sub)] hover:bg-gray-200'
-          }`}
-        >
-          {t('projectIntake.tab')}
-        </button>
-      </div>
-
       {activeTab === 'PROJECT_INTAKE' ? (
         <ProjectIntakeWorkbench currentUser={currentUser} t={t} view={intakeView} requestedIntakeId={requestedIntakeId} />
       ) : isClient ? (
-        <EstimateRequestWorkbench currentUser={currentUser} users={users} t={t} />
+        <EstimateRequestWorkbench currentUser={currentUser} t={t} />
       ) : (
       <>
       <div className="flex justify-between items-center">

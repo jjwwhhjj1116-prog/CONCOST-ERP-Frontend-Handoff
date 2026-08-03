@@ -14,6 +14,7 @@ interface EstimateDatabaseState {
   error: string | null;
   sync: (year: number) => Promise<void>;
   createRecord: (input: EstimateDbRecordInput, actorId: string) => Promise<EstimateDbRecord>;
+  upsertPipelineRecord: (input: EstimateDbRecordInput, actorId: string) => Promise<EstimateDbRecord>;
   updateRecord: (record: EstimateDbRecord, data: EstimateDbPayload, actorId: string) => Promise<EstimateDbRecord>;
   deleteRecord: (record: EstimateDbRecord) => Promise<void>;
   duplicateRecord: (record: EstimateDbRecord, actorId: string) => Promise<EstimateDbRecord>;
@@ -55,6 +56,32 @@ export const useEstimateDatabaseStore = create<EstimateDatabaseState>()(persist(
     const row: EstimateDbRecord = { id: uid('db'), section: input.section, projectId: input.projectId, sourceRecordId: input.sourceRecordId, pjNo: input.pjNo, year: input.year, sortOrder: input.sortOrder || 0, schemaVersion: 1, data: calculateEstimateDbPayload(input.section, input.data), version: 1, createdBy: actorId, updatedBy: actorId, createdAt: timestamp, updatedAt: timestamp };
     set((state) => ({ records: [...state.records, row, ...(row.section === 'PJ' ? [linked(row, 'PROGRESS', actorId), linked(row, 'MEP_CONTRACT', actorId)] : [])] }));
     return row;
+  },
+  upsertPipelineRecord: async (input, actorId) => {
+    const current = get().records.find((item) => item.section === input.section && (
+      (input.sourceRecordId && item.sourceRecordId === input.sourceRecordId)
+      || (input.projectId && item.projectId === input.projectId)
+    ));
+    if (!current) return get().createRecord(input, actorId);
+    const data = calculateEstimateDbPayload(input.section, { ...current.data, ...input.data });
+    if (get().persistenceMode === 'SERVER') {
+      const saved = await estimateDatabaseApi.updateRecord(current.id, current.version, { ...input, data });
+      set((state) => ({ records: state.records.map((item) => item.id === saved.id ? saved : item) }));
+      return saved;
+    }
+    const saved: EstimateDbRecord = {
+      ...current,
+      projectId: input.projectId ?? current.projectId,
+      sourceRecordId: input.sourceRecordId ?? current.sourceRecordId,
+      pjNo: input.pjNo ?? current.pjNo,
+      year: input.year ?? current.year,
+      data,
+      version: current.version + 1,
+      updatedBy: actorId,
+      updatedAt: now(),
+    };
+    set((state) => ({ records: state.records.map((item) => item.id === saved.id ? saved : item) }));
+    return saved;
   },
   updateRecord: async (record, data, actorId) => {
     const pjNo = String(data['PJ NO'] ?? record.pjNo ?? '').trim() || null;

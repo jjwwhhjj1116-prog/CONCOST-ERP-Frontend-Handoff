@@ -4,6 +4,7 @@ import {
   ProjectIntakeMaterial,
   ProjectIntakeSecretReference,
 } from '@/types/models';
+import { isProjectExecutionUnitId, normalizeExecutionUnitIds } from '@/lib/projectExecutionUnits';
 
 type UnknownRecord = Record<string, unknown>;
 
@@ -143,6 +144,11 @@ export const buildProjectIntakeDraft = (intake: ProjectIntake): ProjectIntakeDra
   const deliveries = Array.isArray(project.deliveries) ? project.deliveries : [];
   const contactName = text(project.contact) || text(project.client);
   const scope = text(project.scope);
+  const targetUnitIds = normalizeExecutionUnitIds(Array.isArray(project.targetUnitIds) ? project.targetUnitIds : []);
+  const primaryUnitCandidate = text(project.primaryUnitId);
+  const primaryUnitId = isProjectExecutionUnitId(primaryUnitCandidate) && targetUnitIds.includes(primaryUnitCandidate)
+    ? primaryUnitCandidate
+    : (targetUnitIds[0] || null);
   return {
     projectName: text(project.projectName),
     projectNo: intake.projectNo,
@@ -158,9 +164,9 @@ export const buildProjectIntakeDraft = (intake: ProjectIntake): ProjectIntakeDra
     unitPrice: text(project.unitWork),
     businessTypes: text(project.estimateType) ? [text(project.estimateType)] : [],
     scopes: scope ? scope.split(/[,/\n]/).map((item) => item.trim()).filter(Boolean) : [],
-    targetUnitIds: [],
-    primaryUnitId: null,
-    unitScopes: [],
+    targetUnitIds,
+    primaryUnitId,
+    unitScopes: targetUnitIds.map((unitId) => ({ unitId, scope: '' })),
     contacts: contactName || project.phone || project.email ? [{
       id: 'contact-1',
       name: contactName,
@@ -205,6 +211,7 @@ export const evaluateProjectIntakeCompleteness = (draft: ProjectIntakeDraft) => 
   if (!draft.projectNo.trim()) missing.push('projectNo');
   if (!draft.company.trim() && !draft.client.trim()) missing.push('client');
   if (!draft.workContent.trim() && draft.scopes.length === 0) missing.push('workContent');
+  if (draft.targetUnitIds.length === 0 || !draft.primaryUnitId) missing.push('targetUnitIds');
   if (!draft.expectedStartDate.trim()) missing.push('expectedStartDate');
   if (!draft.firstDelivery.trim() && !draft.finalDelivery.trim()) missing.push('deliveryDate');
   if (!draft.contacts.some((contact) => contact.name.trim() && (contact.telephone || contact.mobile || contact.email))) {
