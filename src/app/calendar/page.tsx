@@ -80,7 +80,6 @@ export default function CalendarPage() {
 
   useEffect(() => {
     let active = true;
-    setHolidayError(null);
     loadKoreanHolidayCalendar(monthDate.getFullYear())
       .then((result) => {
         if (!active) return;
