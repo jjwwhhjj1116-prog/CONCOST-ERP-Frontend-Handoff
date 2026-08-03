@@ -42,6 +42,26 @@ test('filters technical, claim, and development boards by canonical IDs only', (
   assert.equal(matchesProjectBoardScope(development, getProjectBoardScope('DEVELOPMENT', null)), true);
 });
 
+test('shows a won project on department boards only after project intake completion', () => {
+  const assignments = createExecutionAssignments({
+    projectId: 'project-request-3',
+    targetUnitIds: ['FINISH', 'CLAIM'],
+    primaryUnitId: 'FINISH',
+    actorId: 'demo-admin',
+    assignedAt: '2026-08-03T00:00:00.000Z',
+  });
+  const beforeIntakeCompletion = { assignedUnitIds: ['FINISH', 'CLAIM'] as Array<'FINISH' | 'CLAIM'>, executionAssignments: assignments };
+  assert.equal(matchesProjectBoardScope(beforeIntakeCompletion, getProjectBoardScope('TECHNICAL', null)), false);
+  assert.equal(matchesProjectBoardScope(beforeIntakeCompletion, getProjectBoardScope('CLAIM', null)), false);
+
+  const afterIntakeCompletion = {
+    ...beforeIntakeCompletion,
+    executionAssignments: assignments.map((assignment) => ({ ...assignment, status: 'START_PLANNED' as const })),
+  };
+  assert.equal(matchesProjectBoardScope(afterIntakeCompletion, getProjectBoardScope('TECHNICAL', null)), true);
+  assert.equal(matchesProjectBoardScope(afterIntakeCompletion, getProjectBoardScope('CLAIM', null)), true);
+});
+
 test('does not infer assignment from project or department names', () => {
   const project = { assignedUnitIds: [], executionAssignments: [] };
   assert.equal(matchesProjectBoardScope(project, getProjectBoardScope('TECHNICAL', null)), false);

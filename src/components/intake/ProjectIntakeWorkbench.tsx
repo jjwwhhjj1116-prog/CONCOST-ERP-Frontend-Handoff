@@ -93,6 +93,7 @@ export function ProjectIntakeWorkbench({ currentUser, t, view = 'CREATE', reques
     saveDraft,
     review,
     accept,
+    finalizeWonIntake,
   } = useProjectIntakeStore();
   const boundaryLocale = useUiStore((state) => state.brandWorkspace === 'VIET_QS' ? 'vi' : 'ko');
   const router = useRouter();
@@ -108,6 +109,8 @@ export function ProjectIntakeWorkbench({ currentUser, t, view = 'CREATE', reques
   const [actionError, setActionError] = useState('');
   const [activeStep, setActiveStep] = useState(1);
   const activeCreateDraftId = useRef('');
+  const finalizingRef = useRef(false);
+  const hydratedSelectionId = useRef('');
 
   useEffect(() => { void sync(actor); }, [actor, sync]);
 
@@ -143,12 +146,15 @@ export function ProjectIntakeWorkbench({ currentUser, t, view = 'CREATE', reques
       }
       if (!selected) {
         setDraft(null);
+        hydratedSelectionId.current = '';
         return;
       }
+      const selectionChanged = hydratedSelectionId.current !== selected.id;
+      hydratedSelectionId.current = selected.id;
       if (selected.id !== selectedId) setSelectedId(selected.id);
       setDraft(buildProjectIntakeDraft(selected));
       setReviewNote(selected.reviewNote || '');
-      setActiveStep(1);
+      if (selectionChanged) setActiveStep(1);
     }, 0);
     return () => window.clearTimeout(timeout);
   }, [loading, persistenceMode, selected, selectedId, selection.requestedIdMissing]);
@@ -173,6 +179,35 @@ export function ProjectIntakeWorkbench({ currentUser, t, view = 'CREATE', reques
     } catch (caught) {
       setActionError(caught instanceof Error ? caught.message : t('projectIntake.error.generic'));
     } finally {
+      setBusy(false);
+    }
+  };
+
+  const completeWonIntake = async () => {
+    if (busy || finalizingRef.current || !selected || !draft || selected.status === 'ACCEPTED') return;
+    if (missing.length) {
+      const firstMissing = missing[0];
+      const missingStep = ['materials'].includes(firstMissing) ? 2
+        : ['expectedStartDate', 'deliveryDate'].includes(firstMissing) ? 3
+          : ['contact'].includes(firstMissing) ? 4
+            : 1;
+      setActiveStep(missingStep);
+      setMessage('');
+      setActionError(`수주 완료 전 필수 정보를 입력해 주세요: ${missing.map((key) => t(`projectIntake.missing.${key}` as Parameters<Translate>[0])).join(', ')}`);
+      return;
+    }
+
+    finalizingRef.current = true;
+    setBusy(true);
+    setMessage('');
+    setActionError('');
+    try {
+      await finalizeWonIntake(selected.id, draft, reviewNote, actor);
+      setMessage(t('projectIntake.message.accept'));
+    } catch (caught) {
+      setActionError(caught instanceof Error ? caught.message : t('projectIntake.error.generic'));
+    } finally {
+      finalizingRef.current = false;
       setBusy(false);
     }
   };
@@ -381,16 +416,6 @@ export function ProjectIntakeWorkbench({ currentUser, t, view = 'CREATE', reques
                         <Save size={16} />{t('projectIntake.action.save')}
                       </button>
                     )}
-                    {selected.permissions?.canReview && selected.status !== 'ACCEPTED' && (
-                      <button type="button" onClick={() => void run('review')} disabled={busy || missing.length > 0} className="inline-flex items-center gap-2 border border-blue-300 bg-blue-50 px-3 py-2 text-sm font-semibold text-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 disabled:opacity-50">
-                        <ClipboardCheck size={16} />{t('projectIntake.action.review')}
-                      </button>
-                    )}
-                    {selected.permissions?.canReview && selected.status === 'REVIEWED' && (
-                      <button type="button" onClick={() => void run('accept')} disabled={busy || missing.length > 0} className="inline-flex items-center gap-2 border border-emerald-300 bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 disabled:opacity-50">
-                        <CheckCircle2 size={16} />{t('projectIntake.action.accept')}
-                      </button>
-                    )}
                   </div>
                 </div>
                 <div className={`mt-4 border px-3 py-2 text-xs ${missing.length ? 'border-amber-200 bg-amber-50 text-amber-800' : 'border-emerald-200 bg-emerald-50 text-emerald-700'}`}>
@@ -573,7 +598,19 @@ export function ProjectIntakeWorkbench({ currentUser, t, view = 'CREATE', reques
                 <footer className="flex items-center justify-between gap-3 p-4 md:p-6">
                   <button type="button" onClick={() => setActiveStep((step) => Math.max(1, step - 1))} disabled={activeStep === 1} className="inline-flex min-h-10 items-center gap-2 border border-[var(--color-border)] px-4 text-sm font-black text-[var(--color-text-main)] disabled:opacity-40"><ArrowLeft className="h-4 w-4" />이전 단계</button>
                   <span className="text-xs font-black text-[var(--color-text-sub)]">{activeStep} / 4</span>
-                  <button type="button" onClick={() => setActiveStep((step) => Math.min(4, step + 1))} disabled={activeStep === 4} className="inline-flex min-h-10 items-center gap-2 bg-[var(--color-primary)] px-4 text-sm font-black text-white disabled:opacity-40">다음 단계<ArrowRight className="h-4 w-4" /></button>
+                  {activeStep < 4 ? (
+                    <button type="button" onClick={() => setActiveStep((step) => Math.min(4, step + 1))} className="inline-flex min-h-10 items-center gap-2 bg-[var(--color-primary)] px-4 text-sm font-black text-white">다음 단계<ArrowRight className="h-4 w-4" /></button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => void completeWonIntake()}
+                      disabled={busy || selected.status === 'ACCEPTED' || !selected.permissions?.canReview}
+                      className="inline-flex min-h-10 items-center gap-2 bg-emerald-600 px-4 text-sm font-black text-white hover:bg-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      <CheckCircle2 className="h-4 w-4" />
+                      {selected.status === 'ACCEPTED' ? '수주 완료됨' : t('projectIntake.action.accept')}
+                    </button>
+                  )}
                 </footer>
               </div>
             </div>

@@ -6,6 +6,7 @@ import ExcelJS from 'exceljs';
 import { buildEstimateDbReport, buildEstimateDbWorkbook } from './estimateDatabase';
 import { createEstimateSheetState } from './estimateSheetTemplates';
 import { buildProjectIntakeDraft, validateSecretReferences } from './projectIntake';
+import { getProjectBoardScope, matchesProjectBoardScope } from './projectExecutionUnits';
 import { localDeliveryPermissions } from './projectDelivery';
 import { localProjectOperationPermissions } from './projectOperation';
 import { localPmSchedulePermissions } from './projectPmSchedule';
@@ -129,6 +130,8 @@ test('C/E/F/H: WON follows one canonical lineage through archive with guarded fa
   assert.equal(won.intake?.projectId, won.request.projectId);
   assert.equal(useProjectStore.getState().projects[0].id, won.request.projectId);
   const projectId = won.request.projectId!;
+  const awardedProject = useProjectStore.getState().projects.find((item) => item.id === projectId)!;
+  assert.equal(matchesProjectBoardScope(awardedProject, getProjectBoardScope('TECHNICAL', null)), false);
   const projectCount = useProjectStore.getState().projects.length;
   const repeated = await useEstimateRequestStore.getState().recordDecision(sent.id, { decision: 'WON' }, manager.id);
   assert.equal(repeated.idempotent, true);
@@ -141,8 +144,9 @@ test('C/E/F/H: WON follows one canonical lineage through archive with guarded fa
   const draft = buildProjectIntakeDraft(intake);
   assert.equal(draft.source.projectId, projectId);
   assert.equal(draft.materials.find((item) => item.category === 'drawing')?.originalName, 'drawing.pdf');
-  await useProjectIntakeStore.getState().review(intake.id, draft, 'Verified', manager);
-  await useProjectIntakeStore.getState().accept(intake.id, 'Accepted', manager);
+  await useProjectIntakeStore.getState().finalizeWonIntake(intake.id, draft, 'Accepted', manager);
+  const startPlannedProject = useProjectStore.getState().projects.find((item) => item.id === projectId)!;
+  assert.equal(matchesProjectBoardScope(startPlannedProject, getProjectBoardScope('TECHNICAL', null)), true);
 
   await useProjectPmScheduleStore.getState().sync(manager);
   await useProjectPmScheduleStore.getState().assign(projectId, { primaryPmId: pm.id, finishPmId: '', structurePmId: pm.id, bimPmId: pm.id, civilPmId: '' }, manager);

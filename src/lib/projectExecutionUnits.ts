@@ -68,11 +68,17 @@ export const getProjectBoardScope = (
   return null;
 };
 
-const projectUnitIds = (project: Pick<Project, 'assignedUnitIds' | 'executionAssignments'>) =>
-  normalizeExecutionUnitIds([
-    ...(project.assignedUnitIds || []),
-    ...(project.executionAssignments || []).map((assignment) => assignment.unitId),
-  ]);
+const BOARD_VISIBLE_ASSIGNMENT_STATUSES = new Set(['START_PLANNED', 'ACTIVE', 'COMPLETED']);
+
+const projectUnitIds = (project: Pick<Project, 'assignedUnitIds' | 'executionAssignments'>) => {
+  const assignments = project.executionAssignments || [];
+  if (assignments.length) {
+    return normalizeExecutionUnitIds(assignments
+      .filter((assignment) => BOARD_VISIBLE_ASSIGNMENT_STATUSES.has(assignment.status))
+      .map((assignment) => assignment.unitId));
+  }
+  return normalizeExecutionUnitIds(project.assignedUnitIds || []);
+};
 
 export const matchesProjectBoardScope = (
   project: Pick<Project, 'assignedUnitIds' | 'executionAssignments'>,

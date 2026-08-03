@@ -41,6 +41,7 @@ interface ProjectIntakeState {
   saveDraft: (id: string, draft: ProjectIntakeDraft, actor: IntakeActor) => Promise<ProjectIntake>;
   review: (id: string, draft: ProjectIntakeDraft, note: string, actor: IntakeActor) => Promise<ProjectIntake>;
   accept: (id: string, note: string, actor: IntakeActor) => Promise<ProjectIntake>;
+  finalizeWonIntake: (id: string, draft: ProjectIntakeDraft, note: string, actor: IntakeActor) => Promise<ProjectIntake>;
 }
 
 const now = () => new Date().toISOString();
@@ -346,6 +347,74 @@ export const useProjectIntakeStore = create<ProjectIntakeState>()(persist((set, 
       updatedAt: timestamp,
       permissions: { canEdit: false, canReview: false },
       histories: [localHistory(current, 'ACCEPTED', actor.id, current.status, 'ACCEPTED', { note, projectStatus: 'MANAGER_REVIEW' }), ...(current.histories || [])],
+    };
+    set((state) => ({ intakes: replace(state.intakes, updated) }));
+    await upsertLocalPipelineRecord(updated, draft, updated.status, actor.id, timestamp);
+    return updated;
+  },
+
+  finalizeWonIntake: async (id, draft, note, actor) => {
+    const current = get().intakes.find((item) => item.id === id);
+    if (!current) throw new Error('Project intake not found');
+    validateSecretReferences(draft.secretReferences);
+    const missing = evaluateProjectIntakeCompleteness(draft);
+    if (missing.length) throw new Error(`Project intake is incomplete: ${missing.join(', ')}`);
+    assertReview(current, actor);
+
+    if (get().persistenceMode === 'SERVER') {
+      const companyId = selectedCompanyId();
+      const reviewed = current.status === 'REVIEWED'
+        ? current
+        : await projectIntakeApi.review(companyId, id, current.version, draft, note);
+      const updated = await projectIntakeApi.accept(companyId, id, reviewed.version, note);
+      if (selectedCompanyId() !== companyId || get().scopeCompanyId !== companyId) {
+        throw new ProjectIntakeApiError('Company workspace changed while completing project intake', 409);
+      }
+      set((state) => ({ intakes: replace(state.intakes, updated) }));
+      return updated;
+    }
+
+    if (get().persistenceMode !== 'LOCAL_DEMO') {
+      throw new Error('Project intake persistence is still being initialized. Please retry.');
+    }
+
+    const timestamp = now();
+    await useProjectPmScheduleStore.getState().sync(actor);
+    const projectStore = useProjectStore.getState();
+    projectStore.replaceProjects(projectStore.projects.map((project) => project.id === current.projectId ? {
+      ...project,
+      status: 'MANAGER_REVIEW',
+      executionAssignments: (project.executionAssignments || []).map((assignment) => ({ ...assignment, status: 'START_PLANNED' as const })),
+      updatedAt: timestamp,
+    } : project));
+
+    const reviewHistory = current.status === 'REVIEWED'
+      ? []
+      : [localHistory(current, 'REVIEWED', actor.id, current.status, 'REVIEWED', { note })];
+    const acceptedBase = {
+      ...current,
+      status: 'REVIEWED' as const,
+      projectNo: draft.projectNo,
+      draft,
+      draftJson: JSON.stringify(draft),
+      reviewNote: note,
+      reviewedBy: current.reviewedBy || actor.id,
+      reviewedAt: current.reviewedAt || timestamp,
+    };
+    const updated: ProjectIntake = {
+      ...acceptedBase,
+      status: 'ACCEPTED',
+      acceptedBy: actor.id,
+      acceptedAt: timestamp,
+      version: current.version + (current.status === 'REVIEWED' ? 1 : 2),
+      updatedBy: actor.id,
+      updatedAt: timestamp,
+      permissions: { canEdit: false, canReview: false },
+      histories: [
+        localHistory(acceptedBase, 'ACCEPTED', actor.id, 'REVIEWED', 'ACCEPTED', { note, projectStatus: 'MANAGER_REVIEW' }),
+        ...reviewHistory,
+        ...(current.histories || []),
+      ],
     };
     set((state) => ({ intakes: replace(state.intakes, updated) }));
     await upsertLocalPipelineRecord(updated, draft, updated.status, actor.id, timestamp);
