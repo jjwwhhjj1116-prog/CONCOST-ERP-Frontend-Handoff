@@ -49,6 +49,8 @@ const requestDraft = (suffix: string) => ({
   projectName: `OFF-PM-16 ${suffix}`,
   departmentId: 'dept-a',
   ownerId: manager.id,
+  targetUnitIds: ['STRUCTURE' as const],
+  primaryUnitId: 'STRUCTURE' as const,
   company: 'CON-COST',
   client: 'Verification Client',
   contact: 'Test Contact',
@@ -128,7 +130,10 @@ test('C/E/F/H: WON follows one canonical lineage through archive with guarded fa
   assert.equal(useProjectStore.getState().projects[0].id, won.request.projectId);
   const projectId = won.request.projectId!;
   const projectCount = useProjectStore.getState().projects.length;
-  await assert.rejects(() => useEstimateRequestStore.getState().recordDecision(sent.id, { decision: 'WON' }, manager.id), /already been converted/i);
+  const repeated = await useEstimateRequestStore.getState().recordDecision(sent.id, { decision: 'WON' }, manager.id);
+  assert.equal(repeated.idempotent, true);
+  assert.equal(repeated.project?.id, projectId);
+  assert.equal(repeated.intake?.id, won.intake?.id);
   assert.equal(useProjectStore.getState().projects.length, projectCount);
 
   await useProjectIntakeStore.getState().sync(manager);
