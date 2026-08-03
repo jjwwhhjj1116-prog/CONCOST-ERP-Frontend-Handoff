@@ -1,12 +1,14 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { CalendarCheck2, CalendarDays, ChevronLeft, ChevronRight, Clock3, Plus, X } from 'lucide-react';
+import { AlertTriangle, CalendarCheck2, CalendarDays, ChevronLeft, ChevronRight, Clock3, Landmark, Plus, X } from 'lucide-react';
 import { canViewSchedule } from '@/lib/permissions';
 import { getUserDisplayName } from '@/lib/localization';
+import { holidayDisplayName, loadKoreanHolidayCalendar, type HolidayLoadResult, type HolidayRecord } from '@/lib/holidayDataSource';
 import { useAuthStore } from '@/store/authStore';
 import { useScheduleStore } from '@/store/scheduleStore';
+import { useUiStore } from '@/store/uiStore';
 import type { PersonalSchedule, ScheduleType } from '@/types/models';
 import { ModuleHandoffPanel } from '@/components/handoff/ModuleHandoffPanel';
 import {
@@ -17,6 +19,14 @@ import {
 type ViewMode = 'CALENDAR' | 'TODAY' | 'UPCOMING';
 
 const weekDays = ['월', '화', '수', '목', '금', '토', '일'];
+const initialMonth = (value: string | null) => {
+  const match = /^(\d{4})-(\d{2})$/.exec(value || '');
+  if (!match) return new Date();
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  if (month < 1 || month > 12) return new Date();
+  return new Date(year, month - 1, 1);
+};
 const typeLabels: Record<ScheduleType, string> = {
   PERSONAL_WORK: '업무', MEETING: '회의', REVIEW: '검토', CLIENT_MEETING: '고객 미팅', INTERNAL_REPORT: '내부 보고',
   PM_PLANNING: 'PM 계획', MANAGER_REVIEW: '관리자 검토', DEPARTMENT_MANAGEMENT: '본부 운영', ETC: '기타', OFF: '휴가',
@@ -48,8 +58,12 @@ export default function CalendarPage() {
   const view: ViewMode = requestedView === 'TODAY' || requestedView === 'UPCOMING' ? requestedView : 'CALENDAR';
   const { currentUser, users } = useAuthStore();
   const { schedules, addSchedule } = useScheduleStore();
-  const [monthDate, setMonthDate] = useState(() => new Date());
+  const brandWorkspace = useUiStore((state) => state.brandWorkspace);
+  const [monthDate, setMonthDate] = useState(() => initialMonth(searchParams.get('month')));
   const [showForm, setShowForm] = useState(false);
+  const [holidays, setHolidays] = useState<HolidayRecord[]>([]);
+  const [holidayResult, setHolidayResult] = useState<Pick<HolidayLoadResult, 'source' | 'warning'> | null>(null);
+  const [holidayError, setHolidayError] = useState<string | null>(null);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [scheduleType, setScheduleType] = useState<ScheduleType>('PERSONAL_WORK');
@@ -63,6 +77,26 @@ export default function CalendarPage() {
   const calendarBoundary = getFrontendModuleBoundary('CALENDAR', {
     adapterReady: false,
   });
+
+  useEffect(() => {
+    let active = true;
+    setHolidayError(null);
+    loadKoreanHolidayCalendar(monthDate.getFullYear())
+      .then((result) => {
+        if (!active) return;
+        setHolidays(result.records);
+        setHolidayResult({ source: result.source, warning: result.warning });
+      })
+      .catch((error) => {
+        if (!active) return;
+        setHolidays([]);
+        setHolidayResult(null);
+        setHolidayError(error instanceof Error ? error.message : '공휴일 정보를 불러오지 못했습니다.');
+      });
+    return () => { active = false; };
+  }, [monthDate]);
+
+  const holidayByDate = useMemo(() => new Map(holidays.map((item) => [item.date, item])), [holidays]);
 
   const visibleSchedules = useMemo(() => {
     if (!currentUser) return [];
@@ -155,13 +189,31 @@ export default function CalendarPage() {
           <h2 className="text-lg font-black text-[var(--color-text-main)]">{year}년 {month + 1}월</h2>
           <button type="button" aria-label="다음 달" onClick={() => setMonthDate(new Date(year, month + 1, 1))} className="rounded-md p-2 hover:bg-[var(--color-bg)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]"><ChevronRight className="h-5 w-5" /></button>
         </div>
-        <div className="grid grid-cols-7 border-b border-[var(--color-border)] bg-[var(--color-bg)] text-center text-xs font-bold text-[var(--color-text-sub)]">{weekDays.map((day) => <div key={day} className="py-2">{day}</div>)}</div>
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-[var(--color-border)] bg-[var(--color-bg)] px-4 py-2 text-[10px] font-bold text-[var(--color-text-sub)]">
+          <span className="inline-flex items-center gap-1.5"><Landmark className="h-3.5 w-3.5 text-red-600" />대한민국 공휴일</span>
+          <span className="text-red-600">일요일·공휴일</span>
+          <span className="text-blue-600">토요일</span>
+          <span className="text-amber-700">회사 휴무일(별도)</span>
+          <span className="ml-auto rounded-sm border border-[var(--color-border)] bg-[var(--color-surface)] px-2 py-1">
+            {holidayResult?.source === 'BACKEND_API' ? 'Backend/KASI' : 'KASI 2026 검증 캐시'}
+          </span>
+        </div>
+        {(holidayResult?.warning || holidayError) && <div role="status" className="flex items-center gap-2 border-b border-amber-200 bg-amber-50 px-4 py-2 text-xs font-bold text-amber-900"><AlertTriangle className="h-4 w-4" />{holidayResult?.warning || holidayError}</div>}
+        <div className="grid grid-cols-7 border-b border-[var(--color-border)] bg-[var(--color-bg)] text-center text-xs font-bold text-[var(--color-text-sub)]">{weekDays.map((day, index) => <div key={day} className={`py-2 ${index === 5 ? 'text-blue-600' : index === 6 ? 'text-red-600' : ''}`}>{day}</div>)}</div>
         <div className="grid grid-cols-7">{cells.map((day) => {
           const key = dateKey(day);
           const inCurrentMonth = day.getMonth() === month;
           const daySchedules = visibleSchedules.filter((schedule) => dateKey(schedule.startDateTime) === key);
+          const holiday = holidayByDate.get(key);
+          const publicHoliday = Boolean(holiday?.isPublicHoliday);
+          const companyClosure = holiday?.category === 'COMPANY_CLOSED_DAY';
+          const isSunday = day.getDay() === 0;
+          const isSaturday = day.getDay() === 6;
+          const dateTone = publicHoliday || isSunday ? 'text-red-600' : isSaturday ? 'text-blue-600' : 'text-[var(--color-text-main)]';
           return <button type="button" onClick={() => openFormForDate(day)} key={key} aria-label={`${key} 일정 추가`} className={`min-h-[116px] border-b border-r border-[var(--color-border)] p-2 text-left align-top hover:bg-orange-50/50 focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--color-primary)] xl:min-h-[132px] ${!inCurrentMonth ? 'bg-[var(--color-bg)]/45 text-[var(--color-text-sub)] opacity-55' : ''} ${key === today ? 'bg-orange-50/80 dark:bg-orange-950/10' : ''}`}>
-            <span className={`mb-2 grid h-7 w-7 place-items-center rounded-full text-xs font-black ${key === today ? 'bg-[#eb6300] text-white' : ''}`}>{day.getDate()}</span>
+            <span className={`grid h-7 w-7 place-items-center rounded-full text-xs font-black ${key === today ? 'bg-[#eb6300] text-white' : dateTone}`}>{day.getDate()}</span>
+            {holiday && <span title={holiday.nameKo} className={`mb-1 mt-0.5 block min-h-7 text-[9px] font-black leading-tight ${companyClosure ? 'text-amber-700' : 'text-red-600'}`}>{holidayDisplayName(holiday, brandWorkspace === 'VIET_QS' ? 'vi' : 'ko')}</span>}
+            {!holiday && <span className="mb-1 block h-2" />}
             <span className="block space-y-1">{daySchedules.slice(0, 4).map((schedule) => <span key={schedule.id} title={schedule.title} className={`block truncate border-l-2 px-1.5 py-1 text-[10px] font-bold ${typeTone[schedule.scheduleType]}`}><b className="mr-1">{schedule.isAllDay ? '' : formatTime(schedule.startDateTime)}</b>{schedule.title}</span>)}{daySchedules.length > 4 && <span className="block text-[10px] font-bold text-[var(--color-text-sub)]">+{daySchedules.length - 4}건 더보기</span>}</span>
           </button>;
         })}</div>
