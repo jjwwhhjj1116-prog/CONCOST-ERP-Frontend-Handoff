@@ -1,14 +1,19 @@
 import { EstimateSubmissionListItem, EstimateSubmissionStatus, EstimateTemplateType } from '@/types/models';
 
+export type EstimateManagementStatus = EstimateSubmissionStatus | 'DRAFT';
+export type EstimateManagementListItem = Omit<EstimateSubmissionListItem, 'status'> & {
+  status: EstimateManagementStatus;
+};
+
 export type EstimateSubmissionFilters = {
   query: string;
-  status: EstimateSubmissionStatus | 'ALL';
+  status: EstimateManagementStatus | 'ALL';
   templateType: EstimateTemplateType | 'ALL';
   from: string;
   to: string;
 };
 
-export function filterEstimateSubmissions(rows: EstimateSubmissionListItem[], filters: EstimateSubmissionFilters) {
+export function filterEstimateSubmissions(rows: EstimateManagementListItem[], filters: EstimateSubmissionFilters) {
   return rows.filter((row) => {
     if (filters.status !== 'ALL' && row.status !== filters.status) return false;
     if (filters.templateType !== 'ALL' && row.templateType !== filters.templateType) return false;
@@ -22,9 +27,10 @@ export function filterEstimateSubmissions(rows: EstimateSubmissionListItem[], fi
   });
 }
 
-export function summarizeEstimateSubmissions(rows: EstimateSubmissionListItem[]) {
+export function summarizeEstimateSubmissions(rows: EstimateManagementListItem[]) {
   return {
     total: rows.length,
+    draft: rows.filter((row) => row.status === 'DRAFT').length,
     submitted: rows.filter((row) => row.status === 'SUBMITTED').length,
     sent: rows.filter((row) => row.status === 'SENT').length,
     ready: rows.filter((row) => row.decisionReady).length,

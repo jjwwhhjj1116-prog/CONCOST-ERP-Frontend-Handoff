@@ -1,9 +1,8 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { filterEstimateSubmissions, summarizeEstimateSubmissions } from './estimateSubmission';
-import { EstimateSubmissionListItem } from '@/types/models';
+import { EstimateManagementListItem, filterEstimateSubmissions, summarizeEstimateSubmissions } from './estimateSubmission';
 
-const makeRow = (overrides: Partial<EstimateSubmissionListItem> = {}): EstimateSubmissionListItem => ({
+const makeRow = (overrides: Partial<EstimateManagementListItem> = {}): EstimateManagementListItem => ({
   id: 'submission-1',
   estimateSheetId: 'sheet-1',
   estimateRequestId: 'request-1',
@@ -37,5 +36,11 @@ test('filters submissions by linked request, status, type and date', () => {
 
 test('summarizes decision readiness independently from submission state', () => {
   const summary = summarizeEstimateSubmissions([makeRow(), makeRow({ id: 'submission-2', status: 'SUBMITTED', decisionReady: false })]);
-  assert.deepEqual(summary, { total: 2, submitted: 1, sent: 1, ready: 1 });
+  assert.deepEqual(summary, { total: 2, draft: 0, submitted: 1, sent: 1, ready: 1 });
+});
+
+test('keeps a newly created draft visible in the management filters', () => {
+  const rows = [makeRow({ id: 'draft-sheet-1', status: 'DRAFT', decisionReady: false })];
+  assert.equal(filterEstimateSubmissions(rows, { query: '', status: 'DRAFT', templateType: 'ALL', from: '', to: '' }).length, 1);
+  assert.deepEqual(summarizeEstimateSubmissions(rows), { total: 1, draft: 1, submitted: 0, sent: 0, ready: 0 });
 });
