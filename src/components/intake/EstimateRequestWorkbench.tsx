@@ -270,7 +270,7 @@ export function EstimateRequestWorkbench({ currentUser, t }: Props) {
         </form>
       )}
 
-      <div className="grid min-h-[560px] gap-5 xl:grid-cols-[minmax(420px,0.9fr)_minmax(520px,1.1fr)]">
+      <div className="grid min-h-[560px] gap-5 xl:grid-cols-[minmax(320px,0.82fr)_minmax(0,1.18fr)]">
         <section aria-label={t('estimateRequest.listTitle')} className="min-w-0 border-r-0 xl:border-r xl:pr-5">
           <div className="mb-3 grid gap-2 sm:grid-cols-[1fr_170px]">
             <label className="relative"><Search className="pointer-events-none absolute left-3 top-2.5 size-4 text-[var(--color-text-sub)]" />
