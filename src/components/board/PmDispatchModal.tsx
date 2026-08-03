@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Project, TaskCard, LanguageCode } from '@/types/models';
 import { useAuthStore } from '@/store/authStore';
 import { useTaskStore } from '@/store/taskStore';
@@ -12,6 +13,8 @@ import { useTranslation } from '@/lib/localization';
 import { X, Plus, Trash2, Languages, RefreshCw, AlertTriangle, Info } from 'lucide-react';
 import { detectLanguage } from '@/lib/translation/detector';
 import { executeTranslation } from '@/lib/translation/providers';
+import { getProjectAssignment } from '@/lib/projectStaffing';
+import { isProjectExecutionUnitId } from '@/lib/projectExecutionUnits';
 
 interface Props {
   project: Project;
@@ -30,8 +33,17 @@ export const PmDispatchModal: React.FC<Props> = ({ project, onClose, onSuccess }
   const { settings } = useTranslationStore();
   const t = useTranslation(settings.uiLanguage);
 
-  const pmUser = users.find(u => u.id === project.pmId);
-  const activeUsers = users.filter(u => u.employmentStatus === 'ACTIVE');
+  const assignmentUnitId = isProjectExecutionUnitId(project.departmentId) ? project.departmentId : project.primaryUnitId;
+  const assignment = getProjectAssignment(project, assignmentUnitId);
+  const assignedPersonnelIds = new Set(assignment?.personnelIds || []);
+  const assignedPmId = assignment?.pmId || project.pmId;
+  const pmUser = users.find(u => u.id === assignedPmId);
+  const activeUsers = users.filter((user) => (
+    user.employmentStatus === 'ACTIVE'
+    && user.isActive !== false
+    && (!project.companyId || user.companyId === project.companyId)
+    && assignedPersonnelIds.has(user.id)
+  ));
   const activeUserGroups = activeUsers.reduce<Record<string, typeof activeUsers>>((groups, user) => {
     const team = user.teamName || user.subDepartmentName || user.departmentName || '기타';
     groups[team] = [...(groups[team] || []), user];
@@ -218,8 +230,8 @@ export const PmDispatchModal: React.FC<Props> = ({ project, onClose, onSuccess }
         status: 'TODO',
         priority: (t.priority as "URGENT" | "HIGH" | "NORMAL" | "LOW") || 'NORMAL',
         assigneeId: t.assigneeId,
-        pmId: project.pmId,
-        departmentId: project.departmentId,
+        pmId: assignedPmId,
+        departmentId: assignment?.unitId || project.departmentId,
         startDate: t.startDate,
         dueDate: t.dueDate,
         estimatedHours: t.estimatedHours,
@@ -238,7 +250,7 @@ export const PmDispatchModal: React.FC<Props> = ({ project, onClose, onSuccess }
       type: 'SCHEDULE_APPROVAL',
       projectId: project.id,
       requestedBy: currentUser?.id || '',
-      pmId: project.pmId,
+      pmId: assignedPmId,
       managerId: project.managerId,
       title: reqTitle,
       reason: project.status === 'SCHEDULE_REJECTED' ? '반려된 소요일정 재요청' : '업무 하달에 따른 소요일정 승인 요청',
@@ -266,17 +278,32 @@ export const PmDispatchModal: React.FC<Props> = ({ project, onClose, onSuccess }
     onSuccess();
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" onClick={onClose}>
-      <div className="bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)] shadow-xl w-full max-w-[95vw] max-h-[90vh] flex flex-col animate-in fade-in zoom-in-95 duration-200" onClick={(e) => e.stopPropagation()}>
-        <div className="p-4 border-b border-[var(--color-border)] flex justify-between items-center bg-[var(--color-bg)] rounded-t-xl">
-          <h2 className="text-lg font-bold text-[var(--color-text-main)]">{t('board.dispatch.modalTitle')}</h2>
-          <button onClick={onClose} className="text-[var(--color-text-sub)] hover:text-[var(--color-text-main)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] rounded">
+  useEffect(() => {
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [onClose]);
+
+  if (typeof document === 'undefined') return null;
+
+  const modal = (
+    <div className="fixed inset-0 z-[120] flex items-end justify-center overflow-y-auto bg-black/55 p-0 backdrop-blur-[2px] sm:items-center sm:p-4" onMouseDown={onClose}>
+      <section role="dialog" aria-modal="true" aria-labelledby="pm-dispatch-title" className="flex h-[100dvh] w-full min-w-0 flex-col overflow-hidden bg-[var(--color-surface)] shadow-2xl sm:h-auto sm:max-h-[calc(100dvh-2rem)] sm:max-w-6xl sm:rounded-2xl sm:border sm:border-[var(--color-border)]" onMouseDown={(e) => e.stopPropagation()}>
+        <div className="flex shrink-0 items-center justify-between border-b border-[var(--color-border)] bg-[var(--color-bg)] p-4 sm:rounded-t-2xl">
+          <h2 id="pm-dispatch-title" className="text-lg font-bold text-[var(--color-text-main)]">{t('board.dispatch.modalTitle')}</h2>
+          <button onClick={onClose} aria-label={t('common.close')} className="grid h-10 w-10 place-items-center rounded-full text-[var(--color-text-sub)] hover:bg-white hover:text-[var(--color-text-main)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]">
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-6 space-y-6">
+        <div className="min-h-0 flex-1 space-y-6 overflow-y-auto p-4 sm:p-6">
           {project.status === 'SCHEDULE_REJECTED' && rejectedRequest && (
             <div className="bg-red-50 p-4 rounded-lg border border-red-200 flex gap-3">
               <AlertTriangle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
@@ -319,10 +346,10 @@ export const PmDispatchModal: React.FC<Props> = ({ project, onClose, onSuccess }
                     </button>
                   )}
                   
-                  <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                    <div className="col-span-2 md:col-span-2">
+                  <div className="grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-12">
+                    <div className="min-w-0 lg:col-span-5">
                       <label className="block text-xs font-bold text-[var(--color-text-sub)] mb-1">{t('board.dispatch.taskName')}</label>
-                      <div className="flex gap-2">
+                      <div className="flex min-w-0 flex-col gap-2 sm:flex-row">
                         <input 
                           type="text" 
                           value={task.title} 
@@ -339,7 +366,7 @@ export const PmDispatchModal: React.FC<Props> = ({ project, onClose, onSuccess }
                       </div>
                     </div>
 
-                    <div>
+                    <div className="min-w-0 lg:col-span-3">
                       <label className="block text-xs font-bold text-[var(--color-text-sub)] mb-1">{t('board.dispatch.assignee')}</label>
                       <select 
                         value={task.assigneeId} 
@@ -352,7 +379,7 @@ export const PmDispatchModal: React.FC<Props> = ({ project, onClose, onSuccess }
                       {task.assigneeId && (() => { const selected = activeUsers.find((user) => user.id === task.assigneeId); return selected ? <div className="mt-2 flex items-center gap-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-2"><span className="grid h-7 w-7 place-items-center rounded-full bg-[#2979a8] text-[10px] font-black text-white shadow-sm">{selected.name.slice(0, 1)}</span><span className="min-w-0"><strong className="block truncate text-[10px] text-[var(--color-text-main)]">{selected.name}</strong><span className="block truncate text-[9px] font-semibold text-[var(--color-text-sub)]">{selected.teamName || selected.subDepartmentName || selected.departmentName}</span></span></div> : null; })()}
                     </div>
 
-                    <div>
+                    <div className="min-w-0 lg:col-span-2">
                       <label className="block text-xs font-bold text-[var(--color-text-sub)] mb-1">{t('board.dispatch.priority')}</label>
                       <select 
                         value={task.priority} 
@@ -366,7 +393,7 @@ export const PmDispatchModal: React.FC<Props> = ({ project, onClose, onSuccess }
                       </select>
                     </div>
 
-                    <div>
+                    <div className="min-w-0 lg:col-span-2">
                       <label className="block text-xs font-bold text-[var(--color-text-sub)] mb-1">{t('board.dispatch.estTime')}</label>
                       <input 
                         type="number" 
@@ -377,7 +404,7 @@ export const PmDispatchModal: React.FC<Props> = ({ project, onClose, onSuccess }
                       />
                     </div>
 
-                    <div className="col-span-2 md:col-span-2">
+                    <div className="min-w-0 lg:col-span-6">
                       <label className="block text-xs font-bold text-[var(--color-text-sub)] mb-1">{t('board.dispatch.startDate')}</label>
                       <input 
                         type="date" 
@@ -387,7 +414,7 @@ export const PmDispatchModal: React.FC<Props> = ({ project, onClose, onSuccess }
                       />
                     </div>
                     
-                    <div className="col-span-2 md:col-span-3">
+                    <div className="min-w-0 lg:col-span-6">
                       <label className="block text-xs font-bold text-[var(--color-text-sub)] mb-1">{t('board.dispatch.endDate')}</label>
                       <input 
                         type="date" 
@@ -435,7 +462,7 @@ export const PmDispatchModal: React.FC<Props> = ({ project, onClose, onSuccess }
           </div>
         </div>
 
-        <div className="p-4 border-t border-[var(--color-border)] bg-[var(--color-bg)] rounded-b-xl flex justify-end gap-2">
+        <div className="flex shrink-0 flex-col-reverse gap-2 border-t border-[var(--color-border)] bg-[var(--color-bg)] p-4 sm:flex-row sm:justify-end sm:rounded-b-2xl">
           <button onClick={onClose} className="px-4 py-2 border rounded-lg font-bold text-sm bg-[var(--color-surface)] hover:bg-gray-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]">
             {t('common.cancel')}
           </button>
@@ -443,7 +470,9 @@ export const PmDispatchModal: React.FC<Props> = ({ project, onClose, onSuccess }
             {project.status === 'SCHEDULE_REJECTED' ? t('board.dispatch.submitRetry') : t('board.dispatch.submitNew')}
           </button>
         </div>
-      </div>
+      </section>
     </div>
   );
+
+  return createPortal(modal, document.body);
 };

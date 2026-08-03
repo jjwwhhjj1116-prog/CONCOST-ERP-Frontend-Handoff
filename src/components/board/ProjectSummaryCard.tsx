@@ -1,7 +1,7 @@
 import React from 'react';
-import { Project, TaskCard } from '@/types/models';
+import { Project, ProjectExecutionUnitId, TaskCard } from '@/types/models';
 import { getProjectOverallProgress, getProjectDeliveryLifecycle, getProjectDeliveryBadge, getProjectBoardColumn } from '@/lib/selectors';
-import { Activity, AlertCircle, BarChart3, CalendarClock, CheckCircle, ClipboardCheck, Clock, PackageCheck, PencilLine, Play, User, UsersRound } from 'lucide-react';
+import { Activity, AlertCircle, BarChart3, CalendarClock, CheckCircle, ClipboardCheck, Clock, LayoutDashboard, PackageCheck, PencilLine, Play, User, UsersRound } from 'lucide-react';
 import { useProjectStore } from '@/store/projectStore';
 import { useAuthStore } from '@/store/authStore';
 import { Badge } from '@/components/ui/Badge';
@@ -9,6 +9,7 @@ import { getUserDisplayName, useTranslation } from '@/lib/localization';
 import { useTranslationStore } from '@/store/translationStore';
 import { ProjectWorkflowSummary, ProjectWorkflowTab } from '@/lib/projectWorkflow';
 import { ProjectWorkflowProgress } from '@/components/projects/ProjectWorkflowProgress';
+import { getProjectAssignment, getProjectStaffingMemberIds } from '@/lib/projectStaffing';
 
 interface Props {
   project: Project;
@@ -19,9 +20,10 @@ interface Props {
   onOperationClick?: (projectId: string, tab?: ProjectWorkflowTab) => void;
   workflow: ProjectWorkflowSummary;
   onProjectAction?: (project: Project, action: 'START' | 'DUE' | 'COMPLETE' | 'REVISION') => void;
+  assignmentUnitId?: ProjectExecutionUnitId | null;
 }
 
-export const ProjectSummaryCard: React.FC<Props> = ({ project, tasks, onClick, draggable, onDragStart, onOperationClick, onProjectAction, workflow }) => {
+export const ProjectSummaryCard: React.FC<Props> = ({ project, tasks, onClick, draggable, onDragStart, onOperationClick, onProjectAction, workflow, assignmentUnitId }) => {
   const { users, currentUser } = useAuthStore();
   const { postDeliveryWorkRequests, revisionRequests } = useProjectStore();
   const { settings } = useTranslationStore();
@@ -30,8 +32,9 @@ export const ProjectSummaryCard: React.FC<Props> = ({ project, tasks, onClick, d
   const progress = getProjectOverallProgress(project, tasks);
   const lifecycle = getProjectDeliveryLifecycle(project);
   const badgeText = getProjectDeliveryBadge(project);
-  const pmUser = users.find(u => u.id === project.pmId);
-  const projectMembers = Array.from(new Set(tasks.filter((task) => task.projectId === project.id && task.assigneeId && !task.isDeleted).map((task) => task.assigneeId!)))
+  const assignment = getProjectAssignment(project, assignmentUnitId);
+  const pmUser = users.find(u => u.id === (assignment?.pmId || project.pmId));
+  const projectMembers = getProjectStaffingMemberIds(project, tasks, assignmentUnitId)
     .map((id) => users.find((user) => user.id === id))
     .filter((user): user is NonNullable<typeof user> => Boolean(user));
   const memberTeams = Array.from(new Set(projectMembers.map((user) => user.teamName || user.subDepartmentName || user.departmentName).filter(Boolean)));
@@ -153,12 +156,13 @@ export const ProjectSummaryCard: React.FC<Props> = ({ project, tasks, onClick, d
         <WorkflowAction icon={<BarChart3 className="h-3.5 w-3.5" />} label={t('projectWorkflow.phase.PROFIT')} onClick={() => onOperationClick(project.id, 'PROFIT')} />
       </div>}
 
-      {onProjectAction && <div className="grid grid-cols-2 gap-1.5 border-t border-[var(--color-border)] pt-2">
-        {boardColumn === 'PRE_WORK' && <ProjectAction icon={<Play className="h-3.5 w-3.5" />} label="착수·인력배정" tone="bg-sky-50 text-sky-700 border-sky-200" onClick={() => onProjectAction(project, 'START')} />}
-        {boardColumn === 'IN_PROGRESS' && <><ProjectAction icon={<CalendarClock className="h-3.5 w-3.5" />} label="납품 예정" tone="bg-amber-50 text-amber-700 border-amber-200" onClick={() => onProjectAction(project, 'DUE')} /><ProjectAction icon={<PackageCheck className="h-3.5 w-3.5" />} label="납품 완료" tone="bg-emerald-50 text-emerald-700 border-emerald-200" onClick={() => onProjectAction(project, 'COMPLETE')} /></>}
-        {boardColumn === 'COMPLETED' && <ProjectAction icon={<PackageCheck className="h-3.5 w-3.5" />} label="납품 이력" tone="bg-emerald-50 text-emerald-700 border-emerald-200" onClick={() => onProjectAction(project, 'COMPLETE')} />}
-        {boardColumn === 'REVISION' && <ProjectAction icon={<PencilLine className="h-3.5 w-3.5" />} label="수정 등록" tone="bg-orange-50 text-orange-700 border-orange-200" onClick={() => onProjectAction(project, 'REVISION')} />}
-      </div>}
+      <div className="grid grid-cols-2 gap-1.5 border-t border-[var(--color-border)] pt-2">
+        <ProjectAction icon={<LayoutDashboard className="h-3.5 w-3.5" />} label={t('board.summary.openBoard')} tone="bg-white text-slate-700 border-slate-200" onClick={() => onClick(project.id)} />
+        {boardColumn === 'PRE_WORK' && onProjectAction && <ProjectAction icon={<Play className="h-3.5 w-3.5" />} label="착수·인력배정" tone="bg-sky-50 text-sky-700 border-sky-200" onClick={() => onProjectAction(project, 'START')} />}
+        {boardColumn === 'IN_PROGRESS' && onProjectAction && <><ProjectAction icon={<CalendarClock className="h-3.5 w-3.5" />} label="납품 예정" tone="bg-amber-50 text-amber-700 border-amber-200" onClick={() => onProjectAction(project, 'DUE')} /><ProjectAction icon={<PackageCheck className="h-3.5 w-3.5" />} label="납품 완료" tone="bg-emerald-50 text-emerald-700 border-emerald-200" onClick={() => onProjectAction(project, 'COMPLETE')} /></>}
+        {boardColumn === 'COMPLETED' && onProjectAction && <ProjectAction icon={<PackageCheck className="h-3.5 w-3.5" />} label="납품 이력" tone="bg-emerald-50 text-emerald-700 border-emerald-200" onClick={() => onProjectAction(project, 'COMPLETE')} />}
+        {boardColumn === 'REVISION' && onProjectAction && <ProjectAction icon={<PencilLine className="h-3.5 w-3.5" />} label="수정 등록" tone="bg-orange-50 text-orange-700 border-orange-200" onClick={() => onProjectAction(project, 'REVISION')} />}
+      </div>
     </article>
   );
 };

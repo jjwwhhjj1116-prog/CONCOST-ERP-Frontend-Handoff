@@ -11,14 +11,15 @@ import { ProjectPartBoard } from '@/components/board/ProjectPartBoard';
 import { ProjectEvaluationModal } from '@/components/evaluation/ProjectEvaluationModal';
 import { PostDeliveryWorkModal } from '@/components/delivery/PostDeliveryWorkModal';
 import { PmDispatchModal } from '@/components/board/PmDispatchModal';
+import { ProjectStaffingModal } from '@/components/board/ProjectStaffingModal';
 import { RevisionRequestModal } from '@/components/board/RevisionRequestModal';
 import { ApprovalReviewModal } from '@/components/board/ApprovalReviewModal';
 import { useApprovalStore } from '@/store/approvalStore';
 import { useAuditStore } from '@/store/auditStore';
-import { TaskStatus, Project, ApprovalRequest } from '@/types/models';
+import { TaskStatus, Project, ApprovalRequest, ProjectExecutionUnitId } from '@/types/models';
 import { DetailedLineStage, getProjectBoardColumn } from '@/lib/selectors';
 import { canViewProject, canViewTask, canEditProject } from '@/lib/permissions';
-import { ArrowLeft, ChevronRight, History, Wrench, Activity, AlertTriangle, CheckCircle2, Clock3, Layers3, FileText } from 'lucide-react';
+import { ArrowLeft, ChevronRight, History, Wrench, Activity, AlertTriangle, CheckCircle2, Clock3, Layers3, FileText, UserRoundCog } from 'lucide-react';
 import { Badge } from '@/components/ui/Badge';
 import { useTranslationStore } from '@/store/translationStore';
 import { useTranslation } from '@/lib/localization';
@@ -27,6 +28,7 @@ import { ProjectMilestoneModal } from '@/components/projects/ProjectMilestoneMod
 import { PROJECT_WORKFLOW_TABS, ProjectWorkflowTab } from '@/lib/projectWorkflow';
 import { useProjectWorkflowOverviewSync } from '@/hooks/useProjectWorkflow';
 import { getProjectBoardScope, getProjectBoardScopeLabel, matchesProjectBoardScope } from '@/lib/projectExecutionUnits';
+import { getProjectAssignment } from '@/lib/projectStaffing';
 
 export type ExtendedViewType = BoardViewType | 'PART' | 'HISTORY';
 
@@ -51,6 +53,7 @@ export default function ProjectBoardPage() {
   const [milestoneProject, setMilestoneProject] = useState<Project | null>(null);
   const [revisionProject, setRevisionProject] = useState<Project | null>(null);
   const [dispatchProject, setDispatchProject] = useState<Project | null>(null);
+  const [staffingProject, setStaffingProject] = useState<Project | null>(null);
   const [selectedApprovalRequest, setSelectedApprovalRequest] = useState<ApprovalRequest | null>(null);
   const [selectedMonth, setSelectedMonth] = useState<number | 'ALL'>('ALL');
   const [historyFilter, setHistoryFilter] = useState<'ALL' | 'APPROVAL' | 'COMPLETED' | 'AUDIT'>('ALL');
@@ -142,6 +145,9 @@ export default function ProjectBoardPage() {
   };
 
   const selectedProject = projects.find(p => p.id === selectedProjectId);
+  const assignmentUnitId: ProjectExecutionUnitId | null = projectScope?.kind === 'UNIT' ? projectScope.unitId : null;
+  const selectedAssignment = selectedProject ? getProjectAssignment(selectedProject, assignmentUnitId) : undefined;
+  const selectedStaffingReady = Boolean(selectedAssignment?.pmId && selectedAssignment.personnelIds?.length);
   const now = new Date();
   const projectStats = {
     total: accessibleProjects.filter((project) => !project.isDeleted && project.archiveStatus !== 'ARCHIVED').length,
@@ -161,16 +167,17 @@ export default function ProjectBoardPage() {
     if (!project) return;
 
     if (sourceColId === 'PRE_WORK' && targetColId === 'IN_PROGRESS') {
-      const isAuthorized = currentUser.role === 'SUPER_ADMIN' || currentUser.role === 'DEPARTMENT_MANAGER' || (currentUser.role === 'PM' && project.pmId === currentUser.id);
+      const assignment = getProjectAssignment(project, assignmentUnitId);
+      const isAuthorized = currentUser.role === 'SUPER_ADMIN' || currentUser.role === 'DEPARTMENT_MANAGER' || (currentUser.role === 'PM' && (assignment?.pmId || project.pmId) === currentUser.id);
       if (!isAuthorized) {
         alert(t('projects.noAuthAlert'));
         return;
       }
-      if (!project.pmId) {
-        alert(t('projects.pmRequiredAlert'));
+      if (!assignment?.pmId || !assignment.personnelIds?.length) {
+        setStaffingProject(project);
         return;
       }
-      setDispatchProject(project);
+      setDispatchProject({ ...project, pmId: assignment.pmId, departmentId: assignment.unitId });
     } else {
       if (!canEditProject(currentUser, project)) {
         alert(t('projects.noEditAuthAlert'));
@@ -186,17 +193,22 @@ export default function ProjectBoardPage() {
     }
   };
 
+  const openDispatchForProject = (project: Project) => {
+    const assignment = getProjectAssignment(project, assignmentUnitId);
+    if (!assignment?.pmId || !assignment.personnelIds?.length) {
+      setStaffingProject(project);
+      return;
+    }
+    setDispatchProject({ ...project, pmId: assignment.pmId, departmentId: assignment.unitId });
+  };
+
   const handleProjectAction = (project: Project, action: 'START' | 'DUE' | 'COMPLETE' | 'REVISION') => {
     if (!canEditProject(currentUser, project)) {
       alert(t('projects.noEditAuthAlert'));
       return;
     }
     if (action === 'START') {
-      if (!project.pmId) {
-        alert(t('projects.pmRequiredAlert'));
-        return;
-      }
-      setDispatchProject(project);
+      setStaffingProject(project);
     } else if (action === 'DUE') {
       setMilestoneProject(project);
     } else if (action === 'COMPLETE') {
@@ -300,6 +312,15 @@ export default function ProjectBoardPage() {
               {t('projects.btnPmEval')}
             </button>
           )}
+          {selectedProject && canEditProject(currentUser, selectedProject) && (
+            <button
+              onClick={() => setStaffingProject(selectedProject)}
+              className="flex min-h-10 items-center gap-1.5 rounded-md border border-sky-200 bg-sky-50 px-3 py-1.5 text-sm font-bold text-sky-700 transition hover:bg-sky-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]"
+            >
+              <UserRoundCog className="h-4 w-4" />
+              {t('board.staffing.editButton')}
+            </button>
+          )}
 
           <select
             className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] border border-[var(--color-border)] rounded-md px-3 py-1.5 bg-[var(--color-surface)] text-sm font-medium text-[var(--color-text-main)] shadow-sm outline-none focus:border-[var(--color-primary)] transition-colors"
@@ -365,8 +386,10 @@ export default function ProjectBoardPage() {
             tasks={projectTasks}
             users={users}
             onDispatchClick={() => {
-              if (selectedProject) setDispatchProject(selectedProject);
+              if (selectedProject) openDispatchForProject(selectedProject);
             }}
+            staffingReady={selectedStaffingReady}
+            onStaffingClick={() => { if (selectedProject) setStaffingProject(selectedProject); }}
           />
         ) : viewType === 'HISTORY' ? (
           <div className="bg-[var(--color-surface)] rounded-xl shadow-sm border p-6 min-h-[400px]">
@@ -534,6 +557,7 @@ export default function ProjectBoardPage() {
           onOperationClick={openWorkflow}
           onProjectAction={handleProjectAction}
           onProjectMove={handleProjectMove}
+          assignmentUnitId={assignmentUnitId}
         />
       )}
 
@@ -549,6 +573,19 @@ export default function ProjectBoardPage() {
           project={dispatchProject}
           onClose={() => setDispatchProject(null)}
           onSuccess={() => setDispatchProject(null)}
+        />
+      )}
+
+      {staffingProject && (
+        <ProjectStaffingModal
+          project={staffingProject}
+          initialUnitId={assignmentUnitId}
+          onClose={() => setStaffingProject(null)}
+          onSaved={() => {
+            setSelectedProjectId(staffingProject.id);
+            setViewType('PART');
+            setStaffingProject(null);
+          }}
         />
       )}
 

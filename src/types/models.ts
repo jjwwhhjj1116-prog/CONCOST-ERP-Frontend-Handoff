@@ -112,6 +112,10 @@ export interface ProjectExecutionUnitAssignment {
   role: ProjectExecutionUnitAssignmentRole;
   status: ProjectExecutionUnitAssignmentStatus;
   scope?: string | null;
+  pmId?: UserId | null;
+  personnelIds?: UserId[];
+  staffingUpdatedAt?: string | null;
+  staffingUpdatedBy?: UserId | null;
   assignedAt: string;
   assignedBy: UserId;
 }

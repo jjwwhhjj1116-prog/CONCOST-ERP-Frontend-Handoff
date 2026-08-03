@@ -11,7 +11,7 @@ import { useAuditStore } from '@/store/auditStore';
 import { useScheduleStore } from '@/store/scheduleStore';
 import { useTranslationStore } from '@/store/translationStore';
 import { useTranslation } from '@/lib/localization';
-import { CheckCircle, XCircle, AlertCircle, AlertTriangle, Calendar } from 'lucide-react';
+import { CheckCircle, XCircle, AlertCircle, AlertTriangle, Calendar, UserRoundCog } from 'lucide-react';
 
 interface ProjectPartBoardProps {
   projectId: string;
@@ -19,9 +19,11 @@ interface ProjectPartBoardProps {
   users: PersonnelCard[];
   onTaskClick?: (taskId: string) => void;
   onDispatchClick?: () => void;
+  staffingReady?: boolean;
+  onStaffingClick?: () => void;
 }
 
-export const ProjectPartBoard: React.FC<ProjectPartBoardProps> = ({ projectId, tasks, users, onDispatchClick }) => {
+export const ProjectPartBoard: React.FC<ProjectPartBoardProps> = ({ projectId, tasks, users, onDispatchClick, staffingReady = false, onStaffingClick }) => {
   const [selectedTask, setSelectedTask] = React.useState<TaskCard | null>(null);
   const { currentUser } = useAuthStore();
   const project = useProjectStore(state => state.projects.find(p => p.id === projectId));
@@ -40,14 +42,15 @@ export const ProjectPartBoard: React.FC<ProjectPartBoardProps> = ({ projectId, t
     const isAuthorized = currentUser?.role === 'SUPER_ADMIN' || currentUser?.role === 'DEPARTMENT_MANAGER' || (currentUser?.role === 'PM' && project?.pmId === currentUser?.id);
 
     return (
-      <div className="flex flex-col items-center justify-center h-64 text-[var(--color-text-sub)] bg-[var(--color-surface)] rounded-lg border border-dashed gap-4">
-        <p>{t('board.part.noPart')}</p>
-        {isAuthorized && onDispatchClick && (
+      <div className="flex min-h-64 flex-col items-center justify-center gap-4 rounded-xl border border-dashed border-[var(--color-border)] bg-[var(--color-surface)] p-6 text-center text-[var(--color-text-sub)]">
+        <div className="grid h-12 w-12 place-items-center rounded-2xl bg-orange-50 text-[var(--color-primary)]"><UserRoundCog className="h-6 w-6" /></div>
+        <div><p className="font-black text-[var(--color-text-main)]">{staffingReady ? t('board.part.noPart') : t('board.part.staffingFirst')}</p><p className="mt-1 text-xs">{staffingReady ? t('board.part.dispatchHelp') : t('board.part.staffingHelp')}</p></div>
+        {isAuthorized && (staffingReady ? onDispatchClick : onStaffingClick) && (
           <button 
-            onClick={onDispatchClick}
-            className="px-4 py-2 bg-[var(--color-primary)] text-white font-bold rounded-md hover:bg-opacity-90 transition-colors shadow-sm"
+            onClick={staffingReady ? onDispatchClick : onStaffingClick}
+            className="min-h-11 rounded-lg bg-[var(--color-primary)] px-5 py-2 text-sm font-black text-white shadow-lg shadow-orange-500/15 transition hover:brightness-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-300"
           >
-            {t('board.part.dispatchBtn')}
+            {staffingReady ? t('board.part.dispatchBtn') : t('board.part.staffingBtn')}
           </button>
         )}
       </div>

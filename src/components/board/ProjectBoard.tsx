@@ -1,5 +1,5 @@
 import React from 'react';
-import { Project, TaskCard, RevisionRequest } from '@/types/models';
+import { Project, ProjectExecutionUnitId, TaskCard, RevisionRequest } from '@/types/models';
 import { ProjectSummaryCard } from './ProjectSummaryCard';
 import { GroupByOption } from './Board';
 import { getDeliveryUrgencyBucket, getProjectBoardColumn } from '@/lib/selectors';
@@ -18,9 +18,10 @@ interface Props {
   onProjectMove?: (projectId: string, sourceColId: string, targetColId: string) => void;
   onOperationClick?: (projectId: string, tab?: ProjectWorkflowTab) => void;
   onProjectAction?: (project: Project, action: 'START' | 'DUE' | 'COMPLETE' | 'REVISION') => void;
+  assignmentUnitId?: ProjectExecutionUnitId | null;
 }
 
-export const ProjectBoard: React.FC<Props> = ({ projects, tasks, revisionRequests, groupBy, onProjectClick, onProjectMove, onOperationClick, onProjectAction }) => {
+export const ProjectBoard: React.FC<Props> = ({ projects, tasks, revisionRequests, groupBy, onProjectClick, onProjectMove, onOperationClick, onProjectAction, assignmentUnitId }) => {
   const { settings } = useTranslationStore();
   const t = useTranslation(settings.uiLanguage);
   const workflowByProject = useProjectWorkflowIndex(projects, tasks);
@@ -103,6 +104,7 @@ export const ProjectBoard: React.FC<Props> = ({ projects, tasks, revisionRequest
                   onClick={onProjectClick} 
                   onOperationClick={onOperationClick}
                   onProjectAction={onProjectAction}
+                  assignmentUnitId={assignmentUnitId}
                   draggable={true}
                   onDragStart={(e) => {
                     e.dataTransfer.setData('projectId', project.id);
