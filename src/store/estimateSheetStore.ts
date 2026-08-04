@@ -3,6 +3,7 @@ import { persist } from 'zustand/middleware';
 import { estimateSheetApi, EstimateSheetApiError } from '@/lib/estimateSheetApi';
 import { buildEstimatePipelineDbInput } from '@/lib/estimatePipelineDatabase';
 import { ESTIMATE_TEMPLATE_SPECS } from '@/lib/estimateSheetTemplates';
+import { applyEstimateProfileToState, buildEstimateRequestProfile } from '@/lib/estimateRequestProfile';
 import { useEstimateDatabaseStore } from '@/store/estimateDatabaseStore';
 import { useEstimateRequestStore } from '@/store/estimateRequestStore';
 import {
@@ -22,6 +23,7 @@ interface EstimateSheetStore {
   error: string | null;
   sync: (requestId: string) => Promise<EstimateSheet | null>;
   createSheet: (requestId: string, type: EstimateTemplateType, state: EstimateSheetState, actorId: string) => Promise<EstimateSheet>;
+  syncProfile: (requestId: string, actorId: string) => Promise<EstimateSheet | null>;
   duplicateDraftVersion: (requestId: string, actorId: string) => Promise<EstimateSheet>;
   deleteDraft: (requestId: string, actorId: string) => Promise<void>;
   saveVersion: (requestId: string, state: EstimateSheetState, actorId: string) => Promise<EstimateSheet>;
@@ -102,8 +104,10 @@ export const useEstimateSheetStore = create<EstimateSheetStore>()(persist((set, 
   createSheet: async (requestId, type, state, actorId) => {
     assertRequestIsActive(requestId);
     const spec = ESTIMATE_TEMPLATE_SPECS[type];
+    const request = useEstimateRequestStore.getState().requests.find((item) => item.id === requestId);
+    const hydratedState = request ? applyEstimateProfileToState(state, buildEstimateRequestProfile(request)) : state;
     if (get().persistenceMode === 'SERVER') {
-      const sheet = await estimateSheetApi.create(requestId, type, spec.sourceHash, state);
+      const sheet = await estimateSheetApi.create(requestId, type, spec.sourceHash, hydratedState);
       set((current) => ({ sheets: replace(current.sheets, requestId, sheet) }));
       await useEstimateRequestStore.getState().sync();
       return sheet;
@@ -112,7 +116,7 @@ export const useEstimateSheetStore = create<EstimateSheetStore>()(persist((set, 
     const sheetId = id('estimate-sheet');
     const version: EstimateSheetVersion = {
       id: id('estimate-version'), estimateSheetId: sheetId, version: 1, templateVersion: 1,
-      templateHash: spec.sourceHash, state, createdBy: actorId, createdAt: now,
+      templateHash: spec.sourceHash, state: hydratedState, createdBy: actorId, createdAt: now,
     };
     const sheet: EstimateSheet = {
       id: sheetId, estimateRequestId: requestId, templateId: `legacy-${type}`, templateType: type,
@@ -128,6 +132,17 @@ export const useEstimateSheetStore = create<EstimateSheetStore>()(persist((set, 
     }, actorId);
     await upsertLocalPipelineRecord(requestId, sheet, actorId);
     return sheet;
+  },
+
+  syncProfile: async (requestId, actorId) => {
+    const current = get().sheets[requestId];
+    const request = useEstimateRequestStore.getState().requests.find((item) => item.id === requestId);
+    if (!current || !request || current.status !== 'DRAFT') return current || null;
+    const version = current.versions.find((item) => item.version === current.currentVersion);
+    if (!version) return current;
+    const nextState = applyEstimateProfileToState(version.state, buildEstimateRequestProfile(request));
+    if (JSON.stringify(nextState) === JSON.stringify(version.state)) return current;
+    return get().saveVersion(requestId, nextState, actorId);
   },
 
   duplicateDraftVersion: async (requestId, actorId) => {
@@ -245,27 +260,15 @@ export const useEstimateSheetStore = create<EstimateSheetStore>()(persist((set, 
       await useEstimateRequestStore.getState().sync();
       return sheet;
     }
-    const now = timestamp();
-    const sheet = {
-      ...current,
-      status: 'SENT' as const,
-      updatedBy: actorId,
-      updatedAt: now,
-      submissions: (current.submissions || []).map((item) => item.id === submission.id
-        ? { ...item, status: 'SENT' as const, sentAt: now, sentBy: actorId, updatedAt: now }
-        : item),
-    };
-    set((value) => ({ sheets: replace(value.sheets, requestId, sheet) }));
-    await useEstimateRequestStore.getState().changeStatus(requestId, 'WAITING', actorId);
-    await upsertLocalPipelineRecord(requestId, sheet, actorId);
-    return sheet;
+    void actorId;
+    throw new Error('실제 메일 Provider 전송 확인이 필요합니다. 전자메일 Draft에서 발송해 주세요.');
   },
 
   startRevision: async (requestId, actorId) => {
     assertRequestIsActive(requestId);
     const current = get().sheets[requestId];
     if (!current) throw new Error('Estimate sheet not found');
-    if (current.status !== 'SENT') throw new Error('A new version can only start from a sent estimate sheet');
+    if (!['SUBMITTED', 'SENT'].includes(current.status)) throw new Error('A new version can only start from a completed estimate sheet');
     if (get().persistenceMode === 'SERVER') {
       const sheet = await estimateSheetApi.createRevision(requestId, current.currentVersion);
       set((value) => ({ sheets: replace(value.sheets, requestId, sheet) }));

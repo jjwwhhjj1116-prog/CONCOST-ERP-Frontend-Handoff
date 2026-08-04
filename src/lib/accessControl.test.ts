@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import {
+  evaluateEstimateAccess,
   evaluateFinanceAccess,
   hasActiveManagementSupportMembership,
   resolveAccessGrade,
@@ -96,4 +97,13 @@ test('a finance capability never makes an ineligible employee eligible by itself
     ).allowed,
     false,
   );
+});
+
+test('estimate access is limited to approved grades in demo and backend capability in server modes', () => {
+  assert.equal(evaluateEstimateAccess(person({ role: 'SYSTEM_ADMIN' }), 'DEMO_LOCAL').allowed, true);
+  assert.equal(evaluateEstimateAccess(person({ role: 'WORKER', accessGrade: 'GRADE_1' }), 'DEMO_LOCAL').allowed, true);
+  assert.equal(evaluateEstimateAccess(person({ role: 'PM', accessGrade: 'GRADE_3' }), 'DEMO_LOCAL').allowed, false);
+  assert.equal(evaluateEstimateAccess(person({ role: 'DEPARTMENT_MANAGER', accessGrade: 'GRADE_2' }), 'DEMO_LOCAL').allowed, false);
+  assert.equal(evaluateEstimateAccess(person({ role: 'SYSTEM_ADMIN' }), 'PRODUCTION_SERVER').allowed, false);
+  assert.equal(evaluateEstimateAccess(person({ role: 'WORKER', capabilities: ['FINANCE_ACCESS'] }), 'PRODUCTION_SERVER').allowed, true);
 });

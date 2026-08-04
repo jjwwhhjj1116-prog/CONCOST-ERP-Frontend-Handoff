@@ -68,7 +68,7 @@ const requestDraft = (suffix: string) => ({
   estimateType: '개산견적',
 });
 
-const createSentRequest = async (suffix: string): Promise<EstimateRequest> => {
+const createCompletedRequest = async (suffix: string): Promise<EstimateRequest> => {
   const request = await useEstimateRequestStore.getState().createRequest(requestDraft(suffix), manager.id);
   const state = createEstimateSheetState('개산견적');
   state.cells['5:2'] = { value: 'CON-COST' };
@@ -77,7 +77,6 @@ const createSentRequest = async (suffix: string): Promise<EstimateRequest> => {
   state.cells['10:2'] = { value: 100000 };
   await useEstimateSheetStore.getState().createSheet(request.id, '개산견적', state, manager.id);
   await useEstimateSheetStore.getState().submitSheet(request.id, manager.id, 'demo-973dfe463ec8@example.invalid', 'EMAIL');
-  await useEstimateSheetStore.getState().sendSubmission(request.id, manager.id);
   return useEstimateRequestStore.getState().requests.find((item) => item.id === request.id)!;
 };
 
@@ -101,14 +100,14 @@ after(() => {
 beforeEach(resetStores);
 
 test('A: LOST keeps estimate history and never creates a project', { concurrency: false }, async () => {
-  const request = await createSentRequest('LOST');
+  const request = await createCompletedRequest('LOST');
   const result = await useEstimateRequestStore.getState().recordDecision(request.id, { decision: 'LOST', reason: 'Budget rejected' }, manager.id);
   assert.equal(result.request.status, 'LOST');
   assert.equal(result.project, null);
   assert.equal(result.intake, null);
   assert.equal(useProjectStore.getState().projects.length, 0);
   assert.ok(result.request.histories.some((entry) => entry.action === 'COMMERCIAL_DECISION_RECORDED'));
-  assert.equal(useEstimateSheetStore.getState().sheets[request.id].submissions[0].status, 'SENT');
+  assert.equal(useEstimateSheetStore.getState().sheets[request.id].submissions[0].status, 'SUBMITTED');
 });
 
 test('B: CANCELLED requires a reason and blocks estimate/project generation', { concurrency: false }, async () => {
@@ -122,8 +121,8 @@ test('B: CANCELLED requires a reason and blocks estimate/project generation', { 
 test('C/E/F/H: WON follows one canonical lineage through archive with guarded failures', { concurrency: false }, async () => {
   const request = await useEstimateRequestStore.getState().createRequest(requestDraft('WON'), manager.id);
   await useEstimateRequestStore.getState().addAttachments(request.id, 'drawing', [new File(['drawing'], 'drawing.pdf', { type: 'application/pdf' })], manager.id);
-  const sent = await createSentRequestFromExisting(request);
-  const won = await useEstimateRequestStore.getState().recordDecision(sent.id, {
+  const completed = await createCompletedRequestFromExisting(request);
+  const won = await useEstimateRequestStore.getState().recordDecision(completed.id, {
     decision: 'WON', agreedAmount: '100000', agreedScope: 'Structure and BIM', agreedSchedule: '2026-07-25 to 2026-08-20', startCondition: 'Manager acceptance',
   }, manager.id);
   assert.ok(won.request.projectId);
@@ -133,7 +132,7 @@ test('C/E/F/H: WON follows one canonical lineage through archive with guarded fa
   const awardedProject = useProjectStore.getState().projects.find((item) => item.id === projectId)!;
   assert.equal(matchesProjectBoardScope(awardedProject, getProjectBoardScope('TECHNICAL', null)), false);
   const projectCount = useProjectStore.getState().projects.length;
-  const repeated = await useEstimateRequestStore.getState().recordDecision(sent.id, { decision: 'WON' }, manager.id);
+  const repeated = await useEstimateRequestStore.getState().recordDecision(completed.id, { decision: 'WON' }, manager.id);
   assert.equal(repeated.idempotent, true);
   assert.equal(repeated.project?.id, projectId);
   assert.equal(repeated.intake?.id, won.intake?.id);
@@ -237,7 +236,7 @@ test('C/E/F/H: WON follows one canonical lineage through archive with guarded fa
   assert.ok(useAuditStore.getState().logs.length >= 10);
 });
 
-const createSentRequestFromExisting = async (request: EstimateRequest) => {
+const createCompletedRequestFromExisting = async (request: EstimateRequest) => {
   const state = createEstimateSheetState('개산견적');
   state.cells['5:2'] = { value: request.company || '' };
   state.cells['6:2'] = { value: request.projectName };
@@ -245,12 +244,11 @@ const createSentRequestFromExisting = async (request: EstimateRequest) => {
   state.cells['10:2'] = { value: 100000 };
   await useEstimateSheetStore.getState().createSheet(request.id, '개산견적', state, manager.id);
   await useEstimateSheetStore.getState().submitSheet(request.id, manager.id, request.email || undefined, 'EMAIL');
-  await useEstimateSheetStore.getState().sendSubmission(request.id, manager.id);
   return useEstimateRequestStore.getState().requests.find((item) => item.id === request.id)!;
 };
 
 test('D: estimate revision and resend preserve previous versions, formulas and submissions', { concurrency: false }, async () => {
-  const request = await createSentRequest('REVISION');
+  const request = await createCompletedRequest('REVISION');
   const first = useEstimateSheetStore.getState().sheets[request.id];
   const firstHash = first.submissions[0].documentHash;
   const revised = await useEstimateSheetStore.getState().startRevision(request.id, manager.id);
@@ -258,12 +256,12 @@ test('D: estimate revision and resend preserve previous versions, formulas and s
   nextState.cells['10:2'] = { value: 120000 };
   await useEstimateSheetStore.getState().saveVersion(request.id, nextState, manager.id);
   await useEstimateSheetStore.getState().submitSheet(request.id, manager.id, 'demo-973dfe463ec8@example.invalid', 'EMAIL');
-  const resent = await useEstimateSheetStore.getState().sendSubmission(request.id, manager.id);
-  assert.equal(resent.submissions.length, 2);
-  assert.equal(resent.versions.length, 3);
-  assert.equal(resent.submissions[1].documentHash, firstHash);
-  assert.notEqual(resent.submissions[0].documentHash, firstHash);
-  assert.equal(resent.versions.at(-1)?.state.cells['10:2']?.value, 100000);
+  const completed = useEstimateSheetStore.getState().sheets[request.id];
+  assert.equal(completed.submissions.length, 2);
+  assert.equal(completed.versions.length, 3);
+  assert.equal(completed.submissions[1].documentHash, firstHash);
+  assert.notEqual(completed.submissions[0].documentHash, firstHash);
+  assert.equal(completed.versions.at(-1)?.state.cells['10:2']?.value, 100000);
 });
 
 test('D2: convenience actions duplicate editable records and guard linked history', { concurrency: false }, async () => {

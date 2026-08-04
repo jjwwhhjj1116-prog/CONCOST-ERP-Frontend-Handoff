@@ -13,9 +13,37 @@ export type AccessDecision = {
     | 'ADMIN'
     | 'GRADE_1'
     | 'ACTIVE_MANAGEMENT_SUPPORT_MEMBERSHIP'
+    | 'FINANCE_ACCESS'
     | 'BACKEND_CAPABILITY_REQUIRED'
     | 'NOT_ELIGIBLE';
 };
+
+export function evaluateEstimateAccess(
+  user: Pick<PersonnelCard, 'accessGrade' | 'role' | 'organizationRank' | 'capabilities'>,
+  mode: RuntimeExecutionMode = getRuntimeExecutionMode(),
+): AccessDecision {
+  const grade = resolveAccessGrade(user);
+  const serverCapability = user.capabilities?.includes(FINANCE_CAPABILITY) ?? false;
+  const frontendEligible = grade === 'ADMIN' || grade === 'GRADE_1' || serverCapability;
+  const backendCapabilityRequired = mode !== 'DEMO_LOCAL';
+  const allowed = frontendEligible && (!backendCapabilityRequired || serverCapability);
+
+  return {
+    allowed,
+    frontendEligible,
+    backendCapabilityRequired,
+    grade,
+    reason: !frontendEligible
+      ? 'NOT_ELIGIBLE'
+      : backendCapabilityRequired && !serverCapability
+        ? 'BACKEND_CAPABILITY_REQUIRED'
+        : grade === 'ADMIN'
+          ? 'ADMIN'
+          : grade === 'GRADE_1'
+            ? 'GRADE_1'
+            : 'FINANCE_ACCESS',
+  };
+}
 
 export function resolveAccessGrade(
   user: Pick<PersonnelCard, 'accessGrade' | 'role' | 'organizationRank'>,

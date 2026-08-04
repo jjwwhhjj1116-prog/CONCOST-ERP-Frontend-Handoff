@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Clock3 } from 'lucide-react';
+import { Clock3, Plus, Trash2 } from 'lucide-react';
 import {
   inputSuggestionApi,
   isSuggestionFieldAllowed,
@@ -34,6 +34,7 @@ export function InputHistoryInput({
     items: InputSuggestion[];
   }>({ companyId: 'CON_COST', items: [] });
   const [activeIndex, setActiveIndex] = React.useState(-1);
+  const [error, setError] = React.useState('');
   const lastRecorded = React.useRef('');
   const allowed = isSuggestionFieldAllowed(fieldKey);
   const selectedCompanyId = useUiStore((state) => state.brandWorkspace);
@@ -54,7 +55,7 @@ export function InputHistoryInput({
             setActiveIndex(-1);
           }
         });
-    }, 180);
+    }, 280);
     return () => {
       controller.abort();
       window.clearTimeout(timer);
@@ -65,13 +66,30 @@ export function InputHistoryInput({
     const normalized = candidate.trim().replace(/\s+/g, ' ');
     if (!allowed || normalized.length < 2 || normalized === lastRecorded.current) return;
     lastRecorded.current = normalized;
-    void inputSuggestionApi.record(selectedCompanyId, moduleKey, fieldKey, normalized).catch(() => undefined);
+    void inputSuggestionApi.record(selectedCompanyId, moduleKey, fieldKey, normalized)
+      .then(() => setError(''))
+      .catch(() => setError('기억값을 서버에 저장하지 못했습니다.'));
   }, [allowed, fieldKey, moduleKey, selectedCompanyId]);
 
   const choose = (candidate: string) => {
     onChange(candidate);
     recordValue(candidate);
     setOpen(false);
+  };
+
+  const addCurrent = () => {
+    recordValue(value);
+    setOpen(false);
+  };
+
+  const remove = async (item: InputSuggestion) => {
+    try {
+      await inputSuggestionApi.remove(selectedCompanyId, item.id);
+      setResult((current) => ({ ...current, items: current.items.filter((candidate) => candidate.id !== item.id) }));
+      setError('');
+    } catch {
+      setError('이 기억값을 삭제할 권한이 없거나 서버가 응답하지 않았습니다.');
+    }
   };
 
   return (
@@ -93,7 +111,10 @@ export function InputHistoryInput({
           onBlur?.(event);
         }}
         onKeyDown={(event) => {
-          if (event.key === 'ArrowDown' && items.length) {
+          if (event.key === 'Enter' && !open) {
+            event.preventDefault();
+            setOpen(true);
+          } else if (event.key === 'ArrowDown' && items.length) {
             event.preventDefault();
             setOpen(true);
             setActiveIndex((current) => (current + 1) % items.length);
@@ -116,36 +137,24 @@ export function InputHistoryInput({
         aria-activedescendant={allowed && activeIndex >= 0 ? `${listId}-${activeIndex}` : undefined}
         className={className}
       />
-      {allowed && open && items.length > 0 && (
-        <ul
+      {error && <p role="alert" className="mt-1 text-xs font-semibold text-red-600">{error}</p>}
+      {allowed && open && (
+        <div
           id={listId}
-          role="listbox"
           className="absolute inset-x-0 top-full z-50 mt-1 max-h-56 overflow-auto border border-[var(--color-border)] bg-[var(--color-surface)] py-1 shadow-[0_12px_30px_rgba(15,23,42,.16)]"
         >
-          {items.map((item, index) => (
-            <li
-              id={`${listId}-${index}`}
-              key={item.id}
-              role="option"
-              aria-selected={index === activeIndex}
-              onMouseDown={(event) => {
-                event.preventDefault();
-                choose(item.value);
-              }}
-              className={`flex min-h-10 cursor-pointer items-center justify-between gap-3 px-3 text-sm ${
-                index === activeIndex
-                  ? 'bg-orange-50 font-bold text-orange-900'
-                  : 'text-[var(--color-text-main)] hover:bg-[var(--color-bg)]'
-              }`}
-            >
-              <span className="truncate">{item.value}</span>
-              <span className="flex shrink-0 items-center gap-1 text-[10px] text-[var(--color-text-sub)]">
-                <Clock3 className="h-3 w-3" />
-                {item.userUsageCount || item.usageCount}
-              </span>
-            </li>
-          ))}
-        </ul>
+          <div role="listbox">
+            {items.map((item, index) => (
+              <div id={`${listId}-${index}`} key={item.id} role="option" aria-selected={index === activeIndex} className={`flex min-h-10 items-center gap-2 px-2 text-sm ${index === activeIndex ? 'bg-orange-50 font-bold text-orange-900' : 'text-[var(--color-text-main)] hover:bg-[var(--color-bg)]'}`}>
+                <button type="button" onMouseDown={(event) => { event.preventDefault(); choose(item.value); }} className="min-w-0 flex-1 truncate px-1 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]">{item.value}</button>
+                <span title={`최근 ${new Date(item.lastUsedAt).toLocaleDateString()} · 사용 ${item.userUsageCount || item.usageCount}회`} className="flex shrink-0 items-center gap-1 text-[10px] text-[var(--color-text-sub)]"><Clock3 className="h-3 w-3" />{item.userUsageCount || item.usageCount}</span>
+                <button type="button" title="기억값 삭제" onMouseDown={(event) => event.preventDefault()} onClick={() => void remove(item)} className="grid size-7 place-items-center text-red-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400"><Trash2 className="size-3.5" /></button>
+              </div>
+            ))}
+          </div>
+          {value.trim().length >= 2 && !items.some((item) => item.value.toLocaleLowerCase() === value.trim().toLocaleLowerCase()) && <button type="button" onMouseDown={(event) => event.preventDefault()} onClick={addCurrent} className="flex min-h-9 w-full items-center gap-2 border-t px-3 text-left text-xs font-bold text-[var(--color-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--color-primary)]"><Plus className="size-3.5" />현재 값 기억하기</button>}
+          {!items.length && value.trim().length < 2 && <p className="px-3 py-2 text-xs text-[var(--color-text-sub)]">두 글자 이상 입력하거나 Enter를 눌러 기억값을 검색하세요.</p>}
+        </div>
       )}
     </div>
   );

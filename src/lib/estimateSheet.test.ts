@@ -33,6 +33,19 @@ test('evaluates the legacy Korean amount and won concatenation', () => {
   assert.equal(displayEstimateCell(state, 10, 2), '일금일만이천삼백사십오원정 (₩12,345)');
 });
 
+test('sanitizes legacy company identity data before creating runtime sheet state', () => {
+  const forbiddenValues = [
+    ['현', '동', '명'].join(' '),
+    ['백제', '고분로'].join(''),
+    ['2203', '1463'].join('-'),
+    ['2203', '1464'].join('-'),
+  ];
+  for (const type of ESTIMATE_TEMPLATE_TYPES) {
+    const serialized = JSON.stringify(createEstimateSheetState(type));
+    for (const forbidden of forbiddenValues) assert.ok(!serialized.includes(forbidden));
+  }
+});
+
 for (const type of ESTIMATE_TEMPLATE_TYPES) {
   test(`round-trips ${type} workbook semantics`, async () => {
     const state = createEstimateSheetState(type);

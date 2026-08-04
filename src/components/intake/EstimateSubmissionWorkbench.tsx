@@ -21,6 +21,7 @@ import {
   EstimateSubmissionListItem,
   EstimateTemplateType,
 } from '@/types/models';
+import { evaluateEstimateAccess } from '@/lib/accessControl';
 
 const STATUS_OPTIONS: Array<EstimateManagementStatus | 'ALL'> = ['ALL', 'DRAFT', 'SUBMITTED', 'SENT'];
 
@@ -63,7 +64,7 @@ export function EstimateSubmissionWorkbench() {
       departmentId: request?.departmentId || '',
       requestStatus: request?.status || 'ESTIMATE_DRAFTING',
       templateType: sheet.templateType,
-      decisionReady: submission.status === 'SENT',
+      decisionReady: ['SUBMITTED', 'SENT'].includes(submission.status),
     }));
     if (submissions.length || sheet.status !== 'DRAFT') return submissions;
 
@@ -151,7 +152,7 @@ export function EstimateSubmissionWorkbench() {
   ];
 
   if (!currentUser) return <p className="p-8 text-center">{t('header.loginRequired')}</p>;
-  if (!['PM', 'DEPARTMENT_MANAGER', 'SUPER_ADMIN', 'SYSTEM_ADMIN'].includes(currentUser.role)) {
+  if (!evaluateEstimateAccess(currentUser).allowed) {
     return <p className="p-8 text-center font-semibold text-[var(--color-danger)]">{t('estimateSubmission.permissionDenied')}</p>;
   }
 
@@ -198,7 +199,7 @@ export function EstimateSubmissionWorkbench() {
                 <Link href={`/projects/intake?requestId=${encodeURIComponent(row.estimateRequestId)}`} className="inline-flex items-center gap-1 border px-2 py-1.5 font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]">{t('estimateSubmission.sourceRequest')}<ExternalLink className="size-3" /></Link>
                 <Link href={`/projects/intake/estimate?requestId=${encodeURIComponent(row.estimateRequestId)}&version=${row.version}`} className="inline-flex items-center gap-1 border px-2 py-1.5 font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]"><Pencil className="size-3" />수정</Link>
                 {row.status === 'DRAFT' && <button type="button" disabled={busyRequestId === row.estimateRequestId} onClick={() => void runAction(row.estimateRequestId, async () => { await duplicateDraftVersion(row.estimateRequestId, currentUser.id); }, '견적서 초안 버전을 복제했습니다.', true)} className="inline-flex items-center gap-1 border px-2 py-1.5 font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] disabled:opacity-50"><Copy className="size-3" />복제</button>}
-                {row.status === 'SENT' && <button type="button" disabled={busyRequestId === row.estimateRequestId} onClick={() => void runAction(row.estimateRequestId, async () => { await startRevision(row.estimateRequestId, currentUser.id); }, '발행본을 보존하고 정정본 초안을 만들었습니다.', true)} className="inline-flex items-center gap-1 border px-2 py-1.5 font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] disabled:opacity-50"><Copy className="size-3" />정정본</button>}
+                {['SUBMITTED', 'SENT'].includes(row.status) && <button type="button" disabled={busyRequestId === row.estimateRequestId} onClick={() => void runAction(row.estimateRequestId, async () => { await startRevision(row.estimateRequestId, currentUser.id); }, '작성완료본을 보존하고 새 수정본 초안을 만들었습니다.', true)} className="inline-flex items-center gap-1 border px-2 py-1.5 font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] disabled:opacity-50"><Copy className="size-3" />수정본</button>}
                 {row.status === 'DRAFT' && <button type="button" disabled={busyRequestId === row.estimateRequestId} onClick={() => { if (window.confirm(`'${row.projectName}' 견적서 초안을 삭제할까요?`)) void runAction(row.estimateRequestId, () => deleteDraft(row.estimateRequestId, currentUser.id), '견적서 초안을 삭제했습니다.'); }} className="inline-flex items-center gap-1 border border-red-200 px-2 py-1.5 font-medium text-red-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 disabled:opacity-50"><Trash2 className="size-3" />삭제</button>}
               </div></td>
             </tr>

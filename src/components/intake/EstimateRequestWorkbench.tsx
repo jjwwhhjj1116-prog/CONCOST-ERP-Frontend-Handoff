@@ -28,7 +28,10 @@ import {
 import { useTranslation } from '@/lib/localization';
 import { projectBoardHref } from '@/lib/projectExecutionUnits';
 import { useEstimateRequestStore } from '@/store/estimateRequestStore';
+import { useEstimateSheetStore } from '@/store/estimateSheetStore';
 import { ProjectExecutionUnitSelector } from '@/components/intake/ProjectExecutionUnitSelector';
+import { EstimateRequestProfileEditor } from '@/components/intake/EstimateRequestProfileEditor';
+import { evaluateEstimateAccess } from '@/lib/accessControl';
 import {
   CommercialDecisionInput,
   CommercialDecisionType,
@@ -83,6 +86,7 @@ type Props = {
 
 const emptyDraft = {
   projectName: '',
+  projectNo: '',
   company: '',
   client: '',
   contact: '',
@@ -95,7 +99,16 @@ const emptyDraft = {
   scope: '',
   usage: '',
   areaPy: '',
+  areaM2: '',
   floors: '',
+  basementFloors: '',
+  groundFloors: '',
+  buildingCount: '',
+  workCategory: '',
+  executionType: '',
+  unitWork: '',
+  estimateType: '',
+  bidDate: '',
   firstDelivery: '',
 };
 
@@ -134,7 +147,6 @@ export function EstimateRequestWorkbench({ currentUser, t }: Props) {
   });
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
-  const [editingRequestId, setEditingRequestId] = useState<string | null>(null);
 
   useEffect(() => { void sync(); }, [sync]);
   const filtered = useMemo(() => {
@@ -149,9 +161,8 @@ export function EstimateRequestWorkbench({ currentUser, t }: Props) {
   const selected = requests.find((request) => request.id === selectedId) || filtered[0] || null;
 
   const canManage = (request: EstimateRequest) => {
-    if (['SUPER_ADMIN', 'SYSTEM_ADMIN'].includes(currentUser.role)) return true;
-    if (currentUser.role === 'DEPARTMENT_MANAGER') return request.departmentId === currentUser.departmentId;
-    return currentUser.role === 'PM' && request.departmentId === currentUser.departmentId;
+    void request;
+    return evaluateEstimateAccess(currentUser).allowed;
   };
 
   const run = async (operation: () => Promise<void>, success: string) => {
@@ -204,7 +215,10 @@ export function EstimateRequestWorkbench({ currentUser, t }: Props) {
 
   const handleEdit = async (updates: Partial<EstimateRequest>) => {
     if (!selected) return;
-    await run(async () => { await updateRequest(selected.id, updates, currentUser.id); }, t('estimateRequest.saved'));
+    await run(async () => {
+      await updateRequest(selected.id, updates, currentUser.id);
+      await useEstimateSheetStore.getState().syncProfile(selected.id, currentUser.id);
+    }, t('estimateRequest.saved'));
   };
 
   const handleDuplicate = async () => {
@@ -212,7 +226,6 @@ export function EstimateRequestWorkbench({ currentUser, t }: Props) {
     await run(async () => {
       const duplicated = await duplicateRequest(selected.id, currentUser.id);
       setSelectedId(duplicated.id);
-      setEditingRequestId(duplicated.id);
     }, '견적 의뢰를 복제했습니다. 복사본을 확인한 뒤 수정해 주세요.');
   };
 
@@ -222,7 +235,6 @@ export function EstimateRequestWorkbench({ currentUser, t }: Props) {
     await run(async () => {
       await deleteRequest(deletedId);
       setSelectedId(requests.find((item) => item.id !== deletedId)?.id || null);
-      setEditingRequestId(null);
     }, '견적 의뢰를 삭제했습니다.');
   };
 
@@ -256,7 +268,7 @@ export function EstimateRequestWorkbench({ currentUser, t }: Props) {
             <RefreshCw className={`size-4 ${loading ? 'animate-spin' : ''}`} />
           </button>
           <Link href="/projects/intake/estimates" className="inline-flex items-center gap-2 border px-3 py-2 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]"><FileCheck2 className="size-4" />{t('estimateSubmission.openManagement')}</Link>
-          {['DEPARTMENT_MANAGER', 'SUPER_ADMIN', 'SYSTEM_ADMIN'].includes(currentUser.role) && <Link href="/projects/intake/database" className="inline-flex items-center gap-2 border px-3 py-2 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]"><Database className="size-4" />{t('estimateDb.title')}</Link>}
+          {evaluateEstimateAccess(currentUser).allowed && <Link href="/projects/intake/database" className="inline-flex items-center gap-2 border px-3 py-2 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]"><Database className="size-4" />{t('estimateDb.title')}</Link>}
           <button type="button" onClick={() => setShowCreate((value) => !value)}
             className="inline-flex items-center gap-2 rounded bg-[var(--color-primary)] px-3 py-2 text-sm font-semibold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2">
             <Plus className="size-4" /> {t('estimateRequest.new')}
@@ -321,7 +333,7 @@ export function EstimateRequestWorkbench({ currentUser, t }: Props) {
               <div className="flex flex-wrap items-start justify-between gap-3 border-b pb-4">
                 <div><p className="text-xs font-semibold text-[var(--color-primary)]">{selected.requestNo}</p><h2 className="mt-1 text-xl font-bold">{selected.projectName}</h2><p className="mt-1 text-sm text-[var(--color-text-sub)]">{selected.company || selected.client || '-'}</p></div>
                 <div className="flex flex-wrap items-center gap-2">
-                  <button type="button" onClick={() => setEditingRequestId(selected.id)} disabled={!canManage(selected) || busy} className="inline-flex items-center gap-2 border px-3 py-2 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] disabled:opacity-50"><Pencil className="size-4" />수정</button>
+                  <button type="button" onClick={() => document.getElementById('estimate-step-01')?.scrollIntoView({ behavior: 'smooth', block: 'start' })} disabled={!canManage(selected) || busy} className="inline-flex items-center gap-2 border px-3 py-2 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] disabled:opacity-50"><Pencil className="size-4" />수정</button>
                   <button type="button" onClick={() => void handleDuplicate()} disabled={!canManage(selected) || busy} className="inline-flex items-center gap-2 border px-3 py-2 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] disabled:opacity-50"><Copy className="size-4" />복제</button>
                   <button type="button" onClick={() => void handleDelete()} disabled={!canManage(selected) || busy} className="inline-flex items-center gap-2 border border-red-200 px-3 py-2 text-sm font-semibold text-red-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 disabled:opacity-50"><Trash2 className="size-4" />삭제</button>
                   <Link href={`/projects/intake/estimate?requestId=${encodeURIComponent(selected.id)}`} className="inline-flex items-center gap-2 border px-3 py-2 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]"><FileSpreadsheet className="size-4" />{t('estimateSheet.open')}</Link>
@@ -333,22 +345,12 @@ export function EstimateRequestWorkbench({ currentUser, t }: Props) {
                 </div>
               </div>
 
-              <div className="grid gap-x-5 gap-y-3 text-sm sm:grid-cols-2">
-                <Detail label={t('estimateRequest.contact')} value={[selected.contact, selected.contactDepartment].filter(Boolean).join(' / ')} />
-                <Detail label={t('estimateRequest.contactInfo')} value={[selected.phone, selected.email].filter(Boolean).join(' / ')} />
-                <Detail label={t('estimateRequest.scope')} value={selected.scope} />
-                <Detail label={t('estimateRequest.firstDelivery')} value={selected.firstDelivery} />
-                <Detail label={t('estimateRequest.memo')} value={selected.memo} wide />
-              </div>
+              <EstimateRequestProfileEditor key={selected.id} request={selected} disabled={!canManage(selected) || busy || Boolean(selected.projectId)} busy={busy} onSave={handleEdit} />
 
-              <RequestEditForm key={selected.id} request={selected} disabled={!canManage(selected) || busy} t={t} expanded={editingRequestId === selected.id} onExpandedChange={(expanded) => setEditingRequestId(expanded ? selected.id : null)} onSave={handleEdit} />
-
-              <ProjectExecutionUnitSelector value={selected.targetUnitIds || []} primaryUnitId={selected.primaryUnitId || null} disabled={!canManage(selected) || busy || Boolean(selected.projectId)} onChange={(targetUnitIds, primaryUnitId) => void handleEdit({ targetUnitIds, primaryUnitId })} />
-
-              <section aria-labelledby="commercial-decision-title" className="border-y py-4">
+              <section id="estimate-step-04" aria-labelledby="commercial-decision-title" className="scroll-mt-24 border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-[0_8px_22px_rgba(15,23,42,.05)] sm:p-5">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
-                    <h3 id="commercial-decision-title" className="font-bold">{t('estimateRequest.decisionTitle')}</h3>
+                    <div className="text-[10px] font-black tracking-[.12em] text-[var(--color-primary)]">STEP 04</div><h3 id="commercial-decision-title" className="font-bold">{t('estimateRequest.decisionTitle')}</h3>
                     <p className="mt-1 text-xs text-[var(--color-text-sub)]">{t('estimateRequest.decisionDescription')}</p>
                   </div>
                   {selected.projectId && (
@@ -380,7 +382,8 @@ export function EstimateRequestWorkbench({ currentUser, t }: Props) {
                 )}
               </section>
 
-              <div className="border-t pt-4">
+              <section id="estimate-step-05" className="scroll-mt-24 border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-[0_8px_22px_rgba(15,23,42,.05)] sm:p-5">
+                <div className="text-[10px] font-black tracking-[.12em] text-[var(--color-primary)]">STEP 05</div>
                 <h3 className="mb-3 flex items-center gap-2 font-bold"><MessageSquareText className="size-4" />{t('estimateRequest.activityTitle')}</h3>
                 <form onSubmit={handleActivity} className="grid gap-2 sm:grid-cols-[150px_1fr_auto]">
                   <select value={activityKind} onChange={(event) => setActivityKind(event.target.value as EstimateRequestActivityKind)} disabled={!canManage(selected)} className="rounded border bg-[var(--color-surface)] px-2 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]">
@@ -393,17 +396,18 @@ export function EstimateRequestWorkbench({ currentUser, t }: Props) {
                   const Icon = ACTIVITY_ICONS[activity.kind];
                   return <div key={activity.id} className="flex gap-3 border-b py-2 text-sm"><Icon className="mt-0.5 size-4 shrink-0 text-[var(--color-primary)]" /><div><strong>{activityText(t, activity.kind)}</strong><p className="mt-0.5 whitespace-pre-wrap text-[var(--color-text-sub)]">{activity.content}</p><time className="text-xs text-[var(--color-text-sub)]">{new Date(activity.occurredAt).toLocaleString()}</time></div></div>;
                 })}</div>
-              </div>
+              </section>
 
-              <div className="border-t pt-4">
+              <section id="estimate-step-06" className="scroll-mt-24 border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-[0_8px_22px_rgba(15,23,42,.05)] sm:p-5">
+                <div className="text-[10px] font-black tracking-[.12em] text-[var(--color-primary)]">STEP 06</div>
                 <div className="mb-3 flex flex-wrap items-center justify-between gap-2"><h3 className="flex items-center gap-2 font-bold"><Paperclip className="size-4" />{t('estimateRequest.attachmentTitle')}</h3>
                   <label className={`cursor-pointer rounded border px-3 py-2 text-sm font-semibold focus-within:ring-2 focus-within:ring-[var(--color-primary)] ${canManage(selected) ? '' : 'pointer-events-none opacity-50'}`}>{t('estimateRequest.addFiles')}<input type="file" multiple disabled={!canManage(selected) || busy} className="sr-only" onChange={(event) => { void handleFiles(event.target.files); event.target.value = ''; }} /></label>
                 </div>
                 <p className="mb-2 text-xs text-[var(--color-text-sub)]">{t('estimateRequest.metadataOnly')}</p>
                 <div className="space-y-2">{selected.attachments.map((attachment) => <div key={attachment.id} className="flex items-center justify-between gap-3 border-b py-2 text-sm"><span className="min-w-0"><strong className="block truncate">{attachment.originalName}</strong><span className="text-xs text-[var(--color-text-sub)]">{attachment.category} · {(attachment.size / 1024).toFixed(1)} KB</span></span><button type="button" title={t('common.delete')} disabled={!canManage(selected)} onClick={() => void run(() => removeAttachment(selected.id, attachment.id, currentUser.id), t('estimateRequest.attachmentRemoved'))} className="grid size-8 place-items-center text-[var(--color-danger)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] disabled:opacity-50"><Trash2 className="size-4" /></button></div>)}</div>
-              </div>
+              </section>
 
-              <details className="border-t pt-4"><summary className="flex cursor-pointer items-center gap-2 font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]"><History className="size-4" />{t('estimateRequest.historyTitle')} ({selected.histories.length})</summary><div className="mt-3 space-y-2">{selected.histories.map((history) => <div key={history.id} className="border-l-2 pl-3 text-sm"><strong>{history.action}</strong><p className="text-xs text-[var(--color-text-sub)]">{[history.fromStatus, history.toStatus].filter(Boolean).join(' → ')}</p><time className="text-xs text-[var(--color-text-sub)]">{new Date(history.createdAt).toLocaleString()}</time></div>)}</div></details>
+              <details id="estimate-step-07" open className="scroll-mt-24 border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-[0_8px_22px_rgba(15,23,42,.05)] sm:p-5"><summary className="cursor-pointer font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]"><span className="block text-[10px] font-black tracking-[.12em] text-[var(--color-primary)]">STEP 07</span><span className="flex items-center gap-2"><History className="size-4" />{t('estimateRequest.historyTitle')} ({selected.histories.length})</span></summary><div className="mt-3 space-y-2">{selected.histories.map((history) => <div key={history.id} className="border-l-2 pl-3 text-sm"><strong>{history.action}</strong><p className="text-xs text-[var(--color-text-sub)]">{[history.fromStatus, history.toStatus].filter(Boolean).join(' → ')}</p><time className="text-xs text-[var(--color-text-sub)]">{new Date(history.createdAt).toLocaleString()}</time></div>)}</div></details>
             </div>
           )}
         </section>
@@ -414,44 +418,4 @@ export function EstimateRequestWorkbench({ currentUser, t }: Props) {
 
 function Field({ label, value, onChange, type = 'text', required = false }: { label: string; value: string; onChange: (value: string) => void; type?: string; required?: boolean }) {
   return <label className="text-sm"><span className="mb-1 block font-medium">{label}</span><input type={type} required={required} value={value} onChange={(event) => onChange(event.target.value)} className="w-full rounded border bg-[var(--color-surface)] p-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]" /></label>;
-}
-
-function Detail({ label, value, wide = false }: { label: string; value?: string | null; wide?: boolean }) {
-  return <div className={wide ? 'sm:col-span-2' : ''}><span className="block text-xs font-semibold text-[var(--color-text-sub)]">{label}</span><p className="mt-1 whitespace-pre-wrap">{value || '-'}</p></div>;
-}
-
-function RequestEditForm({ request, disabled, t, expanded, onExpandedChange, onSave }: { request: EstimateRequest; disabled: boolean; t: Translate; expanded: boolean; onExpandedChange: (expanded: boolean) => void; onSave: (updates: Partial<EstimateRequest>) => Promise<void> }) {
-  const [values, setValues] = useState({
-    projectName: request.projectName,
-    company: request.company || '',
-    client: request.client || '',
-    contact: request.contact || '',
-    contactDepartment: request.contactDepartment || '',
-    phone: request.phone || '',
-    email: request.email || '',
-    scope: request.scope || '',
-    memo: request.memo || '',
-    firstDelivery: request.firstDelivery || '',
-  });
-
-  return (
-    <details id="estimate-request-edit" open={expanded} onToggle={(event) => onExpandedChange(event.currentTarget.open)} className="border-t pt-4">
-      <summary className="cursor-pointer font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]">{t('estimateRequest.editDetails')}</summary>
-      <form className="mt-3 grid gap-3 sm:grid-cols-2" onSubmit={(event) => { event.preventDefault(); void onSave(values); }}>
-        <fieldset disabled={disabled} className="contents">
-        <Field label={t('estimateRequest.projectName')} required value={values.projectName} onChange={(value) => setValues({ ...values, projectName: value })} />
-        <Field label={t('estimateRequest.company')} value={values.company} onChange={(value) => setValues({ ...values, company: value })} />
-        <Field label={t('estimateRequest.client')} value={values.client} onChange={(value) => setValues({ ...values, client: value })} />
-        <Field label={t('estimateRequest.contact')} value={values.contact} onChange={(value) => setValues({ ...values, contact: value })} />
-        <Field label={t('estimateRequest.contactDepartment')} value={values.contactDepartment} onChange={(value) => setValues({ ...values, contactDepartment: value })} />
-        <Field label={t('estimateRequest.phone')} value={values.phone} onChange={(value) => setValues({ ...values, phone: value })} />
-        <Field label={t('estimateRequest.email')} type="email" value={values.email} onChange={(value) => setValues({ ...values, email: value })} />
-        <Field label={t('estimateRequest.firstDelivery')} type="date" value={values.firstDelivery} onChange={(value) => setValues({ ...values, firstDelivery: value })} />
-        <Field label={t('estimateRequest.scope')} value={values.scope} onChange={(value) => setValues({ ...values, scope: value })} />
-        <label className="text-sm sm:col-span-2"><span className="mb-1 block font-medium">{t('estimateRequest.memo')}</span><textarea rows={3} value={values.memo} onChange={(event) => setValues({ ...values, memo: event.target.value })} className="w-full rounded border bg-[var(--color-surface)] p-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]" /></label>
-        <div className="sm:col-span-2 flex justify-end"><button type="submit" disabled={disabled || !values.projectName.trim()} className="inline-flex items-center gap-2 rounded bg-[var(--color-primary)] px-4 py-2 text-sm font-semibold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] disabled:opacity-50"><Save className="size-4" />{t('estimateRequest.saveDetails')}</button></div>
-        </fieldset>
-      </form>
-    </details>
-  );
 }

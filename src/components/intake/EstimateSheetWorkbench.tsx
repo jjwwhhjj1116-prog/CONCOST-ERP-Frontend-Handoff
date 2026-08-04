@@ -1,13 +1,16 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ArrowLeft,
   ClipboardCheck,
   Columns3,
+  Copy,
   Download,
   FileSpreadsheet,
+  FileUp,
   History,
   LoaderCircle,
   Plus,
@@ -15,13 +18,19 @@ import {
   RotateCcw,
   Rows3,
   Save,
-  Send,
+  MailPlus,
+  Trash2,
 } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
 import { useEstimateRequestStore } from '@/store/estimateRequestStore';
 import { useEstimateSheetStore } from '@/store/estimateSheetStore';
 import { useTranslationStore } from '@/store/translationStore';
 import { useTranslation } from '@/lib/localization';
+import { evaluateEstimateAccess } from '@/lib/accessControl';
+import { markEstimateCellManual } from '@/lib/estimateRequestProfile';
+import { previewEstimateWorkbook, type EstimateImportPreview } from '@/lib/estimateSheetImport';
+import { createEstimateMailDraft, storeEstimateMailDraft } from '@/lib/estimateMailDraft';
+import { useUiStore } from '@/store/uiStore';
 import {
   ESTIMATE_TEMPLATE_SPECS,
   ESTIMATE_TEMPLATE_TYPES,
@@ -40,9 +49,9 @@ const styleToReact = (style = '') => Object.fromEntries(style.split(';').map((ru
 
 function parseInput(value: string) {
   const trimmed = value.replaceAll('\u00a0', ' ').trim();
-  if (trimmed.startsWith('=')) return { value: '', formula: trimmed.slice(1), userFormula: true };
-  if (/^-?[\d,]+(?:\.\d+)?$/.test(trimmed)) return { value: Number(trimmed.replaceAll(',', '')), formula: '', userFormula: false };
-  return { value: trimmed, formula: '', userFormula: false };
+  if (trimmed.startsWith('=')) return { value: '', formula: trimmed.slice(1), userFormula: true, manualOverride: true };
+  if (/^-?[\d,]+(?:\.\d+)?$/.test(trimmed)) return { value: Number(trimmed.replaceAll(',', '')), formula: '', userFormula: false, manualOverride: true };
+  return { value: trimmed, formula: '', userFormula: false, manualOverride: true };
 }
 
 function insertRow(state: EstimateSheetState, after: number) {
@@ -74,11 +83,13 @@ function insertColumn(state: EstimateSheetState, after: number) {
 }
 
 export function EstimateSheetWorkbench({ requestId }: { requestId: string }) {
+  const router = useRouter();
   const { currentUser } = useAuthStore();
+  const companyId = useUiStore((value) => value.brandWorkspace);
   const { requests, sync: syncRequests } = useEstimateRequestStore();
   const { settings } = useTranslationStore();
   const t = useTranslation(settings.uiLanguage);
-  const { sheets, persistenceMode, loading, error, sync, createSheet, saveVersion, submitSheet, sendSubmission, startRevision, recordExport } = useEstimateSheetStore();
+  const { sheets, persistenceMode, loading, error, sync, createSheet, duplicateDraftVersion, deleteDraft, saveVersion, submitSheet, startRevision, recordExport } = useEstimateSheetStore();
   const sheet = sheets[requestId];
   const request = requests.find((item) => item.id === requestId);
   const [templateType, setTemplateType] = useState<EstimateTemplateType>('개산견적');
@@ -89,7 +100,9 @@ export function EstimateSheetWorkbench({ requestId }: { requestId: string }) {
   const [message, setMessage] = useState('');
   const [recipient, setRecipient] = useState<string | null>(null);
   const [deliveryChannel, setDeliveryChannel] = useState('EMAIL');
+  const [importPreview, setImportPreview] = useState<EstimateImportPreview | null>(null);
   const hydrated = useRef(false);
+  const importRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!requestId || hydrated.current) return;
@@ -109,16 +122,9 @@ export function EstimateSheetWorkbench({ requestId }: { requestId: string }) {
   }, [requestId, sync, syncRequests]);
 
   const selectedVersion = sheet?.versions.find((entry) => entry.version === version);
-  const canView = Boolean(request && (
-    ['SUPER_ADMIN', 'SYSTEM_ADMIN'].includes(currentUser?.role || '')
-    || (['PM', 'DEPARTMENT_MANAGER'].includes(currentUser?.role || '')
-      && (request.departmentId === currentUser?.departmentId || request.ownerId === currentUser?.id))
-  ));
-  const canManage = Boolean(request && (
-    ['SUPER_ADMIN', 'SYSTEM_ADMIN'].includes(currentUser?.role || '')
-    || (currentUser?.role === 'DEPARTMENT_MANAGER' && request.departmentId === currentUser.departmentId)
-    || (currentUser?.role === 'PM' && request.ownerId === currentUser.id)
-  ));
+  const estimateAccess = currentUser ? evaluateEstimateAccess(currentUser) : { allowed: false };
+  const canView = Boolean(request && estimateAccess.allowed);
+  const canManage = canView;
   const readOnly = Boolean(sheet && (!canManage || sheet.status !== 'DRAFT' || version !== sheet.currentVersion));
   const active = state.cells[estimateCellKey(activeCell.row, activeCell.column)] || {};
   const formulaValue = active.formula ? `=${active.formula}` : String(active.value ?? '');
@@ -143,7 +149,9 @@ export function EstimateSheetWorkbench({ requestId }: { requestId: string }) {
 
   const updateCell = (row: number, column: number, value: string) => {
     if (readOnly) return;
-    setState((current) => ({ ...current, cells: { ...current.cells, [estimateCellKey(row, column)]: parseInput(value) } }));
+    const key = estimateCellKey(row, column);
+    const parsed = parseInput(value);
+    setState((current) => markEstimateCellManual(current, key, parsed.formula ? `=${parsed.formula}` : String(parsed.value ?? '')));
   };
 
   const updateFormula = (value: string) => updateCell(activeCell.row, activeCell.column, value);
@@ -179,10 +187,21 @@ export function EstimateSheetWorkbench({ requestId }: { requestId: string }) {
     await submitSheet(requestId, currentUser.id, recipient ?? request?.company ?? request?.client ?? '', deliveryChannel);
   }, t('estimateSheet.submitted'));
 
-  const send = () => run(async () => {
-    if (!currentUser) return;
-    await sendSubmission(requestId, currentUser.id);
-  }, t('estimateSheet.sent'));
+  const openMailDraft = () => {
+    if (!request || !sheet) return;
+    const draftId = storeEstimateMailDraft(createEstimateMailDraft(companyId, request, sheet));
+    router.push(`/mail?compose=NEW&draft=${encodeURIComponent(draftId)}`);
+  };
+
+  const importExcel = async (file: File | null) => {
+    if (!file || readOnly) return;
+    setMessage('');
+    try {
+      setImportPreview(await previewEstimateWorkbook(await file.arrayBuffer(), file.name, state));
+    } catch (caught) {
+      setMessage(caught instanceof Error ? caught.message : 'Excel 파일을 분석하지 못했습니다.');
+    }
+  };
 
   const revise = () => run(async () => {
     if (!currentUser) return;
@@ -193,6 +212,25 @@ export function EstimateSheetWorkbench({ requestId }: { requestId: string }) {
       setState(clone(latest.state));
     }
   }, t('estimateSheet.revisionStarted'));
+
+  const duplicateDraft = () => run(async () => {
+    if (!currentUser) return;
+    const updated = await duplicateDraftVersion(requestId, currentUser.id);
+    const latest = updated.versions.find((entry) => entry.version === updated.currentVersion);
+    if (latest) {
+      setVersion(latest.version);
+      setState(clone(latest.state));
+    }
+  }, '견적서 초안을 복제했습니다.');
+
+  const removeDraft = () => {
+    if (!currentUser || !window.confirm('현재 견적서 초안을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) return;
+    void run(async () => {
+      await deleteDraft(requestId, currentUser.id);
+      setVersion(null);
+      setState(createEstimateSheetState(templateType));
+    }, '견적서 초안을 삭제했습니다.');
+  };
 
   if (!requestId) return <p className="p-8 text-center text-[var(--color-danger)]">{t('estimateSheet.missingRequest')}</p>;
   if (!currentUser) return <p className="p-8 text-center">{t('header.loginRequired')}</p>;
@@ -233,12 +271,16 @@ export function EstimateSheetWorkbench({ requestId }: { requestId: string }) {
             <button type="button" title={t('estimateSheet.insertRow')} disabled={readOnly} onClick={() => setState((current) => insertRow(current, activeCell.row))} className="grid size-9 place-items-center border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] disabled:opacity-40"><Rows3 className="size-4" /></button>
             <button type="button" title={t('estimateSheet.insertColumn')} disabled={readOnly} onClick={() => setState((current) => insertColumn(current, activeCell.column))} className="grid size-9 place-items-center border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] disabled:opacity-40"><Columns3 className="size-4" /></button>
             <div className="ml-auto flex flex-wrap gap-2">
+              <input ref={importRef} type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" className="sr-only" onChange={(event) => { void importExcel(event.target.files?.[0] || null); event.target.value = ''; }} />
+              <button type="button" onClick={() => importRef.current?.click()} disabled={busy || readOnly} className="inline-flex items-center gap-2 border px-3 py-2 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] disabled:opacity-40"><FileUp className="size-4" />Excel 불러오기</button>
               <button type="button" onClick={save} disabled={busy || readOnly} className="inline-flex items-center gap-2 border px-3 py-2 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] disabled:opacity-40"><Save className="size-4" />{t('common.save')}</button>
+              {sheet.status === 'DRAFT' && <button type="button" onClick={duplicateDraft} disabled={busy || readOnly} className="inline-flex items-center gap-2 border px-3 py-2 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] disabled:opacity-40"><Copy className="size-4" />초안 복제</button>}
+              {sheet.status === 'DRAFT' && <button type="button" onClick={removeDraft} disabled={busy || readOnly} className="inline-flex items-center gap-2 border border-red-200 px-3 py-2 text-sm font-semibold text-red-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 disabled:opacity-40"><Trash2 className="size-4" />초안 삭제</button>}
               <button type="button" onClick={exportXlsx} disabled={busy} className="inline-flex items-center gap-2 border px-3 py-2 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] disabled:opacity-40"><Download className="size-4" />XLSX</button>
               <button type="button" onClick={printPdf} disabled={busy} className="inline-flex items-center gap-2 border px-3 py-2 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] disabled:opacity-40"><Printer className="size-4" />PDF</button>
               {sheet.status === 'DRAFT' && <button type="button" onClick={submit} disabled={busy || readOnly} className="inline-flex items-center gap-2 bg-[var(--color-primary)] px-3 py-2 text-sm font-semibold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] disabled:opacity-40"><ClipboardCheck className="size-4" />{t('estimateSheet.submit')}</button>}
-              {sheet.status === 'SUBMITTED' && <button type="button" onClick={send} disabled={busy || !canManage} className="inline-flex items-center gap-2 bg-[var(--color-primary)] px-3 py-2 text-sm font-semibold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] disabled:opacity-40"><Send className="size-4" />{t('estimateSheet.markSent')}</button>}
-              {sheet.status === 'SENT' && <button type="button" onClick={revise} disabled={busy || !canManage} className="inline-flex items-center gap-2 border px-3 py-2 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] disabled:opacity-40"><RotateCcw className="size-4" />{t('estimateSheet.newRevision')}</button>}
+              {['SUBMITTED', 'SENT'].includes(sheet.status) && <button type="button" onClick={openMailDraft} disabled={busy || !canManage} className="inline-flex items-center gap-2 bg-[var(--color-primary)] px-3 py-2 text-sm font-semibold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] disabled:opacity-40"><MailPlus className="size-4" />전자메일에서 보내기</button>}
+              {['SUBMITTED', 'SENT'].includes(sheet.status) && <button type="button" onClick={revise} disabled={busy || !canManage} className="inline-flex items-center gap-2 border px-3 py-2 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] disabled:opacity-40"><RotateCcw className="size-4" />{t('estimateSheet.newRevision')}</button>}
             </div>
           </div>
 
@@ -286,6 +328,17 @@ export function EstimateSheetWorkbench({ requestId }: { requestId: string }) {
           </div>
 
           <footer className="flex flex-wrap justify-between gap-2 text-xs text-[var(--color-text-sub)]"><span>{state.type} · {state.maxRow} × {state.maxCol} · {state.merges.length} merges</span><span>{t('estimateSheet.templateHash')}: {selectedVersion?.templateHash.slice(0, 12)}…</span></footer>
+
+          {importPreview && (
+            <div role="dialog" aria-modal="true" aria-labelledby="estimate-import-title" className="fixed inset-0 z-[var(--z-modal)] grid place-items-center bg-black/45 p-4">
+              <section className="max-h-[min(760px,90vh)] w-full max-w-3xl overflow-auto bg-[var(--color-surface)] p-5 shadow-2xl">
+                <div className="flex items-start justify-between gap-4"><div><h2 id="estimate-import-title" className="text-lg font-bold">Excel 가져오기 미리보기</h2><p className="mt-1 text-sm text-[var(--color-text-sub)]">{importPreview.templateName || '알 수 없는 템플릿'} · 변경 {importPreview.diffs.length}개</p></div><button type="button" onClick={() => setImportPreview(null)} className="border px-3 py-2 text-sm font-semibold">닫기</button></div>
+                {importPreview.errors.length > 0 && <div role="alert" className="mt-4 border-l-4 border-red-500 bg-red-50 p-3 text-sm text-red-700">{importPreview.errors.map((item) => <p key={item}>{item}</p>)}</div>}
+                <div className="mt-4 max-h-96 overflow-auto border"><table className="w-full text-left text-sm"><thead className="sticky top-0 bg-[var(--color-bg-sub)]"><tr><th className="p-2">Cell</th><th className="p-2">기존</th><th className="p-2">가져오기</th></tr></thead><tbody>{importPreview.diffs.slice(0, 200).map((item) => <tr key={item.cell} className="border-t"><td className="p-2 font-mono">{item.cell}</td><td className="p-2">{String(item.before)}</td><td className="p-2">{String(item.after)}</td></tr>)}</tbody></table></div>
+                <div className="mt-4 flex justify-end gap-2"><button type="button" onClick={() => setImportPreview(null)} className="border px-4 py-2 text-sm font-semibold">취소</button><button type="button" disabled={!importPreview.templateDetected || importPreview.errors.length > 0} onClick={() => { setState(importPreview.state); setImportPreview(null); setMessage('Excel 변경사항을 적용했습니다. 저장하면 새 DRAFT 버전으로 기록됩니다.'); }} className="bg-[var(--color-primary)] px-4 py-2 text-sm font-semibold text-white disabled:opacity-40">변경 적용</button></div>
+              </section>
+            </div>
+          )}
         </>
       )}
     </div>

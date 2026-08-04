@@ -35,6 +35,7 @@ import {
 } from '@/lib/frontendDataSource';
 import { getRuntimeBoundaryCopy } from '@/lib/runtimeBoundaryCopy';
 import { getMailSendBoundary } from '@/lib/runtimeExecutionMode';
+import { readEstimateMailDraft } from '@/lib/estimateMailDraft';
 import {
   getMailFolderHref,
   getMailFolderLabel,
@@ -342,6 +343,7 @@ export function MailWorkspace() {
   const requestedMailbox = searchParams.get('box');
   const requestedProjectId = searchParams.get('projectId');
   const requestedComposeMode = searchParams.get('compose');
+  const requestedDraftToken = searchParams.get('draft');
   const mailbox = parseMailFolder(requestedMailbox);
   const projectFilter =
     mailbox === 'PROJECT' ? (requestedProjectId ?? '') : '';
@@ -354,6 +356,7 @@ export function MailWorkspace() {
   const [composeMode, setComposeMode] = useState<ComposeMode | null>(null);
   const [composeTo, setComposeTo] = useState('');
   const [composeSubject, setComposeSubject] = useState('');
+  const [composeBody, setComposeBody] = useState('');
   const [composeProjectId, setComposeProjectId] = useState('');
   const [composeFiles, setComposeFiles] = useState<string[]>([]);
   const [operationMessage, setOperationMessage] = useState<{
@@ -428,15 +431,19 @@ export function MailWorkspace() {
   useEffect(() => {
     if (!['NEW', 'MEMO'].includes(requestedComposeMode ?? '')) return;
     const timeoutId = window.setTimeout(() => {
+      const estimateDraft = requestedDraftToken
+        ? readEstimateMailDraft(requestedDraftToken, workspaceId)
+        : null;
       setComposeMode('NEW');
-      setComposeTo('');
-      setComposeSubject(requestedComposeMode === 'MEMO' ? '[Memo] ' : '');
-      setComposeProjectId('');
-      setComposeFiles([]);
+      setComposeTo(estimateDraft?.to || '');
+      setComposeSubject(estimateDraft?.subject || (requestedComposeMode === 'MEMO' ? '[Memo] ' : ''));
+      setComposeBody(estimateDraft?.body || '');
+      setComposeProjectId(estimateDraft?.projectId || '');
+      setComposeFiles(estimateDraft?.attachmentNames || []);
       setOperationMessage(null);
     }, 0);
     return () => window.clearTimeout(timeoutId);
-  }, [requestedComposeMode]);
+  }, [requestedComposeMode, requestedDraftToken, workspaceId]);
 
   const navigateToMailbox = (nextMailbox: Mailbox) => {
     router.push(getMailFolderHref(nextMailbox));
@@ -477,6 +484,7 @@ export function MailWorkspace() {
         ? ''
         : `${mode === 'FORWARD' ? 'Fwd' : 'Re'}: ${source?.subject ?? ''}`,
     );
+    setComposeBody('');
     setComposeProjectId(source?.projectId ?? '');
     setComposeFiles([]);
     setOperationMessage(null);
@@ -512,6 +520,7 @@ export function MailWorkspace() {
       simulate: () => ({
         to: composeTo,
         subject: composeSubject,
+        body: composeBody,
         projectId: composeProjectId || null,
         attachmentCount: composeFiles.length,
       }),
@@ -1019,6 +1028,8 @@ export function MailWorkspace() {
                 name="body"
                 required
                 rows={8}
+                value={composeBody}
+                onChange={(event) => setComposeBody(event.target.value)}
                 className="w-full border border-[var(--color-border)] p-3 text-sm"
                 placeholder={copy.body}
               />

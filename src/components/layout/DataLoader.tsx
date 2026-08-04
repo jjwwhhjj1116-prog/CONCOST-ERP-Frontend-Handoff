@@ -14,10 +14,12 @@ import { fullProjects, fullTasks, fullSchedules } from '@/data/fullScheduleSeed'
 import { defaultProcessTemplates, defaultProcessStages, defaultProcessTasks } from '@/data/processTemplateSeed';
 import { useProcessTemplateStore } from '@/store/processTemplateStore';
 import { useEstimateRequestStore } from '@/store/estimateRequestStore';
+import { evaluateEstimateAccess } from '@/lib/accessControl';
 import { mergeLocalOperationData } from '@/lib/operationOverlay';
 
 export function DataLoader() {
   const dataSourceMode = useAuthStore(state => state.dataSourceMode);
+  const currentUser = useAuthStore(state => state.currentUser);
   
   const replaceProjects = useProjectStore(state => state.replaceProjects);
   const resetProjects = useProjectStore(state => state.resetProjects);
@@ -49,8 +51,10 @@ export function DataLoader() {
   const prevMode = useRef<string | null>(null);
 
   useEffect(() => {
-    if (prevMode.current === dataSourceMode) return;
-    prevMode.current = dataSourceMode;
+    const estimateAllowed = currentUser ? evaluateEstimateAccess(currentUser).allowed : false;
+    const loadKey = `${dataSourceMode}:${currentUser?.id || 'anonymous'}:${estimateAllowed}`;
+    if (prevMode.current === loadKey) return;
+    prevMode.current = loadKey;
     const withPersistedEstimateProjects = (baseProjects: typeof fullProjects) => {
       const persisted = useProjectStore.getState().projects.filter(
         project => project.source === 'ESTIMATE_REQUEST'
@@ -104,7 +108,7 @@ export function DataLoader() {
         replaceTasks(fullTasks);
         replaceUsers(mockUsers);
         replaceSchedules(fullSchedules);
-        loadDemoRequests();
+        if (estimateAllowed) loadDemoRequests();
         
         if (processTemplates.length === 0) {
           loadInitialProcessData(defaultProcessTemplates, defaultProcessStages, defaultProcessTasks);
@@ -126,7 +130,7 @@ export function DataLoader() {
         // The store is manipulated via ImportPreview Apply button. We don't overwrite it here.
         break;
     }
-  }, [dataSourceMode, replaceProjects, resetProjects, replaceTasks, resetTasks, replaceUsers, resetUsers, replaceSchedules, resetSchedules, replaceSettings, resetSettings, replaceRequests, resetRequests, replaceNotifications, resetNotifications, processTemplates.length, loadInitialProcessData, loadDemoRequests]);
+  }, [currentUser, dataSourceMode, replaceProjects, resetProjects, replaceTasks, resetTasks, replaceUsers, resetUsers, replaceSchedules, resetSchedules, replaceSettings, resetSettings, replaceRequests, resetRequests, replaceNotifications, resetNotifications, processTemplates.length, loadInitialProcessData, loadDemoRequests]);
 
   return null;
 }

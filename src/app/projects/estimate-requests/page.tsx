@@ -4,6 +4,7 @@ import { EstimateRequestWorkbench } from '@/components/intake/EstimateRequestWor
 import { useTranslation } from '@/lib/localization';
 import { useAuthStore } from '@/store/authStore';
 import { useTranslationStore } from '@/store/translationStore';
+import { evaluateEstimateAccess } from '@/lib/accessControl';
 
 export default function EstimateRequestsPage() {
   const currentUser = useAuthStore((state) => state.currentUser);
@@ -11,7 +12,7 @@ export default function EstimateRequestsPage() {
   const t = useTranslation(settings.uiLanguage);
 
   if (!currentUser) return <div className="py-10 text-center text-[var(--color-text-sub)]">{t('header.loginRequired')}</div>;
-  if (!['SUPER_ADMIN', 'SYSTEM_ADMIN', 'DEPARTMENT_MANAGER', 'PM'].includes(currentUser.role)) {
+  if (!evaluateEstimateAccess(currentUser).allowed) {
     return <div className="py-10 text-center font-bold text-[var(--color-danger)]">{t('intake.noPermission')}</div>;
   }
 

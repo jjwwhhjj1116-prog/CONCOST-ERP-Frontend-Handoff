@@ -35,7 +35,31 @@ for (let index = valueStart; index < source.length; index += 1) {
 if (valueEnd < 0) throw new Error('ESTIMATE_EXCEL_SPECS object is incomplete');
 
 const raw = source.slice(valueStart, valueEnd);
-const specs = JSON.parse(raw);
+const legacyIdentityReplacements = new Map([
+  [["Tel: 02-2203", "-1463 / Fax: 02-2203", "-1464"].join(''), 'Tel/Fax: DEMO ONLY'],
+  [["(05665) 서울시 송파구 백제", "고분로 46길 18 CC TOWER 5층"].join(''), '(DEMO) 합성 주소 · 실제 업무 사용 금지'],
+  [["㈜컨코스트 대표이사 현", " 동 명 (인)"].join(''), '㈜컨코스트 합성 데모 승인자 (인)'],
+]);
+
+const sanitizeLegacyIdentity = (value) => {
+  if (typeof value === 'string') {
+    let sanitized = value;
+    for (const [sourceValue, replacement] of legacyIdentityReplacements) {
+      sanitized = sanitized.replaceAll(sourceValue, replacement);
+    }
+    if (sanitized.includes(['백제', '고분로'].join(''))) {
+      return 'Tel/Fax: DEMO ONLY\n(DEMO) 합성 주소 · 실제 업무 사용 금지\n㈜컨코스트 합성 데모 승인자 (인)';
+    }
+    return sanitized;
+  }
+  if (Array.isArray(value)) return value.map(sanitizeLegacyIdentity);
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(Object.entries(value).map(([key, entry]) => [key, sanitizeLegacyIdentity(entry)]));
+  }
+  return value;
+};
+
+const specs = sanitizeLegacyIdentity(JSON.parse(raw));
 const templates = Object.fromEntries(Object.entries(specs).map(([type, spec]) => [type, {
   ...spec,
   sourceHash: createHash('sha256').update(JSON.stringify(spec)).digest('hex'),
@@ -44,6 +68,7 @@ const payload = {
   sourceFile: 'work-project-receive-estimate-sheet.js',
   sourceCommit: '4406d2607ace6b64e8a165e4aae8d67e082b992b',
   sourcePayloadHash: createHash('sha256').update(raw).digest('hex'),
+  redactionVersion: 'pii-safe-v1',
   generatedAt: '2026-07-20T00:00:00.000Z',
   templates,
 };

@@ -40,7 +40,7 @@ import { useAuthStore } from '@/store/authStore';
 import { useUiStore } from '@/store/uiStore';
 import type { Role } from '@/types/models';
 import { canAccessNavigation, getNavigationAccessLevel } from '@/lib/navigationAccess';
-import { evaluateFinanceAccess } from '@/lib/accessControl';
+import { evaluateEstimateAccess, evaluateFinanceAccess } from '@/lib/accessControl';
 
 type NavigationItem = {
   id: string;
@@ -62,9 +62,9 @@ const projectNavigation: NavigationItem[] = [
   {
     id: 'project-management', label: '프로젝트 관리', icon: FolderKanban, roles: allRoles, minLevel: 3,
     children: [
-      { id: 'estimate-requests', label: '견적 의뢰관리', href: '/projects/estimate-requests', roles: leaders },
-      { id: 'estimate-sheets', label: '견적서 관리', href: '/projects/intake/estimates', roles: leaders },
-      { id: 'estimate-db', label: 'DB관리', href: '/projects/intake/database', roles: leaders },
+      { id: 'estimate-requests', label: '견적 의뢰관리', href: '/projects/estimate-requests', roles: allRoles },
+      { id: 'estimate-sheets', label: '견적서 관리', href: '/projects/intake/estimates', roles: allRoles },
+      { id: 'estimate-db', label: 'DB관리', href: '/projects/intake/database', roles: allRoles },
     ],
   },
   { id: 'project-intake', label: '프로젝트 접수', href: '/projects/intake', icon: FileCheck2, roles: leaders, minLevel: 3 },
@@ -233,6 +233,17 @@ const panelMenus: Record<string, NavigationItem[]> = {
   ],
 };
 
+const estimateNavigationIds = new Set(['estimate-requests', 'estimate-sheets', 'estimate-db']);
+
+function filterEstimateNavigation(items: NavigationItem[], estimateAllowed: boolean): NavigationItem[] {
+  return items.flatMap((item) => {
+    if (estimateNavigationIds.has(item.id) && !estimateAllowed) return [];
+    const children = item.children ? filterEstimateNavigation(item.children, estimateAllowed) : undefined;
+    if (item.children && !children?.length) return [];
+    return [{ ...item, children }];
+  });
+}
+
 function isHrefActive(href: string, pathname: string, searchString: string): boolean {
   const [path, queryString = ''] = href.split('?');
   if (pathname !== path) return false;
@@ -330,6 +341,7 @@ export function Sidebar() {
   const accessLevel = getNavigationAccessLevel(currentUser);
   const activeRailId = getActiveRail(pathname);
   const financeAccess = evaluateFinanceAccess(currentUser);
+  const estimateAccess = evaluateEstimateAccess(currentUser);
   const visibleRail = railNavigation.filter(
     (item) =>
       canAccessNavigation(item, currentUser.role, accessLevel) &&
@@ -337,7 +349,7 @@ export function Sidebar() {
   );
   const visibleUtilities = utilityNavigation.filter((item) => canAccessNavigation(item, currentUser.role, accessLevel));
   const activeRail = [...visibleRail, ...visibleUtilities].find((item) => item.id === activeRailId) || visibleRail[0];
-  const panelItems = panelMenus[activeRail.id] || [];
+  const panelItems = filterEstimateNavigation(panelMenus[activeRail.id] || [], estimateAccess.allowed);
   const mobile = visibleRail.filter((item) =>
     ['workspace', 'approvals', 'projects', 'calendar', 'tasks'].includes(item.id),
   );

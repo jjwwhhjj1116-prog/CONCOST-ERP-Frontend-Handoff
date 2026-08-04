@@ -2,12 +2,13 @@
 
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
-import { ArrowLeft, Copy, Database, Download, FileJson, Plus, RefreshCw, Save, Search, Trash2, Undo2 } from 'lucide-react';
+import { ArrowLeft, Copy, Database, Download, FileJson, Info, LockKeyhole, Plus, RefreshCw, Save, Search, Trash2, Undo2, X } from 'lucide-react';
 import { ESTIMATE_DB_COLUMNS, ESTIMATE_DB_VENDOR_COLUMNS, exportEstimateDbJson, exportEstimateDbXlsx } from '@/lib/estimateDatabase';
 import { useTranslation } from '@/lib/localization';
 import { useAuthStore } from '@/store/authStore';
 import { useEstimateDatabaseStore } from '@/store/estimateDatabaseStore';
 import { useTranslationStore } from '@/store/translationStore';
+import { evaluateEstimateAccess } from '@/lib/accessControl';
 import type { EstimateDbPayload, EstimateDbRecord, EstimateDbSection, EstimateDbTargetType, EstimateDbVendor } from '@/types/models';
 
 type Tab = EstimateDbSection | 'REPORTS';
@@ -16,6 +17,7 @@ const PAGE_SIZE = 50;
 const targetTypes: EstimateDbTargetType[] = ['ORDER', 'SALES', 'DEPOSIT'];
 const fieldClass = 'w-full min-w-[110px] border bg-[var(--color-surface)] px-2 py-1.5 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]';
 const buttonClass = 'inline-flex min-h-9 items-center justify-center gap-1.5 border bg-[var(--color-surface)] px-3 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] disabled:cursor-not-allowed disabled:opacity-50';
+const autoLinkedColumns = new Set(['접수번호', 'PJ NO', '프로젝트 연결', '최초생성날짜']);
 
 const display = (value: unknown) => value === null || value === undefined || value === '' ? '-' : String(value);
 const currency = (value: string) => Number(value || 0).toLocaleString(undefined, { maximumFractionDigits: 2 });
@@ -33,6 +35,7 @@ export function EstimateDatabaseWorkbench() {
   const [draft, setDraft] = useState<EstimateDbPayload>({});
   const [message, setMessage] = useState('');
   const [busy, setBusy] = useState(false);
+  const [sourceCell, setSourceCell] = useState<{ row: EstimateDbRecord; column: string; readonly: boolean } | null>(null);
 
   useEffect(() => { const timer = window.setTimeout(() => void store.sync(year), 0); return () => window.clearTimeout(timer); }, [year]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -74,7 +77,7 @@ export function EstimateDatabaseWorkbench() {
   const refresh = async () => { setBusy(true); try { await store.sync(year); setMessage(t('estimateDb.refreshed')); } finally { setBusy(false); } };
 
   if (!currentUser) return <p className="p-8 text-center">{t('header.loginRequired')}</p>;
-  if (!['DEPARTMENT_MANAGER', 'SUPER_ADMIN', 'SYSTEM_ADMIN'].includes(currentUser.role)) return <p className="p-8 text-center font-semibold text-[var(--color-danger)]">{t('estimateDb.permissionDenied')}</p>;
+  if (!evaluateEstimateAccess(currentUser).allowed) return <p className="p-8 text-center font-semibold text-[var(--color-danger)]">{t('estimateDb.permissionDenied')}</p>;
 
   return (
     <main style={{ contain: 'inline-size' }} className="w-full min-w-0 max-w-full space-y-4 overflow-x-hidden px-3 py-5 md:px-6">
@@ -101,14 +104,25 @@ export function EstimateDatabaseWorkbench() {
       {store.error && <p role="alert" className="border-l-4 border-[var(--color-danger)] px-4 py-2 text-sm">{store.error}</p>}
 
       {tab !== 'REPORTS' ? <>
-        <section aria-label={t('estimateDb.tools')} className="flex flex-wrap items-center gap-2">
+        <section aria-label={t('estimateDb.tools')} className="flex flex-wrap items-end gap-2 border-y bg-[var(--color-surface)] p-2">
           <label className="relative min-w-[220px] flex-1"><Search className="pointer-events-none absolute left-3 top-2.5 size-4 text-[var(--color-text-sub)]" /><input value={query} onChange={(event) => { setQuery(event.target.value); setPage(1); setSelectedId(null); setDraft({}); }} aria-label={t('estimateDb.search')} placeholder={t('estimateDb.search')} className={`${fieldClass} pl-9`} /></label>
           <input type="number" min="2000" max="2200" value={year} onChange={(event) => { setYear(Number(event.target.value)); setPage(1); setSelectedId(null); setDraft({}); }} aria-label={t('estimateDb.year')} className={`${fieldClass} max-w-[110px]`} />
-          <button type="button" onClick={() => void add()} disabled={busy} className={buttonClass}><Plus className="size-4" />{t('estimateDb.add')}</button>
-          <button type="button" onClick={() => void duplicate()} disabled={!selectedId || busy} className={buttonClass}><Copy className="size-4" />{t('estimateDb.duplicate')}</button>
-          <button type="button" onClick={() => void remove()} disabled={!selectedId || busy} className={`${buttonClass} text-[var(--color-danger)]`}><Trash2 className="size-4" />{t('estimateDb.delete')}</button>
-          <button type="button" onClick={() => void save()} disabled={!selectedId || busy} className={`${buttonClass} border-[var(--color-primary)] bg-[var(--color-primary)] text-white`}><Save className="size-4" />{t('common.save')}</button>
-          <button type="button" onClick={() => { setSelectedId(null); setDraft({}); }} disabled={!selectedId || busy} title={t('common.cancel')} className={`${buttonClass} px-2.5`}><Undo2 className="size-4" /></button>
+          <div className="flex flex-wrap items-center gap-1 border-l pl-2" aria-label="Record tools">
+            <span className="mr-1 text-[10px] font-black uppercase text-[var(--color-text-sub)]">Record</span>
+            <button type="button" onClick={() => void add()} disabled={busy} className={buttonClass}><Plus className="size-4" />{t('estimateDb.add')}</button>
+            <button type="button" onClick={() => void duplicate()} disabled={!selectedId || busy} className={buttonClass}><Copy className="size-4" />{t('estimateDb.duplicate')}</button>
+            <button type="button" onClick={() => void remove()} disabled={!selectedId || busy} className={`${buttonClass} text-[var(--color-danger)]`}><Trash2 className="size-4" />{t('estimateDb.delete')}</button>
+          </div>
+          <div className="flex flex-wrap items-center gap-1 border-l pl-2" aria-label="Grid tools">
+            <span className="mr-1 text-[10px] font-black uppercase text-[var(--color-text-sub)]">Grid</span>
+            <button type="button" onClick={() => void save()} disabled={!selectedId || busy} className={`${buttonClass} border-[var(--color-primary)] bg-[var(--color-primary)] text-white`}><Save className="size-4" />{t('common.save')}</button>
+            <button type="button" onClick={() => { setSelectedId(null); setDraft({}); }} disabled={!selectedId || busy} title={t('common.cancel')} className={`${buttonClass} px-2.5`}><Undo2 className="size-4" /></button>
+          </div>
+          <div className="flex flex-wrap items-center gap-1 border-l pl-2" aria-label="Import and export tools">
+            <span className="mr-1 text-[10px] font-black uppercase text-[var(--color-text-sub)]">Export</span>
+            <button type="button" onClick={() => void exportEstimateDbXlsx(store.records, store.vendors, report)} className={buttonClass}><Download className="size-4" />XLSX</button>
+            <button type="button" onClick={() => void exportEstimateDbJson(store.records, store.vendors, store.targets)} className={buttonClass}><FileJson className="size-4" />JSON</button>
+          </div>
         </section>
 
         <div className="overflow-x-auto border-y" aria-busy={store.loading}>
@@ -120,7 +134,16 @@ export function EstimateDatabaseWorkbench() {
                 <th className="sticky left-0 z-[5] border-r bg-[var(--color-surface)] p-1 text-center font-medium">
                   <button type="button" onClick={(event) => { event.stopPropagation(); beginEdit(row); }} className="min-h-8 w-full px-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]">{(page - 1) * PAGE_SIZE + rowIndex + 1}</button>
                 </th>
-                {ESTIMATE_DB_COLUMNS[tab].map((column) => <td key={column.key} className="border-r p-1.5">{editing && !column.readonly ? <input type={column.kind === 'date' ? 'date' : 'text'} inputMode={column.kind === 'money' || column.kind === 'number' ? 'decimal' : undefined} value={String(draft[column.key] ?? '')} onChange={(event) => setDraft((value) => ({ ...value, [column.key]: event.target.value }))} aria-label={column.label} className={fieldClass} /> : <span className="block max-w-[220px] whitespace-pre-wrap break-words px-1 py-1">{display(editing ? draft[column.key] : row.data[column.key])}</span>}</td>)}
+                {ESTIMATE_DB_COLUMNS[tab].map((column) => {
+                  const linked = autoLinkedColumns.has(column.key);
+                  const locked = Boolean(column.readonly || linked);
+                  return <td key={column.key} className={`border-r p-1.5 ${linked ? 'bg-sky-50/80' : column.readonly ? 'bg-emerald-50/80' : editing ? 'bg-amber-50/80' : ''}`}>
+                    <div className="flex min-w-0 items-start gap-1">
+                      <div className="min-w-0 flex-1">{editing && !locked ? <input type={column.kind === 'date' ? 'date' : 'text'} inputMode={column.kind === 'money' || column.kind === 'number' ? 'decimal' : undefined} value={String(draft[column.key] ?? '')} onChange={(event) => setDraft((value) => ({ ...value, [column.key]: event.target.value }))} aria-label={column.label} className={`${fieldClass} border-amber-300 bg-amber-50`} /> : <span className="block max-w-[220px] whitespace-pre-wrap break-words px-1 py-1">{display(editing ? draft[column.key] : row.data[column.key])}</span>}</div>
+                      <button type="button" onClick={(event) => { event.stopPropagation(); setSourceCell({ row, column: column.key, readonly: locked }); }} title="Cell source" className="grid size-7 shrink-0 place-items-center text-[var(--color-text-sub)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]">{locked ? <LockKeyhole className="size-3.5" /> : <Info className="size-3.5" />}</button>
+                    </div>
+                  </td>;
+                })}
               </tr>;
             }) : <tr><td colSpan={ESTIMATE_DB_COLUMNS[tab].length + 1} className="px-4 py-16 text-center text-sm text-[var(--color-text-sub)]">{t('estimateDb.empty')}</td></tr>}</tbody>
           </table>
@@ -128,6 +151,13 @@ export function EstimateDatabaseWorkbench() {
         <div className="flex items-center justify-between text-sm"><span>{t('estimateDb.count', { count: String(rows.length) })}</span><div className="flex items-center gap-2"><button type="button" onClick={() => setPage((value) => Math.max(1, value - 1))} disabled={page === 1} className={buttonClass}>{t('estimateDb.prev')}</button><span>{page} / {pageCount}</span><button type="button" onClick={() => setPage((value) => Math.min(pageCount, value + 1))} disabled={page === pageCount} className={buttonClass}>{t('estimateDb.next')}</button></div></div>
         {tab === 'MEP_CONTRACT' && <VendorSection vendors={store.vendors} currentUserId={currentUser.id} t={t} />}
       </> : <ReportSection year={year} setYear={setYear} report={report} records={store.records} vendors={store.vendors} targets={store.targets} currentUserId={currentUser.id} t={t} />}
+      {sourceCell && <div className="fixed inset-0 z-[90] bg-black/25" role="presentation" onMouseDown={() => setSourceCell(null)}>
+        <aside role="dialog" aria-modal="true" aria-label="Cell source" onMouseDown={(event) => event.stopPropagation()} className="absolute inset-y-0 right-0 w-full max-w-md overflow-y-auto border-l bg-[var(--color-surface)] p-5 shadow-2xl">
+          <div className="flex items-start justify-between gap-3 border-b pb-4"><div><p className="text-[10px] font-black tracking-[.12em] text-[var(--color-primary)]">CELL SOURCE</p><h2 className="mt-1 text-xl font-black">{sourceCell.column}</h2></div><button type="button" onClick={() => setSourceCell(null)} title={t('common.close')} className="grid size-9 place-items-center border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]"><X className="size-4" /></button></div>
+          <dl className="mt-5 grid grid-cols-[120px_1fr] gap-x-3 gap-y-4 text-sm"><dt className="font-semibold text-[var(--color-text-sub)]">PJ Row</dt><dd>{sourceCell.row.pjNo || sourceCell.row.id}</dd><dt className="font-semibold text-[var(--color-text-sub)]">출처</dt><dd>{autoLinkedColumns.has(sourceCell.column) ? '견적 의뢰·접수·canonical Project 자동 연결' : sourceCell.readonly ? '서버 계산·파생값' : '사용자 수동 입력'}</dd><dt className="font-semibold text-[var(--color-text-sub)]">상태</dt><dd>{sourceCell.readonly ? '자동 연결 / 잠금' : '수정 가능 / 저장 필요'}</dd><dt className="font-semibold text-[var(--color-text-sub)]">현재값</dt><dd className="break-all">{display(sourceCell.row.data[sourceCell.column])}</dd><dt className="font-semibold text-[var(--color-text-sub)]">Record ID</dt><dd className="break-all font-mono text-xs">{sourceCell.row.id}</dd><dt className="font-semibold text-[var(--color-text-sub)]">Version</dt><dd>{sourceCell.row.version}</dd></dl>
+          <div className="mt-6 border-l-4 border-sky-400 bg-sky-50 p-3 text-xs text-sky-900">연한 파랑은 자동 연결, 연한 초록은 서버 계산, 연한 노랑은 수동 입력 Cell입니다.</div>
+        </aside>
+      </div>}
     </main>
   );
 }

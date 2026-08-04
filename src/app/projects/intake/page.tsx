@@ -11,6 +11,7 @@ import { useNotificationStore } from '@/store/notificationStore';
 import { useTranslationStore } from '@/store/translationStore';
 import { EstimateRequestWorkbench } from '@/components/intake/EstimateRequestWorkbench';
 import { ProjectIntakeWorkbench } from '@/components/intake/ProjectIntakeWorkbench';
+import { evaluateEstimateAccess } from '@/lib/accessControl';
 
 type IntakeTab = ProjectSourceType | 'PROJECT_INTAKE';
 
@@ -51,7 +52,17 @@ function IntakePageContent() {
 
   // Authorization Check
   if (!currentUser) return <div className="py-10 text-center text-[var(--color-text-sub)]">{t('header.loginRequired')}</div>;
-  if (!['SUPER_ADMIN', 'SYSTEM_ADMIN', 'DEPARTMENT_MANAGER', 'PM'].includes(currentUser.role)) {
+  const intakeAccess = ['SUPER_ADMIN', 'SYSTEM_ADMIN', 'DEPARTMENT_MANAGER', 'PM'].includes(currentUser.role);
+  const estimateAccess = evaluateEstimateAccess(currentUser).allowed;
+  if (!intakeAccess && !estimateAccess) {
+    return <div className="py-10 text-center text-[var(--color-danger)] font-bold">{t('intake.noPermission')}</div>;
+  }
+
+  if (activeTab === 'CLIENT_ORDER' && !estimateAccess) {
+    return <div className="py-10 text-center text-[var(--color-danger)] font-bold">{t('intake.noPermission')}</div>;
+  }
+
+  if (activeTab !== 'CLIENT_ORDER' && !intakeAccess) {
     return <div className="py-10 text-center text-[var(--color-danger)] font-bold">{t('intake.noPermission')}</div>;
   }
 

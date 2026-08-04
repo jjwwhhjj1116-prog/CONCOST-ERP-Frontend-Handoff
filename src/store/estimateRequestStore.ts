@@ -289,9 +289,9 @@ export const useEstimateRequestStore = create<EstimateRequestState>()(persist((s
     if (['LOST', 'CANCELLED'].includes(input.decision) && !input.reason?.trim()) throw new Error('A reason is required for lost or cancelled decisions');
     const { useEstimateSheetStore } = await import('@/store/estimateSheetStore');
     const sheet = useEstimateSheetStore.getState().sheets[id];
-    const sentSubmission = sheet?.submissions?.find((item) => item.status === 'SENT' && item.sentAt) || null;
-    if (['WON', 'LOST'].includes(input.decision) && !sentSubmission) {
-      throw new Error('A sent estimate submission is required before this decision');
+    const completedSubmission = sheet?.submissions?.find((item) => ['SUBMITTED', 'SENT'].includes(item.status)) || null;
+    if (['WON', 'LOST'].includes(input.decision) && !completedSubmission) {
+      throw new Error('A completed estimate submission is required before this decision');
     }
     const timestamp = now();
     if (input.decision === 'WON') {
@@ -302,8 +302,8 @@ export const useEstimateRequestStore = create<EstimateRequestState>()(persist((s
         companyId: useUiStore.getState().brandWorkspace,
         timestamp,
         estimateSheetId: sheet?.id || null,
-        estimateSubmissionId: sentSubmission?.id || null,
-        estimateDocumentHash: sentSubmission?.documentHash || null,
+        estimateSubmissionId: completedSubmission?.id || null,
+        estimateDocumentHash: completedSubmission?.documentHash || null,
       });
       const projectStore = useProjectStore.getState();
       projectStore.replaceProjects([
@@ -339,7 +339,7 @@ export const useEstimateRequestStore = create<EstimateRequestState>()(persist((s
       id: decisionId,
       estimateRequestId: id,
       estimateSheetId: sheet?.id || null,
-      estimateSubmissionId: sentSubmission?.id || null,
+      estimateSubmissionId: completedSubmission?.id || null,
       projectId,
       idempotencyKey: `estimate-decision:${id}:${current.version}:${input.decision}`,
       decision: input.decision,
@@ -368,7 +368,7 @@ export const useEstimateRequestStore = create<EstimateRequestState>()(persist((s
         action: 'COMMERCIAL_DECISION_RECORDED',
         fromStatus: current.status,
         toStatus: input.decision,
-        changes: JSON.stringify({ decisionId, projectId, projectIntakeId: null, estimateSubmissionId: sentSubmission?.id || null }),
+        changes: JSON.stringify({ decisionId, projectId, projectIntakeId: null, estimateSubmissionId: completedSubmission?.id || null }),
         actorId,
         createdAt: timestamp,
       }, ...current.histories],

@@ -21,6 +21,7 @@ import { useEstimateRequestStore } from '@/store/estimateRequestStore';
 import { useProjectStore } from '@/store/projectStore';
 import { useScheduleStore } from '@/store/scheduleStore';
 import { useTaskStore } from '@/store/taskStore';
+import { evaluateEstimateAccess } from '@/lib/accessControl';
 
 type WidgetId = 'projects' | 'kpi' | 'approvals' | 'sales' | 'tasks' | 'schedule';
 
@@ -75,6 +76,10 @@ export function WorkspaceWidgetPortal() {
 
   const storageKey = currentUser ? `concost.workspace.widgets.v1:${currentUser.id}` : '';
   if (!currentUser) return null;
+  const estimateAccess = evaluateEstimateAccess(currentUser).allowed;
+  const availableWidgetOptions = estimateAccess
+    ? widgetOptions
+    : widgetOptions.filter((option) => option.id !== 'sales');
 
   const myProjects = projects.filter((project) => !project.isDeleted && project.archiveStatus !== 'ARCHIVED' && (
     currentUser.role === 'SUPER_ADMIN' || project.pmId === currentUser.id || project.managerId === currentUser.id || project.departmentId === currentUser.departmentId
@@ -91,9 +96,10 @@ export function WorkspaceWidgetPortal() {
   const rejected = visibleApprovals.filter((request) => request.status === 'REJECTED' || request.status === 'CANCELLED').length;
   const pending = Math.max(0, visibleApprovals.length - approved - rejected);
 
-  const won = estimateRequests.filter((request) => request.status === 'WON');
-  const sent = estimateRequests.filter((request) => ['ESTIMATE_DRAFTING', 'WAITING'].includes(request.status));
-  const lost = estimateRequests.filter((request) => request.status === 'LOST');
+  const scopedEstimateRequests = estimateAccess ? estimateRequests : [];
+  const won = scopedEstimateRequests.filter((request) => request.status === 'WON');
+  const sent = scopedEstimateRequests.filter((request) => ['ESTIMATE_DRAFTING', 'WAITING'].includes(request.status));
+  const lost = scopedEstimateRequests.filter((request) => request.status === 'LOST');
   const salesMax = Math.max(1, won.length, sent.length, lost.length);
   const today = new Date().toISOString().slice(0, 10);
   const todaySchedules = schedules.filter((schedule) => schedule.userId === currentUser.id && schedule.startDateTime.startsWith(today));
@@ -117,7 +123,7 @@ export function WorkspaceWidgetPortal() {
       </div>
 
       {customizing && <div className="flex flex-wrap gap-2 rounded-xl border border-dashed border-[#f1b17f] bg-[#fff8f1] p-3 dark:bg-orange-950/15">
-        {widgetOptions.map((option) => {
+        {availableWidgetOptions.map((option) => {
           const Icon = option.icon;
           const checked = visibleWidgets.includes(option.id);
           return <label key={option.id} className={`flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-xs font-black ${checked ? 'border-[#ff6b00] bg-white text-[#a94100]' : 'border-[#ead8c9] bg-transparent text-[#7e6756]'}`}><input type="checkbox" className="accent-[#ff6b00]" checked={checked} onChange={() => toggleWidget(option.id)} /><Icon className="h-4 w-4" />{option.label}</label>;
@@ -149,7 +155,7 @@ export function WorkspaceWidgetPortal() {
           <div className="mt-3 grid grid-cols-3 text-center text-[9px] font-bold text-[var(--color-text-sub)]"><span><b className="block text-sm text-emerald-600">{approved}</b>승인</span><span><b className="block text-sm text-orange-500">{pending}</b>대기</span><span><b className="block text-sm text-red-500">{rejected}</b>반려</span></div>
         </Link>}
 
-        {visible('sales') && <Link href="/sales?view=CONTRACTS" className="cc-tactile-card group min-h-[196px] p-5 xl:col-span-4" data-interactive="true">
+        {estimateAccess && visible('sales') && <Link href="/sales?view=CONTRACTS" className="cc-tactile-card group min-h-[196px] p-5 xl:col-span-4" data-interactive="true">
           <div className="mb-5 flex items-center justify-between"><div><h3 className="text-sm font-black text-[var(--color-text-main)]">수주 현황</h3><p className="mt-1 text-[10px] font-semibold text-[var(--color-text-sub)]">견적부터 수주 전환까지</p></div><BarChart3 className="h-5 w-5 text-[#eb6300]" /></div>
           <div className="flex h-24 items-end justify-around gap-4 border-b border-[var(--color-border)] px-5">
             {[['수주', won.length, '#17965b'], ['제출', sent.length, '#ff8a1f'], ['실주', lost.length, '#e43c4b']].map(([label, value, color]) => <div key={String(label)} className="flex h-full flex-1 flex-col items-center justify-end"><b className="mb-1 font-mono text-xs tabular-nums">{value}</b><i className="w-full max-w-14 rounded-t" style={{ height: `${Math.max(8, Number(value) / salesMax * 64)}px`, background: String(color) }} /><span className="mt-2 text-[9px] font-bold text-[var(--color-text-sub)]">{label}</span></div>)}

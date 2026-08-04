@@ -331,6 +331,7 @@ export interface EstimateRequest {
   requestNo: string;
   status: EstimateRequestStatus;
   projectName: string;
+  projectNo?: string | null;
   company?: string | null;
   client?: string | null;
   contact?: string | null;
@@ -350,10 +351,15 @@ export interface EstimateRequest {
   finalDelivery?: string | null;
   expectedStartDate?: string | null;
   areaPy?: string | null;
+  areaM2?: string | null;
   floors?: string | null;
+  basementFloors?: string | null;
+  groundFloors?: string | null;
   scope?: string | null;
   usage?: string | null;
   buildingCount?: string | null;
+  workCategory?: string | null;
+  executionType?: string | null;
   unitWork?: string | null;
   bidDate?: string | null;
   estimateType?: string | null;
@@ -390,6 +396,9 @@ export interface EstimateSheetCellState {
   value?: string | number | null;
   formula?: string;
   userFormula?: boolean;
+  sourceField?: string;
+  manualOverride?: boolean;
+  locked?: boolean;
 }
 
 export interface EstimateSheetState {

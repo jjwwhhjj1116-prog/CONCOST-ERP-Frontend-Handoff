@@ -491,7 +491,7 @@ export function ProjectIntakeWorkbench({ currentUser, t, view = 'CREATE', reques
                       ['company', 'projectIntake.field.company'], ['client', 'projectIntake.field.client'],
                       ['usage', 'projectIntake.field.usage'], ['area', 'projectIntake.field.area'],
                       ['buildings', 'projectIntake.field.buildings'], ['floors', 'projectIntake.field.floors'],
-                      ['bidDate', 'projectIntake.field.bidDate'], ['unitPrice', 'projectIntake.field.unitPrice'],
+                      ['bidDate', 'projectIntake.field.bidDate'],
                     ] as Array<[keyof ProjectIntakeDraft, string]>).map(([key, label]) => (
                       <label key={key} className="block text-xs font-medium text-[var(--color-text-sub)]">
                         <span className="mb-1 block">{t(label as Parameters<Translate>[0])}</span>
