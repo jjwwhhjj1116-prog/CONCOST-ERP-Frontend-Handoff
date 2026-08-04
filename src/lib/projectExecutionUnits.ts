@@ -55,6 +55,36 @@ export const createExecutionAssignments = ({
   }));
 };
 
+export const completeExecutionAssignments = ({
+  projectId,
+  targetUnitIds,
+  primaryUnitId,
+  actorId,
+  assignedAt,
+  existingAssignments = [],
+}: {
+  projectId: string;
+  targetUnitIds: readonly ProjectExecutionUnitId[];
+  primaryUnitId?: ProjectExecutionUnitId | null;
+  actorId: string;
+  assignedAt: string;
+  existingAssignments?: readonly ProjectExecutionUnitAssignment[];
+}): ProjectExecutionUnitAssignment[] => {
+  const existingByUnit = new Map(existingAssignments.map((assignment) => [assignment.unitId, assignment]));
+  return createExecutionAssignments({ projectId, targetUnitIds, primaryUnitId, actorId, assignedAt })
+    .map((assignment) => {
+      const existing = existingByUnit.get(assignment.unitId);
+      return {
+        ...assignment,
+        pmId: existing?.pmId,
+        personnelIds: existing?.personnelIds,
+        staffingUpdatedAt: existing?.staffingUpdatedAt,
+        staffingUpdatedBy: existing?.staffingUpdatedBy,
+        status: 'START_PLANNED',
+      };
+    });
+};
+
 export const getProjectBoardScope = (
   groupValue: string | null,
   unitValue: string | null,

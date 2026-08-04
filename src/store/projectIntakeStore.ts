@@ -13,6 +13,7 @@ import {
 } from '@/lib/projectIntake';
 import { getProjectIntakePersistenceMode } from '@/lib/runtimeExecutionMode';
 import { buildEstimatePipelineDbInput } from '@/lib/estimatePipelineDatabase';
+import { completeExecutionAssignments } from '@/lib/projectExecutionUnits';
 import { useEstimateDatabaseStore } from '@/store/estimateDatabaseStore';
 import { useEstimateRequestStore } from '@/store/estimateRequestStore';
 import { useProjectStore } from '@/store/projectStore';
@@ -381,12 +382,25 @@ export const useProjectIntakeStore = create<ProjectIntakeState>()(persist((set, 
     const timestamp = now();
     await useProjectPmScheduleStore.getState().sync(actor);
     const projectStore = useProjectStore.getState();
-    projectStore.replaceProjects(projectStore.projects.map((project) => project.id === current.projectId ? {
-      ...project,
-      status: 'MANAGER_REVIEW',
-      executionAssignments: (project.executionAssignments || []).map((assignment) => ({ ...assignment, status: 'START_PLANNED' as const })),
-      updatedAt: timestamp,
-    } : project));
+    projectStore.replaceProjects(projectStore.projects.map((project) => {
+      if (project.id !== current.projectId) return project;
+      const executionAssignments = completeExecutionAssignments({
+        projectId: project.id,
+        targetUnitIds: draft.targetUnitIds,
+        primaryUnitId: draft.primaryUnitId,
+        actorId: actor.id,
+        assignedAt: timestamp,
+        existingAssignments: project.executionAssignments,
+      });
+      return {
+        ...project,
+        status: 'MANAGER_REVIEW',
+        primaryUnitId: draft.primaryUnitId,
+        assignedUnitIds: draft.targetUnitIds,
+        executionAssignments,
+        updatedAt: timestamp,
+      };
+    }));
 
     const reviewHistory = current.status === 'REVIEWED'
       ? []

@@ -1,11 +1,38 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
+  completeExecutionAssignments,
   createExecutionAssignments,
   getProjectBoardScope,
   matchesProjectBoardScope,
   normalizeExecutionUnitIds,
 } from './projectExecutionUnits';
+
+test('completes only final intake departments and preserves staffing for retained units', () => {
+  const existing = createExecutionAssignments({
+    projectId: 'project-request-final',
+    targetUnitIds: ['FINISH', 'STRUCTURE'],
+    primaryUnitId: 'FINISH',
+    actorId: 'demo-admin',
+    assignedAt: '2026-08-03T00:00:00.000Z',
+  }).map((assignment) => assignment.unitId === 'STRUCTURE'
+    ? { ...assignment, pmId: 'structure-pm', personnelIds: ['structure-pm', 'structure-worker'] }
+    : assignment);
+  const completed = completeExecutionAssignments({
+    projectId: 'project-request-final',
+    targetUnitIds: ['STRUCTURE', 'CLAIM'],
+    primaryUnitId: 'STRUCTURE',
+    actorId: 'demo-manager',
+    assignedAt: '2026-08-04T00:00:00.000Z',
+    existingAssignments: existing,
+  });
+
+  assert.deepEqual(completed.map((assignment) => assignment.unitId), ['STRUCTURE', 'CLAIM']);
+  assert.ok(completed.every((assignment) => assignment.status === 'START_PLANNED'));
+  assert.equal(completed.find((assignment) => assignment.unitId === 'STRUCTURE')?.role, 'PRIMARY');
+  assert.equal(completed.find((assignment) => assignment.unitId === 'STRUCTURE')?.pmId, 'structure-pm');
+  assert.deepEqual(completed.find((assignment) => assignment.unitId === 'STRUCTURE')?.personnelIds, ['structure-pm', 'structure-worker']);
+});
 
 test('creates deterministic canonical assignments with one primary unit', () => {
   const assignments = createExecutionAssignments({

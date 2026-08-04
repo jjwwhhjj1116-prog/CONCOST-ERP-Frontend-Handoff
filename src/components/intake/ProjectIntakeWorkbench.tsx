@@ -22,6 +22,7 @@ import {
 import { useTranslation } from '@/lib/localization';
 import { buildProjectIntakeDraft, evaluateProjectIntakeCompleteness } from '@/lib/projectIntake';
 import { resolveProjectIntakeSelection } from '@/lib/projectIntakeMode';
+import { projectBoardHref } from '@/lib/projectExecutionUnits';
 import { getProjectIntakeCreateBlockedCopy } from '@/lib/runtimeBoundaryCopy';
 import { useProjectIntakeStore } from '@/store/projectIntakeStore';
 import { useUiStore } from '@/store/uiStore';
@@ -204,6 +205,10 @@ export function ProjectIntakeWorkbench({ currentUser, t, view = 'CREATE', reques
     try {
       await finalizeWonIntake(selected.id, draft, reviewNote, actor);
       setMessage(t('projectIntake.message.accept'));
+      const destinationUnitIds = draft.primaryUnitId
+        ? [draft.primaryUnitId, ...draft.targetUnitIds]
+        : draft.targetUnitIds;
+      router.push(projectBoardHref(destinationUnitIds));
     } catch (caught) {
       setActionError(caught instanceof Error ? caught.message : t('projectIntake.error.generic'));
     } finally {
