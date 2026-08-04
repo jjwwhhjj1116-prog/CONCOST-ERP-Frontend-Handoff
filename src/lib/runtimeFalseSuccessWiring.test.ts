@@ -15,13 +15,15 @@ test('mail send handler delegates to the runtime boundary without creating a SEN
 });
 
 test('approval mutations are presentation-only until a server adapter responds', () => {
-  const approvals = source('src/components/approvals/ApprovalWorkspace.tsx');
-  const mutationBlock = approvals.match(/const submit = [\s\S]*?const summary =/)?.[0] || '';
+  const approvals = source('src/components/approvals/ApprovalDocumentComposer.tsx');
+  const mutationBlock = approvals.match(/const submit = async[\s\S]*?\n  };/)?.[0] || '';
+  const draftBlock = approvals.match(/const draft = \(\) => \{[\s\S]*?\n  };/)?.[0] || '';
 
-  assert.match(mutationBlock, /getRuntimeBoundaryCopy\('APPROVAL'/);
-  assert.doesNotMatch(mutationBlock, /\baddRequest\(/);
-  assert.doesNotMatch(mutationBlock, /\breviewDocument\(/);
-  assert.doesNotMatch(mutationBlock, /\bcancelRequest\(/);
+  assert.match(mutationBlock, /executeFrontendMutation\(boundary/);
+  assert.match(mutationBlock, /result\.kind === 'BLOCKED'/);
+  assert.ok(mutationBlock.indexOf("result.kind === 'BLOCKED'") < mutationBlock.indexOf('addRequest(payload)'));
+  assert.match(draftBlock, /runtimeMode !== 'DEMO_LOCAL'/);
+  assert.ok(draftBlock.indexOf("runtimeMode !== 'DEMO_LOCAL'") < draftBlock.indexOf('saveDraft(requestPayload())'));
   assert.doesNotMatch(approvals, /findApprover\([^;]+currentUser\)/);
 });
 

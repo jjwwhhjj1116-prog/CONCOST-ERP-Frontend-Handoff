@@ -5,6 +5,7 @@ import { useApprovalStore } from '@/store/approvalStore';
 import { useTranslationStore } from '@/store/translationStore';
 import { useTranslation } from '@/lib/localization';
 import { X, CheckCircle, XCircle } from 'lucide-react';
+import { getApprovalBoundary } from '@/lib/runtimeExecutionMode';
 
 interface Props {
   request: ApprovalRequest;
@@ -13,15 +14,24 @@ interface Props {
 
 export const ApprovalReviewModal: React.FC<Props> = ({ request, onClose }) => {
   const { currentUser } = useAuthStore();
-  const { updateApprovalStatus } = useApprovalStore();
+  const { reviewDocument } = useApprovalStore();
   const { settings } = useTranslationStore();
   const t = useTranslation(settings.uiLanguage);
   const [comment, setComment] = useState('');
 
   const handleApprove = () => {
     if (!currentUser) return;
-    updateApprovalStatus(request.id, 'APPROVED', currentUser.id, comment);
-    alert(t('board.approval.approvedAlert'));
+    const boundary = getApprovalBoundary();
+    if (boundary.kind === 'BLOCKED') {
+      alert(boundary.message);
+      return;
+    }
+    const changed = reviewDocument(request.id, currentUser.id, 'APPROVE', comment);
+    if (!changed) {
+      alert('Permission denied');
+      return;
+    }
+    alert(`DEMO_LOCAL · ${t('board.approval.approvedAlert')}`);
     onClose();
   };
 
@@ -31,8 +41,17 @@ export const ApprovalReviewModal: React.FC<Props> = ({ request, onClose }) => {
       alert(t('board.approval.rejectReasonRequired'));
       return;
     }
-    updateApprovalStatus(request.id, 'REJECTED', currentUser.id, comment);
-    alert(t('board.approval.rejectedAlert'));
+    const boundary = getApprovalBoundary();
+    if (boundary.kind === 'BLOCKED') {
+      alert(boundary.message);
+      return;
+    }
+    const changed = reviewDocument(request.id, currentUser.id, 'REJECT', comment);
+    if (!changed) {
+      alert('Permission denied');
+      return;
+    }
+    alert(`DEMO_LOCAL · ${t('board.approval.rejectedAlert')}`);
     onClose();
   };
 
