@@ -1284,13 +1284,75 @@ export interface ProcessSchedule {
 
 export type ApprovalRequestType = 'SCHEDULE_APPROVAL' | 'SCHEDULE_REJECTION' | 'ADDITIONAL_TASK' | 'OVERTIME_REQUEST' | 'DEADLINE_EXTENSION' | 'TASK_REORDER' | 'PM_ASSIGNMENT' | 'MANPOWER_SUPPORT' | 'PRIORITY_CHANGE' | 'SCHEDULE_REPLAN' | 'PROCESS_SCHEDULE_APPROVAL' | 'LEAVE_REQUEST' | 'EXPENSE_APPROVAL' | 'PURCHASE_APPROVAL' | 'BUSINESS_TRIP' | 'GENERAL_APPROVAL';
 
+export type ApprovalLineScope = 'PERSONAL' | 'DEPARTMENT' | 'COMPANY';
+export type ApprovalStepKind = 'APPROVAL' | 'FINAL_APPROVAL' | 'AGREEMENT' | 'COOPERATION' | 'REFERENCE';
+export type ApprovalStepExecutionMode = 'SEQUENTIAL' | 'PARALLEL_ALL' | 'REFERENCE_ONLY';
+export type ApprovalDistributionKind = 'RECIPIENT' | 'REFERENCE' | 'CIRCULATION' | 'DISTRIBUTION';
+export type ApprovalSecurityLevel = 'GENERAL' | 'INTERNAL' | 'CONFIDENTIAL' | 'RESTRICTED';
+export type ApprovalFileState = 'LOCAL_PREVIEW' | 'UPLOADING' | 'SCANNING' | 'READY' | 'REJECTED';
+
 export interface ApprovalDocumentLineStep {
   id: string;
   label: string;
-  approverId: UserId;
-  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  sequence?: number;
+  kind?: ApprovalStepKind;
+  departmentId?: DepartmentId;
+  approverId?: UserId;
+  approverRole?: Role;
+  positionTitle?: string;
+  displayTitle?: string;
+  executionMode?: ApprovalStepExecutionMode;
+  groupId?: string;
+  immediateArrival?: boolean;
+  canEditLine?: boolean;
+  canEditContent?: boolean;
+  required?: boolean;
+  policyLocked?: boolean;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'CHANGES_REQUESTED' | 'SKIPPED';
   actedAt?: string;
   comment?: string;
+}
+
+export interface ApprovalLineDefinition {
+  id: string;
+  companyId: CompanyId;
+  scope: ApprovalLineScope;
+  departmentId?: DepartmentId;
+  ownerId: UserId;
+  name: string;
+  formType?: ApprovalRequestType;
+  steps: ApprovalDocumentLineStep[];
+  isDefault: boolean;
+  usageCount: number;
+  version: number;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ApprovalDistributionTarget {
+  id: string;
+  kind: ApprovalDistributionKind;
+  targetType: 'USER' | 'ROLE' | 'ORGANIZATION';
+  targetId: string;
+  label: string;
+}
+
+export interface ApprovalAttachmentReference {
+  id: string;
+  fileName: string;
+  contentType: string;
+  size: number;
+  state: ApprovalFileState;
+  fileReferenceId?: string;
+}
+
+export interface ApprovalSubmissionSnapshot {
+  lineDefinitionId?: string;
+  lineVersion: number;
+  policyVersion: string;
+  steps: ApprovalDocumentLineStep[];
+  createdAt: string;
 }
 
 export interface ApprovalRequest {
@@ -1301,9 +1363,16 @@ export interface ApprovalRequest {
   requestedBy: UserId;
   pmId?: UserId;
   managerId?: UserId;
-  status: 'PENDING' | 'PM_REVIEWING' | 'PM_APPROVED' | 'MANAGER_REVIEWING' | 'APPROVED' | 'REJECTED' | 'CANCELLED';
+  status: 'DRAFT' | 'PENDING' | 'PM_REVIEWING' | 'PM_APPROVED' | 'MANAGER_REVIEWING' | 'CHANGES_REQUESTED' | 'APPROVED' | 'REJECTED' | 'RECALLED' | 'CANCELLED';
   title: string;
   reason: string;
+  companyId?: CompanyId;
+  departmentId?: DepartmentId;
+  formId?: string;
+  documentNo?: string;
+  retentionPeriod?: string;
+  securityLevel?: ApprovalSecurityLevel;
+  claimId?: string;
   requestedStartDate?: string;
   requestedDueDate?: string;
   reviewedBy?: UserId;
@@ -1311,6 +1380,10 @@ export interface ApprovalRequest {
   alternativeType?: ApprovalRequestType;
   documentData?: Record<string, string | number | boolean | null>;
   approvalLine?: ApprovalDocumentLineStep[];
+  approvalSnapshot?: ApprovalSubmissionSnapshot;
+  distributionTargets?: ApprovalDistributionTarget[];
+  attachments?: ApprovalAttachmentReference[];
+  revision?: number;
   currentApprovalStep?: number;
   isDeleted?: boolean;
   createdAt: string;

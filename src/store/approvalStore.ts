@@ -1,6 +1,6 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
-import { ApprovalRequest, ApprovalWorkflowTemplate, ApprovalRequestType } from '@/types/models';
+import { createJSONStorage, persist, type StateStorage } from 'zustand/middleware';
+import { ApprovalLineDefinition, ApprovalRequest, ApprovalWorkflowTemplate, ApprovalRequestType } from '@/types/models';
 import { mockApprovalRequests } from '@/data/mockData';
 import { useNotificationStore } from '@/store/notificationStore';
 import { useTaskStore } from '@/store/taskStore';
@@ -11,14 +11,23 @@ import { useAuditStore } from '@/store/auditStore';
 import { useProjectStore } from '@/store/projectStore';
 import { useAuthStore } from '@/store/authStore';
 import { canApproveRequest } from '@/lib/permissions';
+import { getRuntimeExecutionMode } from '@/lib/runtimeExecutionMode';
+import { normalizeApprovalSteps } from '@/lib/approvalWorkflow';
 
 interface ApprovalState {
   requests: ApprovalRequest[];
   templates: ApprovalWorkflowTemplate[];
+  savedLines: ApprovalLineDefinition[];
   addRequest: (request: Omit<ApprovalRequest, 'id' | 'createdAt' | 'updatedAt' | 'status'> & { id?: string }) => string;
   updateApprovalStatus: (id: string, status: 'APPROVED' | 'REJECTED' | 'PM_APPROVED' | 'MANAGER_REVIEWING', reviewerId: string, comment?: string, alternativeType?: ApprovalRequestType) => void;
-  reviewDocument: (id: string, reviewerId: string, action: 'APPROVE' | 'REJECT', comment?: string) => boolean;
+  reviewDocument: (id: string, reviewerId: string, action: 'APPROVE' | 'REJECT' | 'REQUEST_CHANGES', comment?: string, stepId?: string) => boolean;
   cancelRequest: (id: string, requesterId: string, reason?: string) => boolean;
+  saveDraft: (request: Omit<ApprovalRequest, 'id' | 'createdAt' | 'updatedAt' | 'status'> & { id?: string }) => string;
+  saveLine: (line: ApprovalLineDefinition) => void;
+  deleteLine: (lineId: string, actorId: string) => boolean;
+  copyLine: (lineId: string, actorId: string) => string | null;
+  setDefaultLine: (lineId: string, actorId: string) => boolean;
+  incrementLineUsage: (lineId: string) => void;
   updateTemplate: (templateId: string, updates: Partial<ApprovalWorkflowTemplate>) => void;
   replaceRequests: (requests: ApprovalRequest[]) => void;
   resetRequests: () => void;
@@ -50,9 +59,27 @@ const initialTemplates: ApprovalWorkflowTemplate[] = [
   }
 ];
 
+const initialSavedLines: ApprovalLineDefinition[] = [];
+
+const approvalStorage: StateStorage = {
+  getItem: (name) => {
+    if (typeof window === 'undefined' || getRuntimeExecutionMode() !== 'DEMO_LOCAL') return null;
+    return window.localStorage.getItem(name);
+  },
+  setItem: (name, value) => {
+    if (typeof window === 'undefined' || getRuntimeExecutionMode() !== 'DEMO_LOCAL') return;
+    window.localStorage.setItem(name, value);
+  },
+  removeItem: (name) => {
+    if (typeof window === 'undefined' || getRuntimeExecutionMode() !== 'DEMO_LOCAL') return;
+    window.localStorage.removeItem(name);
+  },
+};
+
 export const useApprovalStore = create<ApprovalState>()(persist((set, get) => ({
   requests: initialRequests,
   templates: initialTemplates,
+  savedLines: initialSavedLines,
   addRequest: (requestData) => {
     const newId = requestData.id || `apr_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
     set((state) => ({
@@ -87,6 +114,86 @@ export const useApprovalStore = create<ApprovalState>()(persist((set, get) => ({
 
     return newId;
   },
+  saveDraft: (requestData) => {
+    if (getRuntimeExecutionMode() !== 'DEMO_LOCAL') return '';
+    const id = requestData.id || `apr_draft_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+    const now = new Date().toISOString();
+    set((state) => ({
+      requests: [
+        ...state.requests.filter((request) => request.id !== id),
+        { ...requestData, id, status: 'DRAFT', createdAt: now, updatedAt: now },
+      ],
+    }));
+    return id;
+  },
+  saveLine: (line) => {
+    if (getRuntimeExecutionMode() !== 'DEMO_LOCAL') return;
+    const now = new Date().toISOString();
+    set((state) => {
+      const existing = state.savedLines.find((item) => item.id === line.id);
+      const saved = {
+        ...line,
+        steps: normalizeApprovalSteps(line.steps),
+        version: existing ? existing.version + 1 : Math.max(1, line.version),
+        createdAt: existing?.createdAt ?? line.createdAt ?? now,
+        updatedAt: now,
+      };
+      return {
+        savedLines: existing
+          ? state.savedLines.map((item) => item.id === line.id ? saved : item)
+          : [...state.savedLines, saved],
+      };
+    });
+  },
+  deleteLine: (lineId, actorId) => {
+    if (getRuntimeExecutionMode() !== 'DEMO_LOCAL') return false;
+    const line = get().savedLines.find((item) => item.id === lineId);
+    if (!line || line.ownerId !== actorId || line.steps.some((step) => step.policyLocked)) return false;
+    set((state) => ({ savedLines: state.savedLines.filter((item) => item.id !== lineId) }));
+    return true;
+  },
+  copyLine: (lineId, actorId) => {
+    if (getRuntimeExecutionMode() !== 'DEMO_LOCAL') return null;
+    const line = get().savedLines.find((item) => item.id === lineId);
+    if (!line) return null;
+    const now = new Date().toISOString();
+    const copyId = `line_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+    set((state) => ({
+      savedLines: [...state.savedLines, {
+        ...line,
+        id: copyId,
+        ownerId: actorId,
+        scope: 'PERSONAL',
+        name: `${line.name} (복사본)`,
+        isDefault: false,
+        usageCount: 0,
+        version: 1,
+        steps: line.steps.map((step) => ({ ...step, id: `${step.id}_copy_${Math.random().toString(36).slice(2, 6)}`, status: 'PENDING' })),
+        createdAt: now,
+        updatedAt: now,
+      }],
+    }));
+    return copyId;
+  },
+  setDefaultLine: (lineId, actorId) => {
+    if (getRuntimeExecutionMode() !== 'DEMO_LOCAL') return false;
+    const line = get().savedLines.find((item) => item.id === lineId);
+    if (!line || (line.scope === 'PERSONAL' && line.ownerId !== actorId)) return false;
+    set((state) => ({
+      savedLines: state.savedLines.map((item) => ({
+        ...item,
+        isDefault: item.id === lineId
+          ? true
+          : item.companyId === line.companyId && item.formType === line.formType
+            ? false
+            : item.isDefault,
+      })),
+    }));
+    return true;
+  },
+  incrementLineUsage: (lineId) => set((state) => ({
+    savedLines: state.savedLines.map((line) => line.id === lineId ? { ...line, usageCount: line.usageCount + 1 } : line),
+  })),
   updateApprovalStatus: (id, status, reviewerId, comment, alternativeType) => set((state) => {
     const request = state.requests.find(r => r.id === id);
     if (!request) return state;
@@ -323,52 +430,83 @@ export const useApprovalStore = create<ApprovalState>()(persist((set, get) => ({
       )
     };
   }),
-  reviewDocument: (id, reviewerId, action, comment) => {
+  reviewDocument: (id, reviewerId, action, comment, stepId) => {
     const request = get().requests.find((item) => item.id === id);
     const reviewer = useAuthStore.getState().currentUser;
-    if (!request || !reviewer || reviewer.id !== reviewerId || ['APPROVED', 'REJECTED', 'CANCELLED'].includes(request.status)) return false;
+    if (!request || !reviewer || reviewer.id !== reviewerId || ['APPROVED', 'REJECTED', 'RECALLED', 'CANCELLED'].includes(request.status)) return false;
 
     const line = request.approvalLine || [];
-    const currentIndex = Math.max(0, request.currentApprovalStep || 0);
-    const currentStep = line[currentIndex];
-    if (!currentStep || (reviewer.role !== 'SUPER_ADMIN' && currentStep.approverId !== reviewer.id)) return false;
+    if (line.length === 0) {
+      if (!canApproveRequest(reviewer, request) || action === 'REQUEST_CHANGES') return false;
+      get().updateApprovalStatus(
+        id,
+        action === 'APPROVE' ? 'APPROVED' : 'REJECTED',
+        reviewerId,
+        comment,
+      );
+      return true;
+    }
+    const unresolved = line.filter((step) => step.kind !== 'REFERENCE' && step.status === 'PENDING');
+    const firstSequence = Math.min(...unresolved.map((step) => step.sequence ?? Number.MAX_SAFE_INTEGER));
+    const actionable = unresolved.filter((step) => {
+      if ((step.sequence ?? Number.MAX_SAFE_INTEGER) === firstSequence) return true;
+      return step.executionMode === 'PARALLEL_ALL' && step.groupId && unresolved.some((candidate) => candidate.groupId === step.groupId && (candidate.sequence ?? 0) === firstSequence);
+    });
+    const currentStep = stepId
+      ? actionable.find((step) => step.id === stepId)
+      : actionable.find((step) =>
+          step.approverId === reviewer.id ||
+          (!step.approverId && step.approverRole === reviewer.role) ||
+          reviewer.role === 'SUPER_ADMIN',
+        );
+    if (!currentStep) return false;
+    if (reviewer.role !== 'SUPER_ADMIN' && currentStep.approverId !== reviewer.id && currentStep.approverRole !== reviewer.role) return false;
 
     const timestamp = new Date().toISOString();
-    const nextLine = line.map((step, index) => index === currentIndex ? {
+    const nextLine = line.map((step) => step.id === currentStep.id ? {
       ...step,
-      status: action === 'APPROVE' ? 'APPROVED' as const : 'REJECTED' as const,
+      status: action === 'APPROVE'
+        ? 'APPROVED' as const
+        : action === 'REQUEST_CHANGES'
+          ? 'CHANGES_REQUESTED' as const
+          : 'REJECTED' as const,
       actedAt: timestamp,
       comment,
     } : step);
 
-    if (action === 'REJECT') {
+    if (action === 'REJECT' || action === 'REQUEST_CHANGES') {
+      const nextStatus = action === 'REJECT' ? 'REJECTED' : 'CHANGES_REQUESTED';
       set((state) => ({ requests: state.requests.map((item) => item.id === id ? {
         ...item,
         approvalLine: nextLine,
-        status: 'REJECTED',
-        reviewedBy: reviewerId,
-        reviewComment: comment,
-        updatedAt: timestamp,
-      } : item) }));
-      useAuditStore.getState().addLog({ actorId: reviewerId, action: 'UPDATE', entityType: 'APPROVAL', entityId: id, message: `Approval document ${id} rejected at ${currentStep.label}.` });
-      useNotificationStore.getState().addNotification({ userId: request.requestedBy, type: 'SYSTEM', title: '결재 반려 알림', message: `[${request.title}] 문서가 ${currentStep.label} 단계에서 반려되었습니다.`, priority: 'HIGH', relatedApprovalId: id });
-      return true;
-    }
-
-    const nextIndex = currentIndex + 1;
-    if (nextIndex < line.length) {
-      const nextStatus = nextIndex === 1 ? 'PM_APPROVED' : 'MANAGER_REVIEWING';
-      set((state) => ({ requests: state.requests.map((item) => item.id === id ? {
-        ...item,
-        approvalLine: nextLine,
-        currentApprovalStep: nextIndex,
         status: nextStatus,
         reviewedBy: reviewerId,
         reviewComment: comment,
         updatedAt: timestamp,
       } : item) }));
+      useAuditStore.getState().addLog({ actorId: reviewerId, action: 'UPDATE', entityType: 'APPROVAL', entityId: id, message: `Approval document ${id} ${action === 'REJECT' ? 'rejected' : 'requested changes'} at ${currentStep.label}.` });
+      useNotificationStore.getState().addNotification({ userId: request.requestedBy, type: 'SYSTEM', title: action === 'REJECT' ? '결재 반려 알림' : '결재 수정 요청', message: `[${request.title}] 문서가 ${currentStep.label} 단계에서 ${action === 'REJECT' ? '반려' : '수정 요청'}되었습니다.`, priority: 'HIGH', relatedApprovalId: id });
+      return true;
+    }
+
+    const remaining = nextLine.filter((step) => step.kind !== 'REFERENCE' && step.status === 'PENDING');
+    if (remaining.length > 0) {
+      const nextSequence = Math.min(...remaining.map((step) => step.sequence ?? Number.MAX_SAFE_INTEGER));
+      const nextTargets = remaining.filter((step) => (step.sequence ?? Number.MAX_SAFE_INTEGER) === nextSequence || (step.executionMode === 'PARALLEL_ALL' && step.groupId === remaining.find((candidate) => (candidate.sequence ?? Number.MAX_SAFE_INTEGER) === nextSequence)?.groupId));
+      set((state) => ({ requests: state.requests.map((item) => item.id === id ? {
+        ...item,
+        approvalLine: nextLine,
+        currentApprovalStep: nextLine.findIndex((step) => step.id === nextTargets[0]?.id),
+        status: 'MANAGER_REVIEWING',
+        reviewedBy: reviewerId,
+        reviewComment: comment,
+        updatedAt: timestamp,
+      } : item) }));
       useAuditStore.getState().addLog({ actorId: reviewerId, action: 'UPDATE', entityType: 'APPROVAL', entityId: id, message: `Approval document ${id} advanced from ${currentStep.label}.` });
-      useNotificationStore.getState().addNotification({ userId: line[nextIndex].approverId, type: 'SYSTEM', title: '결재 요청 알림', message: `[${request.title}] 문서의 결재 차례입니다.`, priority: 'NORMAL', relatedApprovalId: id });
+      nextTargets.forEach((target) => {
+        if (!target.approverId) return;
+        useNotificationStore.getState().addNotification({ userId: target.approverId, type: 'SYSTEM', title: '결재 요청 알림', message: `[${request.title}] 문서의 결재 차례입니다.`, priority: 'NORMAL', relatedApprovalId: id });
+      });
       return true;
     }
 
@@ -395,4 +533,10 @@ export const useApprovalStore = create<ApprovalState>()(persist((set, get) => ({
   resetRequests: () => set({ requests: [] }),
   replaceTemplates: (templates) => set({ templates }),
   resetTemplates: () => set({ templates: [] })
-}), { name: 'approval-storage' }));
+}), {
+  name: 'approval-storage',
+  storage: createJSONStorage(() => approvalStorage),
+  partialize: (state) => getRuntimeExecutionMode() === 'DEMO_LOCAL'
+    ? { requests: state.requests, templates: state.templates, savedLines: state.savedLines }
+    : { requests: [], templates: [], savedLines: [] },
+}));
