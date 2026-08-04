@@ -1,0 +1,14 @@
+screen,action,legacy_observation,erp_v1_behavior,status
+Approval navigation,Open document boxes,"Received, sent, consultation, distribution, archive, temporary boxes",Permission-first queue tabs,READY_WITH_BACKEND_DEPENDENCIES
+Form catalog,Choose form,Vacation and general company forms are listed,Schema-driven catalog with five pilot forms,PARTIAL
+Document compose,Submit,Legacy submit controls observed but not activated,Demo simulation or Backend-only official submit,READY_WITH_BACKEND_DEPENDENCIES
+Approval line manager,Create line,New action visible but not activated,Create versioned personal/department/company line in Demo,READY_WITH_BACKEND_DEPENDENCIES
+Approval line manager,Copy/Delete/Default,Controls and labels observed without writes,Implemented with policy-lock protection,READY_WITH_BACKEND_DEPENDENCIES
+Approval line manager,Add approver,Organization/person selection entry observed,Person or role step editor,READY_WITH_BACKEND_DEPENDENCIES
+Approval line manager,Move order,Order controls observed,Desktop and mobile up/down controls,COMPLETE
+Approval line manager,Immediate arrival,MustBe Y/N field verified,Contract field only until provider semantics confirmed,BACKEND_CAPABILITY_PENDING
+Approval line manager,A permission,Tooltip says line-edit permission,Boolean canEditLine,COMPLETE
+Approval line manager,B permission,Tooltip says content-edit permission,Boolean canEditContent,COMPLETE
+Distribution,Recipient/Reference/Circulation,Separate compose targets observed,Separate distribution targets,COMPLETE
+Review,Approve/Reject/Request changes/Recall,Legacy actions listed; no mutation performed,Demo simulation or Backend-only official action,READY_WITH_BACKEND_DEPENDENCIES
+Delegation,Delegate/Acting/Final authority,Required by user directive; no safe write discovery,Contract notice and Backend gate,BACKEND_CAPABILITY_PENDING

@@ -1,0 +1,7 @@
+target_kind,approval_decision,delivery_timing,read_state,backend_requirement
+RECIPIENT,no,Policy-defined after submit or final approval,Required,Company and organization scope
+REFERENCE,no,Visible according to policy after submit,Required,Permission-first projection
+CIRCULATION,no,Explicit circulation event,Required,Recipient audit and acknowledgement capability
+DISTRIBUTION,no,Post-approval distribution event,Required,Immutable document version and delivery outbox
+APPROVER,yes,Actionable step timing,Decision state,Policy snapshot and delegation validation
+COOPERATION,policy-dependent,Configured sequence or parallel group,Decision state,Policy capability required

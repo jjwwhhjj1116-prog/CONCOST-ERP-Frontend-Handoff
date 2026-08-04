@@ -1,0 +1,25 @@
+form_group,legacy_form_name,erp_pilot_form_id,erp_support,status
+Leave,휴가신청서,leave-request,full pilot schema,COMPLETE
+Leave,병가신청서,leave-request,form policy variant,BACKEND_CAPABILITY_PENDING
+Leave,공가신청서,leave-request,form policy variant,BACKEND_CAPABILITY_PENDING
+Leave,조퇴신청서,leave-request,form policy variant,BACKEND_CAPABILITY_PENDING
+Leave,외출신청서,leave-request,form policy variant,BACKEND_CAPABILITY_PENDING
+General,기안문,general-proposal,pilot schema,COMPLETE
+General,기안서,general-proposal,pilot schema,COMPLETE
+Finance,지출결의서,expense-resolution,pilot schema,COMPLETE
+Purchase,발주신청서,purchase-request,pilot schema,COMPLETE
+Travel,출장신청서,business-trip,pilot schema,COMPLETE
+Operations,회의록,,catalog discovery only,BACKEND_CAPABILITY_PENDING
+Operations,일일업무일지,,catalog discovery only,BACKEND_CAPABILITY_PENDING
+Operations,주간업무일지,,catalog discovery only,BACKEND_CAPABILITY_PENDING
+Operations,월간업무일지,,catalog discovery only,BACKEND_CAPABILITY_PENDING
+HR,제증명신청서,,catalog discovery only,BACKEND_CAPABILITY_PENDING
+HR,인사발령,,catalog discovery only,BACKEND_CAPABILITY_PENDING
+HR,채용품의서,,catalog discovery only,BACKEND_CAPABILITY_PENDING
+HR,사직서,,catalog discovery only,BACKEND_CAPABILITY_PENDING
+HR,근태계,,catalog discovery only,BACKEND_CAPABILITY_PENDING
+Training,교육훈련신청서,,catalog discovery only,BACKEND_CAPABILITY_PENDING
+Training,교육훈련보고서,,catalog discovery only,BACKEND_CAPABILITY_PENDING
+Communication,업무연락,,catalog discovery only,BACKEND_CAPABILITY_PENDING
+Handover,인수인계서,,catalog discovery only,BACKEND_CAPABILITY_PENDING
+Incident,경위서,,catalog discovery only,BACKEND_CAPABILITY_PENDING

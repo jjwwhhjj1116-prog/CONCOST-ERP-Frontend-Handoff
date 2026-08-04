@@ -1,0 +1,6 @@
+route_id,host,path,screen,discovery,status,write_action_executed
+ZIO-ROUTE-001,gw.con-cost.com:1205,/,Groupware shell,Chrome read-only,TARGET_VERIFIED,no
+ZIO-ROUTE-002,gw.con-cost.com:1205,/Flow/,Electronic approval navigation,Chrome iframe read-only,TARGET_VERIFIED,no
+ZIO-ROUTE-003,gw.con-cost.com:1205,/Flow/LineR22?FormNo=3&isPopup=Y&SignList=,Approval line manager popup,Chrome popup read-only,TARGET_VERIFIED,no
+ZIO-ROUTE-004,gw.con-cost.com:1205,/Flow/*Form*,Form catalog and document compose,Chrome read-only,TARGET_VERIFIED,no
+ZIO-ROUTE-005,gw.con-cost.com:1205,/Flow/*Box*,Received/Sent/Consultation/Distribution/Archive boxes,Navigation labels only,LEGACY_VERIFIED,no

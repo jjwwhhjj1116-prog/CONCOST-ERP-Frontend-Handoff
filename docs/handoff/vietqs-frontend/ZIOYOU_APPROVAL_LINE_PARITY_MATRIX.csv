@@ -1,0 +1,16 @@
+capability,legacy_evidence,erp_component,parity,status
+Line scope,Company/department/personal selector,ApprovalLineManager,implemented,COMPLETE
+Line metadata,Name/form/steps/default/version requested,ApprovalLineManager,implemented,COMPLETE
+Create/Copy/Edit/Delete/Default,Legacy toolbar observed,ApprovalLineManager,implemented in Demo only,READY_WITH_BACKEND_DEPENDENCIES
+Approver person,Organization and employee selector observed,ApprovalLineManager,implemented,COMPLETE
+Approver role,Policy-oriented target required,ApprovalLineManager,implemented,COMPLETE
+Step kind,Approval/Final approval/Cooperation observed,ApprovalLineManager,extended with agreement/reference,COMPLETE
+Sequential/Parallel/Reference,Contract requirement,ApprovalLineManager and approvalWorkflow,implemented,COMPLETE
+Order move,Legacy order column observed,ApprovalLineManager,up/down implemented,COMPLETE
+Policy required step,User directive,approvalWorkflow and ApprovalLineManager,locked from delete,COMPLETE
+Immediate arrival,MustBe field verified,ApprovalLineManager,field preserved only,BACKEND_CAPABILITY_PENDING
+A line edit,Verified tooltip,ApprovalLineManager,implemented,COMPLETE
+B content edit,Verified tooltip,ApprovalLineManager,implemented,COMPLETE
+Submission snapshot,User directive,ApprovalDocumentComposer,deep copied with line version,COMPLETE
+Author as final approver,User directive,approvalWorkflow validation,blocked,COMPLETE
+Missing approver fallback,User directive,approvalWorkflow and store,no current-user fallback,COMPLETE
