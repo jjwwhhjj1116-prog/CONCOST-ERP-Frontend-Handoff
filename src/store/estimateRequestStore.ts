@@ -30,6 +30,8 @@ interface EstimateRequestState {
   loadDemoRequests: () => void;
   sync: () => Promise<void>;
   createRequest: (draft: EstimateRequestDraft, actorId: string) => Promise<EstimateRequest>;
+  duplicateRequest: (id: string, actorId: string) => Promise<EstimateRequest>;
+  deleteRequest: (id: string) => Promise<void>;
   updateRequest: (id: string, updates: Partial<EstimateRequest>, actorId: string) => Promise<EstimateRequest>;
   changeStatus: (id: string, status: EstimateRequestStatus, actorId: string) => Promise<EstimateRequest>;
   recordDecision: (id: string, input: CommercialDecisionInput, actorId: string) => Promise<CommercialDecisionResult>;
@@ -116,6 +118,59 @@ export const useEstimateRequestStore = create<EstimateRequestState>()(persist((s
       actorId,
     );
     return created;
+  },
+
+  duplicateRequest: async (id, actorId) => {
+    const current = get().requests.find((item) => item.id === id);
+    if (!current) throw new Error('Estimate request not found');
+    if (get().persistenceMode !== 'LOCAL_DEMO') {
+      throw new Error('견적 의뢰 복제 API가 준비되지 않았습니다. 서버 연결 후 다시 시도해 주세요.');
+    }
+    return get().createRequest({
+      projectName: `${current.projectName} (복사본)`,
+      departmentId: current.departmentId,
+      ownerId: current.ownerId,
+      company: current.company,
+      client: current.client,
+      contact: current.contact,
+      contactDepartment: current.contactDepartment,
+      phone: current.phone,
+      email: current.email,
+      targetUnitIds: [...(current.targetUnitIds || [])],
+      primaryUnitId: current.primaryUnitId,
+      requestDate: now(),
+      memo: current.memo,
+      rawMemo: current.rawMemo,
+      firstDelivery: current.firstDelivery,
+      secondDelivery: current.secondDelivery,
+      thirdDelivery: current.thirdDelivery,
+      finalDelivery: current.finalDelivery,
+      expectedStartDate: current.expectedStartDate,
+      areaPy: current.areaPy,
+      floors: current.floors,
+      scope: current.scope,
+      usage: current.usage,
+      buildingCount: current.buildingCount,
+      unitWork: current.unitWork,
+      bidDate: current.bidDate,
+      estimateType: current.estimateType,
+      status: 'REQUEST_MEMO',
+    }, actorId);
+  },
+
+  deleteRequest: async (id) => {
+    const current = get().requests.find((item) => item.id === id);
+    if (!current) throw new Error('Estimate request not found');
+    if (get().persistenceMode !== 'LOCAL_DEMO') {
+      throw new Error('견적 의뢰 삭제 API가 준비되지 않았습니다. 서버 데이터는 삭제하지 않았습니다.');
+    }
+    if (current.estimateId || current.commercialDecisionId || current.projectIntakeId || current.projectId) {
+      throw new Error('견적서·수주·프로젝트와 연결된 의뢰는 삭제할 수 없습니다. 취소 또는 정정 절차를 사용해 주세요.');
+    }
+    const linkedRows = useEstimateDatabaseStore.getState().records
+      .filter((record) => record.sourceRecordId === current.id);
+    for (const record of linkedRows) await useEstimateDatabaseStore.getState().deleteRecord(record);
+    set((state) => ({ requests: state.requests.filter((item) => item.id !== id) }));
   },
 
   updateRequest: async (id, updates, actorId) => {

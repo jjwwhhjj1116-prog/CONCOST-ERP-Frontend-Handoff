@@ -22,6 +22,8 @@ interface EstimateSheetStore {
   error: string | null;
   sync: (requestId: string) => Promise<EstimateSheet | null>;
   createSheet: (requestId: string, type: EstimateTemplateType, state: EstimateSheetState, actorId: string) => Promise<EstimateSheet>;
+  duplicateDraftVersion: (requestId: string, actorId: string) => Promise<EstimateSheet>;
+  deleteDraft: (requestId: string, actorId: string) => Promise<void>;
   saveVersion: (requestId: string, state: EstimateSheetState, actorId: string) => Promise<EstimateSheet>;
   submitSheet: (requestId: string, actorId: string, recipient?: string, deliveryChannel?: string) => Promise<EstimateSheet>;
   sendSubmission: (requestId: string, actorId: string) => Promise<EstimateSheet>;
@@ -126,6 +128,58 @@ export const useEstimateSheetStore = create<EstimateSheetStore>()(persist((set, 
     }, actorId);
     await upsertLocalPipelineRecord(requestId, sheet, actorId);
     return sheet;
+  },
+
+  duplicateDraftVersion: async (requestId, actorId) => {
+    const current = get().sheets[requestId];
+    if (!current) throw new Error('Estimate sheet not found');
+    if (get().persistenceMode !== 'LOCAL_DEMO') {
+      throw new Error('견적서 복제 API가 준비되지 않았습니다. 서버 데이터는 변경하지 않았습니다.');
+    }
+    if (current.status !== 'DRAFT') throw new Error('발행된 견적서는 정정본 생성 기능을 사용해 주세요.');
+    const source = current.versions.find((item) => item.version === current.currentVersion);
+    if (!source) throw new Error('Current estimate sheet version is missing');
+    const now = timestamp();
+    const version = current.currentVersion + 1;
+    const duplicated: EstimateSheetVersion = {
+      ...source,
+      id: id('estimate-version'),
+      version,
+      state: structuredClone(source.state),
+      createdBy: actorId,
+      createdAt: now,
+    };
+    const sheet = {
+      ...current,
+      currentVersion: version,
+      updatedBy: actorId,
+      updatedAt: now,
+      versions: [duplicated, ...current.versions],
+    };
+    set((value) => ({ sheets: replace(value.sheets, requestId, sheet) }));
+    await upsertLocalPipelineRecord(requestId, sheet, actorId);
+    return sheet;
+  },
+
+  deleteDraft: async (requestId, actorId) => {
+    const current = get().sheets[requestId];
+    if (!current) throw new Error('Estimate sheet not found');
+    if (get().persistenceMode !== 'LOCAL_DEMO') {
+      throw new Error('견적서 삭제 API가 준비되지 않았습니다. 서버 데이터는 삭제하지 않았습니다.');
+    }
+    if (current.status !== 'DRAFT' || current.submissions.length > 0) {
+      throw new Error('제출·발송 이력이 있는 견적서는 삭제할 수 없습니다. 정정본을 생성해 주세요.');
+    }
+    set((value) => {
+      const sheets = { ...value.sheets };
+      delete sheets[requestId];
+      return { sheets };
+    });
+    await useEstimateRequestStore.getState().updateRequest(requestId, {
+      estimateId: null,
+      estimateType: null,
+      status: 'REQUEST_MEMO',
+    }, actorId);
   },
 
   saveVersion: async (requestId, state, actorId) => {

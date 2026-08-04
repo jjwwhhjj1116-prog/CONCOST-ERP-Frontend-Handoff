@@ -1,8 +1,9 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, Database, ExternalLink, FileCheck2, RefreshCw, Search, Send, TimerReset } from 'lucide-react';
+import { ArrowLeft, Copy, Database, ExternalLink, FileCheck2, Pencil, RefreshCw, Search, Send, TimerReset, Trash2 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { EstimateSheetApiError, estimateSheetApi } from '@/lib/estimateSheetApi';
 import {
@@ -27,12 +28,13 @@ const canFallback = (error: unknown) => error instanceof TypeError
   || (error instanceof EstimateSheetApiError && [401, 404].includes(error.status));
 
 export function EstimateSubmissionWorkbench() {
+  const router = useRouter();
   const { currentUser } = useAuthStore();
   const { settings } = useTranslationStore();
   const t = useTranslation(settings.uiLanguage);
   const tRef = useRef(t);
   const { requests, sync: syncRequests } = useEstimateRequestStore();
-  const { sheets } = useEstimateSheetStore();
+  const { sheets, duplicateDraftVersion, deleteDraft, startRevision } = useEstimateSheetStore();
   const [serverRows, setServerRows] = useState<EstimateSubmissionListItem[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -41,6 +43,9 @@ export function EstimateSubmissionWorkbench() {
   const [templateType, setTemplateType] = useState<EstimateTemplateType | 'ALL'>('ALL');
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
+  const [actionMessage, setActionMessage] = useState('');
+  const [actionError, setActionError] = useState('');
+  const [busyRequestId, setBusyRequestId] = useState('');
 
   useEffect(() => {
     tRef.current = t;
@@ -121,6 +126,22 @@ export function EstimateSubmissionWorkbench() {
   const filtered = useMemo(() => filterEstimateSubmissions(rows, { query, status, templateType, from, to }), [from, query, rows, status, templateType, to]);
 
   const summary = useMemo(() => summarizeEstimateSubmissions(filtered), [filtered]);
+
+  const runAction = async (requestId: string, operation: () => Promise<void>, success: string, navigate = false) => {
+    setBusyRequestId(requestId);
+    setActionMessage('');
+    setActionError('');
+    try {
+      await operation();
+      setActionMessage(success);
+      await refresh();
+      if (navigate) router.push(`/projects/intake/estimate?requestId=${encodeURIComponent(requestId)}`);
+    } catch (caught) {
+      setActionError(caught instanceof Error ? caught.message : '견적서 관리 작업을 완료하지 못했습니다.');
+    } finally {
+      setBusyRequestId('');
+    }
+  };
   const metrics: Array<{ label: string; value: number; Icon: LucideIcon }> = [
     { label: t('estimateSubmission.total'), value: summary.total, Icon: FileCheck2 },
     { label: t('estimateSubmission.statusDraft'), value: summary.draft, Icon: TimerReset },
@@ -145,7 +166,7 @@ export function EstimateSubmissionWorkbench() {
         <div className="flex gap-2"><Link href="/projects/intake/database" className="inline-flex min-h-9 items-center gap-2 border px-3 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]"><Database className="size-4" />{t('estimateDb.title')}</Link><button type="button" onClick={() => void refresh()} disabled={loading} title={t('estimateRequest.refresh')} className="grid size-9 place-items-center border bg-[var(--color-surface)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] disabled:opacity-50"><RefreshCw className={`size-4 ${loading ? 'animate-spin' : ''}`} /></button></div>
       </header>
 
-      {error && <p role="alert" className="border-l-4 border-[var(--color-danger)] bg-[var(--color-bg-sub)] px-4 py-3 text-sm">{error}</p>}
+      {(error || actionError || actionMessage) && <p role={error || actionError ? 'alert' : 'status'} className={`border-l-4 bg-[var(--color-bg-sub)] px-4 py-3 text-sm ${error || actionError ? 'border-[var(--color-danger)] text-[var(--color-danger)]' : 'border-emerald-500 text-emerald-700'}`}>{error || actionError || actionMessage}</p>}
 
       <section aria-label={t('estimateSubmission.summary')} className="grid border-y sm:grid-cols-5">
         {metrics.map(({ label, value, Icon }, index) => (
@@ -173,7 +194,13 @@ export function EstimateSubmissionWorkbench() {
               <td className="px-3 py-3 font-semibold text-[var(--color-primary)]">{row.status === 'SENT' ? t('estimateSubmission.statusSent') : row.status === 'DRAFT' ? t('estimateSubmission.statusDraft') : t('estimateSubmission.statusSubmitted')}</td>
               <td className="whitespace-nowrap px-3 py-3">{row.sentAt ? new Date(row.sentAt).toLocaleString() : '-'}</td>
               <td className="px-3 py-3">{row.decisionReady ? t('estimateSubmission.ready') : t('estimateSubmission.notReady')}</td>
-              <td className="px-3 py-3"><div className="flex justify-end gap-2"><Link href={`/projects/intake?requestId=${encodeURIComponent(row.estimateRequestId)}`} className="inline-flex items-center gap-1 border px-2 py-1.5 font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]">{t('estimateSubmission.sourceRequest')}<ExternalLink className="size-3" /></Link><Link href={`/projects/intake/estimate?requestId=${encodeURIComponent(row.estimateRequestId)}&version=${row.version}`} className="inline-flex items-center gap-1 border px-2 py-1.5 font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]">v{row.version}<ExternalLink className="size-3" /></Link></div></td>
+              <td className="px-3 py-3"><div className="flex flex-wrap justify-end gap-2">
+                <Link href={`/projects/intake?requestId=${encodeURIComponent(row.estimateRequestId)}`} className="inline-flex items-center gap-1 border px-2 py-1.5 font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]">{t('estimateSubmission.sourceRequest')}<ExternalLink className="size-3" /></Link>
+                <Link href={`/projects/intake/estimate?requestId=${encodeURIComponent(row.estimateRequestId)}&version=${row.version}`} className="inline-flex items-center gap-1 border px-2 py-1.5 font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]"><Pencil className="size-3" />수정</Link>
+                {row.status === 'DRAFT' && <button type="button" disabled={busyRequestId === row.estimateRequestId} onClick={() => void runAction(row.estimateRequestId, async () => { await duplicateDraftVersion(row.estimateRequestId, currentUser.id); }, '견적서 초안 버전을 복제했습니다.', true)} className="inline-flex items-center gap-1 border px-2 py-1.5 font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] disabled:opacity-50"><Copy className="size-3" />복제</button>}
+                {row.status === 'SENT' && <button type="button" disabled={busyRequestId === row.estimateRequestId} onClick={() => void runAction(row.estimateRequestId, async () => { await startRevision(row.estimateRequestId, currentUser.id); }, '발행본을 보존하고 정정본 초안을 만들었습니다.', true)} className="inline-flex items-center gap-1 border px-2 py-1.5 font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] disabled:opacity-50"><Copy className="size-3" />정정본</button>}
+                {row.status === 'DRAFT' && <button type="button" disabled={busyRequestId === row.estimateRequestId} onClick={() => { if (window.confirm(`'${row.projectName}' 견적서 초안을 삭제할까요?`)) void runAction(row.estimateRequestId, () => deleteDraft(row.estimateRequestId, currentUser.id), '견적서 초안을 삭제했습니다.'); }} className="inline-flex items-center gap-1 border border-red-200 px-2 py-1.5 font-medium text-red-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 disabled:opacity-50"><Trash2 className="size-3" />삭제</button>}
+              </div></td>
             </tr>
           )) : <tr><td colSpan={8} className="px-4 py-12 text-center text-[var(--color-text-sub)]">{t('estimateSubmission.empty')}</td></tr>}</tbody>
         </table>

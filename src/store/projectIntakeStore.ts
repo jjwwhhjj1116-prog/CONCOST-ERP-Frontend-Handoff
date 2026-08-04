@@ -38,6 +38,8 @@ interface ProjectIntakeState {
   error: string | null;
   sync: (actor: IntakeActor) => Promise<void>;
   createDraft: (actor: IntakeActor) => ProjectIntake;
+  duplicateDraft: (id: string, actor: IntakeActor) => ProjectIntake;
+  deleteDraft: (id: string, actor: IntakeActor) => void;
   discardDraft: (id: string, actor: IntakeActor) => void;
   saveDraft: (id: string, draft: ProjectIntakeDraft, actor: IntakeActor) => Promise<ProjectIntake>;
   review: (id: string, draft: ProjectIntakeDraft, note: string, actor: IntakeActor) => Promise<ProjectIntake>;
@@ -81,9 +83,13 @@ const localPermissions = (intake: ProjectIntake, actor: IntakeActor) => {
   const source = findSourceRequest(intake);
   const isAdmin = ['SUPER_ADMIN', 'SYSTEM_ADMIN'].includes(actor.role);
   const isManager = actor.role === 'DEPARTMENT_MANAGER' && source?.departmentId === actor.departmentId;
+  const isOwnedStandaloneDraft = !intake.estimateRequestId
+    && !intake.commercialDecisionId
+    && intake.createdBy === actor.id
+    && ['PM', 'DEPARTMENT_MANAGER'].includes(actor.role);
   return {
-    canEdit: intake.status !== 'ACCEPTED' && (isAdmin || isManager),
-    canReview: intake.status !== 'ACCEPTED' && (isAdmin || isManager),
+    canEdit: intake.status !== 'ACCEPTED' && (isAdmin || isManager || isOwnedStandaloneDraft),
+    canReview: intake.status !== 'ACCEPTED' && (isAdmin || isManager || (isOwnedStandaloneDraft && actor.role === 'DEPARTMENT_MANAGER')),
   };
 };
 
@@ -211,6 +217,68 @@ export const useProjectIntakeStore = create<ProjectIntakeState>()(persist((set, 
       scopeCompanyId: selectedCompanyId(),
     }));
     return intake;
+  },
+
+  duplicateDraft: (id, actor) => {
+    if (get().persistenceMode !== 'LOCAL_DEMO') {
+      throw new Error('프로젝트 접수 복제 API가 준비되지 않았습니다. 서버 데이터는 변경하지 않았습니다.');
+    }
+    const sourceIntake = get().intakes.find((item) => item.id === id);
+    if (!sourceIntake) throw new Error('Project intake not found');
+    const timestamp = now();
+    const intakeId = newId('project-intake');
+    const projectId = newId('pending-project');
+    const sourceDraft = buildProjectIntakeDraft(sourceIntake);
+    const draft: ProjectIntakeDraft = {
+      ...structuredClone(sourceDraft),
+      projectName: `${sourceDraft.projectName || '새 프로젝트'} (복사본)`,
+      projectNo: '',
+      contacts: sourceDraft.contacts.map((contact) => ({ ...contact, id: newId('contact') })),
+      materials: sourceDraft.materials.map((material) => ({ ...material, id: newId('material') })),
+      secretReferences: sourceDraft.secretReferences.map((secret) => ({ ...secret, id: newId('secret-reference') })),
+      source: {
+        estimateRequestId: '',
+        requestNo: intakeId,
+        estimateId: null,
+        estimateSheetId: null,
+        estimateSubmissionId: null,
+        estimateDocumentHash: null,
+        commercialDecisionId: '',
+        projectId,
+      },
+    };
+    const intake = hydrateLocal({
+      id: intakeId,
+      estimateRequestId: '',
+      commercialDecisionId: '',
+      projectId,
+      status: 'DRAFT',
+      projectNo: '',
+      sourceSnapshotJson: JSON.stringify({ duplicatedFrom: id }),
+      draft,
+      draftJson: JSON.stringify(draft),
+      version: 1,
+      createdBy: actor.id,
+      updatedBy: actor.id,
+      createdAt: timestamp,
+      updatedAt: timestamp,
+      histories: [],
+    }, actor);
+    set((state) => ({ intakes: [intake, ...state.intakes] }));
+    return intake;
+  },
+
+  deleteDraft: (id, actor) => {
+    if (get().persistenceMode !== 'LOCAL_DEMO') {
+      throw new Error('프로젝트 접수 삭제 API가 준비되지 않았습니다. 서버 데이터는 삭제하지 않았습니다.');
+    }
+    const intake = get().intakes.find((item) => item.id === id);
+    if (!intake) throw new Error('Project intake not found');
+    assertEdit(intake, actor);
+    if (intake.status !== 'DRAFT' || intake.estimateRequestId || intake.commercialDecisionId) {
+      throw new Error('수주 계보와 연결된 접수는 삭제할 수 없습니다. 접수 내용을 수정하거나 수주 정정 절차를 사용해 주세요.');
+    }
+    set((state) => ({ intakes: state.intakes.filter((item) => item.id !== id) }));
   },
 
   discardDraft: (id, actor) => {

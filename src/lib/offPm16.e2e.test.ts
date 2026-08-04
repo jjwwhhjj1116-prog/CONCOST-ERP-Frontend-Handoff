@@ -266,6 +266,33 @@ test('D: estimate revision and resend preserve previous versions, formulas and s
   assert.equal(resent.versions.at(-1)?.state.cells['10:2']?.value, 100000);
 });
 
+test('D2: convenience actions duplicate editable records and guard linked history', { concurrency: false }, async () => {
+  const request = await useEstimateRequestStore.getState().createRequest(requestDraft('CONVENIENCE'), manager.id);
+  const duplicatedRequest = await useEstimateRequestStore.getState().duplicateRequest(request.id, manager.id);
+  assert.match(duplicatedRequest.projectName, /복사본/);
+  assert.equal(duplicatedRequest.status, 'REQUEST_MEMO');
+  assert.notEqual(duplicatedRequest.id, request.id);
+  await useEstimateRequestStore.getState().deleteRequest(duplicatedRequest.id);
+  assert.equal(useEstimateRequestStore.getState().requests.some((item) => item.id === duplicatedRequest.id), false);
+
+  await useEstimateSheetStore.getState().createSheet(request.id, '개산견적', createEstimateSheetState('개산견적'), manager.id);
+  const duplicatedSheet = await useEstimateSheetStore.getState().duplicateDraftVersion(request.id, manager.id);
+  assert.equal(duplicatedSheet.currentVersion, 2);
+  assert.equal(duplicatedSheet.versions.length, 2);
+  await assert.rejects(() => useEstimateRequestStore.getState().deleteRequest(request.id), /연결된 의뢰/);
+  await useEstimateSheetStore.getState().deleteDraft(request.id, manager.id);
+  assert.equal(useEstimateSheetStore.getState().sheets[request.id], undefined);
+  assert.equal(useEstimateRequestStore.getState().requests.find((item) => item.id === request.id)?.status, 'REQUEST_MEMO');
+
+  const intake = useProjectIntakeStore.getState().createDraft(manager);
+  const duplicatedIntake = useProjectIntakeStore.getState().duplicateDraft(intake.id, manager);
+  assert.match(buildProjectIntakeDraft(duplicatedIntake).projectName, /복사본/);
+  assert.equal(duplicatedIntake.status, 'DRAFT');
+  assert.equal(duplicatedIntake.estimateRequestId, '');
+  useProjectIntakeStore.getState().deleteDraft(duplicatedIntake.id, manager);
+  assert.equal(useProjectIntakeStore.getState().intakes.some((item) => item.id === duplicatedIntake.id), false);
+});
+
 test('F/G: secret references, migration schema and approved brand asset remain exact', { concurrency: false }, () => {
   assert.doesNotThrow(() => validateSecretReferences([{ id: 'secret-1', label: 'ERP', provider: 'vault', reference: 'vault://projects/off-pm-16', note: '' }]));
   assert.throws(() => validateSecretReferences([{ id: 'secret-2', label: 'Password', provider: 'plain', reference: 'plaintext-password', note: '' }]), /Secret references must use/);

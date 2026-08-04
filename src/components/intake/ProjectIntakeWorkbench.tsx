@@ -7,11 +7,13 @@ import {
   ArrowRight,
   CheckCircle2,
   ClipboardCheck,
+  Copy,
   FileCheck2,
   FileText,
   History,
   KeyRound,
   Plus,
+  Pencil,
   RefreshCw,
   Save,
   Search,
@@ -90,6 +92,8 @@ export function ProjectIntakeWorkbench({ currentUser, t, view = 'CREATE', reques
     error: syncError,
     sync,
     createDraft,
+    duplicateDraft,
+    deleteDraft,
     discardDraft,
     saveDraft,
     review,
@@ -306,6 +310,39 @@ export function ProjectIntakeWorkbench({ currentUser, t, view = 'CREATE', reques
     }
   };
 
+  const duplicateCurrent = () => {
+    if (!selected) return;
+    try {
+      const duplicated = duplicateDraft(selected.id, actor);
+      activeCreateDraftId.current = duplicated.id;
+      setCreatedDraftId(duplicated.id);
+      setSelectedId(duplicated.id);
+      setDraft(buildProjectIntakeDraft(duplicated));
+      setActiveStep(1);
+      setMessage('프로젝트 접수를 복제했습니다. 복사본을 수정해 주세요.');
+      setActionError('');
+    } catch (caught) {
+      setActionError(caught instanceof Error ? caught.message : t('projectIntake.error.generic'));
+    }
+  };
+
+  const deleteCurrent = () => {
+    if (!selected || !window.confirm(`'${draft?.projectName || t('projectIntake.untitled')}' 프로젝트 접수 초안을 삭제할까요? 수주 계보에 연결된 접수는 삭제되지 않습니다.`)) return;
+    try {
+      deleteDraft(selected.id, actor);
+      activeCreateDraftId.current = '';
+      setCreatedDraftId('');
+      setSelectedId('');
+      setDraft(null);
+      setReviewNote('');
+      setMessage('프로젝트 접수 초안을 삭제했습니다.');
+      setActionError('');
+      router.replace('/projects/intake?tab=PROJECT_INTAKE');
+    } catch (caught) {
+      setActionError(caught instanceof Error ? caught.message : t('projectIntake.error.generic'));
+    }
+  };
+
   return (
     <div className="min-w-0 space-y-4">
       <div className="flex flex-col gap-3 border-b border-[var(--color-border)] pb-4 md:flex-row md:items-end md:justify-between">
@@ -416,6 +453,11 @@ export function ProjectIntakeWorkbench({ currentUser, t, view = 'CREATE', reques
                     </p>
                   </div>
                   <div className="flex flex-wrap gap-2">
+                    {selected.permissions?.canEdit && selected.status !== 'ACCEPTED' && (
+                      <button type="button" onClick={() => setActiveStep(1)} disabled={busy} className="inline-flex items-center gap-2 border border-[var(--color-border)] px-3 py-2 text-sm font-semibold text-[var(--color-text-main)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] disabled:opacity-60"><Pencil size={16} />수정</button>
+                    )}
+                    <button type="button" onClick={duplicateCurrent} disabled={busy} className="inline-flex items-center gap-2 border border-[var(--color-border)] px-3 py-2 text-sm font-semibold text-[var(--color-text-main)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] disabled:opacity-60"><Copy size={16} />복제</button>
+                    <button type="button" onClick={deleteCurrent} disabled={busy} className="inline-flex items-center gap-2 border border-red-200 px-3 py-2 text-sm font-semibold text-red-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 disabled:opacity-60"><Trash2 size={16} />삭제</button>
                     {selected.permissions?.canEdit && selected.status !== 'ACCEPTED' && (
                       <button type="button" onClick={() => void run('save')} disabled={busy} className="inline-flex items-center gap-2 bg-[var(--color-primary)] px-3 py-2 text-sm font-semibold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2 disabled:opacity-60">
                         <Save size={16} />{t('projectIntake.action.save')}

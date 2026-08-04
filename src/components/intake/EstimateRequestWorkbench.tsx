@@ -15,8 +15,10 @@ import {
   Mail,
   MessageSquareText,
   Paperclip,
+  Pencil,
   Phone,
   Plus,
+  Copy,
   RefreshCw,
   Save,
   Search,
@@ -106,6 +108,8 @@ export function EstimateRequestWorkbench({ currentUser, t }: Props) {
     error,
     sync,
     createRequest,
+    duplicateRequest,
+    deleteRequest,
     updateRequest,
     changeStatus,
     recordDecision,
@@ -130,6 +134,7 @@ export function EstimateRequestWorkbench({ currentUser, t }: Props) {
   });
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [editingRequestId, setEditingRequestId] = useState<string | null>(null);
 
   useEffect(() => { void sync(); }, [sync]);
   const filtered = useMemo(() => {
@@ -200,6 +205,25 @@ export function EstimateRequestWorkbench({ currentUser, t }: Props) {
   const handleEdit = async (updates: Partial<EstimateRequest>) => {
     if (!selected) return;
     await run(async () => { await updateRequest(selected.id, updates, currentUser.id); }, t('estimateRequest.saved'));
+  };
+
+  const handleDuplicate = async () => {
+    if (!selected) return;
+    await run(async () => {
+      const duplicated = await duplicateRequest(selected.id, currentUser.id);
+      setSelectedId(duplicated.id);
+      setEditingRequestId(duplicated.id);
+    }, '견적 의뢰를 복제했습니다. 복사본을 확인한 뒤 수정해 주세요.');
+  };
+
+  const handleDelete = async () => {
+    if (!selected || !window.confirm(`'${selected.projectName}' 견적 의뢰를 삭제할까요? 연결된 업무가 있으면 삭제되지 않습니다.`)) return;
+    const deletedId = selected.id;
+    await run(async () => {
+      await deleteRequest(deletedId);
+      setSelectedId(requests.find((item) => item.id !== deletedId)?.id || null);
+      setEditingRequestId(null);
+    }, '견적 의뢰를 삭제했습니다.');
   };
 
   const handleActivity = async (event: FormEvent) => {
@@ -297,6 +321,9 @@ export function EstimateRequestWorkbench({ currentUser, t }: Props) {
               <div className="flex flex-wrap items-start justify-between gap-3 border-b pb-4">
                 <div><p className="text-xs font-semibold text-[var(--color-primary)]">{selected.requestNo}</p><h2 className="mt-1 text-xl font-bold">{selected.projectName}</h2><p className="mt-1 text-sm text-[var(--color-text-sub)]">{selected.company || selected.client || '-'}</p></div>
                 <div className="flex flex-wrap items-center gap-2">
+                  <button type="button" onClick={() => setEditingRequestId(selected.id)} disabled={!canManage(selected) || busy} className="inline-flex items-center gap-2 border px-3 py-2 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] disabled:opacity-50"><Pencil className="size-4" />수정</button>
+                  <button type="button" onClick={() => void handleDuplicate()} disabled={!canManage(selected) || busy} className="inline-flex items-center gap-2 border px-3 py-2 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] disabled:opacity-50"><Copy className="size-4" />복제</button>
+                  <button type="button" onClick={() => void handleDelete()} disabled={!canManage(selected) || busy} className="inline-flex items-center gap-2 border border-red-200 px-3 py-2 text-sm font-semibold text-red-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 disabled:opacity-50"><Trash2 className="size-4" />삭제</button>
                   <Link href={`/projects/intake/estimate?requestId=${encodeURIComponent(selected.id)}`} className="inline-flex items-center gap-2 border px-3 py-2 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]"><FileSpreadsheet className="size-4" />{t('estimateSheet.open')}</Link>
                   {OPERATIONAL_STATUSES.includes(selected.status) ? (
                     <select aria-label={t('estimateRequest.changeStatus')} value={selected.status} disabled={!canManage(selected) || busy} onChange={(event) => void handleStatus(event.target.value as EstimateRequestStatus)} className="rounded border bg-[var(--color-surface)] px-3 py-2 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] disabled:opacity-50">
@@ -314,7 +341,7 @@ export function EstimateRequestWorkbench({ currentUser, t }: Props) {
                 <Detail label={t('estimateRequest.memo')} value={selected.memo} wide />
               </div>
 
-              <RequestEditForm key={selected.id} request={selected} disabled={!canManage(selected) || busy} t={t} onSave={handleEdit} />
+              <RequestEditForm key={selected.id} request={selected} disabled={!canManage(selected) || busy} t={t} expanded={editingRequestId === selected.id} onExpandedChange={(expanded) => setEditingRequestId(expanded ? selected.id : null)} onSave={handleEdit} />
 
               <ProjectExecutionUnitSelector value={selected.targetUnitIds || []} primaryUnitId={selected.primaryUnitId || null} disabled={!canManage(selected) || busy || Boolean(selected.projectId)} onChange={(targetUnitIds, primaryUnitId) => void handleEdit({ targetUnitIds, primaryUnitId })} />
 
@@ -393,7 +420,7 @@ function Detail({ label, value, wide = false }: { label: string; value?: string 
   return <div className={wide ? 'sm:col-span-2' : ''}><span className="block text-xs font-semibold text-[var(--color-text-sub)]">{label}</span><p className="mt-1 whitespace-pre-wrap">{value || '-'}</p></div>;
 }
 
-function RequestEditForm({ request, disabled, t, onSave }: { request: EstimateRequest; disabled: boolean; t: Translate; onSave: (updates: Partial<EstimateRequest>) => Promise<void> }) {
+function RequestEditForm({ request, disabled, t, expanded, onExpandedChange, onSave }: { request: EstimateRequest; disabled: boolean; t: Translate; expanded: boolean; onExpandedChange: (expanded: boolean) => void; onSave: (updates: Partial<EstimateRequest>) => Promise<void> }) {
   const [values, setValues] = useState({
     projectName: request.projectName,
     company: request.company || '',
@@ -408,7 +435,7 @@ function RequestEditForm({ request, disabled, t, onSave }: { request: EstimateRe
   });
 
   return (
-    <details className="border-t pt-4">
+    <details id="estimate-request-edit" open={expanded} onToggle={(event) => onExpandedChange(event.currentTarget.open)} className="border-t pt-4">
       <summary className="cursor-pointer font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]">{t('estimateRequest.editDetails')}</summary>
       <form className="mt-3 grid gap-3 sm:grid-cols-2" onSubmit={(event) => { event.preventDefault(); void onSave(values); }}>
         <fieldset disabled={disabled} className="contents">
