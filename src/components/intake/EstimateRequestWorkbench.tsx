@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { FormEvent, useEffect, useMemo, useState } from 'react';
+import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import {
   BadgeCheck,
   Ban,
@@ -24,6 +24,7 @@ import {
   Search,
   PauseCircle,
   Trash2,
+  X,
 } from 'lucide-react';
 import { useTranslation } from '@/lib/localization';
 import { projectBoardHref } from '@/lib/projectExecutionUnits';
@@ -32,6 +33,14 @@ import { useEstimateSheetStore } from '@/store/estimateSheetStore';
 import { ProjectExecutionUnitSelector } from '@/components/intake/ProjectExecutionUnitSelector';
 import { EstimateRequestProfileEditor } from '@/components/intake/EstimateRequestProfileEditor';
 import { evaluateEstimateAccess } from '@/lib/accessControl';
+import {
+  mergeEstimateRequestIntoIntakeDraft,
+  resolveEstimateRequestDeletePolicy,
+  resolveEstimateRequestEditPolicy,
+  type EstimateRequestEditMode,
+} from '@/lib/estimateRequestUx';
+import { buildProjectIntakeDraft } from '@/lib/projectIntake';
+import { useProjectIntakeStore } from '@/store/projectIntakeStore';
 import {
   CommercialDecisionInput,
   CommercialDecisionType,
@@ -147,6 +156,11 @@ export function EstimateRequestWorkbench({ currentUser, t }: Props) {
   });
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [editorMode, setEditorMode] = useState<EstimateRequestEditMode>('VIEW');
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleteConfirmed, setDeleteConfirmed] = useState(false);
+  const sheets = useEstimateSheetStore((state) => state.sheets);
+  const deleteDraftSheet = useEstimateSheetStore((state) => state.deleteDraft);
 
   useEffect(() => { void sync(); }, [sync]);
   const filtered = useMemo(() => {
@@ -159,6 +173,35 @@ export function EstimateRequestWorkbench({ currentUser, t }: Props) {
     });
   }, [query, requests, statusFilter]);
   const selected = requests.find((request) => request.id === selectedId) || filtered[0] || null;
+  const editPolicy = selected ? resolveEstimateRequestEditPolicy(selected) : null;
+  const deletePolicy = selected ? resolveEstimateRequestDeletePolicy(selected, sheets[selected.id]) : null;
+
+  const selectRequest = useCallback((id: string | null, historyMode: 'push' | 'replace' = 'push') => {
+    setSelectedId(id);
+    setEditorMode('VIEW');
+    setDeleteOpen(false);
+    setDeleteConfirmed(false);
+    if (typeof window === 'undefined') return;
+    const url = new URL(window.location.href);
+    if (id) url.searchParams.set('requestId', id);
+    else url.searchParams.delete('requestId');
+    window.history[historyMode === 'push' ? 'pushState' : 'replaceState']({}, '', `${url.pathname}${url.search}${url.hash}`);
+  }, []);
+
+  useEffect(() => {
+    const restore = () => {
+      setSelectedId(new URLSearchParams(window.location.search).get('requestId'));
+      setEditorMode('VIEW');
+    };
+    window.addEventListener('popstate', restore);
+    return () => window.removeEventListener('popstate', restore);
+  }, []);
+
+  useEffect(() => {
+    if ((selectedId && requests.some((request) => request.id === selectedId)) || !filtered[0]) return;
+    const timer = window.setTimeout(() => selectRequest(filtered[0].id, 'replace'), 0);
+    return () => window.clearTimeout(timer);
+  }, [filtered, requests, selectRequest, selectedId]);
 
   const canManage = (request: EstimateRequest) => {
     void request;
@@ -171,8 +214,10 @@ export function EstimateRequestWorkbench({ currentUser, t }: Props) {
     try {
       await operation();
       setMessage(success);
+      return true;
     } catch (caught) {
       setMessage(caught instanceof Error ? caught.message : t('estimateRequest.errorGeneric'));
+      return false;
     } finally {
       setBusy(false);
     }
@@ -186,7 +231,7 @@ export function EstimateRequestWorkbench({ currentUser, t }: Props) {
         departmentId: currentUser.departmentId,
         projectName: draft.projectName.trim(),
       }, currentUser.id);
-      setSelectedId(created.id);
+      selectRequest(created.id);
       setDraft(emptyDraft);
       setShowCreate(false);
     }, t('estimateRequest.created'));
@@ -196,7 +241,7 @@ export function EstimateRequestWorkbench({ currentUser, t }: Props) {
     if (!selected) return;
     await run(async () => {
       const updated = await changeStatus(selected.id, status, currentUser.id);
-      setSelectedId(updated.id);
+      selectRequest(updated.id, 'replace');
     }, t('estimateRequest.statusChanged'));
   };
 
@@ -205,7 +250,7 @@ export function EstimateRequestWorkbench({ currentUser, t }: Props) {
     if (!selected) return;
     await run(async () => {
       const result = await recordDecision(selected.id, decisionDraft, currentUser.id);
-      setSelectedId(result.request.id);
+      selectRequest(result.request.id, 'replace');
       setDecisionDraft({ decision: 'WON', reason: '', agreedAmount: '', agreedScope: '', agreedSchedule: '', startCondition: '' });
       if (decisionDraft.decision === 'WON' && result.intake) {
         router.push(`/projects/intake?intakeId=${encodeURIComponent(result.intake.id)}`);
@@ -215,27 +260,49 @@ export function EstimateRequestWorkbench({ currentUser, t }: Props) {
 
   const handleEdit = async (updates: Partial<EstimateRequest>) => {
     if (!selected) return;
-    await run(async () => {
-      await updateRequest(selected.id, updates, currentUser.id);
+    const previousMode = editorMode;
+    setEditorMode('SAVING');
+    const saved = await run(async () => {
+      const updated = await updateRequest(selected.id, updates, currentUser.id);
       await useEstimateSheetStore.getState().syncProfile(selected.id, currentUser.id);
+      if (previousMode === 'CORRECTION' && updated.projectIntakeId) {
+        const actor = { id: currentUser.id, role: currentUser.role, departmentId: currentUser.departmentId };
+        await useProjectIntakeStore.getState().sync(actor);
+        const intake = useProjectIntakeStore.getState().intakes.find((item) => item.id === updated.projectIntakeId);
+        if (!intake) throw new Error('연결된 프로젝트 접수를 찾지 못했습니다. 정정 내용을 다시 확인해 주세요.');
+        if (intake.status !== 'DRAFT') throw new Error('작성 중인 프로젝트 접수만 견적 의뢰에서 동기화할 수 있습니다.');
+        await useProjectIntakeStore.getState().saveDraft(
+          intake.id,
+          mergeEstimateRequestIntoIntakeDraft(updated, buildProjectIntakeDraft(intake)),
+          actor,
+        );
+      }
     }, t('estimateRequest.saved'));
+    setEditorMode(saved ? 'VIEW' : previousMode);
   };
 
   const handleDuplicate = async () => {
     if (!selected) return;
     await run(async () => {
       const duplicated = await duplicateRequest(selected.id, currentUser.id);
-      setSelectedId(duplicated.id);
+      selectRequest(duplicated.id);
     }, '견적 의뢰를 복제했습니다. 복사본을 확인한 뒤 수정해 주세요.');
   };
 
   const handleDelete = async () => {
-    if (!selected || !window.confirm(`'${selected.projectName}' 견적 의뢰를 삭제할까요? 연결된 업무가 있으면 삭제되지 않습니다.`)) return;
+    if (!selected || !deletePolicy || deletePolicy.kind === 'RESTRICTED' || !deleteConfirmed) return;
     const deletedId = selected.id;
-    await run(async () => {
+    const deleted = await run(async () => {
+      if (deletePolicy.kind === 'DELETE_DRAFT_SHEET_AND_REQUEST') {
+        await deleteDraftSheet(deletedId, currentUser.id);
+      }
       await deleteRequest(deletedId);
-      setSelectedId(requests.find((item) => item.id !== deletedId)?.id || null);
     }, '견적 의뢰를 삭제했습니다.');
+    if (deleted) {
+      selectRequest(requests.find((item) => item.id !== deletedId)?.id || null, 'replace');
+      setDeleteOpen(false);
+      setDeleteConfirmed(false);
+    }
   };
 
   const handleActivity = async (event: FormEvent) => {
@@ -254,7 +321,7 @@ export function EstimateRequestWorkbench({ currentUser, t }: Props) {
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      <header className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-[0_10px_28px_rgba(15,23,42,.07)]">
         <div>
           <h1 className="text-2xl font-bold text-[var(--color-text-main)]">{t('estimateRequest.title')}</h1>
           <p className="mt-1 text-sm text-[var(--color-text-sub)]">{t('estimateRequest.subtitle')}</p>
@@ -274,12 +341,12 @@ export function EstimateRequestWorkbench({ currentUser, t }: Props) {
             <Plus className="size-4" /> {t('estimateRequest.new')}
           </button>
         </div>
-      </div>
+      </header>
 
       {(message || error) && <div role="status" className="border-l-4 border-[var(--color-primary)] bg-[var(--color-bg-sub)] px-4 py-3 text-sm">{message || error}</div>}
 
       {showCreate && (
-        <form onSubmit={handleCreate} className="border-y bg-[var(--color-surface)] py-5">
+        <form onSubmit={handleCreate} className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-[0_10px_28px_rgba(15,23,42,.07)]">
           <div className="mb-4 flex items-center gap-2"><FileText className="size-5" /><h2 className="font-bold">{t('estimateRequest.createTitle')}</h2></div>
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
             <Field label={t('estimateRequest.projectName')} required value={draft.projectName} onChange={(value) => setDraft({ ...draft, projectName: value })} />
@@ -306,8 +373,9 @@ export function EstimateRequestWorkbench({ currentUser, t }: Props) {
         </form>
       )}
 
-      <div className="grid min-h-[560px] gap-5 xl:grid-cols-[minmax(320px,0.82fr)_minmax(0,1.18fr)]">
-        <section aria-label={t('estimateRequest.listTitle')} className="min-w-0 border-r-0 xl:border-r xl:pr-5">
+      <div className="grid min-h-[560px] gap-5 xl:grid-cols-[minmax(320px,0.78fr)_minmax(0,1.22fr)]">
+        <section aria-label={t('estimateRequest.listTitle')} className="min-w-0 self-start rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-[0_10px_28px_rgba(15,23,42,.07)] xl:sticky xl:top-4">
+          <div className="mb-3"><p className="text-[10px] font-black tracking-[.12em] text-[var(--color-primary)]">REQUEST NAVIGATOR</p><h2 className="text-base font-black">{t('estimateRequest.listTitle')}</h2></div>
           <div className="mb-3 grid gap-2 sm:grid-cols-[1fr_170px]">
             <label className="relative"><Search className="pointer-events-none absolute left-3 top-2.5 size-4 text-[var(--color-text-sub)]" />
               <input aria-label={t('estimateRequest.search')} value={query} onChange={(event) => setQuery(event.target.value)} placeholder={t('estimateRequest.search')} className="w-full rounded border bg-[var(--color-surface)] py-2 pl-9 pr-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]" />
@@ -317,25 +385,33 @@ export function EstimateRequestWorkbench({ currentUser, t }: Props) {
               {STATUSES.map((status) => <option key={status} value={status}>{statusText(t, status)}</option>)}
             </select>
           </div>
-          <div className="overflow-hidden border-y">
+          <div className="space-y-2">
             {filtered.length === 0 ? <p className="p-8 text-center text-sm text-[var(--color-text-sub)]">{t('estimateRequest.empty')}</p> : filtered.map((request) => (
-              <button key={request.id} type="button" onClick={() => setSelectedId(request.id)} className={`grid w-full grid-cols-[1fr_auto] gap-3 border-b p-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--color-primary)] ${selected?.id === request.id ? 'bg-[var(--color-bg-sub)]' : 'bg-[var(--color-surface)] hover:bg-[var(--color-bg)]'}`}>
+              <button key={request.id} type="button" aria-current={selected?.id === request.id ? 'true' : undefined} onClick={() => selectRequest(request.id)} className={`relative grid w-full grid-cols-[1fr_auto] gap-3 rounded-md border p-4 pl-5 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] ${selected?.id === request.id ? 'border-orange-400 bg-orange-50 shadow-[0_8px_20px_rgba(234,88,12,.15)] before:absolute before:inset-y-2 before:left-0 before:w-1 before:rounded-r before:bg-[var(--color-primary)]' : 'border-[var(--color-border)] bg-[var(--color-surface)] hover:-translate-y-0.5 hover:border-orange-300 hover:bg-orange-50/40 hover:shadow-sm'}`}>
                 <span className="min-w-0"><span className="block truncate font-semibold">{request.projectName}</span><span className="mt-1 block truncate text-xs text-[var(--color-text-sub)]">{request.requestNo} · {request.company || request.client || '-'}</span></span>
-                <span className="self-center text-xs font-semibold text-[var(--color-primary)]">{statusText(t, request.status)}</span>
+                <span className="flex flex-col items-end gap-1 self-center text-xs font-semibold text-[var(--color-primary)]">{selected?.id === request.id && <span className="rounded-full bg-[var(--color-primary)] px-2 py-0.5 text-[10px] text-white">선택됨</span>}<span>{statusText(t, request.status)}</span></span>
               </button>
             ))}
           </div>
         </section>
 
-        <section aria-label={t('estimateRequest.detailTitle')} className="min-w-0">
+        <section aria-label={t('estimateRequest.detailTitle')} className="min-w-0 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)] p-3 shadow-[0_10px_28px_rgba(15,23,42,.07)] sm:p-5">
           {!selected ? <p className="p-8 text-center text-sm text-[var(--color-text-sub)]">{t('estimateRequest.selectPrompt')}</p> : (
             <div className="space-y-5">
-              <div className="flex flex-wrap items-start justify-between gap-3 border-b pb-4">
+              <div className="flex flex-wrap items-start justify-between gap-3 rounded-lg border border-orange-300 bg-gradient-to-r from-orange-50 via-white to-white p-4 shadow-sm">
                 <div><p className="text-xs font-semibold text-[var(--color-primary)]">{selected.requestNo}</p><h2 className="mt-1 text-xl font-bold">{selected.projectName}</h2><p className="mt-1 text-sm text-[var(--color-text-sub)]">{selected.company || selected.client || '-'}</p></div>
                 <div className="flex flex-wrap items-center gap-2">
-                  <button type="button" onClick={() => document.getElementById('estimate-step-01')?.scrollIntoView({ behavior: 'smooth', block: 'start' })} disabled={!canManage(selected) || busy} className="inline-flex items-center gap-2 border px-3 py-2 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] disabled:opacity-50"><Pencil className="size-4" />수정</button>
+                  <button type="button" onClick={() => {
+                    if (!editPolicy) return;
+                    if (!editPolicy.editable) {
+                      setMessage(editPolicy.reason);
+                      return;
+                    }
+                    setEditorMode(editPolicy.mode);
+                    window.setTimeout(() => document.querySelector<HTMLElement>('[data-estimate-field="projectName"]')?.focus(), 0);
+                  }} disabled={!canManage(selected) || busy || editorMode === 'SAVING'} title={editPolicy?.reason} className="inline-flex items-center gap-2 rounded border bg-white px-3 py-2 text-sm font-semibold transition hover:border-orange-300 hover:bg-orange-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] disabled:opacity-50"><Pencil className="size-4" />{editPolicy?.actionLabel || '수정'}</button>
                   <button type="button" onClick={() => void handleDuplicate()} disabled={!canManage(selected) || busy} className="inline-flex items-center gap-2 border px-3 py-2 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] disabled:opacity-50"><Copy className="size-4" />복제</button>
-                  <button type="button" onClick={() => void handleDelete()} disabled={!canManage(selected) || busy} className="inline-flex items-center gap-2 border border-red-200 px-3 py-2 text-sm font-semibold text-red-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 disabled:opacity-50"><Trash2 className="size-4" />삭제</button>
+                  <button type="button" onClick={() => { setDeleteConfirmed(false); setDeleteOpen(true); }} disabled={!canManage(selected) || busy} title="삭제 가능 여부와 연결 대상을 확인합니다." className="inline-flex items-center gap-2 rounded border border-red-200 bg-white px-3 py-2 text-sm font-semibold text-red-600 transition hover:border-red-400 hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 disabled:opacity-50"><Trash2 className="size-4" />삭제</button>
                   <Link href={`/projects/intake/estimate?requestId=${encodeURIComponent(selected.id)}`} className="inline-flex items-center gap-2 border px-3 py-2 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]"><FileSpreadsheet className="size-4" />{t('estimateSheet.open')}</Link>
                   {OPERATIONAL_STATUSES.includes(selected.status) ? (
                     <select aria-label={t('estimateRequest.changeStatus')} value={selected.status} disabled={!canManage(selected) || busy} onChange={(event) => void handleStatus(event.target.value as EstimateRequestStatus)} className="rounded border bg-[var(--color-surface)] px-3 py-2 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] disabled:opacity-50">
@@ -345,9 +421,9 @@ export function EstimateRequestWorkbench({ currentUser, t }: Props) {
                 </div>
               </div>
 
-              <EstimateRequestProfileEditor key={selected.id} request={selected} disabled={!canManage(selected) || busy || Boolean(selected.projectId)} busy={busy} onSave={handleEdit} />
+              <EstimateRequestProfileEditor key={`${selected.id}:${selected.version}`} request={selected} mode={editorMode} disabled={!canManage(selected)} busy={busy} onSave={handleEdit} onCancel={() => setEditorMode('VIEW')} />
 
-              <section id="estimate-step-04" aria-labelledby="commercial-decision-title" className="scroll-mt-24 border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-[0_8px_22px_rgba(15,23,42,.05)] sm:p-5">
+              <section id="estimate-step-04" aria-labelledby="commercial-decision-title" className="scroll-mt-24 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-[0_8px_22px_rgba(15,23,42,.06)] sm:p-5">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
                     <div className="text-[10px] font-black tracking-[.12em] text-[var(--color-primary)]">STEP 04</div><h3 id="commercial-decision-title" className="font-bold">{t('estimateRequest.decisionTitle')}</h3>
@@ -382,7 +458,7 @@ export function EstimateRequestWorkbench({ currentUser, t }: Props) {
                 )}
               </section>
 
-              <section id="estimate-step-05" className="scroll-mt-24 border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-[0_8px_22px_rgba(15,23,42,.05)] sm:p-5">
+              <section id="estimate-step-05" className="scroll-mt-24 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-[0_8px_22px_rgba(15,23,42,.06)] sm:p-5">
                 <div className="text-[10px] font-black tracking-[.12em] text-[var(--color-primary)]">STEP 05</div>
                 <h3 className="mb-3 flex items-center gap-2 font-bold"><MessageSquareText className="size-4" />{t('estimateRequest.activityTitle')}</h3>
                 <form onSubmit={handleActivity} className="grid gap-2 sm:grid-cols-[150px_1fr_auto]">
@@ -398,7 +474,7 @@ export function EstimateRequestWorkbench({ currentUser, t }: Props) {
                 })}</div>
               </section>
 
-              <section id="estimate-step-06" className="scroll-mt-24 border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-[0_8px_22px_rgba(15,23,42,.05)] sm:p-5">
+              <section id="estimate-step-06" className="scroll-mt-24 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-[0_8px_22px_rgba(15,23,42,.06)] sm:p-5">
                 <div className="text-[10px] font-black tracking-[.12em] text-[var(--color-primary)]">STEP 06</div>
                 <div className="mb-3 flex flex-wrap items-center justify-between gap-2"><h3 className="flex items-center gap-2 font-bold"><Paperclip className="size-4" />{t('estimateRequest.attachmentTitle')}</h3>
                   <label className={`cursor-pointer rounded border px-3 py-2 text-sm font-semibold focus-within:ring-2 focus-within:ring-[var(--color-primary)] ${canManage(selected) ? '' : 'pointer-events-none opacity-50'}`}>{t('estimateRequest.addFiles')}<input type="file" multiple disabled={!canManage(selected) || busy} className="sr-only" onChange={(event) => { void handleFiles(event.target.files); event.target.value = ''; }} /></label>
@@ -407,11 +483,64 @@ export function EstimateRequestWorkbench({ currentUser, t }: Props) {
                 <div className="space-y-2">{selected.attachments.map((attachment) => <div key={attachment.id} className="flex items-center justify-between gap-3 border-b py-2 text-sm"><span className="min-w-0"><strong className="block truncate">{attachment.originalName}</strong><span className="text-xs text-[var(--color-text-sub)]">{attachment.category} · {(attachment.size / 1024).toFixed(1)} KB</span></span><button type="button" title={t('common.delete')} disabled={!canManage(selected)} onClick={() => void run(() => removeAttachment(selected.id, attachment.id, currentUser.id), t('estimateRequest.attachmentRemoved'))} className="grid size-8 place-items-center text-[var(--color-danger)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] disabled:opacity-50"><Trash2 className="size-4" /></button></div>)}</div>
               </section>
 
-              <details id="estimate-step-07" open className="scroll-mt-24 border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-[0_8px_22px_rgba(15,23,42,.05)] sm:p-5"><summary className="cursor-pointer font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]"><span className="block text-[10px] font-black tracking-[.12em] text-[var(--color-primary)]">STEP 07</span><span className="flex items-center gap-2"><History className="size-4" />{t('estimateRequest.historyTitle')} ({selected.histories.length})</span></summary><div className="mt-3 space-y-2">{selected.histories.map((history) => <div key={history.id} className="border-l-2 pl-3 text-sm"><strong>{history.action}</strong><p className="text-xs text-[var(--color-text-sub)]">{[history.fromStatus, history.toStatus].filter(Boolean).join(' → ')}</p><time className="text-xs text-[var(--color-text-sub)]">{new Date(history.createdAt).toLocaleString()}</time></div>)}</div></details>
+              <details id="estimate-step-07" open className="scroll-mt-24 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-[0_8px_22px_rgba(15,23,42,.06)] sm:p-5"><summary className="cursor-pointer font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]"><span className="block text-[10px] font-black tracking-[.12em] text-[var(--color-primary)]">STEP 07</span><span className="flex items-center gap-2"><History className="size-4" />{t('estimateRequest.historyTitle')} ({selected.histories.length})</span></summary><div className="mt-3 space-y-2">{selected.histories.map((history) => <div key={history.id} className="border-l-2 pl-3 text-sm"><strong>{history.action}</strong><p className="text-xs text-[var(--color-text-sub)]">{[history.fromStatus, history.toStatus].filter(Boolean).join(' → ')}</p><time className="text-xs text-[var(--color-text-sub)]">{new Date(history.createdAt).toLocaleString()}</time></div>)}</div></details>
             </div>
           )}
         </section>
       </div>
+
+      {deleteOpen && selected && deletePolicy && (
+        <div role="presentation" className="fixed inset-0 z-[100] grid place-items-center bg-slate-950/55 p-4" onMouseDown={(event) => {
+          if (event.target === event.currentTarget) setDeleteOpen(false);
+        }}>
+          <section role="dialog" aria-modal="true" aria-labelledby="estimate-delete-title" className="w-full max-w-xl rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] shadow-[0_24px_70px_rgba(15,23,42,.35)]">
+            <header className="flex items-start justify-between gap-4 border-b p-5">
+              <div>
+                <p className="text-[10px] font-black tracking-[.12em] text-red-600">DELETE POLICY PREVIEW</p>
+                <h2 id="estimate-delete-title" className="mt-1 text-lg font-black">{deletePolicy.title}</h2>
+                <p className="mt-2 text-sm leading-6 text-[var(--color-text-sub)]">{deletePolicy.description}</p>
+              </div>
+              <button type="button" title="닫기" onClick={() => setDeleteOpen(false)} className="grid size-9 shrink-0 place-items-center rounded border transition hover:border-orange-300 hover:bg-orange-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]"><X className="size-4" /></button>
+            </header>
+
+            <div className="space-y-4 p-5">
+              <div className="rounded-md border bg-[var(--color-bg-sub)] p-4">
+                <p className="mb-2 text-xs font-bold text-[var(--color-text-sub)]">영향 대상</p>
+                <ul className="space-y-2 text-sm">
+                  {deletePolicy.targets.map((target) => <li key={target} className="flex items-center gap-2"><span className="size-1.5 rounded-full bg-[var(--color-primary)]" />{target}</li>)}
+                </ul>
+              </div>
+
+              {deletePolicy.kind === 'RESTRICTED' ? (
+                <>
+                  <div className="grid gap-2 sm:grid-cols-3">
+                    {[
+                      ['취소', '업무를 취소 상태로 전환하고 이력은 보존합니다.'],
+                      ['보관', '목록 기본 조회에서 제외하고 감사 이력은 유지합니다.'],
+                      ['정정 요청', '승인된 정보는 정정 Workflow에서 새 Revision으로 처리합니다.'],
+                    ].map(([label, description]) => (
+                      <div key={label} className="rounded-md border bg-white p-3"><strong className="text-sm">{label}</strong><p className="mt-1 text-xs leading-5 text-[var(--color-text-sub)]">{description}</p></div>
+                    ))}
+                  </div>
+                  <p className="rounded-md border border-amber-200 bg-amber-50 p-3 text-xs font-semibold text-amber-900">현재 연결 상태에서는 직접 삭제를 실행하지 않습니다. 서버 정정·보관 API가 연결되기 전에는 성공으로 표시하지 않습니다.</p>
+                  <div className="flex justify-end"><button type="button" onClick={() => setDeleteOpen(false)} className="rounded border px-4 py-2 text-sm font-semibold transition hover:border-orange-300 hover:bg-orange-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]">확인</button></div>
+                </>
+              ) : (
+                <>
+                  <label className="flex cursor-pointer items-start gap-3 rounded-md border border-red-200 bg-red-50 p-4 text-sm">
+                    <input type="checkbox" checked={deleteConfirmed} onChange={(event) => setDeleteConfirmed(event.target.checked)} className="mt-0.5 size-4 accent-red-600" />
+                    <span><strong className="block text-red-800">삭제 대상을 확인했습니다</strong><span className="mt-1 block text-xs leading-5 text-red-700">이 작업은 DEMO_LOCAL 데이터에서만 실행되며 삭제 후 복구할 수 없습니다.</span></span>
+                  </label>
+                  <div className="flex justify-end gap-2">
+                    <button type="button" onClick={() => setDeleteOpen(false)} className="rounded border px-4 py-2 text-sm font-semibold transition hover:border-orange-300 hover:bg-orange-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]">취소</button>
+                    <button type="button" disabled={!deleteConfirmed || busy} title={!deleteConfirmed ? '삭제 대상 확인에 체크해 주세요.' : '확인한 대상을 삭제합니다.'} onClick={() => void handleDelete()} className="inline-flex items-center gap-2 rounded bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 disabled:cursor-not-allowed disabled:opacity-50"><Trash2 className="size-4" />삭제 실행</button>
+                  </div>
+                </>
+              )}
+            </div>
+          </section>
+        </div>
+      )}
     </div>
   );
 }
