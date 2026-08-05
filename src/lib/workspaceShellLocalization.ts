@@ -117,6 +117,9 @@ const VI_SHELL_TEXT: Record<string, string> = {
 export const localizeShellText = (value: string, language: WorkspaceLanguage) =>
   language === 'vi' ? VI_SHELL_TEXT[value] ?? value : value;
 
+export const localizeGeneratedTaskTitle = (value: string, language: WorkspaceLanguage) =>
+  language === 'vi' ? value.replace(/ 작업$/, ' công việc') : value;
+
 export interface WorkspaceShellCopy {
   switchWorkspace: (company: string) => string;
   globalNavigation: string;

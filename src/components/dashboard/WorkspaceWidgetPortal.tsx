@@ -23,7 +23,7 @@ import { useScheduleStore } from '@/store/scheduleStore';
 import { useTaskStore } from '@/store/taskStore';
 import { useTranslationStore } from '@/store/translationStore';
 import { evaluateEstimateAccess } from '@/lib/accessControl';
-import { getWorkspaceHomeCopy } from '@/lib/workspaceShellLocalization';
+import { getWorkspaceHomeCopy, localizeGeneratedTaskTitle } from '@/lib/workspaceShellLocalization';
 
 type WidgetId = 'projects' | 'kpi' | 'approvals' | 'sales' | 'tasks' | 'schedule';
 
@@ -168,7 +168,7 @@ export function WorkspaceWidgetPortal() {
 
         {visible('tasks') && <Link href="/tasks/my" className="cc-tactile-card group min-h-[196px] p-5 xl:col-span-5" data-interactive="true">
           <div className="mb-3 flex items-center justify-between"><h3 className="text-sm font-black text-[var(--color-text-main)]">{copy.priorityTasks}</h3><ChevronRight className="h-4 w-4 text-[#eb6300]" /></div>
-          <div className="divide-y divide-[var(--color-border)]">{myTasks.filter((task) => task.status !== 'DONE').slice(0, 4).map((task) => <div key={task.id} className="flex items-center gap-3 py-2.5"><span className={`h-2 w-2 rounded-full ${task.priority === 'URGENT' ? 'bg-red-500' : 'bg-[#ff8a1f]'}`} /><span className="min-w-0 flex-1 truncate text-[11px] font-bold text-[var(--color-text-main)]">{task.title}</span><span className="text-[9px] font-semibold text-[var(--color-text-sub)]">{task.dueDate || copy.noDeadline}</span></div>)}{myTasks.filter((task) => task.status !== 'DONE').length === 0 && <p className="py-10 text-center text-xs text-[var(--color-text-sub)]">{copy.noPriorityTasks}</p>}</div>
+          <div className="divide-y divide-[var(--color-border)]">{myTasks.filter((task) => task.status !== 'DONE').slice(0, 4).map((task) => <div key={task.id} className="flex items-center gap-3 py-2.5"><span className={`h-2 w-2 rounded-full ${task.priority === 'URGENT' ? 'bg-red-500' : 'bg-[#ff8a1f]'}`} /><span className="min-w-0 flex-1 truncate text-[11px] font-bold text-[var(--color-text-main)]">{localizeGeneratedTaskTitle(task.title, language)}</span><span className="text-[9px] font-semibold text-[var(--color-text-sub)]">{task.dueDate || copy.noDeadline}</span></div>)}{myTasks.filter((task) => task.status !== 'DONE').length === 0 && <p className="py-10 text-center text-xs text-[var(--color-text-sub)]">{copy.noPriorityTasks}</p>}</div>
         </Link>}
 
         {visible('schedule') && <Link href="/calendar" className="cc-tactile-card group min-h-[196px] p-5 xl:col-span-3" data-interactive="true">
