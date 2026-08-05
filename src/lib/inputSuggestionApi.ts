@@ -11,27 +11,28 @@ export type InputSuggestion = {
   score: number;
 };
 
-const sensitiveFragments = [
-  'password',
-  'passwd',
-  'secret',
-  'token',
-  'credential',
-  'email',
-  'phone',
-  'mobile',
-  'telephone',
-  'fax',
-  'memo',
-  'note',
-  'content',
-  'address',
-];
+const approvedSuggestionFields = new Set([
+  'building_use',
+  'businesstype',
+  'clientname',
+  'customer_company',
+  'estimate_type',
+  'estimatetype',
+  'market_scope',
+  'projectname',
+  'unit_price_work',
+  'unitwork',
+  'usage',
+  'vendor',
+  'work_category',
+  'work_trade',
+  'work_type',
+  'workcategory',
+]);
 
 export function isSuggestionFieldAllowed(fieldKey: string) {
   const normalized = fieldKey.trim().toLocaleLowerCase();
-  return /^[a-z0-9_.-]{1,64}$/.test(normalized)
-    && !sensitiveFragments.some((fragment) => normalized.includes(fragment));
+  return approvedSuggestionFields.has(normalized);
 }
 
 async function request<T>(endpoint: string, companyId: CompanyId, init?: RequestInit): Promise<T> {

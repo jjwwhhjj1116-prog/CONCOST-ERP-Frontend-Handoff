@@ -1,5 +1,5 @@
 import { apiClient, ApiClientError } from '@/lib/apiClient';
-import { ProjectIntake, ProjectIntakeDraft, ProjectIntakeStatus } from '@/types/models';
+import { ProjectIntake, ProjectIntakeCompletionResult, ProjectIntakeDraft, ProjectIntakeStatus } from '@/types/models';
 
 export type ProjectIntakeCompanyId = 'CON_COST' | 'VIET_QS';
 
@@ -72,5 +72,18 @@ export const projectIntakeApi = {
     request<ProjectIntake>(companyId, `/project-intakes/${id}/accept`, {
       method: 'POST',
       body: JSON.stringify({ expectedVersion, note }),
+    }),
+  completeWon: (
+    companyId: ProjectIntakeCompanyId,
+    id: string,
+    expectedVersion: number,
+    draft: ProjectIntakeDraft,
+    note: string,
+    idempotencyKey: string,
+  ) =>
+    request<ProjectIntakeCompletionResult>(companyId, `/project-intakes/${id}/complete-won`, {
+      method: 'POST',
+      headers: { 'Idempotency-Key': idempotencyKey },
+      body: JSON.stringify({ expectedVersion, draft, note }),
     }),
 };

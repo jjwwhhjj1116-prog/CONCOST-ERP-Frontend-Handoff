@@ -6,6 +6,7 @@ import {
   getProjectBoardScope,
   matchesProjectBoardScope,
   normalizeExecutionUnitIds,
+  projectBoardHref,
 } from './projectExecutionUnits';
 
 test('completes only final intake departments and preserves staffing for retained units', () => {
@@ -97,4 +98,11 @@ test('does not infer assignment from project or department names', () => {
 
 test('normalizes duplicate and invalid unit values', () => {
   assert.deepEqual(normalizeExecutionUnitIds(['FINISH', 'UNKNOWN', 'FINISH', 'CLAIM']), ['FINISH', 'CLAIM']);
+});
+
+test('builds a canonical department board deep link for the completed project', () => {
+  assert.equal(
+    projectBoardHref(['STRUCTURE', 'CLAIM'], { projectId: 'project-request-4', view: 'PART' }),
+    '/projects?unit=STRUCTURE&projectId=project-request-4&view=PART',
+  );
 });

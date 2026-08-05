@@ -76,6 +76,23 @@ export default function ProjectBoardPage() {
     return () => window.clearTimeout(timer);
   }, []);
 
+  useEffect(() => {
+    const requestedProjectId = searchParams.get('projectId');
+    const requestedView = searchParams.get('view');
+    if (!requestedProjectId || !currentUser) return;
+    const candidate = projects.find((project) => project.id === requestedProjectId);
+    const requestedScope = getProjectBoardScope(searchParams.get('group'), searchParams.get('unit'), searchParams.get('department'));
+    if (!candidate || !matchesProjectBoardScope(candidate, requestedScope)) return;
+    const allowed = canViewProject(currentUser, candidate)
+      || (currentUser.role === 'WORKER' && tasks.some((task) => task.projectId === candidate.id && task.assigneeId === currentUser.id && !task.isDeleted));
+    if (!allowed) return;
+    const timer = window.setTimeout(() => {
+      setSelectedProjectId(candidate.id);
+      if (requestedView === 'PART') setViewType('PART');
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [currentUser, projects, searchParams, tasks]);
+
   const updateWorkflowUrl = (projectId: string | null, tab?: ProjectWorkflowTab) => {
     const url = new URL(window.location.href);
     if (projectId) {

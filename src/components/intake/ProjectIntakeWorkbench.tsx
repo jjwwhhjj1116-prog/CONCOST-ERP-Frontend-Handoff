@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import {
   ArrowLeft,
   ArrowRight,
+  AlertTriangle,
   CheckCircle2,
   ClipboardCheck,
   Copy,
@@ -29,6 +30,7 @@ import { getProjectIntakeCreateBlockedCopy } from '@/lib/runtimeBoundaryCopy';
 import { useProjectIntakeStore } from '@/store/projectIntakeStore';
 import { useUiStore } from '@/store/uiStore';
 import { ProjectExecutionUnitSelector } from '@/components/intake/ProjectExecutionUnitSelector';
+import { ResponsiveDialogShell } from '@/components/ui/ResponsiveDialogShell';
 import {
   PersonnelCard,
   ProjectIntakeContact,
@@ -113,6 +115,7 @@ export function ProjectIntakeWorkbench({ currentUser, t, view = 'CREATE', reques
   const [message, setMessage] = useState('');
   const [actionError, setActionError] = useState('');
   const [activeStep, setActiveStep] = useState(1);
+  const [validationMissing, setValidationMissing] = useState<string[]>([]);
   const activeCreateDraftId = useRef('');
   const finalizingRef = useRef(false);
   const hydratedSelectionId = useRef('');
@@ -191,14 +194,9 @@ export function ProjectIntakeWorkbench({ currentUser, t, view = 'CREATE', reques
   const completeWonIntake = async () => {
     if (busy || finalizingRef.current || !selected || !draft || selected.status === 'ACCEPTED') return;
     if (missing.length) {
-      const firstMissing = missing[0];
-      const missingStep = ['materials'].includes(firstMissing) ? 2
-        : ['expectedStartDate', 'deliveryDate'].includes(firstMissing) ? 3
-          : ['contact'].includes(firstMissing) ? 4
-            : 1;
-      setActiveStep(missingStep);
       setMessage('');
-      setActionError(`수주 완료 전 필수 정보를 입력해 주세요: ${missing.map((key) => t(`projectIntake.missing.${key}` as Parameters<Translate>[0])).join(', ')}`);
+      setActionError('');
+      setValidationMissing(missing);
       return;
     }
 
@@ -207,18 +205,34 @@ export function ProjectIntakeWorkbench({ currentUser, t, view = 'CREATE', reques
     setMessage('');
     setActionError('');
     try {
-      await finalizeWonIntake(selected.id, draft, reviewNote, actor);
+      const result = await finalizeWonIntake(selected.id, draft, reviewNote, actor);
       setMessage(t('projectIntake.message.accept'));
-      const destinationUnitIds = draft.primaryUnitId
-        ? [draft.primaryUnitId, ...draft.targetUnitIds]
-        : draft.targetUnitIds;
-      router.push(projectBoardHref(destinationUnitIds));
+      const destinationUnitIds = result.project.primaryUnitId
+        ? [result.project.primaryUnitId, ...(result.project.assignedUnitIds || [])]
+        : (result.project.assignedUnitIds || []);
+      router.push(projectBoardHref(destinationUnitIds, {
+        projectId: result.project.id,
+        view: 'PART',
+      }));
     } catch (caught) {
       setActionError(caught instanceof Error ? caught.message : t('projectIntake.error.generic'));
     } finally {
       finalizingRef.current = false;
       setBusy(false);
     }
+  };
+
+  const stepForMissing = (key: string) => (
+    key === 'materials' ? 2 : key === 'deliveryDate' ? 3 : key === 'contact' ? 4 : 1
+  );
+
+  const goToMissing = (key: string) => {
+    const step = stepForMissing(key);
+    setValidationMissing([]);
+    setActiveStep(step);
+    window.setTimeout(() => {
+      document.querySelector<HTMLElement>(`[data-intake-step="${step}"] input:not([disabled]), [data-intake-step="${step}"] textarea:not([disabled]), [data-intake-step="${step}"] select:not([disabled])`)?.focus();
+    }, 0);
   };
 
   const updateContact = (index: number, patch: Partial<ProjectIntakeContact>) => {
@@ -483,7 +497,7 @@ export function ProjectIntakeWorkbench({ currentUser, t, view = 'CREATE', reques
 
               <div className="divide-y divide-[var(--color-border)]">
                 {activeStep === 1 && (
-                <section className="p-4 md:p-6">
+                <section data-intake-step="1" className="p-4 md:p-6">
                   <h3 className="mb-3 flex items-center gap-2 text-sm font-bold text-[var(--color-text-main)]"><FileText size={16} />{t('projectIntake.section.basic')}</h3>
                   <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
                     {([
@@ -524,7 +538,7 @@ export function ProjectIntakeWorkbench({ currentUser, t, view = 'CREATE', reques
                 )}
 
                 {activeStep === 4 && (
-                <section className="p-4 md:p-6">
+                <section data-intake-step="4" className="p-4 md:p-6">
                   <div className="mb-3 flex items-center justify-between">
                     <h3 className="flex items-center gap-2 text-sm font-bold text-[var(--color-text-main)]"><UserRound size={16} />{t('projectIntake.section.contacts')}</h3>
                     {!readOnly && <button type="button" title={t('projectIntake.action.addContact')} className={iconButtonClass} onClick={() => updateDraft('contacts', [...draft.contacts, makeContact()])}><Plus size={16} /></button>}
@@ -546,7 +560,7 @@ export function ProjectIntakeWorkbench({ currentUser, t, view = 'CREATE', reques
                 )}
 
                 {activeStep === 2 && (
-                <section className="p-4 md:p-6">
+                <section data-intake-step="2" className="p-4 md:p-6">
                   <div className="mb-3 flex items-center justify-between">
                     <h3 className="flex items-center gap-2 text-sm font-bold text-[var(--color-text-main)]"><FileCheck2 size={16} />{t('projectIntake.section.materials')}</h3>
                     {!readOnly && <button type="button" title={t('projectIntake.action.addMaterial')} className={iconButtonClass} onClick={() => updateDraft('materials', [...draft.materials, makeMaterial()])}><Plus size={16} /></button>}
@@ -572,12 +586,16 @@ export function ProjectIntakeWorkbench({ currentUser, t, view = 'CREATE', reques
                 )}
 
                 {activeStep === 3 && (
-                <section className="p-4 md:p-6">
+                <section data-intake-step="3" className="p-4 md:p-6">
                   <h3 className="mb-3 flex items-center gap-2 text-sm font-bold text-[var(--color-text-main)]"><History size={16} />프로젝트 일정</h3>
-                  <p className="mb-4 text-xs font-semibold text-[var(--color-text-sub)]">착수 예정일과 단계별 납품일을 입력하면 접수 승인 후 프로젝트 일정관리로 승계됩니다.</p>
-                  <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+                  <p className="mb-4 text-xs font-semibold text-[var(--color-text-sub)]">착수일은 날짜를 지정하거나 미정으로 둘 수 있습니다. 납품 일정은 접수 승인 후 프로젝트 일정관리로 승계됩니다.</p>
+                  <div className="mb-4 grid gap-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)] p-3 sm:grid-cols-[auto_auto_minmax(180px,1fr)] sm:items-end">
+                    <button type="button" disabled={readOnly} aria-pressed={draft.startDateStatus !== 'TBD'} onClick={() => updateDraft('startDateStatus', 'SCHEDULED')} className={`min-h-10 border px-4 text-sm font-black ${draft.startDateStatus !== 'TBD' ? 'border-[var(--color-primary)] bg-orange-50 text-orange-800' : 'border-[var(--color-border)] bg-[var(--color-surface)]'}`}>날짜 입력</button>
+                    <button type="button" disabled={readOnly} aria-pressed={draft.startDateStatus === 'TBD'} onClick={() => { updateDraft('startDateStatus', 'TBD'); updateDraft('expectedStartDate', ''); }} className={`min-h-10 border px-4 text-sm font-black ${draft.startDateStatus === 'TBD' ? 'border-[var(--color-primary)] bg-orange-50 text-orange-800' : 'border-[var(--color-border)] bg-[var(--color-surface)]'}`}>착수일 미정</button>
+                    <label className="block text-xs font-medium text-[var(--color-text-sub)]"><span className="mb-1 block">{t('projectIntake.field.expectedStartDate')}</span><input type="date" disabled={readOnly || draft.startDateStatus === 'TBD'} value={draft.expectedStartDate} onChange={(event) => { updateDraft('expectedStartDate', event.target.value); updateDraft('startDateStatus', event.target.value ? 'SCHEDULED' : 'TBD'); }} className={inputClass} /></label>
+                  </div>
+                  <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
                     {([
-                      ['expectedStartDate', 'projectIntake.field.expectedStartDate'],
                       ['firstDelivery', 'projectIntake.field.firstDelivery'],
                       ['secondDelivery', 'projectIntake.field.secondDelivery'],
                       ['thirdDelivery', 'projectIntake.field.thirdDelivery'],
@@ -664,6 +682,35 @@ export function ProjectIntakeWorkbench({ currentUser, t, view = 'CREATE', reques
           )}
         </main>
       </div>
+      {validationMissing.length > 0 && (
+        <ResponsiveDialogShell
+          eyebrow="PROJECT INTAKE VALIDATION"
+          title="수주 완료 전 확인이 필요합니다"
+          description="현재 단계에 입력값을 보존했습니다. 이동할 항목을 직접 선택해 주세요."
+          widthClassName="sm:max-w-xl"
+          onClose={() => setValidationMissing([])}
+          footer={(
+            <div className="flex justify-end">
+              <button type="button" onClick={() => setValidationMissing([])} className="min-h-10 border border-[var(--color-border)] px-4 text-sm font-bold hover:bg-[var(--color-bg)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]">Step 4에 머무르기</button>
+            </div>
+          )}
+        >
+          <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-amber-950">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" />
+              <div><strong className="block text-sm">필수 입력 {validationMissing.length}건이 남아 있습니다.</strong><p className="mt-1 text-xs">착수 예정일은 필수 항목이 아니며, Step 3에서 `착수일 미정`을 선택할 수 있습니다.</p></div>
+            </div>
+          </div>
+          <ul className="mt-4 space-y-2">
+            {validationMissing.map((key) => (
+              <li key={key} className="flex items-center justify-between gap-3 rounded-lg border border-[var(--color-border)] p-3">
+                <div><strong className="text-sm text-[var(--color-text-main)]">{t(`projectIntake.missing.${key}` as Parameters<Translate>[0])}</strong><p className="mt-0.5 text-xs text-[var(--color-text-sub)]">STEP {stepForMissing(key)}</p></div>
+                <button type="button" onClick={() => goToMissing(key)} className="min-h-9 shrink-0 bg-[var(--color-primary)] px-3 text-xs font-black text-white hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2">입력하러 가기</button>
+              </li>
+            ))}
+          </ul>
+        </ResponsiveDialogShell>
+      )}
     </div>
   );
 }

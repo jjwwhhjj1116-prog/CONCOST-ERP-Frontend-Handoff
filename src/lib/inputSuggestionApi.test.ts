@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { afterEach, describe, it } from 'node:test';
 import type { CompanyId } from '@/types/models';
-import { inputSuggestionApi } from './inputSuggestionApi';
+import { inputSuggestionApi, isSuggestionFieldAllowed } from './inputSuggestionApi';
 
 const originalFetch = globalThis.fetch;
 
@@ -47,5 +47,13 @@ describe('input suggestion API company scope', () => {
       () => inputSuggestionApi.search('UNKNOWN' as CompanyId, 'project-intake', 'projectName', ''),
       /valid selected company/i,
     );
+  });
+
+  it('keeps sensitive identity and communication fields out of input memory', () => {
+    for (const field of ['name', 'email', 'phone', 'telephone', 'mobile', 'address', 'memo', 'secret']) {
+      assert.equal(isSuggestionFieldAllowed(field), false, field);
+    }
+    assert.equal(isSuggestionFieldAllowed('clientName'), true);
+    assert.equal(isSuggestionFieldAllowed('businessType'), true);
   });
 });

@@ -32,11 +32,13 @@ after(() => {
 });
 
 test('project intake read and mutation requests always include the selected company', async () => {
-  const requests: Array<{ companyId: string; method: string }> = [];
-  globalThis.fetch = async (_input, init) => {
+  const requests: Array<{ companyId: string; method: string; path: string; idempotencyKey: string }> = [];
+  globalThis.fetch = async (input, init) => {
     requests.push({
       companyId: new Headers(init?.headers).get('X-Company-Id') || '',
       method: init?.method || 'GET',
+      path: String(input),
+      idempotencyKey: new Headers(init?.headers).get('Idempotency-Key') || '',
     });
     return response({});
   };
@@ -46,14 +48,18 @@ test('project intake read and mutation requests always include the selected comp
   await projectIntakeApi.save('CON_COST', 'intake-1', 1, {} as never);
   await projectIntakeApi.review('VIET_QS', 'intake-1', 1, {} as never, 'review');
   await projectIntakeApi.accept('CON_COST', 'intake-1', 1, 'accept');
+  await projectIntakeApi.completeWon('VIET_QS', 'intake-1', 2, {} as never, 'complete', 'complete-won-key');
 
-  assert.deepEqual(requests, [
+  assert.deepEqual(requests.map(({ companyId, method }) => ({ companyId, method })), [
     { companyId: 'CON_COST', method: 'GET' },
     { companyId: 'VIET_QS', method: 'GET' },
     { companyId: 'CON_COST', method: 'PATCH' },
     { companyId: 'VIET_QS', method: 'POST' },
     { companyId: 'CON_COST', method: 'POST' },
+    { companyId: 'VIET_QS', method: 'POST' },
   ]);
+  assert.match(requests[5].path, /\/project-intakes\/intake-1\/complete-won$/);
+  assert.equal(requests[5].idempotencyKey, 'complete-won-key');
 });
 
 test('a late response from the previous company cannot replace the active intake scope', async () => {

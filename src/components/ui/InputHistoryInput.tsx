@@ -13,6 +13,9 @@ import { useUiStore } from '@/store/uiStore';
 type InputHistoryInputProps = Omit<React.InputHTMLAttributes<HTMLInputElement>, 'value' | 'onChange'> & {
   moduleKey: string;
   fieldKey: string;
+  label?: string;
+  enterOpensPicker?: boolean;
+  pickerRequest?: number;
   value: string;
   onChange: (value: string) => void;
 };
@@ -20,6 +23,9 @@ type InputHistoryInputProps = Omit<React.InputHTMLAttributes<HTMLInputElement>, 
 export function InputHistoryInput({
   moduleKey,
   fieldKey,
+  label,
+  enterOpensPicker = false,
+  pickerRequest,
   value,
   onChange,
   onBlur,
@@ -32,7 +38,7 @@ export function InputHistoryInput({
   const [open, setOpen] = React.useState(false);
   const [pickerOpen, setPickerOpen] = React.useState(false);
   const [pickerQuery, setPickerQuery] = React.useState('');
-  const [pickerView, setPickerView] = React.useState<'COMPANY' | 'RECENT'>('COMPANY');
+  const [pickerView, setPickerView] = React.useState<'ALL' | 'COMPANY' | 'RECENT'>('ALL');
   const [result, setResult] = React.useState<{
     companyId: 'CON_COST' | 'VIET_QS';
     items: InputSuggestion[];
@@ -40,9 +46,20 @@ export function InputHistoryInput({
   const [activeIndex, setActiveIndex] = React.useState(-1);
   const [error, setError] = React.useState('');
   const lastRecorded = React.useRef('');
+  const lastPickerRequest = React.useRef(pickerRequest);
+  const pickerDialogRef = React.useRef<HTMLElement>(null);
   const allowed = isSuggestionFieldAllowed(fieldKey);
   const selectedCompanyId = useUiStore((state) => state.brandWorkspace);
-  const items = result.companyId === selectedCompanyId ? result.items : [];
+  const items = React.useMemo(
+    () => result.companyId === selectedCompanyId ? result.items : [],
+    [result, selectedCompanyId],
+  );
+  const pickerItems = React.useMemo(() => {
+    if (pickerView !== 'RECENT') return items;
+    return [...items]
+      .filter((item) => item.userUsageCount > 0)
+      .sort((a, b) => b.lastUsedAt.localeCompare(a.lastUsedAt));
+  }, [items, pickerView]);
 
   React.useEffect(() => {
     if (!allowed || (!open && !pickerOpen)) return;
@@ -66,24 +83,33 @@ export function InputHistoryInput({
     };
   }, [allowed, fieldKey, moduleKey, open, pickerOpen, pickerQuery, selectedCompanyId, value]);
 
-  const recordValue = React.useCallback((candidate: string) => {
+  const recordValue = React.useCallback(async (candidate: string) => {
     const normalized = candidate.trim().replace(/\s+/g, ' ');
     if (!allowed || normalized.length < 2 || normalized === lastRecorded.current) return;
     lastRecorded.current = normalized;
-    void inputSuggestionApi.record(selectedCompanyId, moduleKey, fieldKey, normalized)
-      .then(() => setError(''))
-      .catch(() => setError('기억값을 서버에 저장하지 못했습니다.'));
+    try {
+      await inputSuggestionApi.record(selectedCompanyId, moduleKey, fieldKey, normalized);
+      setError('');
+    } catch {
+      lastRecorded.current = '';
+      setError('기억값을 서버에 저장하지 못했습니다.');
+      throw new Error('기억값을 서버에 저장하지 못했습니다.');
+    }
   }, [allowed, fieldKey, moduleKey, selectedCompanyId]);
 
-  const choose = (candidate: string) => {
+  const applyValue = (candidate: string) => {
     onChange(candidate);
-    recordValue(candidate);
     setOpen(false);
     setPickerOpen(false);
   };
 
+  const choose = (candidate: string) => {
+    applyValue(candidate);
+    void recordValue(candidate).catch(() => undefined);
+  };
+
   const addCurrent = () => {
-    recordValue(value);
+    void recordValue(value).catch(() => undefined);
     setOpen(false);
     setPickerOpen(false);
   };
@@ -91,10 +117,16 @@ export function InputHistoryInput({
   const openPicker = () => {
     if (!allowed) return;
     setPickerQuery(value);
-    setPickerView('COMPANY');
+    setPickerView('ALL');
     setOpen(false);
     setPickerOpen(true);
   };
+
+  React.useEffect(() => {
+    if (pickerRequest === undefined || pickerRequest === lastPickerRequest.current) return;
+    lastPickerRequest.current = pickerRequest;
+    openPicker();
+  }, [pickerRequest]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const remove = async (item: InputSuggestion) => {
     try {
@@ -121,11 +153,14 @@ export function InputHistoryInput({
         }}
         onBlur={(event) => {
           window.setTimeout(() => setOpen(false), 100);
-          recordValue(value);
+          void recordValue(value).catch(() => undefined);
           onBlur?.(event);
         }}
         onKeyDown={(event) => {
           if ((event.key === 'F4' || (event.altKey && event.key === 'ArrowDown')) && allowed) {
+            event.preventDefault();
+            openPicker();
+          } else if (event.key === 'Enter' && enterOpensPicker) {
             event.preventDefault();
             openPicker();
           } else if (event.key === 'Enter' && !open) {
@@ -178,27 +213,56 @@ export function InputHistoryInput({
       )}
       {allowed && pickerOpen && typeof document !== 'undefined' && createPortal(
         <div role="presentation" className="fixed inset-0 z-[120] grid place-items-center bg-slate-950/55 p-4" onMouseDown={(event) => { if (event.target === event.currentTarget) setPickerOpen(false); }}>
-          <section role="dialog" aria-modal="true" aria-labelledby={`${listId}-picker-title`} className="flex max-h-[min(720px,90vh)] w-full max-w-2xl flex-col overflow-hidden rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] shadow-[0_26px_80px_rgba(15,23,42,.42)]">
+          <section
+            ref={pickerDialogRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={`${listId}-picker-title`}
+            className="flex max-h-[min(720px,90vh)] w-full max-w-2xl flex-col overflow-hidden rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] shadow-[0_26px_80px_rgba(15,23,42,.42)]"
+            onKeyDown={(event) => {
+              event.stopPropagation();
+              if (event.key === 'Escape') {
+                event.preventDefault();
+                setPickerOpen(false);
+                return;
+              }
+              if (event.ctrlKey && event.key === 'Enter' && pickerQuery.trim().length >= 2) {
+                event.preventDefault();
+                const candidate = pickerQuery.trim();
+                applyValue(candidate);
+                void recordValue(candidate).catch(() => undefined);
+                return;
+              }
+              if (event.key !== 'Tab') return;
+              const focusable = Array.from(pickerDialogRef.current?.querySelectorAll<HTMLElement>('button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])') || []);
+              if (!focusable.length) return;
+              const first = focusable[0];
+              const last = focusable[focusable.length - 1];
+              if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+              if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+            }}
+          >
             <header className="flex items-start justify-between gap-4 border-b p-5">
-              <div><p className="text-[10px] font-black tracking-[.12em] text-[var(--color-primary)]">INPUT MEMORY</p><h2 id={`${listId}-picker-title`} className="mt-1 text-xl font-black">기억값 선택</h2><p className="mt-1 text-xs text-[var(--color-text-sub)]">{selectedCompanyId === 'CON_COST' ? 'CON-COST' : 'Viet QS'} · {fieldKey}</p></div>
+              <div><p className="text-[10px] font-black tracking-[.12em] text-[var(--color-primary)]">INPUT MEMORY</p><h2 id={`${listId}-picker-title`} className="mt-1 text-xl font-black">{label || fieldKey} 입력·선택</h2><p className="mt-1 text-xs text-[var(--color-text-sub)]">{selectedCompanyId === 'CON_COST' ? 'CON-COST' : 'Viet QS'} · 회사별 기억값</p></div>
               <button type="button" title="닫기 (Esc)" onClick={() => setPickerOpen(false)} className="grid size-9 place-items-center rounded border transition hover:border-orange-300 hover:bg-orange-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]"><X className="size-4" /></button>
             </header>
             <div className="space-y-3 border-b p-4">
-              <label className="relative block"><Search className="pointer-events-none absolute left-3 top-2.5 size-4 text-[var(--color-text-sub)]" /><input autoFocus value={pickerQuery} onChange={(event) => setPickerQuery(event.target.value)} onKeyDown={(event) => { if (event.key === 'Escape') setPickerOpen(false); if (event.key === 'ArrowDown' && items.length) { event.preventDefault(); setActiveIndex(0); document.getElementById(`${listId}-picker-0`)?.focus(); } }} placeholder="기억값 검색" className="w-full rounded border bg-white py-2 pl-9 pr-20 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]" /><button type="button" onClick={() => setPickerQuery('')} className="absolute right-2 top-1.5 rounded px-2 py-1 text-xs font-semibold text-[var(--color-text-sub)] transition hover:bg-orange-50 hover:text-[var(--color-primary)]">Clear</button></label>
-              <div className="flex gap-2" role="tablist" aria-label="기억값 범위"><button type="button" role="tab" aria-selected={pickerView === 'COMPANY'} onClick={() => setPickerView('COMPANY')} className={`rounded px-3 py-2 text-xs font-bold transition ${pickerView === 'COMPANY' ? 'bg-[var(--color-primary)] text-white' : 'border hover:border-orange-300 hover:bg-orange-50'}`}>회사 공용</button><button type="button" role="tab" aria-selected={pickerView === 'RECENT'} onClick={() => setPickerView('RECENT')} className={`rounded px-3 py-2 text-xs font-bold transition ${pickerView === 'RECENT' ? 'bg-[var(--color-primary)] text-white' : 'border hover:border-orange-300 hover:bg-orange-50'}`}>내 최근</button></div>
+              <label className="relative block"><Search className="pointer-events-none absolute left-3 top-2.5 size-4 text-[var(--color-text-sub)]" /><input autoFocus value={pickerQuery} onChange={(event) => setPickerQuery(event.target.value)} onKeyDown={(event) => { if (event.ctrlKey && event.key === 'Enter') { event.preventDefault(); const candidate = pickerQuery.trim(); if (candidate.length >= 2) { applyValue(candidate); void recordValue(candidate).catch(() => undefined); } return; } if (event.key === 'ArrowDown' && pickerItems.length) { event.preventDefault(); setActiveIndex(0); document.getElementById(`${listId}-picker-0`)?.focus(); } else if (event.key === 'Enter' && pickerQuery.trim()) { event.preventDefault(); if (activeIndex >= 0 && pickerItems[activeIndex]) choose(pickerItems[activeIndex].value); else applyValue(pickerQuery.trim()); } }} placeholder="새 값을 직접 입력하거나 기억값 검색" className="w-full rounded border bg-white py-2 pl-9 pr-20 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]" /><button type="button" onClick={() => setPickerQuery('')} className="absolute right-2 top-1.5 rounded px-2 py-1 text-xs font-semibold text-[var(--color-text-sub)] transition hover:bg-orange-50 hover:text-[var(--color-primary)]">Clear</button></label>
+              <div className="flex gap-2" role="tablist" aria-label="기억값 범위">{(['ALL', 'COMPANY', 'RECENT'] as const).map((scope) => <button key={scope} type="button" role="tab" aria-selected={pickerView === scope} onClick={() => setPickerView(scope)} className={`rounded px-3 py-2 text-xs font-bold transition ${pickerView === scope ? 'bg-[var(--color-primary)] text-white' : 'border hover:border-orange-300 hover:bg-orange-50'}`}>{scope === 'ALL' ? '전체' : scope === 'COMPANY' ? '회사 공용' : '내 최근'}</button>)}</div>
             </div>
             <div className="min-h-0 flex-1 overflow-y-auto p-3">
-              {(pickerView === 'RECENT' ? [...items].sort((a, b) => b.lastUsedAt.localeCompare(a.lastUsedAt)) : items).map((item, index) => (
-                <div key={item.id} className={`mb-2 flex items-center gap-3 rounded-md border p-2 transition ${index === activeIndex ? 'border-orange-400 bg-orange-50 shadow-[inset_4px_0_0_var(--color-primary)]' : 'hover:border-orange-300 hover:bg-orange-50/40'}`}>
-                  <button id={`${listId}-picker-${index}`} type="button" onClick={() => choose(item.value)} onKeyDown={(event) => { if (event.key === 'ArrowDown') { event.preventDefault(); document.getElementById(`${listId}-picker-${Math.min(items.length - 1, index + 1)}`)?.focus(); } if (event.key === 'ArrowUp') { event.preventDefault(); document.getElementById(`${listId}-picker-${Math.max(0, index - 1)}`)?.focus(); } }} className="min-w-0 flex-1 rounded px-2 py-1 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]"><strong className="block truncate">{item.value}</strong><span className="mt-1 flex gap-3 text-[10px] text-[var(--color-text-sub)]"><span>Usage {item.userUsageCount || item.usageCount}</span><span>Recent {new Date(item.lastUsedAt).toLocaleDateString()}</span></span></button>
+              <div className="mb-2 grid grid-cols-[minmax(0,1fr)_80px_110px_40px] gap-2 px-3 text-[10px] font-black uppercase text-[var(--color-text-sub)]"><span>값</span><span>사용횟수</span><span>최근사용</span><span></span></div>
+              {pickerItems.map((item, index) => (
+                <div key={item.id} onMouseEnter={() => setActiveIndex(index)} className={`mb-2 flex items-center gap-3 rounded-md border p-2 transition ${index === activeIndex ? 'border-orange-400 bg-orange-50 shadow-[inset_4px_0_0_var(--color-primary)]' : 'hover:border-orange-300 hover:bg-orange-50/40'}`}>
+                  <button id={`${listId}-picker-${index}`} type="button" onClick={() => choose(item.value)} onKeyDown={(event) => { if (event.key === 'ArrowDown') { event.preventDefault(); const next = Math.min(pickerItems.length - 1, index + 1); setActiveIndex(next); document.getElementById(`${listId}-picker-${next}`)?.focus(); } if (event.key === 'ArrowUp') { event.preventDefault(); const previous = Math.max(0, index - 1); setActiveIndex(previous); document.getElementById(`${listId}-picker-${previous}`)?.focus(); } if (event.key === 'Delete') { event.preventDefault(); void remove(item); } }} className="grid min-w-0 flex-1 grid-cols-[minmax(0,1fr)_80px_110px] items-center gap-2 rounded px-2 py-1 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]"><strong className="truncate">{item.value}</strong><span className="text-[10px] text-[var(--color-text-sub)]">{item.userUsageCount || item.usageCount}회</span><span className="text-[10px] text-[var(--color-text-sub)]">{new Date(item.lastUsedAt).toLocaleDateString()}</span></button>
                   <button type="button" title="기억값 삭제" onClick={() => void remove(item)} className="grid size-9 shrink-0 place-items-center rounded text-red-500 transition hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400"><Trash2 className="size-4" /></button>
                 </div>
               ))}
-              {!items.length && <div className="p-10 text-center"><History className="mx-auto mb-3 size-8 text-orange-300" /><strong className="block">검색된 기억값이 없습니다.</strong><p className="mt-1 text-xs text-[var(--color-text-sub)]">새 값을 입력해 회사 범위에 등록할 수 있습니다.</p></div>}
+              {!pickerItems.length && <div className="p-10 text-center"><History className="mx-auto mb-3 size-8 text-orange-300" /><strong className="block">검색된 기억값이 없습니다.</strong><p className="mt-1 text-xs text-[var(--color-text-sub)]">위 입력칸에 새 값을 직접 입력해 셀에 적용할 수 있습니다.</p></div>}
             </div>
             <footer className="flex flex-wrap items-center justify-between gap-3 border-t p-4">
-              <p className="text-xs text-[var(--color-text-sub)]">Enter 선택 · ↑↓ 이동 · Esc 닫기</p>
-              <div className="flex gap-2">{pickerQuery.trim().length >= 2 && !items.some((item) => item.value.toLocaleLowerCase() === pickerQuery.trim().toLocaleLowerCase()) && <button type="button" onClick={() => { onChange(pickerQuery); recordValue(pickerQuery); setPickerOpen(false); }} className="inline-flex items-center gap-2 rounded border border-orange-300 bg-orange-50 px-3 py-2 text-sm font-bold text-orange-800 transition hover:bg-orange-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]"><Plus className="size-4" />추가 후 선택</button>}<button type="button" onClick={() => setPickerOpen(false)} className="rounded border px-4 py-2 text-sm font-semibold transition hover:border-orange-300 hover:bg-orange-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]">닫기</button></div>
+              <p className="text-xs text-[var(--color-text-sub)]">↑↓ 이동 · Enter 적용 · Ctrl+Enter 기억+적용 · Delete 삭제 · Esc 닫기</p>
+              <div className="flex flex-wrap gap-2"><button type="button" disabled={!pickerQuery.trim()} onClick={() => applyValue(pickerQuery.trim())} className="rounded border border-orange-300 px-3 py-2 text-sm font-bold text-orange-800 transition hover:bg-orange-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] disabled:opacity-40">Cell에 적용</button><button type="button" disabled={pickerQuery.trim().length < 2} onClick={() => { const candidate = pickerQuery.trim(); applyValue(candidate); void recordValue(candidate).catch(() => undefined); }} className="inline-flex items-center gap-2 rounded bg-[var(--color-primary)] px-3 py-2 text-sm font-bold text-white transition hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2 disabled:opacity-40"><Plus className="size-4" />현재 입력값 기억하기</button><button type="button" onClick={() => setPickerOpen(false)} className="rounded border px-4 py-2 text-sm font-semibold transition hover:border-orange-300 hover:bg-orange-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]">취소</button></div>
             </footer>
           </section>
         </div>,

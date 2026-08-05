@@ -16,6 +16,7 @@ test('builds one canonical won chain without assigning a PM', () => {
   assert.equal(result.project.id, 'project-estimate-request-1');
   assert.equal(result.intake.id, 'project-intake-estimate-request-1');
   assert.equal(result.decision.id, 'commercial-decision-estimate-request-1');
+  assert.equal(result.project.publicationStatus, 'DRAFT');
   assert.equal(result.project.pmId, undefined);
   assert.equal(result.intake.draft?.primaryUnitId, 'FINISH');
   assert.deepEqual(result.project.assignedUnitIds, ['FINISH', 'STRUCTURE']);

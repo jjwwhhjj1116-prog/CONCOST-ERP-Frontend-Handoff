@@ -143,13 +143,38 @@ test('C/E/F/H: WON follows one canonical lineage through archive with guarded fa
   const draft = buildProjectIntakeDraft(intake);
   assert.equal(draft.source.projectId, projectId);
   assert.equal(draft.materials.find((item) => item.category === 'drawing')?.originalName, 'drawing.pdf');
-  const finalDraft: typeof draft = { ...draft, targetUnitIds: ['STRUCTURE', 'CLAIM'], primaryUnitId: 'STRUCTURE' };
-  await useProjectIntakeStore.getState().finalizeWonIntake(intake.id, finalDraft, 'Accepted', manager);
+  const finalDraft: typeof draft = {
+    ...draft,
+    targetUnitIds: ['STRUCTURE', 'CLAIM'],
+    primaryUnitId: 'STRUCTURE',
+    startDateStatus: 'TBD',
+    expectedStartDate: '',
+  };
+  const completedIntake = await useProjectIntakeStore.getState().finalizeWonIntake(intake.id, finalDraft, 'Accepted', manager);
   const startPlannedProject = useProjectStore.getState().projects.find((item) => item.id === projectId)!;
+  assert.equal(completedIntake.intake.status, 'ACCEPTED');
+  assert.equal(completedIntake.project.id, projectId);
+  assert.equal(completedIntake.project.publicationStatus, 'PUBLISHED');
+  assert.equal(completedIntake.project.status, 'MANAGER_REVIEW');
+  assert.equal(completedIntake.projectNo, startPlannedProject.projectNo);
+  assert.equal(completedIntake.startDateStatus, 'TBD');
+  assert.equal(completedIntake.idempotent, false);
+  assert.equal(completedIntake.assignments.length, 2);
+  assert.equal(completedIntake.assignments.filter((item) => item.role === 'PRIMARY').length, 1);
+  assert.ok(completedIntake.assignments.every((item) => item.status === 'START_PLANNED'));
   assert.equal(matchesProjectBoardScope(startPlannedProject, getProjectBoardScope('TECHNICAL', null)), true);
   assert.equal(matchesProjectBoardScope(startPlannedProject, getProjectBoardScope('CLAIM', null)), true);
   assert.equal(startPlannedProject.primaryUnitId, 'STRUCTURE');
   assert.deepEqual(startPlannedProject.assignedUnitIds, ['STRUCTURE', 'CLAIM']);
+  assert.equal(startPlannedProject.startDateStatus, 'TBD');
+  assert.equal(startPlannedProject.startDate, undefined);
+
+  const projectCountAfterCompletion = useProjectStore.getState().projects.length;
+  const repeatedCompletion = await useProjectIntakeStore.getState().finalizeWonIntake(intake.id, finalDraft, 'Accepted again', manager);
+  assert.equal(repeatedCompletion.idempotent, true);
+  assert.equal(repeatedCompletion.project.id, projectId);
+  assert.equal(repeatedCompletion.assignments.length, 2);
+  assert.equal(useProjectStore.getState().projects.length, projectCountAfterCompletion);
 
   await useProjectPmScheduleStore.getState().sync(manager);
   await useProjectPmScheduleStore.getState().assign(projectId, { primaryPmId: pm.id, finishPmId: '', structurePmId: pm.id, bimPmId: pm.id, civilPmId: '' }, manager);

@@ -131,8 +131,14 @@ export const getProjectBoardScopeLabel = (scope: ProjectBoardScope | null) => {
   return '개발팀 전체 프로젝트';
 };
 
-export const projectBoardHref = (unitIds: readonly ProjectExecutionUnitId[]) => {
+export const projectBoardHref = (
+  unitIds: readonly ProjectExecutionUnitId[],
+  options: { projectId?: string; view?: 'PART' } = {},
+) => {
   const primary = normalizeExecutionUnitIds(unitIds)[0];
   if (!primary) return '/projects';
-  return `/projects?unit=${primary}`;
+  const query = new URLSearchParams({ unit: primary });
+  if (options.projectId) query.set('projectId', options.projectId);
+  if (options.view) query.set('view', options.view);
+  return `/projects?${query.toString()}`;
 };

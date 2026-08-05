@@ -13,6 +13,11 @@ const record = (value: unknown): UnknownRecord => (
 );
 const text = (value: unknown) => typeof value === 'string' ? value : '';
 const nullable = (value: unknown) => typeof value === 'string' && value ? value : null;
+const withStartDateStatus = (draft: ProjectIntakeDraft): ProjectIntakeDraft => ({
+  ...draft,
+  startDateStatus: draft.startDateStatus === 'TBD' || !draft.expectedStartDate.trim() ? 'TBD' : 'SCHEDULED',
+  expectedStartDate: draft.startDateStatus === 'TBD' ? '' : draft.expectedStartDate,
+});
 
 export const createBlankProjectIntakeDraft = (
   intakeId: string,
@@ -66,6 +71,7 @@ export const createBlankProjectIntakeDraft = (
       mimeType: '',
       storageKey: '',
     })),
+    startDateStatus: 'TBD',
     expectedStartDate: '',
     firstDelivery: '',
     secondDelivery: '',
@@ -99,10 +105,10 @@ export const isSafeSecretReference = (value: string) => (
 );
 
 export const buildProjectIntakeDraft = (intake: ProjectIntake): ProjectIntakeDraft => {
-  if (intake.draft) return structuredClone(intake.draft);
+  if (intake.draft) return withStartDateStatus(structuredClone(intake.draft));
   if (intake.draftJson) {
     try {
-      return JSON.parse(intake.draftJson) as ProjectIntakeDraft;
+      return withStartDateStatus(JSON.parse(intake.draftJson) as ProjectIntakeDraft);
     } catch {
       // Fall through to the immutable source snapshot.
     }
@@ -149,7 +155,7 @@ export const buildProjectIntakeDraft = (intake: ProjectIntake): ProjectIntakeDra
   const primaryUnitId = isProjectExecutionUnitId(primaryUnitCandidate) && targetUnitIds.includes(primaryUnitCandidate)
     ? primaryUnitCandidate
     : (targetUnitIds[0] || null);
-  return {
+  return withStartDateStatus({
     projectName: text(project.projectName),
     projectNo: intake.projectNo,
     company: text(project.company),
@@ -177,6 +183,7 @@ export const buildProjectIntakeDraft = (intake: ProjectIntake): ProjectIntakeDra
       email: text(project.email),
     }] : [],
     materials,
+    startDateStatus: text(project.expectedStartDate) ? 'SCHEDULED' : 'TBD',
     expectedStartDate: text(project.expectedStartDate),
     firstDelivery: text(project.firstDelivery) || text(deliveries[0]),
     secondDelivery: text(project.secondDelivery) || text(deliveries[1]),
@@ -202,7 +209,7 @@ export const buildProjectIntakeDraft = (intake: ProjectIntake): ProjectIntakeDra
       agreedSchedule: nullable(decision.agreedSchedule),
       startCondition: nullable(decision.startCondition),
     },
-  };
+  });
 };
 
 export const evaluateProjectIntakeCompleteness = (draft: ProjectIntakeDraft) => {
@@ -212,7 +219,6 @@ export const evaluateProjectIntakeCompleteness = (draft: ProjectIntakeDraft) => 
   if (!draft.company.trim() && !draft.client.trim()) missing.push('client');
   if (!draft.workContent.trim() && draft.scopes.length === 0) missing.push('workContent');
   if (draft.targetUnitIds.length === 0 || !draft.primaryUnitId) missing.push('targetUnitIds');
-  if (!draft.expectedStartDate.trim()) missing.push('expectedStartDate');
   if (!draft.firstDelivery.trim() && !draft.finalDelivery.trim()) missing.push('deliveryDate');
   if (!draft.contacts.some((contact) => contact.name.trim() && (contact.telephone || contact.mobile || contact.email))) {
     missing.push('contact');

@@ -1,0 +1,15 @@
+ID,Reference behavior,RC3 target behavior,Implementation evidence,Validation
+EP-01,Manual memory-enabled cell Enter opens centered value picker,Enter on a manual memory cell opens a centered input and selection dialog,EstimateDatabaseWorkbench.tsx; InputHistoryInput.tsx,Browser and keyboard test
+EP-02,Popup accepts a new text value,Focused text input supports direct entry and applies the entered value,InputHistoryInput.tsx,Browser
+EP-03,Arrow keys move through remembered values,ArrowUp and ArrowDown move the active option,InputHistoryInput.tsx,Keyboard QA
+EP-04,Enter applies selected or directly entered value,Enter applies the highlighted suggestion or current text,InputHistoryInput.tsx,Keyboard QA
+EP-05,Ctrl+Enter remembers and applies current text,Ctrl+Enter records then applies the current text,InputHistoryInput.tsx,Keyboard QA
+EP-06,Delete removes only the remembered suggestion,Delete calls suggestion removal without changing the database row,InputHistoryInput.tsx; inputSuggestionApi.ts,Integration and browser
+EP-07,Escape closes without applying,Escape closes the dialog and keeps the current cell value,InputHistoryInput.tsx,Keyboard QA
+EP-08,Picker exposes all company and recent scopes,All; company shared; and my recent tabs are visible,InputHistoryInput.tsx,Browser
+EP-09,Usage and recent-use metadata are visible,Each suggestion displays use count and last-used date,InputHistoryInput.tsx,Browser
+EP-10,Company memory is isolated,Every search record and delete request carries the selected company scope,inputSuggestionApi.ts; apiClient.ts,inputSuggestionApi.test.ts
+EP-11,Sensitive fields do not use memory,Name email phone address memo and secret fields are denied by the allowlist,inputSuggestionApi.ts,Unit test
+EP-12,Auto-linked cells expose their source instead of the input picker,Locked linked cells open the source drawer while manual memory cells open the picker,EstimateDatabaseWorkbench.tsx,Browser
+EP-13,Memory-enabled manual cells are visually discoverable,Manual cells have an orange left edge and an Enter label,EstimateDatabaseWorkbench.tsx,Visual QA
+EP-14,Dialog keyboard focus remains contained,Tab and Shift+Tab cycle inside the modal,InputHistoryInput.tsx,Accessibility QA

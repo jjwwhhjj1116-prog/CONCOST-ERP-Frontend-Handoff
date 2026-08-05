@@ -84,6 +84,7 @@ export interface PersonnelCard {
 }
 
 export type ProjectStatus = 'INTAKE_RECEIVED' | 'MANAGER_REVIEW' | 'PM_ASSIGNED' | 'SCHEDULE_DRAFTING' | 'SCHEDULE_PENDING_APPROVAL' | 'SCHEDULE_REJECTED' | 'SCHEDULE_APPROVED' | 'IN_PROGRESS' | 'QA_REVIEW' | 'COMPLETED' | 'ON_HOLD' | 'ARCHIVED' | 'REVISION_REQUESTED';
+export type ProjectPublicationStatus = 'DRAFT' | 'PUBLISHED';
 
 export type ProjectSourceType = 'CLIENT_ORDER' | 'INTERNAL_DEVELOPMENT';
 
@@ -145,6 +146,7 @@ export interface CommercialDecision {
 
 export type ProjectIntakeStatus = 'DRAFT' | 'REVIEWED' | 'ACCEPTED';
 export type ProjectIntakeMaterialStatus = 'NOT_RECEIVED' | 'PARTIAL' | 'RECEIVED' | 'CONFIRMED';
+export type ProjectIntakeStartDateStatus = 'SCHEDULED' | 'TBD';
 
 export interface ProjectIntakeContact {
   id: string;
@@ -198,6 +200,7 @@ export interface ProjectIntakeDraft {
   unitScopes: ProjectExecutionUnitScope[];
   contacts: ProjectIntakeContact[];
   materials: ProjectIntakeMaterial[];
+  startDateStatus?: ProjectIntakeStartDateStatus;
   expectedStartDate: string;
   firstDelivery: string;
   secondDelivery: string;
@@ -262,6 +265,15 @@ export interface ProjectIntake {
   estimateRequest?: EstimateRequest;
   completeness?: { missing: string[] };
   permissions?: { canEdit: boolean; canReview: boolean };
+}
+
+export interface ProjectIntakeCompletionResult {
+  intake: ProjectIntake;
+  project: Project;
+  assignments: ProjectExecutionUnitAssignment[];
+  projectNo: string;
+  startDateStatus: ProjectIntakeStartDateStatus;
+  idempotent: boolean;
 }
 
 export interface CommercialDecisionInput {
@@ -1037,6 +1049,8 @@ export interface ProjectProfitAnalysis {
 
 export interface Project {
   id: string;
+  projectNo?: string;
+  publicationStatus?: ProjectPublicationStatus;
   projectSourceType?: ProjectSourceType; // Default to CLIENT_ORDER if undefined
   clientId?: string;
   clientName?: string;
@@ -1054,6 +1068,7 @@ export interface Project {
   companyId?: string;
   managerId?: UserId;
   pmId?: UserId;
+  startDateStatus?: ProjectIntakeStartDateStatus;
   startDate?: string;
   dueDate?: string;
   approvedStartDate?: string;

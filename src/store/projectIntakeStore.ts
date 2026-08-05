@@ -18,9 +18,13 @@ import { useEstimateDatabaseStore } from '@/store/estimateDatabaseStore';
 import { useEstimateRequestStore } from '@/store/estimateRequestStore';
 import { useProjectStore } from '@/store/projectStore';
 import { useProjectPmScheduleStore } from '@/store/projectPmScheduleStore';
+import { useNotificationStore } from '@/store/notificationStore';
+import { useAuditStore } from '@/store/auditStore';
 import { useUiStore } from '@/store/uiStore';
 import {
+  Project,
   ProjectIntake,
+  ProjectIntakeCompletionResult,
   ProjectIntakeDraft,
   ProjectIntakeHistory,
   ProjectIntakeStatus,
@@ -44,7 +48,7 @@ interface ProjectIntakeState {
   saveDraft: (id: string, draft: ProjectIntakeDraft, actor: IntakeActor) => Promise<ProjectIntake>;
   review: (id: string, draft: ProjectIntakeDraft, note: string, actor: IntakeActor) => Promise<ProjectIntake>;
   accept: (id: string, note: string, actor: IntakeActor) => Promise<ProjectIntake>;
-  finalizeWonIntake: (id: string, draft: ProjectIntakeDraft, note: string, actor: IntakeActor) => Promise<ProjectIntake>;
+  finalizeWonIntake: (id: string, draft: ProjectIntakeDraft, note: string, actor: IntakeActor) => Promise<ProjectIntakeCompletionResult>;
 }
 
 const now = () => new Date().toISOString();
@@ -146,6 +150,45 @@ const assertEdit = (intake: ProjectIntake, actor: IntakeActor) => {
 const assertReview = (intake: ProjectIntake, actor: IntakeActor) => {
   if (!localPermissions(intake, actor).canReview) throw new Error('You do not have permission to review this project intake');
   if (intake.status === 'ACCEPTED') throw new Error('An accepted project intake is immutable');
+};
+
+const completionStartDateStatus = (draft: ProjectIntakeDraft): 'SCHEDULED' | 'TBD' => (
+  draft.startDateStatus === 'TBD' || !draft.expectedStartDate.trim() ? 'TBD' : 'SCHEDULED'
+);
+
+const assertCompletionPostconditions = (result: ProjectIntakeCompletionResult) => {
+  const assignedUnitIds = Array.from(new Set(result.project.assignedUnitIds || []));
+  const assignmentUnitIds = Array.from(new Set(result.assignments.map((item) => item.unitId)));
+  if (result.intake.status !== 'ACCEPTED') throw new Error('수주 완료 검증 실패: 접수 상태가 ACCEPTED가 아닙니다.');
+  if (result.project.publicationStatus !== 'PUBLISHED') throw new Error('수주 완료 검증 실패: 프로젝트가 게시되지 않았습니다.');
+  if (result.project.status !== 'MANAGER_REVIEW') throw new Error('수주 완료 검증 실패: 프로젝트가 착수 전 상태가 아닙니다.');
+  if (!result.projectNo.trim() || result.project.projectNo !== result.projectNo) throw new Error('수주 완료 검증 실패: 프로젝트 번호가 일치하지 않습니다.');
+  if (!result.project.primaryUnitId || result.assignments.filter((item) => item.role === 'PRIMARY').length !== 1) {
+    throw new Error('수주 완료 검증 실패: 주관부서는 정확히 한 곳이어야 합니다.');
+  }
+  if (result.assignments.some((item) => item.status !== 'START_PLANNED')) {
+    throw new Error('수주 완료 검증 실패: 담당부서 배정 상태가 착수 예정이 아닙니다.');
+  }
+  if (assignedUnitIds.length !== assignmentUnitIds.length || assignedUnitIds.some((unitId) => !assignmentUnitIds.includes(unitId))) {
+    throw new Error('수주 완료 검증 실패: 담당부서와 실행 배정이 일치하지 않습니다.');
+  }
+};
+
+const completionFromProject = (
+  intake: ProjectIntake,
+  project: Project,
+  idempotent: boolean,
+): ProjectIntakeCompletionResult => {
+  const result: ProjectIntakeCompletionResult = {
+    intake,
+    project,
+    assignments: project.executionAssignments || [],
+    projectNo: intake.projectNo || project.projectNo || '',
+    startDateStatus: project.startDateStatus || (project.startDate ? 'SCHEDULED' : 'TBD'),
+    idempotent,
+  };
+  assertCompletionPostconditions(result);
+  return result;
 };
 
 export const useProjectIntakeStore = create<ProjectIntakeState>()(persist((set, get) => ({
@@ -425,22 +468,43 @@ export const useProjectIntakeStore = create<ProjectIntakeState>()(persist((set, 
   finalizeWonIntake: async (id, draft, note, actor) => {
     const current = get().intakes.find((item) => item.id === id);
     if (!current) throw new Error('Project intake not found');
+    const existingProject = useProjectStore.getState().projects.find((project) => project.id === current.projectId);
+    if (current.status === 'ACCEPTED') {
+      if (!existingProject) throw new Error('수주 완료된 접수의 canonical Project를 찾을 수 없습니다.');
+      return completionFromProject(current, { ...existingProject, projectNo: existingProject.projectNo || current.projectNo }, true);
+    }
     validateSecretReferences(draft.secretReferences);
     const missing = evaluateProjectIntakeCompleteness(draft);
     if (missing.length) throw new Error(`Project intake is incomplete: ${missing.join(', ')}`);
     assertReview(current, actor);
+    const startDateStatus = completionStartDateStatus(draft);
+    const completionDraft: ProjectIntakeDraft = {
+      ...draft,
+      startDateStatus,
+      expectedStartDate: startDateStatus === 'SCHEDULED' ? draft.expectedStartDate : '',
+    };
 
     if (get().persistenceMode === 'SERVER') {
       const companyId = selectedCompanyId();
-      const reviewed = current.status === 'REVIEWED'
-        ? current
-        : await projectIntakeApi.review(companyId, id, current.version, draft, note);
-      const updated = await projectIntakeApi.accept(companyId, id, reviewed.version, note);
+      const result = await projectIntakeApi.completeWon(
+        companyId,
+        id,
+        current.version,
+        completionDraft,
+        note,
+        `project-intake-complete-won:${companyId}:${id}:${current.version}`,
+      );
       if (selectedCompanyId() !== companyId || get().scopeCompanyId !== companyId) {
         throw new ProjectIntakeApiError('Company workspace changed while completing project intake', 409);
       }
-      set((state) => ({ intakes: replace(state.intakes, updated) }));
-      return updated;
+      assertCompletionPostconditions(result);
+      const projectStore = useProjectStore.getState();
+      const projectExists = projectStore.projects.some((project) => project.id === result.project.id);
+      projectStore.replaceProjects(projectExists
+        ? projectStore.projects.map((project) => project.id === result.project.id ? result.project : project)
+        : [result.project, ...projectStore.projects]);
+      set((state) => ({ intakes: replace(state.intakes, result.intake) }));
+      return result;
     }
 
     if (get().persistenceMode !== 'LOCAL_DEMO') {
@@ -448,27 +512,29 @@ export const useProjectIntakeStore = create<ProjectIntakeState>()(persist((set, 
     }
 
     const timestamp = now();
-    await useProjectPmScheduleStore.getState().sync(actor);
     const projectStore = useProjectStore.getState();
-    projectStore.replaceProjects(projectStore.projects.map((project) => {
-      if (project.id !== current.projectId) return project;
-      const executionAssignments = completeExecutionAssignments({
-        projectId: project.id,
-        targetUnitIds: draft.targetUnitIds,
-        primaryUnitId: draft.primaryUnitId,
-        actorId: actor.id,
-        assignedAt: timestamp,
-        existingAssignments: project.executionAssignments,
-      });
-      return {
-        ...project,
-        status: 'MANAGER_REVIEW',
-        primaryUnitId: draft.primaryUnitId,
-        assignedUnitIds: draft.targetUnitIds,
-        executionAssignments,
-        updatedAt: timestamp,
-      };
-    }));
+    const sourceProject = projectStore.projects.find((project) => project.id === current.projectId);
+    if (!sourceProject) throw new Error('수주 접수와 연결된 canonical Project를 찾을 수 없습니다.');
+    const executionAssignments = completeExecutionAssignments({
+      projectId: sourceProject.id,
+      targetUnitIds: draft.targetUnitIds,
+      primaryUnitId: draft.primaryUnitId,
+      actorId: actor.id,
+      assignedAt: timestamp,
+      existingAssignments: sourceProject.executionAssignments,
+    });
+    const completedProject: Project = {
+      ...sourceProject,
+      projectNo: draft.projectNo,
+      publicationStatus: 'PUBLISHED',
+      status: 'MANAGER_REVIEW',
+      primaryUnitId: draft.primaryUnitId,
+      assignedUnitIds: draft.targetUnitIds,
+      executionAssignments,
+      startDateStatus,
+      startDate: startDateStatus === 'SCHEDULED' ? completionDraft.expectedStartDate : undefined,
+      updatedAt: timestamp,
+    };
 
     const reviewHistory = current.status === 'REVIEWED'
       ? []
@@ -477,8 +543,8 @@ export const useProjectIntakeStore = create<ProjectIntakeState>()(persist((set, 
       ...current,
       status: 'REVIEWED' as const,
       projectNo: draft.projectNo,
-      draft,
-      draftJson: JSON.stringify(draft),
+      draft: completionDraft,
+      draftJson: JSON.stringify(completionDraft),
       reviewNote: note,
       reviewedBy: current.reviewedBy || actor.id,
       reviewedAt: current.reviewedAt || timestamp,
@@ -493,14 +559,49 @@ export const useProjectIntakeStore = create<ProjectIntakeState>()(persist((set, 
       updatedAt: timestamp,
       permissions: { canEdit: false, canReview: false },
       histories: [
-        localHistory(acceptedBase, 'ACCEPTED', actor.id, 'REVIEWED', 'ACCEPTED', { note, projectStatus: 'MANAGER_REVIEW' }),
+        localHistory(acceptedBase, 'ACCEPTED', actor.id, 'REVIEWED', 'ACCEPTED', {
+          note,
+          projectStatus: 'MANAGER_REVIEW',
+          projectNo: draft.projectNo,
+          assignedUnitIds: draft.targetUnitIds,
+          primaryUnitId: draft.primaryUnitId,
+          startDateStatus,
+        }),
         ...reviewHistory,
         ...(current.histories || []),
       ],
     };
+    const result: ProjectIntakeCompletionResult = {
+      intake: updated,
+      project: completedProject,
+      assignments: executionAssignments,
+      projectNo: draft.projectNo,
+      startDateStatus,
+      idempotent: false,
+    };
+    assertCompletionPostconditions(result);
+
+    await upsertLocalPipelineRecord(updated, completionDraft, updated.status, actor.id, timestamp);
+    projectStore.replaceProjects(projectStore.projects.map((project) => project.id === completedProject.id ? completedProject : project));
     set((state) => ({ intakes: replace(state.intakes, updated) }));
-    await upsertLocalPipelineRecord(updated, draft, updated.status, actor.id, timestamp);
-    return updated;
+    await useProjectPmScheduleStore.getState().sync(actor);
+    useNotificationStore.getState().addNotification({
+      userId: actor.id,
+      type: 'PROJECT_ASSIGNED',
+      title: '수주 프로젝트 착수 예정 배정',
+      message: `[${completedProject.title}] 프로젝트가 ${executionAssignments.length}개 담당부서에 착수 예정으로 배정되었습니다.`,
+      priority: 'HIGH',
+      relatedProjectId: completedProject.id,
+      groupId: `project-intake-completed:${completedProject.id}`,
+    });
+    useAuditStore.getState().addLog({
+      actorId: actor.id,
+      action: 'UPDATE',
+      entityType: 'PROJECT_INTAKE',
+      entityId: updated.id,
+      message: `Project intake completed for canonical project ${completedProject.id}; units=${executionAssignments.map((item) => item.unitId).join(',')}; startDateStatus=${startDateStatus}.`,
+    });
+    return result;
   },
 }), {
   name: 'project-intake-storage-v1',
