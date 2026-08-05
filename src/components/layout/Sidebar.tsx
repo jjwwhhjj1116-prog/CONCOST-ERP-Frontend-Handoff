@@ -37,10 +37,12 @@ import { BrandLogo } from '@/components/ui/BrandLogo';
 import { MailNavigationPanel } from '@/components/mail/MailNavigationPanel';
 import { SecondaryNavIcon } from '@/components/navigation/SecondaryNavIcon';
 import { useAuthStore } from '@/store/authStore';
+import { useTranslationStore } from '@/store/translationStore';
 import { useUiStore } from '@/store/uiStore';
 import type { Role } from '@/types/models';
 import { canAccessNavigation, getNavigationAccessLevel } from '@/lib/navigationAccess';
 import { evaluateEstimateAccess, evaluateFinanceAccess } from '@/lib/accessControl';
+import { getWorkspaceShellCopy, localizeShellText } from '@/lib/workspaceShellLocalization';
 
 type NavigationItem = {
   id: string;
@@ -276,10 +278,11 @@ function getActiveRail(pathname: string) {
   return 'workspace';
 }
 
-function PanelNode({ item, depth, role, level, pathname, searchString }: { item: NavigationItem; depth: number; role: Role; level: number; pathname: string; searchString: string }) {
+function PanelNode({ item, depth, role, level, pathname, searchString, language }: { item: NavigationItem; depth: number; role: Role; level: number; pathname: string; searchString: string; language: 'ko' | 'vi' }) {
   const visibleChildren = item.children?.filter((child) => canAccessNavigation(child, role, level));
   const active = containsActivePath(item, pathname, searchString);
   const [open, setOpen] = React.useState(active || depth === 0);
+  const label = localizeShellText(item.label, language);
   if (!canAccessNavigation(item, role, level)) return null;
 
   if (visibleChildren?.length) {
@@ -287,7 +290,7 @@ function PanelNode({ item, depth, role, level, pathname, searchString }: { item:
       <div>
         <button
           type="button"
-          title={item.label}
+          title={label}
           aria-expanded={open}
           onClick={() => setOpen((value) => !value)}
           className={`relative flex min-h-11 w-full items-center gap-2.5 rounded-xl px-2.5 text-left text-[12px] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff8a1f]/45 ${
@@ -299,10 +302,10 @@ function PanelNode({ item, depth, role, level, pathname, searchString }: { item:
         >
           {active && <span className="absolute inset-y-2 left-0 w-1 rounded-full bg-[#ff6b00]" />}
           <SecondaryNavIcon id={item.id} fallbackIcon={item.icon} active={active} />
-          <span className="min-w-0 flex-1 truncate">{item.label}</span>
+          <span className="min-w-0 flex-1 truncate">{label}</span>
           <ChevronDown className={`h-3.5 w-3.5 text-[#a98973] transition-transform ${open ? 'rotate-180' : ''}`} />
         </button>
-        {open && <div className="ml-3.5 mt-1 space-y-0.5 border-l border-[#f1d7c1] pl-2.5">{visibleChildren.map((child) => <PanelNode key={child.id} item={child} depth={depth + 1} role={role} level={level} pathname={pathname} searchString={searchString} />)}</div>}
+        {open && <div className="ml-3.5 mt-1 space-y-0.5 border-l border-[#f1d7c1] pl-2.5">{visibleChildren.map((child) => <PanelNode key={child.id} item={child} depth={depth + 1} role={role} level={level} pathname={pathname} searchString={searchString} language={language} />)}</div>}
       </div>
     );
   }
@@ -312,7 +315,7 @@ function PanelNode({ item, depth, role, level, pathname, searchString }: { item:
   return (
     <Link
       href={item.href}
-      title={item.label}
+      title={label}
       aria-current={exactActive ? 'page' : undefined}
       className={`group relative flex min-h-11 items-center gap-2.5 rounded-xl px-2.5 text-[12px] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff8a1f]/45 ${
         exactActive
@@ -323,7 +326,7 @@ function PanelNode({ item, depth, role, level, pathname, searchString }: { item:
     >
       {exactActive && <span className="absolute inset-y-2 left-0 w-1 rounded-full bg-[#ff6b00]" />}
       <SecondaryNavIcon id={item.id} fallbackIcon={item.icon} active={exactActive} />
-      <span className="min-w-0 flex-1 truncate">{item.label}</span>
+      <span className="min-w-0 flex-1 truncate">{label}</span>
       {item.badge && <span className="rounded-full bg-[#ff6b00] px-1.5 py-0.5 text-[9px] font-black text-white">{item.badge}</span>}
     </Link>
   );
@@ -334,7 +337,10 @@ export function Sidebar() {
   const searchString = useSearchParams().toString();
   const currentUser = useAuthStore((state) => state.currentUser);
   const { isDarkMode, toggleDarkMode, brandWorkspace, toggleBrandWorkspace } = useUiStore();
+  const language = useTranslationStore((state) => state.settings.uiLanguage);
   if (!currentUser) return null;
+
+  const copy = getWorkspaceShellCopy(language);
 
   const canSwitchCompany = ['SUPER_ADMIN', 'SYSTEM_ADMIN'].includes(currentUser.role);
 
@@ -359,20 +365,20 @@ export function Sidebar() {
     <>
       <div className={`hidden shrink-0 xl:block ${compactWorkspace ? 'w-[84px]' : 'w-[316px]'}`} aria-hidden="true" />
       <aside className={`fixed inset-y-0 left-0 z-[var(--z-sidebar)] hidden pt-[64px] xl:flex ${compactWorkspace ? 'w-[84px]' : 'w-[316px]'}`}>
-        <button type="button" onClick={toggleBrandWorkspace} disabled={!canSwitchCompany} aria-label={canSwitchCompany ? `${brandWorkspace === 'CON_COST' ? 'VIETQS' : 'CON-COST'} 워크스페이스로 전환` : `${brandWorkspace} workspace`} className={`absolute inset-x-0 top-0 z-10 flex h-[64px] items-center border-b border-[#efd8c4] bg-[#fffaf5] shadow-[0_8px_22px_rgba(86,52,24,.06)] disabled:cursor-default ${compactWorkspace ? 'justify-center px-2' : 'px-5'}`}>
-          <BrandLogo brand={brandWorkspace} className={compactWorkspace ? 'h-[28px] w-[68px] shrink-0' : 'h-[34px] w-[178px] shrink-0'} />
-          {!compactWorkspace && canSwitchCompany && <ChevronDown className="ml-auto h-4 w-4 text-[#a98973]" />}
+        <button type="button" onClick={toggleBrandWorkspace} disabled={!canSwitchCompany} aria-label={canSwitchCompany ? copy.switchWorkspace(brandWorkspace === 'CON_COST' ? 'VIETQS' : 'CON-COST') : `${brandWorkspace} workspace`} className="absolute left-0 top-0 z-10 flex h-[64px] w-[316px] items-center border-b border-[#efd8c4] bg-[#fffaf5] px-5 shadow-[0_8px_22px_rgba(86,52,24,.06)] disabled:cursor-default">
+          <BrandLogo brand={brandWorkspace} className="h-[34px] w-[178px] shrink-0" />
+          {canSwitchCompany && <ChevronDown className="ml-auto h-4 w-4 text-[#a98973]" />}
         </button>
         <div className={`flex w-[84px] shrink-0 flex-col border-r shadow-[8px_0_24px_rgba(20,44,96,.16)] transition-colors ${brandWorkspace === 'VIET_QS' ? 'border-[#084b86] bg-[#0871bd]' : 'border-[#c74f00]/30 bg-[#ff6b00]'}`}>
-          <nav aria-label="글로벌 업무 메뉴" className="cc-scrollbar flex-1 overflow-y-auto px-1.5 py-2.5">
+          <nav aria-label={copy.globalNavigation} className="cc-scrollbar flex-1 overflow-y-auto px-1.5 py-2.5">
             <div className="space-y-1.5">
               {visibleRail.map((item) => {
                 const Icon = item.icon ?? CircleDot;
                 const active = item.id === activeRail.id;
                 return (
-                  <Link key={item.id} href={item.href} title={item.section} aria-current={active ? 'page' : undefined} className={`relative flex min-h-[68px] flex-col items-center justify-center gap-1.5 rounded-[14px] border text-[10.5px] font-black leading-none text-white transition-all ${active ? 'border-white/75 bg-white/22 shadow-[0_8px_20px_rgba(24,39,75,.24),inset_0_1px_0_rgba(255,255,255,.38)]' : 'border-transparent hover:-translate-y-0.5 hover:border-white/45 hover:bg-white/18'}`}>
+                   <Link key={item.id} href={item.href} title={localizeShellText(item.section, language)} aria-current={active ? 'page' : undefined} className={`relative flex min-h-[68px] flex-col items-center justify-center gap-1.5 rounded-[14px] border text-[10.5px] font-black leading-none text-white transition-all ${active ? 'border-white/75 bg-white/22 shadow-[0_8px_20px_rgba(24,39,75,.24),inset_0_1px_0_rgba(255,255,255,.38)]' : 'border-transparent hover:-translate-y-0.5 hover:border-white/45 hover:bg-white/18'}`}>
                     <Icon className="h-[30px] w-[30px] drop-shadow-[0_1px_1px_rgba(0,0,0,.22)]" strokeWidth={1.75} />
-                    <span>{item.label}</span>
+                    <span>{localizeShellText(item.label, language)}</span>
                     {item.badge && <span className="absolute right-1.5 top-1 rounded-full bg-white px-1.5 py-0.5 text-[8px] font-black text-[#d45300] shadow-sm">{item.badge}</span>}
                   </Link>
                 );
@@ -383,13 +389,13 @@ export function Sidebar() {
             {visibleUtilities.filter((item) => item.id === 'ai-assistant').map((item) => {
               const Icon = item.icon ?? Bot;
               const active = item.id === activeRail.id;
-              return <Link key={item.id} href={item.href} title={item.section} aria-current={active ? 'page' : undefined} className={`flex min-h-[56px] flex-col items-center justify-center gap-1 rounded-xl text-[9.5px] font-black text-white transition ${active ? 'bg-white/20 shadow-[0_5px_14px_rgba(20,39,84,.2)]' : 'hover:bg-white/15'}`}><Icon className="h-[26px] w-[26px]" strokeWidth={1.75} /><span>{item.label}</span></Link>;
+              return <Link key={item.id} href={item.href} title={localizeShellText(item.section, language)} aria-current={active ? 'page' : undefined} className={`flex min-h-[56px] flex-col items-center justify-center gap-1 rounded-xl text-[9.5px] font-black text-white transition ${active ? 'bg-white/20 shadow-[0_5px_14px_rgba(20,39,84,.2)]' : 'hover:bg-white/15'}`}><Icon className="h-[26px] w-[26px]" strokeWidth={1.75} /><span>{localizeShellText(item.label, language)}</span></Link>;
             })}
-            <button type="button" onClick={toggleDarkMode} title={isDarkMode ? '라이트모드로 전환' : '다크모드로 전환'} aria-pressed={isDarkMode} className="flex min-h-[56px] w-full flex-col items-center justify-center gap-1 rounded-xl text-[9.5px] font-black text-white transition hover:bg-white/15">{isDarkMode ? <Sun className="h-[26px] w-[26px]" strokeWidth={1.75} /> : <MoonStar className="h-[26px] w-[26px]" strokeWidth={1.75} />}<span>모드설정</span></button>
+            <button type="button" onClick={toggleDarkMode} title={isDarkMode ? copy.lightMode : copy.darkMode} aria-pressed={isDarkMode} className="flex min-h-[56px] w-full flex-col items-center justify-center gap-1 rounded-xl text-[9.5px] font-black text-white transition hover:bg-white/15">{isDarkMode ? <Sun className="h-[26px] w-[26px]" strokeWidth={1.75} /> : <MoonStar className="h-[26px] w-[26px]" strokeWidth={1.75} />}<span>{copy.modeSettings}</span></button>
             {visibleUtilities.filter((item) => item.id !== 'ai-assistant').map((item) => {
               const Icon = item.icon ?? Settings;
               const active = item.id === activeRail.id;
-              return <Link key={item.id} href={item.href} title={item.section} aria-current={active ? 'page' : undefined} className={`flex min-h-[56px] flex-col items-center justify-center gap-1 rounded-xl text-[9.5px] font-black text-white transition ${active ? 'bg-white/20 shadow-[0_5px_14px_rgba(20,39,84,.2)]' : 'hover:bg-white/15'}`}><Icon className="h-[26px] w-[26px]" strokeWidth={1.75} /><span>{item.label}</span></Link>;
+              return <Link key={item.id} href={item.href} title={localizeShellText(item.section, language)} aria-current={active ? 'page' : undefined} className={`flex min-h-[56px] flex-col items-center justify-center gap-1 rounded-xl text-[9.5px] font-black text-white transition ${active ? 'bg-white/20 shadow-[0_5px_14px_rgba(20,39,84,.2)]' : 'hover:bg-white/15'}`}><Icon className="h-[26px] w-[26px]" strokeWidth={1.75} /><span>{localizeShellText(item.label, language)}</span></Link>;
             })}
           </div>
         </div>
@@ -399,36 +405,36 @@ export function Sidebar() {
             <div className="flex items-center gap-3">
               <SecondaryNavIcon id={activeRail.id} fallbackIcon={activeRail.icon} active size="lg" />
               <span className="min-w-0">
-                <h2 className="truncate text-[15px] font-black tracking-tight">{activeRail.section}</h2>
-                <p className="mt-1 truncate text-[10px] font-semibold text-[#9a755c]">{activeRail.description}</p>
+                <h2 className="truncate text-[15px] font-black tracking-tight">{localizeShellText(activeRail.section, language)}</h2>
+                <p className="mt-1 truncate text-[10px] font-semibold text-[#9a755c]">{localizeShellText(activeRail.description, language)}</p>
               </span>
             </div>
           </div>
-          <nav aria-label={`${activeRail.section} 채널`} className="cc-scrollbar flex-1 overflow-y-auto p-3">
+          <nav aria-label={`${localizeShellText(activeRail.section, language)} ${copy.channels}`} className="cc-scrollbar flex-1 overflow-y-auto p-3">
             {activeRail.id === 'mail' ? (
               <MailNavigationPanel />
             ) : (
               <>
-                <p className="mb-2 px-3 text-[9px] font-black uppercase tracking-[.18em] text-[#b5957e]">Channels</p>
-                <div className="space-y-1">{panelItems.map((item) => <PanelNode key={item.id} item={item} depth={0} role={currentUser.role} level={accessLevel} pathname={pathname} searchString={searchString} />)}</div>
+                <p className="mb-2 px-3 text-[9px] font-black uppercase tracking-[.18em] text-[#b5957e]">{copy.channels}</p>
+                <div className="space-y-1">{panelItems.map((item) => <PanelNode key={item.id} item={item} depth={0} role={currentUser.role} level={accessLevel} pathname={pathname} searchString={searchString} language={language} />)}</div>
               </>
             )}
           </nav>
           <div className="border-t border-[#f0ddcd] p-3">
             <div className="flex items-center gap-2.5 rounded-2xl border border-[#efd5c0] bg-white/70 p-2.5 shadow-sm">
               <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#ffead5] text-xs font-black text-[#bd4b00]">{currentUser.name.slice(0, 1)}</span>
-              <span className="min-w-0 flex-1"><strong className="block truncate text-[11px] font-black">{currentUser.displayName || currentUser.name}</strong><span className="block truncate text-[9px] font-semibold text-[#9a755c]">{currentUser.departmentName || currentUser.teamName || '전사'} · {currentUser.role === 'SUPER_ADMIN' ? '최고관리자' : currentUser.jobTitle || currentUser.role}</span></span>
+              <span className="min-w-0 flex-1"><strong className="block truncate text-[11px] font-black">{currentUser.displayName || currentUser.name}</strong><span className="block truncate text-[9px] font-semibold text-[#9a755c]">{localizeShellText(currentUser.departmentName || currentUser.teamName || copy.companyWide, language)} · {currentUser.role === 'SUPER_ADMIN' ? copy.topAdministrator : localizeShellText(currentUser.jobTitle || currentUser.role, language)}</span></span>
               <LockKeyhole className="h-3.5 w-3.5 text-[#eb6300]" />
             </div>
           </div>
         </div>}
       </aside>
 
-      <nav aria-label="모바일 주요 메뉴" className="fixed inset-x-3 bottom-3 z-[var(--z-mobile-nav)] grid min-h-[66px] grid-cols-5 rounded-[20px] border border-white/10 bg-[#172554]/95 p-1.5 shadow-[0_18px_42px_rgba(6,15,44,.35)] backdrop-blur-xl xl:hidden">
+      <nav aria-label={copy.mobileNavigation} className="fixed inset-x-3 bottom-3 z-[var(--z-mobile-nav)] grid min-h-[66px] grid-cols-5 rounded-[20px] border border-white/10 bg-[#172554]/95 p-1.5 shadow-[0_18px_42px_rgba(6,15,44,.35)] backdrop-blur-xl xl:hidden">
         {mobile.map((item) => {
           const Icon = item.icon ?? CircleDot;
           const active = item.id === activeRail.id;
-          return <Link key={item.id} href={item.href} className={`flex min-w-0 flex-col items-center justify-center gap-1 rounded-2xl px-1 text-[9px] font-black ${active ? 'bg-[#ff6b00] text-white shadow-[0_6px_16px_rgba(235,99,0,.32)]' : 'text-slate-400 hover:bg-white/[.08] hover:text-white'}`}><Icon className="h-5 w-5" strokeWidth={1.75} /><span className="max-w-full truncate">{item.label}</span></Link>;
+          return <Link key={item.id} href={item.href} className={`flex min-w-0 flex-col items-center justify-center gap-1 rounded-2xl px-1 text-[9px] font-black ${active ? 'bg-[#ff6b00] text-white shadow-[0_6px_16px_rgba(235,99,0,.32)]' : 'text-slate-400 hover:bg-white/[.08] hover:text-white'}`}><Icon className="h-5 w-5" strokeWidth={1.75} /><span className="max-w-full truncate">{localizeShellText(item.label, language)}</span></Link>;
         })}
       </nav>
     </>

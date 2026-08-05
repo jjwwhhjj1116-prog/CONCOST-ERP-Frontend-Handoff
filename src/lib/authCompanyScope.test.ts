@@ -44,3 +44,20 @@ test('sequential synthetic logins reset company, locale, and API scope', async (
     process.env.NEXT_PUBLIC_RUNTIME_MODE = previousMode;
   }
 });
+
+test('workspace switch synchronizes company, locale, and API scope atomically', () => {
+  useUiStore.getState().setBrandWorkspace('CON_COST');
+  assert.equal(useUiStore.getState().brandWorkspace, 'CON_COST');
+  assert.equal(useTranslationStore.getState().settings.uiLanguage, 'ko');
+  assert.equal(getApiCompanyId(), 'CON_COST');
+
+  useUiStore.getState().toggleBrandWorkspace();
+  assert.equal(useUiStore.getState().brandWorkspace, 'VIET_QS');
+  assert.equal(useTranslationStore.getState().settings.uiLanguage, 'vi');
+  assert.equal(getApiCompanyId(), 'VIET_QS');
+
+  useUiStore.getState().toggleBrandWorkspace();
+  assert.equal(useUiStore.getState().brandWorkspace, 'CON_COST');
+  assert.equal(useTranslationStore.getState().settings.uiLanguage, 'ko');
+  assert.equal(getApiCompanyId(), 'CON_COST');
+});

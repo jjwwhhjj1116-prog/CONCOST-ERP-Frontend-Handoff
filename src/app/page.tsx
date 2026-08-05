@@ -8,6 +8,7 @@ import { WorkerDashboard } from '@/components/dashboard/WorkerDashboard';
 import { useProjectStore } from '@/store/projectStore';
 import { useTranslationStore } from '@/store/translationStore';
 import { useTranslation } from '@/lib/localization';
+import { getWorkspaceHomeCopy, localizeShellText } from '@/lib/workspaceShellLocalization';
 import { Download, Upload } from 'lucide-react';
 import { WorkspaceWidgetPortal } from '@/components/dashboard/WorkspaceWidgetPortal';
 import { applyImportData, downloadJson, exportWorkspaceData, validateImportData } from '@/lib/jsonHandoff';
@@ -21,11 +22,12 @@ export default function Home() {
 
   const { settings } = useTranslationStore();
   const t = useTranslation(settings.uiLanguage);
+  const homeCopy = getWorkspaceHomeCopy(settings.uiLanguage);
 
   const getDeptName = () => {
     if (!currentUser) return '';
-    if (currentUser.departmentName) return currentUser.departmentName;
-    if (currentUser.teamName) return currentUser.teamName;
+    if (currentUser.departmentName) return localizeShellText(currentUser.departmentName, settings.uiLanguage);
+    if (currentUser.teamName) return localizeShellText(currentUser.teamName, settings.uiLanguage);
     if (currentUser.companyId === 'CON_COST') return t('header.dept.hq');
     if (currentUser.companyId === 'VIET_QS') return 'Viet_QS';
     return t('header.dept.none');
@@ -66,9 +68,9 @@ export default function Home() {
         const payload: unknown = JSON.parse(String(reader.result));
         if (!validateImportData(payload)) throw new Error('invalid workspace json');
         applyImportData(payload);
-        setMessage('워크스페이스 데이터를 불러왔습니다.');
+        setMessage(homeCopy.importSuccess);
       } catch {
-        setMessage('올바른 워크스페이스 JSON 파일이 아닙니다.');
+        setMessage(homeCopy.importInvalid);
       }
     };
     reader.readAsText(file);
@@ -119,7 +121,7 @@ export default function Home() {
       <WorkspaceWidgetPortal />
 
       <details className="group rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-sm">
-        <summary className="flex cursor-pointer list-none items-center justify-between px-5 py-4 text-sm font-black text-[var(--color-text-main)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#ff6b00]">역할별 운영 상세 <span className="text-[10px] font-bold text-[var(--color-text-sub)] group-open:hidden">펼쳐보기</span><span className="hidden text-[10px] font-bold text-[var(--color-text-sub)] group-open:inline">접기</span></summary>
+        <summary className="flex cursor-pointer list-none items-center justify-between px-5 py-4 text-sm font-black text-[var(--color-text-main)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#ff6b00]">{homeCopy.roleDetails} <span className="text-[10px] font-bold text-[var(--color-text-sub)] group-open:hidden">{homeCopy.expand}</span><span className="hidden text-[10px] font-bold text-[var(--color-text-sub)] group-open:inline">{homeCopy.collapse}</span></summary>
         <div className="border-t border-[var(--color-border)] p-4">
           {currentUser.role === 'SUPER_ADMIN' && <SuperAdminDashboard selectedMonth={selectedMonth} />}
           {currentUser.role === 'SYSTEM_ADMIN' && <SuperAdminDashboard selectedMonth={selectedMonth} />}

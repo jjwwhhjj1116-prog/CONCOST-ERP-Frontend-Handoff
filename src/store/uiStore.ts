@@ -1,8 +1,17 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { setApiCompanyId } from '@/lib/apiClient';
+import { useTranslationStore } from '@/store/translationStore';
 
 export type SidebarMode = 'EXPANDED' | 'COMPACT' | 'MINI';
 export type BrandWorkspace = 'CON_COST' | 'VIET_QS';
+
+const synchronizeWorkspaceContext = (brandWorkspace: BrandWorkspace) => {
+  setApiCompanyId(brandWorkspace);
+  useTranslationStore.getState().updateSettings({
+    uiLanguage: brandWorkspace === 'VIET_QS' ? 'vi' : 'ko',
+  });
+};
 
 interface UiState {
   sidebarMode: SidebarMode;
@@ -30,13 +39,21 @@ export const useUiStore = create<UiState>()(
       }),
       toggleDarkMode: () => set((state) => ({ isDarkMode: !state.isDarkMode })),
       setDarkMode: (isDark) => set({ isDarkMode: isDark }),
-      setBrandWorkspace: (brandWorkspace) => set({ brandWorkspace }),
-      toggleBrandWorkspace: () => set((state) => ({
-        brandWorkspace: state.brandWorkspace === 'CON_COST' ? 'VIET_QS' : 'CON_COST',
-      })),
+      setBrandWorkspace: (brandWorkspace) => {
+        synchronizeWorkspaceContext(brandWorkspace);
+        set({ brandWorkspace });
+      },
+      toggleBrandWorkspace: () => set((state) => {
+        const brandWorkspace = state.brandWorkspace === 'CON_COST' ? 'VIET_QS' : 'CON_COST';
+        synchronizeWorkspaceContext(brandWorkspace);
+        return { brandWorkspace };
+      }),
     }),
     {
       name: 'ui-storage',
+      onRehydrateStorage: () => (state) => {
+        if (state) synchronizeWorkspaceContext(state.brandWorkspace);
+      },
     }
   )
 );
