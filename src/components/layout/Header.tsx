@@ -21,6 +21,9 @@ const roleLabels: Record<string, string> = {
   EVALUATION_ADMIN: '평가관리자',
 };
 
+const releaseChannel = process.env.NEXT_PUBLIC_RELEASE_CHANNEL?.trim();
+const buildShortSha = process.env.NEXT_PUBLIC_BUILD_SHA?.trim().slice(0, 7);
+
 export function Header() {
   const pathname = usePathname();
   const { currentUser, logout, appMode, setAppMode } = useAuthStore();
@@ -57,6 +60,17 @@ export function Header() {
       </label>
 
       <div className="ml-auto flex min-w-0 items-center gap-1.5 sm:gap-2.5">
+        {releaseChannel && (
+          <div
+            className="hidden items-center gap-2 rounded-xl border border-orange-200 bg-orange-50 px-2.5 py-1.5 text-[9px] font-black text-orange-800 shadow-sm lg:flex"
+            aria-label={`${releaseChannel}, build ${buildShortSha || 'unknown'}, DEMO_LOCAL`}
+            title={`${releaseChannel} · Build ${buildShortSha || 'unknown'} · DEMO_LOCAL`}
+          >
+            <span>{releaseChannel}</span>
+            {buildShortSha && <span className="border-l border-orange-200 pl-2">Build {buildShortSha}</span>}
+            <span className="border-l border-orange-200 pl-2">DEMO_LOCAL</span>
+          </div>
+        )}
         {isAdmin && (
           <div className="hidden rounded-xl border border-[var(--color-border)] bg-[var(--cc-surface-2)] p-1 2xl:flex">
             <button type="button" onClick={() => setAppMode('DAILY_WORK')} className={`rounded-lg px-3 py-2 text-[10px] font-black ${appMode === 'DAILY_WORK' ? 'bg-[var(--color-surface)] text-[#3453a4] shadow-sm' : 'text-[var(--color-text-sub)]'}`}>업무모드</button>

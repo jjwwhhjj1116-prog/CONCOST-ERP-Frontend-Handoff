@@ -56,7 +56,9 @@ jobs:
         env:
           NEXT_PUBLIC_BASE_PATH: ${{ steps.pages.outputs.base_path }}
           NEXT_PUBLIC_RUNTIME_MODE: DEMO_LOCAL
-        run: ${{ steps.detect-package-manager.outputs.runner }} next build
+          NEXT_PUBLIC_BUILD_SHA: ${{ github.sha }}
+          NEXT_PUBLIC_RELEASE_CHANNEL: ${{ github.ref_name == 'preview/frontend-rc3' && 'RC3 PREVIEW' || '' }}
+        run: ${{ steps.detect-package-manager.outputs.runner }} next build --webpack
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v4
         with:
