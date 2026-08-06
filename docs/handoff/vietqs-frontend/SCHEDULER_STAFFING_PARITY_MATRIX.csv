@@ -1,0 +1,10 @@
+Requirement,Scheduler reference,RC3 frontend,Backend handoff,Status
+One PM per unit,PM role row,Single-select and confirm validation,Server validation required,COMPLETE
+Multiple personnel per trade,Role assignment rows,Multi-select avatar roster,Persistence API required,COMPLETE
+Assignment period,Start/end controls,Per-role start/end date,Timezone/date policy required,COMPLETE
+Department candidates,Department personnel selector,Same-company active unit members,Organization membership query required,COMPLETE
+Support personnel,External participant pattern,Authorized separate support action,Permission capability required,COMPLETE
+Three save commands,Scheduler workflow adapted,Draft/confirm/confirm-and-start,Atomic commands required,COMPLETE
+Card summary,Avatar workload display,PM and role avatar stacks with +N,Projection DTO required,COMPLETE
+Change history,Schedule revisions,Before/after reason actor time revision,Audit endpoint required,COMPLETE
+Canonical project,Single schedule project,projectId plus unitId without copies,Canonical project enforcement required,COMPLETE
