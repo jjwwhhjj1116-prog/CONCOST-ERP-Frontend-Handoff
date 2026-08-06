@@ -11,6 +11,7 @@ import { useEstimateRequestStore } from '@/store/estimateRequestStore';
 import { useTranslationStore } from '@/store/translationStore';
 import { evaluateEstimateAccess } from '@/lib/accessControl';
 import { InputHistoryInput } from '@/components/ui/InputHistoryInput';
+import { ActionButtonGroup, DangerActionSection, SemanticActionButton, semanticActionClasses, type SemanticActionVariant } from '@/components/ui/SemanticActionButton';
 import { getEstimateRequestWorklistState, matchesEstimateDbWorklistFilter, type EstimateDbWorklistFilter } from '@/lib/estimateRequestUx';
 import { estimateDbValueForDisplay, projectNoForDisplay } from '@/lib/projectIdentifierPresentation';
 import type { EstimateDbPayload, EstimateDbRecord, EstimateDbSection, EstimateDbTargetType, EstimateDbVendor } from '@/types/models';
@@ -29,6 +30,7 @@ const WORKLIST_FILTERS: Array<{ value: EstimateDbWorklistFilter; label: string }
 ];
 const fieldClass = 'w-full min-w-[110px] rounded border bg-[var(--color-surface)] px-2 py-1.5 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]';
 const buttonClass = 'inline-flex min-h-9 items-center justify-center gap-1.5 rounded border bg-[var(--color-surface)] px-3 text-sm font-semibold transition hover:border-orange-300 hover:bg-orange-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] disabled:cursor-not-allowed disabled:opacity-50';
+const semanticLinkClass = (variant: SemanticActionVariant) => `inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border px-3 text-sm font-black shadow-sm transition hover:-translate-y-px hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] ${semanticActionClasses[variant]}`;
 const autoLinkedColumns = new Set(['접수번호', 'PJ NO', '프로젝트 연결', '최초생성날짜']);
 const requiredManualColumns = new Set(['거래처명', '프로젝트명', '작업공종', '업무성격', '건물용도']);
 const memoryFieldKeys: Record<string, string> = {
@@ -148,8 +150,8 @@ export function EstimateDatabaseWorkbench() {
           <p className="mt-1 text-sm text-[var(--color-text-sub)]">{t('estimateDb.subtitle')}</p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Link href="/projects/intake/estimates" className={buttonClass}>{t('estimateDb.submissions')}</Link>
-          <button type="button" onClick={() => void refresh()} disabled={busy} title={t('estimateRequest.refresh')} className={`${buttonClass} px-2.5`}><RefreshCw className={`size-4 ${busy ? 'animate-spin' : ''}`} /></button>
+            <Link href="/projects/intake/estimates" className={semanticLinkClass('document')}>{t('estimateDb.submissions')}</Link>
+            <SemanticActionButton size="icon" variant="neutral" icon={<RefreshCw className="size-4" />} loading={busy} tooltip={t('estimateRequest.refresh')} onClick={() => void refresh()} />
         </div>
       </header>
 
@@ -166,25 +168,27 @@ export function EstimateDatabaseWorkbench() {
       {tab !== 'REPORTS' ? <>
         <section aria-label={t('estimateDb.tools')} className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-3 shadow-[0_8px_20px_rgba(15,23,42,.06)]">
           <div className="mb-3 flex flex-wrap items-center gap-2 border-b pb-3">
-          <div className="flex flex-wrap items-center gap-1 border-l pl-2" aria-label="Record tools">
+          <ActionButtonGroup label="레코드 작업" className="border-l pl-2">
             <span className="mr-1 text-[10px] font-black uppercase text-[var(--color-text-sub)]">Record</span>
-            <button type="button" onClick={() => void add()} disabled={busy} className={buttonClass}><Plus className="size-4" />{t('estimateDb.add')}</button>
-            <button type="button" onClick={() => void duplicate()} disabled={!selectedId || busy} title={!selectedId ? '먼저 행을 선택하세요.' : '선택한 행을 복제합니다.'} className={buttonClass}><Copy className="size-4" />{t('estimateDb.duplicate')}</button>
-            <button type="button" onClick={() => void remove()} disabled={!selectedId || busy || Boolean(selectedRequest)} title={!selectedId ? '먼저 행을 선택하세요.' : selectedRequest ? '견적 의뢰 연결 행은 삭제 대신 의뢰관리 보관·복구를 사용하세요.' : '연결되지 않은 수동 DB 행을 삭제합니다.'} className={`${buttonClass} text-[var(--color-danger)]`}><Trash2 className="size-4" />{t('estimateDb.delete')}</button>
-            {selectedRequest && getEstimateRequestWorklistState(selectedRequest) !== 'ACTIVE' && <button type="button" onClick={() => void restoreRequest()} disabled={busy} className={`${buttonClass} border-orange-300 text-orange-700`}><ArchiveRestore className="size-4" />의뢰관리로 복구</button>}
-            {selectedRequest?.projectIntakeId && <Link href={`/projects/intake?tab=PROJECT_INTAKE&intakeId=${encodeURIComponent(selectedRequest.projectIntakeId)}`} className={buttonClass}><FolderOpen className="size-4" />기존 프로젝트 접수 열기</Link>}
-          </div>
-          <div className="flex flex-wrap items-center gap-1 border-l pl-2" aria-label="Edit tools">
+            <SemanticActionButton variant="add-resource" icon={<Plus className="size-4" />} loading={busy} tooltip={t('estimateDb.add')} onClick={() => void add()}>{t('estimateDb.add')}</SemanticActionButton>
+            <SemanticActionButton variant="duplicate" icon={<Copy className="size-4" />} disabled={!selectedId || busy} disabledReason={!selectedId ? '먼저 행을 선택하세요.' : undefined} tooltip="선택한 행 복제" onClick={() => void duplicate()}>{t('estimateDb.duplicate')}</SemanticActionButton>
+            {selectedRequest && getEstimateRequestWorklistState(selectedRequest) !== 'ACTIVE' && <SemanticActionButton variant="archive" icon={<ArchiveRestore className="size-4" />} loading={busy} tooltip="같은 의뢰 ID로 의뢰관리 목록에 복구" onClick={() => void restoreRequest()}>의뢰관리로 복구</SemanticActionButton>}
+            {selectedRequest?.projectIntakeId && <Link href={`/projects/intake?tab=PROJECT_INTAKE&intakeId=${encodeURIComponent(selectedRequest.projectIntakeId)}`} className={semanticLinkClass('view')}><FolderOpen className="size-4" />기존 프로젝트 접수 열기</Link>}
+          </ActionButtonGroup>
+          <ActionButtonGroup label="편집 작업" className="border-l pl-2">
             <span className="mr-1 text-[10px] font-black uppercase text-[var(--color-text-sub)]">Edit</span>
-            <button type="button" onClick={() => { const row = store.records.find((item) => item.id === selectedId); if (row) beginEdit(row); }} disabled={!selectedId || Boolean(editingId) || busy} title={!selectedId ? '먼저 행을 선택하세요.' : '선택한 행을 편집합니다.'} className={buttonClass}><Pencil className="size-4" />수정</button>
-            <button type="button" onClick={() => void save()} disabled={!editingId || busy} title={!editingId ? '더블클릭, Enter 또는 수정 버튼으로 편집을 시작하세요.' : t('common.save')} className={`${buttonClass} border-[var(--color-primary)] bg-[var(--color-primary)] text-white`}><Save className="size-4" />{t('common.save')}</button>
-            <button type="button" onClick={() => { setEditingId(null); setDraft({}); }} disabled={!editingId || busy} title={t('common.cancel')} className={`${buttonClass} px-2.5`}><Undo2 className="size-4" /></button>
-          </div>
-          <div className="flex flex-wrap items-center gap-1 border-l pl-2" aria-label="Import and export tools">
+            <SemanticActionButton variant="edit" icon={<Pencil className="size-4" />} disabled={!selectedId || Boolean(editingId) || busy} disabledReason={!selectedId ? '먼저 행을 선택하세요.' : editingId ? '현재 행 편집을 저장하거나 취소해 주세요.' : undefined} tooltip="선택한 행 수정" onClick={() => { const row = store.records.find((item) => item.id === selectedId); if (row) beginEdit(row); }}>수정</SemanticActionButton>
+            <SemanticActionButton variant="save" icon={<Save className="size-4" />} disabled={!editingId || busy} disabledReason={!editingId ? '더블클릭, Enter 또는 수정 버튼으로 편집을 시작하세요.' : undefined} loading={busy} tooltip={t('common.save')} onClick={() => void save()}>{t('common.save')}</SemanticActionButton>
+            <SemanticActionButton size="icon" variant="neutral" icon={<Undo2 className="size-4" />} disabled={!editingId || busy} disabledReason={!editingId ? '편집 중인 행이 없습니다.' : undefined} tooltip={t('common.cancel')} onClick={() => { setEditingId(null); setDraft({}); }} />
+          </ActionButtonGroup>
+          <ActionButtonGroup label="가져오기 및 내보내기" className="border-l pl-2">
             <span className="mr-1 text-[10px] font-black uppercase text-[var(--color-text-sub)]">Export</span>
-            <button type="button" onClick={() => void exportEstimateDbXlsx(store.records, store.vendors, report)} className={buttonClass}><Download className="size-4" />XLSX</button>
-            <button type="button" onClick={() => void exportEstimateDbJson(store.records, store.vendors, store.targets)} className={buttonClass}><FileJson className="size-4" />JSON</button>
-          </div>
+            <SemanticActionButton variant="document" icon={<Download className="size-4" />} tooltip="XLSX 내보내기" onClick={() => void exportEstimateDbXlsx(store.records, store.vendors, report)}>XLSX</SemanticActionButton>
+            <SemanticActionButton variant="view" icon={<FileJson className="size-4" />} tooltip="관리자 JSON 내보내기" onClick={() => void exportEstimateDbJson(store.records, store.vendors, store.targets)}>JSON</SemanticActionButton>
+          </ActionButtonGroup>
+          <DangerActionSection className="border-l border-t-0 pl-2 pt-0">
+            <SemanticActionButton variant="danger" icon={<Trash2 className="size-4" />} disabled={!selectedId || busy || Boolean(selectedRequest)} disabledReason={!selectedId ? '먼저 행을 선택하세요.' : selectedRequest ? '견적 의뢰 연결 행은 삭제 대신 의뢰관리 보관·복구를 사용하세요.' : undefined} tooltip="연결되지 않은 수동 DB 행 삭제" onClick={() => void remove()}>{t('estimateDb.delete')}</SemanticActionButton>
+          </DangerActionSection>
           </div>
           <div className="grid gap-2 sm:grid-cols-[minmax(220px,1fr)_160px_120px]" aria-label="Search tools">
             <label className="relative"><Search className="pointer-events-none absolute left-3 top-2.5 size-4 text-[var(--color-text-sub)]" /><input value={query} onChange={(event) => { setQuery(event.target.value); setPage(1); setSelectedId(null); setEditingId(null); setSelectedCell(null); setDraft({}); }} aria-label={t('estimateDb.search')} placeholder={t('estimateDb.search')} className={`${fieldClass} rounded pl-9`} /></label>

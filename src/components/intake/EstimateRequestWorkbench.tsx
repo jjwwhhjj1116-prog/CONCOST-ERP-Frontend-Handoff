@@ -32,6 +32,7 @@ import { useEstimateRequestStore } from '@/store/estimateRequestStore';
 import { useEstimateSheetStore } from '@/store/estimateSheetStore';
 import { ProjectExecutionUnitSelector } from '@/components/intake/ProjectExecutionUnitSelector';
 import { EstimateRequestProfileEditor } from '@/components/intake/EstimateRequestProfileEditor';
+import { ActionButtonGroup, SemanticActionButton, semanticActionClasses, type SemanticActionVariant } from '@/components/ui/SemanticActionButton';
 import { evaluateEstimateAccess } from '@/lib/accessControl';
 import {
   filterActiveEstimateRequestWorklist,
@@ -78,6 +79,15 @@ const DECISIONS: Array<{ value: CommercialDecisionType; icon: typeof BadgeCheck 
   { value: 'CANCELLED', icon: Ban },
   { value: 'ON_HOLD', icon: PauseCircle },
 ];
+
+const decisionVariants: Record<CommercialDecisionType, SemanticActionVariant> = {
+  WON: 'success',
+  LOST: 'reject',
+  CANCELLED: 'archive',
+  ON_HOLD: 'warning',
+};
+
+const semanticLinkClass = (variant: SemanticActionVariant) => `inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border px-4 text-sm font-black shadow-sm transition hover:-translate-y-px hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2 ${semanticActionClasses[variant]}`;
 
 const ACTIVITY_ICONS = {
   CONSULTATION: MessageSquareText,
@@ -327,16 +337,10 @@ export function EstimateRequestWorkbench({ currentUser, t }: Props) {
           <span className={`text-xs font-semibold ${persistenceMode === 'SERVER' ? 'text-emerald-600' : 'text-amber-600'}`}>
             {persistenceMode === 'SERVER' ? t('estimateRequest.serverMode') : t('estimateRequest.localMode')}
           </span>
-          <button type="button" title={t('estimateRequest.refresh')} onClick={() => void sync()} disabled={loading}
-            className="grid size-9 place-items-center rounded border bg-[var(--color-surface)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] disabled:opacity-50">
-            <RefreshCw className={`size-4 ${loading ? 'animate-spin' : ''}`} />
-          </button>
-          <Link href="/projects/intake/estimates" className="inline-flex items-center gap-2 border px-3 py-2 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]"><FileCheck2 className="size-4" />{t('estimateSubmission.openManagement')}</Link>
-          {evaluateEstimateAccess(currentUser).allowed && <Link href="/projects/intake/database" className="inline-flex items-center gap-2 border px-3 py-2 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]"><Database className="size-4" />{t('estimateDb.title')}</Link>}
-          <button type="button" onClick={() => setShowCreate((value) => !value)}
-            className="inline-flex items-center gap-2 rounded bg-[var(--color-primary)] px-3 py-2 text-sm font-semibold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2">
-            <Plus className="size-4" /> {t('estimateRequest.new')}
-          </button>
+          <SemanticActionButton size="icon" variant="neutral" tooltip={t('estimateRequest.refresh')} loading={loading} onClick={() => void sync()}><RefreshCw className="size-4" /></SemanticActionButton>
+          <Link href="/projects/intake/estimates" className={semanticLinkClass('document')}><FileCheck2 className="size-4" />{t('estimateSubmission.openManagement')}</Link>
+          {evaluateEstimateAccess(currentUser).allowed && <Link href="/projects/intake/database" className={semanticLinkClass('view')}><Database className="size-4" />{t('estimateDb.title')}</Link>}
+          <SemanticActionButton variant="primary" icon={<Plus className="size-4" />} tooltip={t('estimateRequest.new')} onClick={() => setShowCreate((value) => !value)}>{t('estimateRequest.new')}</SemanticActionButton>
         </div>
       </header>
 
@@ -364,8 +368,8 @@ export function EstimateRequestWorkbench({ currentUser, t }: Props) {
             </label>
           </div>
           <div className="mt-4 flex justify-end gap-2">
-            <button type="button" onClick={() => setShowCreate(false)} className="rounded border px-4 py-2 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]">{t('common.cancel')}</button>
-            <button type="submit" disabled={busy || !draft.projectName.trim() || draft.targetUnitIds.length === 0 || !draft.primaryUnitId} className="inline-flex items-center gap-2 rounded bg-[var(--color-primary)] px-4 py-2 text-sm font-semibold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] disabled:opacity-50"><Save className="size-4" />{t('common.save')}</button>
+            <SemanticActionButton variant="neutral" tooltip={t('common.cancel')} onClick={() => setShowCreate(false)}>{t('common.cancel')}</SemanticActionButton>
+            <SemanticActionButton type="submit" variant="primary" icon={<Save className="size-4" />} loading={busy} disabled={!draft.projectName.trim() || draft.targetUnitIds.length === 0 || !draft.primaryUnitId} disabledReason={!draft.projectName.trim() ? '프로젝트명을 입력해 주세요.' : draft.targetUnitIds.length === 0 || !draft.primaryUnitId ? '담당부서와 주관부서를 선택해 주세요.' : undefined} tooltip={t('common.save')}>{t('common.save')}</SemanticActionButton>
           </div>
         </form>
       )}
@@ -397,8 +401,8 @@ export function EstimateRequestWorkbench({ currentUser, t }: Props) {
             <div className="space-y-5">
               <div className="flex flex-wrap items-start justify-between gap-3 rounded-lg border border-orange-300 bg-gradient-to-r from-orange-50 via-white to-white p-4 shadow-sm">
                 <div><p className="text-xs font-semibold text-[var(--color-primary)]">{selected.projectNo || '수주 완료 시 프로젝트번호 발급'}</p><h2 className="mt-1 text-xl font-bold">{selected.projectName}</h2><p className="mt-1 text-sm text-[var(--color-text-sub)]">{selected.company || selected.client || '-'}</p></div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <button type="button" onClick={() => {
+                <ActionButtonGroup label="견적 의뢰 작업">
+                  <SemanticActionButton variant="edit" icon={<Pencil className="size-4" />} tooltip={editPolicy?.reason || editPolicy?.actionLabel || '수정'} onClick={() => {
                     if (!editPolicy) return;
                     if (!editPolicy.editable) {
                       setMessage(editPolicy.reason);
@@ -406,16 +410,16 @@ export function EstimateRequestWorkbench({ currentUser, t }: Props) {
                     }
                     setEditorMode(editPolicy.mode);
                     window.setTimeout(() => document.querySelector<HTMLElement>('[data-estimate-field="projectName"]')?.focus(), 0);
-                  }} disabled={!canManage(selected) || busy || editorMode === 'SAVING'} title={editPolicy?.reason} className="inline-flex items-center gap-2 rounded border bg-white px-3 py-2 text-sm font-semibold transition hover:border-orange-300 hover:bg-orange-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] disabled:opacity-50"><Pencil className="size-4" />{editPolicy?.actionLabel || '수정'}</button>
-                  <button type="button" onClick={() => void handleDuplicate()} disabled={!canManage(selected) || busy} className="inline-flex items-center gap-2 border px-3 py-2 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] disabled:opacity-50"><Copy className="size-4" />복제</button>
-                  <button type="button" onClick={() => { setDeleteConfirmed(false); setDeleteOpen(true); }} disabled={!canManage(selected) || busy} title="삭제 가능 여부와 연결 대상을 확인합니다." className="inline-flex items-center gap-2 rounded border border-red-200 bg-white px-3 py-2 text-sm font-semibold text-red-600 transition hover:border-red-400 hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 disabled:opacity-50"><Trash2 className="size-4" />삭제</button>
-                  <Link href={`/projects/intake/estimate?requestId=${encodeURIComponent(selected.id)}`} className="inline-flex items-center gap-2 border px-3 py-2 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]"><FileSpreadsheet className="size-4" />{t('estimateSheet.open')}</Link>
+                  }} disabled={!canManage(selected) || busy || editorMode === 'SAVING'} disabledReason={!canManage(selected) ? '견적 의뢰 수정 권한이 필요합니다.' : editorMode === 'SAVING' ? '저장 중입니다.' : undefined}>{editPolicy?.actionLabel || '수정'}</SemanticActionButton>
+                  <SemanticActionButton variant="duplicate" icon={<Copy className="size-4" />} tooltip="견적 의뢰 복제" onClick={() => void handleDuplicate()} disabled={!canManage(selected) || busy} disabledReason={!canManage(selected) ? '견적 의뢰 복제 권한이 필요합니다.' : undefined}>복제</SemanticActionButton>
+                  <Link href={`/projects/intake/estimate?requestId=${encodeURIComponent(selected.id)}`} className={semanticLinkClass('document')}><FileSpreadsheet className="size-4" />{t('estimateSheet.open')}</Link>
+                  <SemanticActionButton variant="danger" icon={<Trash2 className="size-4" />} tooltip="삭제 가능 여부와 연결 대상을 확인합니다." onClick={() => { setDeleteConfirmed(false); setDeleteOpen(true); }} disabled={!canManage(selected) || busy} disabledReason={!canManage(selected) ? '견적 의뢰 삭제 권한이 필요합니다.' : undefined}>삭제</SemanticActionButton>
                   {OPERATIONAL_STATUSES.includes(selected.status) ? (
                     <select aria-label={t('estimateRequest.changeStatus')} value={selected.status} disabled={!canManage(selected) || busy} onChange={(event) => void handleStatus(event.target.value as EstimateRequestStatus)} className="rounded border bg-[var(--color-surface)] px-3 py-2 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] disabled:opacity-50">
                       {OPERATIONAL_STATUSES.map((status) => <option key={status} value={status}>{statusText(t, status)}</option>)}
                     </select>
                   ) : <span className="border px-3 py-2 text-sm font-semibold text-[var(--color-primary)]">{statusText(t, selected.status)}</span>}
-                </div>
+                </ActionButtonGroup>
               </div>
 
               <EstimateRequestProfileEditor key={`${selected.id}:${selected.version}`} request={selected} mode={editorMode} disabled={!canManage(selected)} busy={busy} onSave={handleEdit} onCancel={() => setEditorMode('VIEW')} />
@@ -427,7 +431,7 @@ export function EstimateRequestWorkbench({ currentUser, t }: Props) {
                     <p className="mt-1 text-xs text-[var(--color-text-sub)]">{t('estimateRequest.decisionDescription')}</p>
                   </div>
                   {selected.projectId && (
-                    <Link href={projectBoardHref(selected.targetUnitIds || [])} className="inline-flex items-center gap-2 border px-3 py-2 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]">
+                    <Link href={projectBoardHref(selected.targetUnitIds || [])} className={semanticLinkClass('view')}>
                       <BadgeCheck className="size-4" />{t('estimateRequest.openProject')}
                     </Link>
                   )}
@@ -438,9 +442,7 @@ export function EstimateRequestWorkbench({ currentUser, t }: Props) {
                   <form onSubmit={handleDecision} className="mt-4 space-y-3">
                     <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                       {DECISIONS.map(({ value, icon: Icon }) => (
-                        <button key={value} type="button" onClick={() => setDecisionDraft({ ...decisionDraft, decision: value })} aria-pressed={decisionDraft.decision === value} className={`inline-flex min-h-10 items-center justify-center gap-2 border px-3 py-2 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] ${decisionDraft.decision === value ? 'border-[var(--color-primary)] bg-[var(--color-bg-sub)] text-[var(--color-primary)]' : ''}`}>
-                          <Icon className="size-4" />{statusText(t, value)}
-                        </button>
+                        <SemanticActionButton key={value} variant={decisionVariants[value]} icon={<Icon className="size-4" />} tooltip={`${statusText(t, value)} 판정 선택`} aria-pressed={decisionDraft.decision === value} className={decisionDraft.decision === value ? 'ring-2 ring-offset-2 ring-current' : ''} onClick={() => setDecisionDraft({ ...decisionDraft, decision: value })}>{statusText(t, value)}{decisionDraft.decision === value ? ' · 선택됨' : ''}</SemanticActionButton>
                       ))}
                     </div>
                     <div className="grid gap-3 sm:grid-cols-2">
@@ -450,7 +452,7 @@ export function EstimateRequestWorkbench({ currentUser, t }: Props) {
                       <label className="text-sm"><span className="mb-1 block font-medium">{t('estimateRequest.agreedScope')}</span><textarea rows={2} value={decisionDraft.agreedScope || ''} onChange={(event) => setDecisionDraft({ ...decisionDraft, agreedScope: event.target.value })} className="w-full rounded border bg-[var(--color-surface)] p-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]" /></label>
                       <label className="text-sm"><span className="mb-1 block font-medium">{t('estimateRequest.startCondition')}</span><textarea rows={2} value={decisionDraft.startCondition || ''} onChange={(event) => setDecisionDraft({ ...decisionDraft, startCondition: event.target.value })} className="w-full rounded border bg-[var(--color-surface)] p-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]" /></label>
                     </div>
-                    <div className="flex justify-end"><button type="submit" disabled={busy || !canManage(selected)} className="inline-flex items-center gap-2 rounded bg-[var(--color-primary)] px-4 py-2 text-sm font-semibold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] disabled:opacity-50"><BadgeCheck className="size-4" />{t('estimateRequest.confirmDecision')}</button></div>
+                    <div className="flex justify-end"><SemanticActionButton type="submit" variant="save" icon={<BadgeCheck className="size-4" />} loading={busy} disabled={!canManage(selected)} disabledReason={!canManage(selected) ? '견적 판정 저장 권한이 필요합니다.' : undefined} tooltip={t('estimateRequest.confirmDecision')}>{t('estimateRequest.confirmDecision')}</SemanticActionButton></div>
                   </form>
                 )}
               </section>
@@ -463,7 +465,7 @@ export function EstimateRequestWorkbench({ currentUser, t }: Props) {
                     {(Object.keys(ACTIVITY_ICONS) as EstimateRequestActivityKind[]).map((kind) => <option key={kind} value={kind}>{activityText(t, kind)}</option>)}
                   </select>
                   <input value={activityContent} onChange={(event) => setActivityContent(event.target.value)} disabled={!canManage(selected)} placeholder={t('estimateRequest.activityPlaceholder')} className="rounded border bg-[var(--color-surface)] px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]" />
-                  <button type="submit" disabled={busy || !canManage(selected) || !activityContent.trim()} className="rounded bg-[var(--color-primary)] px-4 py-2 text-sm font-semibold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] disabled:opacity-50">{t('common.add')}</button>
+                  <SemanticActionButton type="submit" variant="add-resource" icon={<Plus className="size-4" />} loading={busy} disabled={!canManage(selected) || !activityContent.trim()} disabledReason={!canManage(selected) ? '상담 기록 추가 권한이 필요합니다.' : !activityContent.trim() ? '상담 내용을 입력해 주세요.' : undefined} tooltip={t('common.add')}>{t('common.add')}</SemanticActionButton>
                 </form>
                 <div className="mt-3 space-y-2">{selected.activities.map((activity) => {
                   const Icon = ACTIVITY_ICONS[activity.kind];
@@ -514,8 +516,8 @@ export function EstimateRequestWorkbench({ currentUser, t }: Props) {
                     <span><strong className="block text-red-800">목록 제거 대상을 확인했습니다</strong><span className="mt-1 block text-xs leading-5 text-red-700">업무 데이터와 연결 계보는 삭제하지 않으며 DB관리에서 같은 의뢰 ID로 복구할 수 있습니다.</span></span>
                   </label>
                   <div className="flex justify-end gap-2">
-                    <button type="button" onClick={() => setDeleteOpen(false)} className="rounded border px-4 py-2 text-sm font-semibold transition hover:border-orange-300 hover:bg-orange-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]">취소</button>
-                    <button type="button" disabled={!deleteConfirmed || busy} title={!deleteConfirmed ? '보관 대상 확인에 체크해 주세요.' : '의뢰관리에서 제거하고 DB에 보관합니다.'} onClick={() => void handleDelete()} className="inline-flex items-center gap-2 rounded bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 disabled:cursor-not-allowed disabled:opacity-50"><Trash2 className="size-4" />목록에서 제거</button>
+                    <SemanticActionButton variant="neutral" tooltip="취소" onClick={() => setDeleteOpen(false)}>취소</SemanticActionButton>
+                    <SemanticActionButton variant="archive" icon={<Trash2 className="size-4" />} disabled={!deleteConfirmed || busy} disabledReason={!deleteConfirmed ? '보관 대상 확인에 체크해 주세요.' : undefined} loading={busy} tooltip="의뢰관리에서 제거하고 DB에 보관합니다." onClick={() => void handleDelete()}>DB에 보관</SemanticActionButton>
                   </div>
               </>
             </div>

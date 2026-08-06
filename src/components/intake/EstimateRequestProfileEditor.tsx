@@ -10,6 +10,7 @@ import {
   type EstimateRequestProfile,
 } from '@/lib/estimateRequestProfile';
 import { useTranslationStore } from '@/store/translationStore';
+import { SemanticActionButton, StickyEditActionBar } from '@/components/ui/SemanticActionButton';
 import type { EstimateRequestEditMode } from '@/lib/estimateRequestUx';
 import type { EstimateRequest, ProjectExecutionUnitId } from '@/types/models';
 
@@ -130,12 +131,19 @@ export function EstimateRequestProfileEditor({ request, mode, disabled = false, 
       </div>
       <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t pt-4">
         <p className="text-xs text-[var(--color-text-sub)]">{language === 'vi' ? 'Ô màu vàng nhạt là trường bắt buộc.' : '연한 노란색 입력칸은 필수입니다.'}</p>
-        {editable && <div className="flex flex-wrap gap-2">
-          <button type="button" onClick={onCancel} disabled={busy} className="inline-flex min-h-10 items-center gap-2 rounded border bg-white px-4 text-sm font-bold transition hover:border-orange-300 hover:bg-orange-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] disabled:opacity-45"><Undo2 className="size-4" />취소</button>
-          <button type="button" onClick={() => void save()} disabled={busy} title={missing.length ? `필수 ${missing.length}개 항목을 확인합니다.` : '변경사항 저장'} className="inline-flex min-h-10 items-center gap-2 rounded bg-[var(--color-primary)] px-4 text-sm font-bold text-white transition hover:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] disabled:opacity-45"><Save className="size-4" />{mode === 'CORRECTION' ? '정정 내용 저장' : '기본정보 저장'}</button>
-        </div>}
+        {editable && <span className="text-xs font-black text-teal-700">저장 필요</span>}
       </div>
     </section>
+
+    {editable && (
+      <StickyEditActionBar>
+        <div><strong className="block text-sm text-[var(--color-text-main)]">수정 중 · 저장 필요</strong><span className="text-xs text-[var(--color-text-sub)]">스크롤 위치와 관계없이 변경사항을 저장하거나 취소할 수 있습니다.</span></div>
+        <div className="flex flex-wrap gap-2">
+          <SemanticActionButton variant="neutral" icon={<Undo2 className="size-4" />} tooltip="수정 취소" disabled={busy} onClick={onCancel}>수정 취소</SemanticActionButton>
+          <SemanticActionButton variant="save" icon={<Save className="size-4" />} tooltip={missing.length ? `필수 ${missing.length}개 항목을 확인한 뒤 저장합니다.` : '변경사항 저장'} loading={busy} onClick={() => void save()}>{mode === 'CORRECTION' ? '정정 내용 저장' : '수정 저장'}</SemanticActionButton>
+        </div>
+      </StickyEditActionBar>
+    )}
   </>;
 }
 

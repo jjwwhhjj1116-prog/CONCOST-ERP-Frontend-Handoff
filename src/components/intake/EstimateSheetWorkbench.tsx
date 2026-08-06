@@ -12,7 +12,6 @@ import {
   FileSpreadsheet,
   FileUp,
   History,
-  LoaderCircle,
   Plus,
   Printer,
   RotateCcw,
@@ -31,6 +30,7 @@ import { markEstimateCellManual } from '@/lib/estimateRequestProfile';
 import { previewEstimateWorkbook, type EstimateImportPreview } from '@/lib/estimateSheetImport';
 import { createEstimateMailDraft, storeEstimateMailDraft } from '@/lib/estimateMailDraft';
 import { useUiStore } from '@/store/uiStore';
+import { ActionButtonGroup, DangerActionSection, SemanticActionButton } from '@/components/ui/SemanticActionButton';
 import {
   ESTIMATE_TEMPLATE_SPECS,
   ESTIMATE_TEMPLATE_TYPES,
@@ -261,26 +261,31 @@ export function EstimateSheetWorkbench({ requestId }: { requestId: string }) {
           <div className="grid gap-3 sm:grid-cols-2">
             {ESTIMATE_TEMPLATE_TYPES.map((type) => <button key={type} type="button" onClick={() => setTemplateType(type)} className={`border p-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] ${templateType === type ? 'border-[var(--color-primary)] bg-[var(--color-bg-sub)]' : 'bg-[var(--color-surface)]'}`}><strong>{type}</strong><span className="mt-1 block text-xs text-[var(--color-text-sub)]">{ESTIMATE_TEMPLATE_SPECS[type].maxRow} × {ESTIMATE_TEMPLATE_SPECS[type].maxCol} · {ESTIMATE_TEMPLATE_SPECS[type].merges.length} merges</span></button>)}
           </div>
-          <button type="button" onClick={create} disabled={busy || loading || !canManage} className="mt-5 inline-flex items-center gap-2 bg-[var(--color-primary)] px-4 py-2 font-semibold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] disabled:opacity-50">{busy ? <LoaderCircle className="size-4 animate-spin" /> : <Plus className="size-4" />}{t('estimateSheet.create')}</button>
+          <SemanticActionButton variant="primary" icon={<Plus className="size-4" />} loading={busy || loading} disabled={!canManage} disabledReason={!canManage ? '견적서 작성 권한이 필요합니다.' : undefined} tooltip={t('estimateSheet.create')} className="mt-5" onClick={create}>{t('estimateSheet.create')}</SemanticActionButton>
         </section>
       ) : (
         <>
-          <div className="flex flex-wrap items-center gap-2 border-y py-3">
+          <div className="flex flex-wrap items-center gap-3 border-y py-3">
             <label className="flex items-center gap-2 text-sm"><History className="size-4" /><span className="sr-only">{t('estimateSheet.version')}</span><select value={version || sheet.currentVersion} onChange={(event) => { const next = Number(event.target.value); const selected = sheet.versions.find((entry) => entry.version === next); if (selected) { setVersion(next); setState(clone(selected.state)); } }} className="border bg-[var(--color-surface)] px-2 py-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]">{sheet.versions.map((entry) => <option key={entry.id} value={entry.version}>v{entry.version} · {new Date(entry.createdAt).toLocaleString()}</option>)}</select></label>
-            <div className="h-6 border-l" />
-            <button type="button" title={t('estimateSheet.insertRow')} disabled={readOnly} onClick={() => setState((current) => insertRow(current, activeCell.row))} className="grid size-9 place-items-center border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] disabled:opacity-40"><Rows3 className="size-4" /></button>
-            <button type="button" title={t('estimateSheet.insertColumn')} disabled={readOnly} onClick={() => setState((current) => insertColumn(current, activeCell.column))} className="grid size-9 place-items-center border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] disabled:opacity-40"><Columns3 className="size-4" /></button>
-            <div className="ml-auto flex flex-wrap gap-2">
+            <ActionButtonGroup label="견적서 편집" className="border-l pl-3">
+              <SemanticActionButton size="icon" variant="add-resource" icon={<Rows3 className="size-4" />} tooltip={t('estimateSheet.insertRow')} disabled={readOnly} disabledReason={readOnly ? '작성완료 견적서는 새 수정본에서 행을 추가할 수 있습니다.' : undefined} onClick={() => setState((current) => insertRow(current, activeCell.row))} />
+              <SemanticActionButton size="icon" variant="add-resource" icon={<Columns3 className="size-4" />} tooltip={t('estimateSheet.insertColumn')} disabled={readOnly} disabledReason={readOnly ? '작성완료 견적서는 새 수정본에서 열을 추가할 수 있습니다.' : undefined} onClick={() => setState((current) => insertColumn(current, activeCell.column))} />
+              <SemanticActionButton variant="save" icon={<Save className="size-4" />} loading={busy} disabled={readOnly} disabledReason={readOnly ? '작성완료 견적서는 새 수정본을 만들어야 저장할 수 있습니다.' : undefined} tooltip={t('common.save')} onClick={save}>{t('common.save')}</SemanticActionButton>
+            </ActionButtonGroup>
+            <div className="ml-auto flex flex-wrap items-center gap-3">
               <input ref={importRef} type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" className="sr-only" onChange={(event) => { void importExcel(event.target.files?.[0] || null); event.target.value = ''; }} />
-              <button type="button" onClick={() => importRef.current?.click()} disabled={busy || readOnly} className="inline-flex items-center gap-2 border px-3 py-2 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] disabled:opacity-40"><FileUp className="size-4" />Excel 불러오기</button>
-              <button type="button" onClick={save} disabled={busy || readOnly} className="inline-flex items-center gap-2 border px-3 py-2 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] disabled:opacity-40"><Save className="size-4" />{t('common.save')}</button>
-              {sheet.status === 'DRAFT' && <button type="button" onClick={duplicateDraft} disabled={busy || readOnly} className="inline-flex items-center gap-2 border px-3 py-2 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] disabled:opacity-40"><Copy className="size-4" />초안 복제</button>}
-              {sheet.status === 'DRAFT' && <button type="button" onClick={removeDraft} disabled={busy || readOnly} className="inline-flex items-center gap-2 border border-red-200 px-3 py-2 text-sm font-semibold text-red-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 disabled:opacity-40"><Trash2 className="size-4" />초안 삭제</button>}
-              <button type="button" onClick={exportXlsx} disabled={busy} className="inline-flex items-center gap-2 border px-3 py-2 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] disabled:opacity-40"><Download className="size-4" />XLSX</button>
-              <button type="button" onClick={printPdf} disabled={busy} className="inline-flex items-center gap-2 border px-3 py-2 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] disabled:opacity-40"><Printer className="size-4" />PDF</button>
-              {sheet.status === 'DRAFT' && <button type="button" onClick={submit} disabled={busy || readOnly} className="inline-flex items-center gap-2 bg-[var(--color-primary)] px-3 py-2 text-sm font-semibold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] disabled:opacity-40"><ClipboardCheck className="size-4" />{t('estimateSheet.submit')}</button>}
-              {['SUBMITTED', 'SENT'].includes(sheet.status) && <button type="button" onClick={openMailDraft} disabled={busy || !canManage} className="inline-flex items-center gap-2 bg-[var(--color-primary)] px-3 py-2 text-sm font-semibold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] disabled:opacity-40"><MailPlus className="size-4" />전자메일에서 보내기</button>}
-              {['SUBMITTED', 'SENT'].includes(sheet.status) && <button type="button" onClick={revise} disabled={busy || !canManage} className="inline-flex items-center gap-2 border px-3 py-2 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] disabled:opacity-40"><RotateCcw className="size-4" />{t('estimateSheet.newRevision')}</button>}
+              <ActionButtonGroup label="견적서 문서 작업">
+                <SemanticActionButton variant="document" icon={<FileUp className="size-4" />} tooltip="Excel 불러오기" disabled={busy || readOnly} disabledReason={readOnly ? '작성완료 견적서는 새 수정본에서 Excel을 가져올 수 있습니다.' : undefined} onClick={() => importRef.current?.click()}>Excel 불러오기</SemanticActionButton>
+                <SemanticActionButton variant="document" icon={<Download className="size-4" />} tooltip="XLSX 내보내기" disabled={busy} onClick={exportXlsx}>XLSX</SemanticActionButton>
+                <SemanticActionButton variant="document" icon={<Printer className="size-4" />} tooltip="PDF 인쇄" disabled={busy} onClick={printPdf}>PDF</SemanticActionButton>
+              </ActionButtonGroup>
+              <ActionButtonGroup label="견적서 상태 작업">
+                {sheet.status === 'DRAFT' && <SemanticActionButton variant="duplicate" icon={<Copy className="size-4" />} tooltip="초안 복제" disabled={busy || readOnly} onClick={duplicateDraft}>초안 복제</SemanticActionButton>}
+                {sheet.status === 'DRAFT' && <SemanticActionButton variant="primary" icon={<ClipboardCheck className="size-4" />} tooltip={t('estimateSheet.submit')} disabled={busy || readOnly} onClick={submit}>{t('estimateSheet.submit')}</SemanticActionButton>}
+                {['SUBMITTED', 'SENT'].includes(sheet.status) && <SemanticActionButton variant="document" icon={<MailPlus className="size-4" />} tooltip="전자메일 Draft 열기" disabled={busy || !canManage} disabledReason={!canManage ? '전자메일 Draft 생성 권한이 필요합니다.' : undefined} onClick={openMailDraft}>전자메일에서 보내기</SemanticActionButton>}
+                {['SUBMITTED', 'SENT'].includes(sheet.status) && <SemanticActionButton variant="duplicate" icon={<RotateCcw className="size-4" />} tooltip={t('estimateSheet.newRevision')} disabled={busy || !canManage} onClick={revise}>{t('estimateSheet.newRevision')}</SemanticActionButton>}
+              </ActionButtonGroup>
+              {sheet.status === 'DRAFT' && <DangerActionSection className="border-l border-t-0 pl-3 pt-0"><SemanticActionButton variant="danger" icon={<Trash2 className="size-4" />} tooltip="초안 삭제" disabled={busy || readOnly} onClick={removeDraft}>초안 삭제</SemanticActionButton></DangerActionSection>}
             </div>
           </div>
 
@@ -335,7 +340,7 @@ export function EstimateSheetWorkbench({ requestId }: { requestId: string }) {
                 <div className="flex items-start justify-between gap-4"><div><h2 id="estimate-import-title" className="text-lg font-bold">Excel 가져오기 미리보기</h2><p className="mt-1 text-sm text-[var(--color-text-sub)]">{importPreview.templateName || '알 수 없는 템플릿'} · 변경 {importPreview.diffs.length}개</p></div><button type="button" onClick={() => setImportPreview(null)} className="border px-3 py-2 text-sm font-semibold">닫기</button></div>
                 {importPreview.errors.length > 0 && <div role="alert" className="mt-4 border-l-4 border-red-500 bg-red-50 p-3 text-sm text-red-700">{importPreview.errors.map((item) => <p key={item}>{item}</p>)}</div>}
                 <div className="mt-4 max-h-96 overflow-auto border"><table className="w-full text-left text-sm"><thead className="sticky top-0 bg-[var(--color-bg-sub)]"><tr><th className="p-2">Cell</th><th className="p-2">기존</th><th className="p-2">가져오기</th></tr></thead><tbody>{importPreview.diffs.slice(0, 200).map((item) => <tr key={item.cell} className="border-t"><td className="p-2 font-mono">{item.cell}</td><td className="p-2">{String(item.before)}</td><td className="p-2">{String(item.after)}</td></tr>)}</tbody></table></div>
-                <div className="mt-4 flex justify-end gap-2"><button type="button" onClick={() => setImportPreview(null)} className="border px-4 py-2 text-sm font-semibold">취소</button><button type="button" disabled={!importPreview.templateDetected || importPreview.errors.length > 0} onClick={() => { setState(importPreview.state); setImportPreview(null); setMessage('Excel 변경사항을 적용했습니다. 저장하면 새 DRAFT 버전으로 기록됩니다.'); }} className="bg-[var(--color-primary)] px-4 py-2 text-sm font-semibold text-white disabled:opacity-40">변경 적용</button></div>
+                <ActionButtonGroup label="Excel 변경 적용" className="mt-4 justify-end"><SemanticActionButton variant="neutral" tooltip="취소" onClick={() => setImportPreview(null)}>취소</SemanticActionButton><SemanticActionButton variant="save" icon={<Save className="size-4" />} disabled={!importPreview.templateDetected || importPreview.errors.length > 0} disabledReason={!importPreview.templateDetected ? '지원되는 견적서 템플릿을 확인할 수 없습니다.' : importPreview.errors.length > 0 ? '가져오기 오류를 먼저 해결해 주세요.' : undefined} tooltip="Excel 변경 적용" onClick={() => { setState(importPreview.state); setImportPreview(null); setMessage('Excel 변경사항을 적용했습니다. 저장하면 새 DRAFT 버전으로 기록됩니다.'); }}>변경 적용</SemanticActionButton></ActionButtonGroup>
               </section>
             </div>
           )}
