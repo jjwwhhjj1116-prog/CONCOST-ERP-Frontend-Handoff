@@ -40,6 +40,23 @@
   --cc-info-500: #3b82f6;
   --cc-info-700: #1d4ed8;
 
+  --cc-teal-50: #ecfdfb;
+  --cc-teal-100: #ccfbf1;
+  --cc-teal-600: #0d9488;
+  --cc-teal-700: #0f766e;
+  --cc-violet-50: #f5f3ff;
+  --cc-violet-100: #ede9fe;
+  --cc-violet-600: #7c3aed;
+  --cc-violet-700: #6d28d9;
+  --cc-rose-50: #fff1f2;
+  --cc-rose-100: #ffe4e6;
+  --cc-rose-600: #e11d48;
+  --cc-rose-700: #be123c;
+  --cc-sky-50: #f0f9ff;
+  --cc-sky-100: #e0f2fe;
+  --cc-sky-600: #0284c7;
+  --cc-sky-700: #0369a1;
+
   --cc-indigo-950: #172554;
   --cc-indigo-900: #203468;
   --cc-indigo-800: #273e7a;
