@@ -31,7 +31,8 @@ interface EstimateRequestState {
   sync: () => Promise<void>;
   createRequest: (draft: EstimateRequestDraft, actorId: string) => Promise<EstimateRequest>;
   duplicateRequest: (id: string, actorId: string) => Promise<EstimateRequest>;
-  deleteRequest: (id: string) => Promise<void>;
+  archiveRequest: (id: string, actorId: string) => Promise<EstimateRequest>;
+  restoreRequest: (id: string, actorId: string) => Promise<EstimateRequest>;
   updateRequest: (id: string, updates: Partial<EstimateRequest>, actorId: string) => Promise<EstimateRequest>;
   changeStatus: (id: string, status: EstimateRequestStatus, actorId: string) => Promise<EstimateRequest>;
   recordDecision: (id: string, input: CommercialDecisionInput, actorId: string) => Promise<CommercialDecisionResult>;
@@ -92,6 +93,7 @@ export const useEstimateRequestStore = create<EstimateRequestState>()(persist((s
       id: newId('estimate-request'),
       requestNo: draft.requestNo || requestNo(),
       status: draft.status || 'REQUEST_MEMO',
+      worklistState: 'ACTIVE',
       projectName: draft.projectName,
       departmentId: draft.departmentId,
       requestDate: draft.requestDate || timestamp,
@@ -158,19 +160,78 @@ export const useEstimateRequestStore = create<EstimateRequestState>()(persist((s
     }, actorId);
   },
 
-  deleteRequest: async (id) => {
+  archiveRequest: async (id, actorId) => {
     const current = get().requests.find((item) => item.id === id);
     if (!current) throw new Error('Estimate request not found');
-    if (get().persistenceMode !== 'LOCAL_DEMO') {
-      throw new Error('견적 의뢰 삭제 API가 준비되지 않았습니다. 서버 데이터는 삭제하지 않았습니다.');
-    }
-    if (current.estimateId || current.commercialDecisionId || current.projectIntakeId || current.projectId) {
-      throw new Error('견적서·수주·프로젝트와 연결된 의뢰는 삭제할 수 없습니다. 취소 또는 정정 절차를 사용해 주세요.');
-    }
-    const linkedRows = useEstimateDatabaseStore.getState().records
-      .filter((record) => record.sourceRecordId === current.id);
-    for (const record of linkedRows) await useEstimateDatabaseStore.getState().deleteRecord(record);
-    set((state) => ({ requests: state.requests.filter((item) => item.id !== id) }));
+    if (current.worklistState === 'ARCHIVED') return current;
+    const timestamp = now();
+    const reason = '의뢰관리 목록 정리';
+    const updates: Partial<EstimateRequest> = {
+      worklistState: 'ARCHIVED',
+      archivedAt: timestamp,
+      archivedBy: actorId,
+      archiveReason: reason,
+    };
+    const saved = get().persistenceMode === 'SERVER'
+      ? await estimateRequestApi.update(id, current.version, updates)
+      : {
+          ...current,
+          ...updates,
+          version: current.version + 1,
+          updatedBy: actorId,
+          updatedAt: timestamp,
+          histories: [{
+            id: newId('history'), estimateRequestId: id, action: 'ESTIMATE_REQUEST_ARCHIVED_FROM_WORKLIST',
+            changes: JSON.stringify({
+              before: { worklistState: current.worklistState || 'ACTIVE', archivedAt: current.archivedAt || null },
+              after: { worklistState: 'ARCHIVED', archivedAt: timestamp, archivedBy: actorId, reason },
+            }),
+            actorId, createdAt: timestamp,
+          }, ...current.histories],
+        };
+    if (saved.worklistState !== 'ARCHIVED') throw new Error('의뢰 보관 결과를 확인할 수 없습니다. 목록은 변경되지 않았습니다.');
+    set((state) => ({ requests: replaceRequest(state.requests, saved) }));
+    await useEstimateDatabaseStore.getState().upsertPipelineRecord(
+      buildEstimatePipelineDbInput(saved, { stage: saved.projectIntakeId ? 'INTAKE' : saved.commercialDecisionId ? 'DECISION' : saved.estimateId ? 'SHEET' : 'REQUEST', occurredAt: timestamp }), actorId,
+    );
+    return saved;
+  },
+
+  restoreRequest: async (id, actorId) => {
+    const current = get().requests.find((item) => item.id === id);
+    if (!current) throw new Error('Estimate request not found');
+    if ((current.worklistState || 'ACTIVE') === 'ACTIVE') return current;
+    const timestamp = now();
+    const reason = current.projectIntakeId ? '기존 프로젝트 접수와 함께 의뢰관리로 복구' : '의뢰관리 재검토';
+    const updates: Partial<EstimateRequest> = {
+      worklistState: 'ACTIVE',
+      restoredAt: timestamp,
+      restoredBy: actorId,
+      restoreReason: reason,
+    };
+    const saved = get().persistenceMode === 'SERVER'
+      ? await estimateRequestApi.update(id, current.version, updates)
+      : {
+          ...current,
+          ...updates,
+          version: current.version + 1,
+          updatedBy: actorId,
+          updatedAt: timestamp,
+          histories: [{
+            id: newId('history'), estimateRequestId: id, action: 'ESTIMATE_REQUEST_RESTORED_TO_WORKLIST',
+            changes: JSON.stringify({
+              before: { worklistState: current.worklistState || 'ACTIVE', projectIntakeId: current.projectIntakeId || null },
+              after: { worklistState: 'ACTIVE', restoredAt: timestamp, restoredBy: actorId, reason },
+            }),
+            actorId, createdAt: timestamp,
+          }, ...current.histories],
+        };
+    if (saved.worklistState !== 'ACTIVE') throw new Error('의뢰 복구 결과를 확인할 수 없습니다.');
+    set((state) => ({ requests: replaceRequest(state.requests, saved) }));
+    await useEstimateDatabaseStore.getState().upsertPipelineRecord(
+      buildEstimatePipelineDbInput(saved, { stage: saved.projectIntakeId ? 'INTAKE' : saved.commercialDecisionId ? 'DECISION' : saved.estimateId ? 'SHEET' : 'REQUEST', occurredAt: timestamp }), actorId,
+    );
+    return saved;
   },
 
   updateRequest: async (id, updates, actorId) => {

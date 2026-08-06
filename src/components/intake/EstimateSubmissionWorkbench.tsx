@@ -49,6 +49,7 @@ export function EstimateSubmissionWorkbench() {
   const [actionMessage, setActionMessage] = useState('');
   const [actionError, setActionError] = useState('');
   const [busyRequestId, setBusyRequestId] = useState('');
+  const projectNoByRequestId = useMemo(() => new Map(requests.map((request) => [request.id, request.projectNo || '프로젝트번호 발급 대기'])), [requests]);
 
   useEffect(() => {
     tRef.current = t;
@@ -210,7 +211,7 @@ export function EstimateSubmissionWorkbench() {
           <tbody>{filtered.length ? filtered.map((row) => (
             <tr key={row.id} tabIndex={0} aria-selected={selectedRowId === row.id} onClick={() => setSelectedRowId(row.id)} onKeyDown={(event) => { if (event.key === 'Enter') router.push(`/projects/intake/estimate?requestId=${encodeURIComponent(row.estimateRequestId)}&version=${row.version}`); }} className={`cursor-pointer border-b align-top transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--color-primary)] ${selectedRowId === row.id ? 'bg-orange-50 shadow-[inset_4px_0_0_var(--color-primary)]' : 'hover:bg-[var(--color-bg-sub)]'}`}>
               <td className="whitespace-nowrap px-3 py-3">{new Date(row.submittedAt).toLocaleString()}</td>
-              <td className="max-w-[260px] px-3 py-3"><strong className="block truncate">{row.projectName}</strong><span className="block truncate text-xs text-[var(--color-text-sub)]">{row.requestNo} · {row.company || '-'}</span></td>
+              <td className="max-w-[260px] px-3 py-3"><strong className="block truncate">{row.projectName}</strong><span className="block truncate text-xs text-[var(--color-text-sub)]">{projectNoByRequestId.get(row.estimateRequestId) || '프로젝트번호 발급 대기'} · {row.company || '-'}</span></td>
               <td className="px-3 py-3"><span className="block font-medium">{row.templateType} · v{row.version}</span><code className="text-[11px] text-[var(--color-text-sub)]">{row.documentHash.slice(0, 12)}…</code></td>
               <td className="px-3 py-3">{row.recipient || '-'}<span className="block text-xs text-[var(--color-text-sub)]">{row.deliveryChannel || '-'}</span></td>
               <td className="whitespace-nowrap px-3 py-3 font-semibold text-[var(--color-primary)]">{row.status === 'SENT' ? t('estimateSubmission.statusSent') : row.status === 'DRAFT' ? t('estimateSubmission.statusDraft') : t('estimateSubmission.statusSubmitted')}</td>

@@ -1,4 +1,4 @@
-import type { EstimateRequest, EstimateSheet, ProjectIntakeDraft } from '@/types/models';
+import type { EstimateRequest, EstimateRequestWorklistState, EstimateSheet, ProjectIntakeDraft } from '@/types/models';
 
 export type EstimateRequestEditMode = 'VIEW' | 'EDIT' | 'CORRECTION' | 'SAVING';
 
@@ -10,13 +10,38 @@ export type EstimateRequestEditPolicy = {
 };
 
 export type EstimateRequestDeletePolicy = {
-  kind: 'DELETE_REQUEST' | 'DELETE_DRAFT_SHEET_AND_REQUEST' | 'RESTRICTED';
+  kind: 'ARCHIVE_REQUEST';
   title: string;
   description: string;
   targets: string[];
 };
 
 const TERMINAL_STATUSES = new Set(['LOST', 'CANCELLED']);
+
+export const getEstimateRequestWorklistState = (request: Pick<EstimateRequest, 'worklistState'>): EstimateRequestWorklistState => (
+  request.worklistState || 'ACTIVE'
+);
+
+export const isEstimateRequestInActiveWorklist = (request: Pick<EstimateRequest, 'worklistState'>) => (
+  getEstimateRequestWorklistState(request) === 'ACTIVE'
+);
+
+export const filterActiveEstimateRequestWorklist = <T extends Pick<EstimateRequest, 'worklistState'>>(requests: T[]) => (
+  requests.filter(isEstimateRequestInActiveWorklist)
+);
+
+export type EstimateDbWorklistFilter = 'ALL' | 'ACTIVE' | 'TRANSFERRED_TO_INTAKE' | 'ARCHIVED' | 'WON_COMPLETED' | 'CLOSED';
+
+export const matchesEstimateDbWorklistFilter = (
+  request: EstimateRequest | undefined,
+  filter: EstimateDbWorklistFilter,
+) => {
+  if (filter === 'ALL') return true;
+  if (!request) return false;
+  if (filter === 'WON_COMPLETED') return request.projectIntake?.status === 'ACCEPTED';
+  if (filter === 'CLOSED') return request.status === 'LOST' || request.status === 'CANCELLED';
+  return getEstimateRequestWorklistState(request) === filter;
+};
 
 export function resolveEstimateRequestEditPolicy(request: EstimateRequest): EstimateRequestEditPolicy {
   if (!request.projectId && !TERMINAL_STATUSES.has(request.status)) {
@@ -50,41 +75,17 @@ export function resolveEstimateRequestDeletePolicy(
   sheet?: Pick<EstimateSheet, 'status' | 'submissions'> | null,
 ): EstimateRequestDeletePolicy {
   const baseTarget = `${request.requestNo} · ${request.projectName}`;
-  const hasTerminalLink = Boolean(
-    request.commercialDecisionId || request.projectIntakeId || request.projectId,
-  ) || ['WON', 'LOST', 'CANCELLED'].includes(request.status);
-
-  if (hasTerminalLink) {
-    return {
-      kind: 'RESTRICTED',
-      title: '연결된 업무가 있어 삭제할 수 없습니다',
-      description: '수주·접수·프로젝트 계보는 감사 이력을 위해 보존합니다. 취소, 보관 또는 정정 요청을 사용하세요.',
-      targets: [baseTarget, request.commercialDecisionId ? '수주 판정' : '', request.projectIntakeId ? '프로젝트 접수' : '', request.projectId ? 'Canonical Project' : ''].filter(Boolean),
-    };
-  }
-
-  if (sheet) {
-    if (sheet.status !== 'DRAFT' || sheet.submissions.length > 0) {
-      return {
-        kind: 'RESTRICTED',
-        title: '발행 이력이 있는 견적서는 삭제할 수 없습니다',
-        description: '작성완료 또는 발송된 Version은 보존하고 수정본 또는 정정 절차를 사용하세요.',
-        targets: [baseTarget, `견적서 ${sheet.status}`],
-      };
-    }
-    return {
-      kind: 'DELETE_DRAFT_SHEET_AND_REQUEST',
-      title: '견적 의뢰와 DRAFT 견적서를 함께 삭제합니다',
-      description: '삭제 후 복구할 수 없습니다. 아래 대상만 제거되며 수주·프로젝트 데이터에는 영향을 주지 않습니다.',
-      targets: [baseTarget, 'DRAFT 견적서', '연결된 견적 DB 요청 행'],
-    };
-  }
-
   return {
-    kind: 'DELETE_REQUEST',
-    title: '연결되지 않은 견적 의뢰를 삭제합니다',
-    description: '삭제 후 복구할 수 없습니다. 수주·접수·프로젝트와 연결되지 않은 의뢰만 삭제합니다.',
-    targets: [baseTarget, '연결된 견적 DB 요청 행'],
+    kind: 'ARCHIVE_REQUEST',
+    title: '견적 의뢰를 보관합니다',
+    description: '의뢰관리 목록에서 제거하고 DB에 보관합니다.',
+    targets: [
+      baseTarget,
+      '견적 DB 원본 행 유지',
+      sheet ? `견적서 ${sheet.status}` : '',
+      request.projectIntakeId ? '프로젝트 접수' : '',
+      request.projectId ? 'Canonical Project' : '',
+    ].filter(Boolean),
   };
 }
 

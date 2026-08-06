@@ -28,7 +28,7 @@ import { ProjectMilestoneModal } from '@/components/projects/ProjectMilestoneMod
 import { PROJECT_WORKFLOW_TABS, ProjectWorkflowTab } from '@/lib/projectWorkflow';
 import { useProjectWorkflowOverviewSync } from '@/hooks/useProjectWorkflow';
 import { getProjectBoardScope, getProjectBoardScopeLabel, matchesProjectBoardScope } from '@/lib/projectExecutionUnits';
-import { getProjectAssignment } from '@/lib/projectStaffing';
+import { getProjectAssignment, isProjectStaffingReady } from '@/lib/projectStaffing';
 
 export type ExtendedViewType = BoardViewType | 'PART' | 'HISTORY';
 
@@ -164,7 +164,7 @@ export default function ProjectBoardPage() {
   const selectedProject = projects.find(p => p.id === selectedProjectId);
   const assignmentUnitId: ProjectExecutionUnitId | null = projectScope?.kind === 'UNIT' ? projectScope.unitId : null;
   const selectedAssignment = selectedProject ? getProjectAssignment(selectedProject, assignmentUnitId) : undefined;
-  const selectedStaffingReady = Boolean(selectedAssignment?.pmId && selectedAssignment.personnelIds?.length);
+  const selectedStaffingReady = isProjectStaffingReady(selectedAssignment);
   const now = new Date();
   const projectStats = {
     total: accessibleProjects.filter((project) => !project.isDeleted && project.archiveStatus !== 'ARCHIVED').length,
@@ -190,11 +190,11 @@ export default function ProjectBoardPage() {
         alert(t('projects.noAuthAlert'));
         return;
       }
-      if (!assignment?.pmId || !assignment.personnelIds?.length) {
+      if (!isProjectStaffingReady(assignment)) {
         setStaffingProject(project);
         return;
       }
-      setDispatchProject({ ...project, pmId: assignment.pmId, departmentId: assignment.unitId });
+      setDispatchProject({ ...project, pmId: assignment.pmId || undefined, departmentId: assignment.unitId });
     } else {
       if (!canEditProject(currentUser, project)) {
         alert(t('projects.noEditAuthAlert'));
@@ -212,11 +212,11 @@ export default function ProjectBoardPage() {
 
   const openDispatchForProject = (project: Project) => {
     const assignment = getProjectAssignment(project, assignmentUnitId);
-    if (!assignment?.pmId || !assignment.personnelIds?.length) {
+    if (!isProjectStaffingReady(assignment)) {
       setStaffingProject(project);
       return;
     }
-    setDispatchProject({ ...project, pmId: assignment.pmId, departmentId: assignment.unitId });
+    setDispatchProject({ ...project, pmId: assignment.pmId || undefined, departmentId: assignment.unitId });
   };
 
   const handleProjectAction = (project: Project, action: 'START' | 'DUE' | 'COMPLETE' | 'REVISION') => {
@@ -598,9 +598,15 @@ export default function ProjectBoardPage() {
           project={staffingProject}
           initialUnitId={assignmentUnitId}
           onClose={() => setStaffingProject(null)}
-          onSaved={() => {
-            setSelectedProjectId(staffingProject.id);
-            setViewType('PART');
+          onSaved={(unitId, status) => {
+            if (status === 'ACTIVE') {
+              setSelectedProjectId(staffingProject.id);
+              setViewType('PART');
+              const params = new URLSearchParams(window.location.search);
+              params.set('unit', unitId);
+              params.set('projectId', staffingProject.id);
+              window.history.replaceState({}, '', `${window.location.pathname}?${params.toString()}`);
+            }
             setStaffingProject(null);
           }}
         />

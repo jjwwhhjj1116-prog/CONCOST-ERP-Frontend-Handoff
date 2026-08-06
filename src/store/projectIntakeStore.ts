@@ -14,6 +14,7 @@ import {
 import { getProjectIntakePersistenceMode } from '@/lib/runtimeExecutionMode';
 import { buildEstimatePipelineDbInput } from '@/lib/estimatePipelineDatabase';
 import { completeExecutionAssignments } from '@/lib/projectExecutionUnits';
+import { allocateAnnualProjectNo } from '@/lib/projectNumber';
 import { useEstimateDatabaseStore } from '@/store/estimateDatabaseStore';
 import { useEstimateRequestStore } from '@/store/estimateRequestStore';
 import { useProjectStore } from '@/store/projectStore';
@@ -515,6 +516,11 @@ export const useProjectIntakeStore = create<ProjectIntakeState>()(persist((set, 
     const projectStore = useProjectStore.getState();
     const sourceProject = projectStore.projects.find((project) => project.id === current.projectId);
     if (!sourceProject) throw new Error('수주 접수와 연결된 canonical Project를 찾을 수 없습니다.');
+    const projectNo = sourceProject.projectNo || allocateAnnualProjectNo(
+      projectStore.projects,
+      new Date(timestamp).getFullYear(),
+    );
+    const localCompletionDraft: ProjectIntakeDraft = { ...completionDraft, projectNo };
     const executionAssignments = completeExecutionAssignments({
       projectId: sourceProject.id,
       targetUnitIds: draft.targetUnitIds,
@@ -525,7 +531,7 @@ export const useProjectIntakeStore = create<ProjectIntakeState>()(persist((set, 
     });
     const completedProject: Project = {
       ...sourceProject,
-      projectNo: draft.projectNo,
+      projectNo,
       publicationStatus: 'PUBLISHED',
       status: 'MANAGER_REVIEW',
       primaryUnitId: draft.primaryUnitId,
@@ -542,9 +548,9 @@ export const useProjectIntakeStore = create<ProjectIntakeState>()(persist((set, 
     const acceptedBase = {
       ...current,
       status: 'REVIEWED' as const,
-      projectNo: draft.projectNo,
-      draft: completionDraft,
-      draftJson: JSON.stringify(completionDraft),
+      projectNo,
+      draft: localCompletionDraft,
+      draftJson: JSON.stringify(localCompletionDraft),
       reviewNote: note,
       reviewedBy: current.reviewedBy || actor.id,
       reviewedAt: current.reviewedAt || timestamp,
@@ -562,7 +568,7 @@ export const useProjectIntakeStore = create<ProjectIntakeState>()(persist((set, 
         localHistory(acceptedBase, 'ACCEPTED', actor.id, 'REVIEWED', 'ACCEPTED', {
           note,
           projectStatus: 'MANAGER_REVIEW',
-          projectNo: draft.projectNo,
+          projectNo,
           assignedUnitIds: draft.targetUnitIds,
           primaryUnitId: draft.primaryUnitId,
           startDateStatus,
@@ -575,13 +581,35 @@ export const useProjectIntakeStore = create<ProjectIntakeState>()(persist((set, 
       intake: updated,
       project: completedProject,
       assignments: executionAssignments,
-      projectNo: draft.projectNo,
+      projectNo,
       startDateStatus,
       idempotent: false,
     };
     assertCompletionPostconditions(result);
 
-    await upsertLocalPipelineRecord(updated, completionDraft, updated.status, actor.id, timestamp);
+    useEstimateRequestStore.setState((state) => ({
+      requests: state.requests.map((request) => request.id === current.estimateRequestId
+        ? {
+            ...request,
+            projectNo,
+            updatedAt: timestamp,
+            updatedBy: actor.id,
+            version: request.version + 1,
+            histories: [{
+              id: `history-project-number-${request.id}-${projectNo}`,
+              estimateRequestId: request.id,
+              action: 'PROJECT_NUMBER_ASSIGNED',
+              changes: JSON.stringify({
+                before: { projectNo: request.projectNo || null },
+                after: { projectNo, projectId: completedProject.id },
+              }),
+              actorId: actor.id,
+              createdAt: timestamp,
+            }, ...request.histories],
+          }
+        : request),
+    }));
+    await upsertLocalPipelineRecord(updated, localCompletionDraft, updated.status, actor.id, timestamp);
     projectStore.replaceProjects(projectStore.projects.map((project) => project.id === completedProject.id ? completedProject : project));
     set((state) => ({ intakes: replace(state.intakes, updated) }));
     await useProjectPmScheduleStore.getState().sync(actor);

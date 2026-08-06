@@ -100,11 +100,33 @@ export type EstimateRequestStatus =
   | 'ON_HOLD'
   | 'OTHER';
 
+export type EstimateRequestWorklistState = 'ACTIVE' | 'TRANSFERRED_TO_INTAKE' | 'ARCHIVED';
+
 export type CommercialDecisionType = 'WON' | 'LOST' | 'CANCELLED' | 'ON_HOLD';
 
 export type ProjectExecutionUnitId = 'FINISH' | 'STRUCTURE' | 'CIVIL_LANDSCAPE' | 'CLAIM' | 'DEVELOPMENT';
 export type ProjectExecutionUnitAssignmentRole = 'PRIMARY' | 'PARTICIPATING';
 export type ProjectExecutionUnitAssignmentStatus = 'AWARD_CONFIRMED' | 'INTAKE_IN_PROGRESS' | 'START_PLANNED' | 'ACTIVE' | 'COMPLETED';
+export type ProjectStaffingPlanStatus = 'DRAFT' | 'CONFIRMED' | 'ACTIVE' | 'COMPLETED';
+
+export interface ProjectStaffingRoleAssignment {
+  roleId: string;
+  roleLabel: string;
+  personnelIds: UserId[];
+  startDate?: string | null;
+  endDate?: string | null;
+}
+
+export interface ProjectStaffingHistory {
+  id: string;
+  action: 'PROJECT_STAFFING_DRAFT_SAVED' | 'PROJECT_STAFFING_CONFIRMED' | 'PROJECT_STAFFING_STARTED' | 'PROJECT_STAFFING_CHANGED';
+  beforeJson: string;
+  afterJson: string;
+  actorId: UserId;
+  reason: string;
+  revision: number;
+  createdAt: string;
+}
 
 export interface ProjectExecutionUnitAssignment {
   id: string;
@@ -115,6 +137,10 @@ export interface ProjectExecutionUnitAssignment {
   scope?: string | null;
   pmId?: UserId | null;
   personnelIds?: UserId[];
+  staffingPlan?: ProjectStaffingRoleAssignment[];
+  staffingStatus?: ProjectStaffingPlanStatus;
+  staffingRevision?: number;
+  staffingHistories?: ProjectStaffingHistory[];
   staffingUpdatedAt?: string | null;
   staffingUpdatedBy?: UserId | null;
   assignedAt: string;
@@ -342,6 +368,14 @@ export interface EstimateRequest {
   id: string;
   requestNo: string;
   status: EstimateRequestStatus;
+  worklistState?: EstimateRequestWorklistState;
+  transferredToIntakeAt?: string | null;
+  archivedAt?: string | null;
+  archivedBy?: UserId | null;
+  archiveReason?: string | null;
+  restoredAt?: string | null;
+  restoredBy?: UserId | null;
+  restoreReason?: string | null;
   projectName: string;
   projectNo?: string | null;
   company?: string | null;

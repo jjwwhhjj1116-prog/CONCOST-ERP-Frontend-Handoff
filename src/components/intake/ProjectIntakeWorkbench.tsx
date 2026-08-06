@@ -441,7 +441,7 @@ export function ProjectIntakeWorkbench({ currentUser, t, view = 'CREATE', reques
                       {t(`projectIntake.status.${intake.status}` as Parameters<Translate>[0])}
                     </span>
                   </div>
-                  <p className="mt-1 truncate text-xs text-[var(--color-text-sub)]">{itemDraft.projectNo} · {itemDraft.client || itemDraft.company || '-'}</p>
+                  <p className="mt-1 truncate text-xs text-[var(--color-text-sub)]">{itemDraft.projectNo || '프로젝트번호 발급 대기'} · {itemDraft.client || itemDraft.company || '-'}</p>
                   <p className="mt-2 text-[11px] text-[var(--color-text-sub)]">{t('projectIntake.version', { version: String(intake.version) })}</p>
                 </button>
               );
@@ -462,8 +462,8 @@ export function ProjectIntakeWorkbench({ currentUser, t, view = 'CREATE', reques
                       <h2 className="truncate text-lg font-bold text-[var(--color-text-main)]">{draft.projectName || t('projectIntake.untitled')}</h2>
                       <span className={`border px-2 py-0.5 text-xs font-semibold ${statusClass[selected.status]}`}>{t(`projectIntake.status.${selected.status}` as Parameters<Translate>[0])}</span>
                     </div>
-                    <p className="mt-2 break-all text-xs text-[var(--color-text-sub)]">
-                      {t('projectIntake.sourceTrace')}: {draft.source.estimateRequestId} → {draft.source.commercialDecisionId} → {draft.source.projectId}
+                    <p className="mt-2 text-xs font-semibold text-[var(--color-text-sub)]">
+                      {draft.projectNo ? `공식 프로젝트번호 ${draft.projectNo}` : '수주 완료 시 공식 프로젝트번호가 자동 발급됩니다.'}
                     </p>
                   </div>
                   <div className="flex flex-wrap gap-2">
@@ -499,9 +499,12 @@ export function ProjectIntakeWorkbench({ currentUser, t, view = 'CREATE', reques
                 {activeStep === 1 && (
                 <section data-intake-step="1" className="p-4 md:p-6">
                   <h3 className="mb-3 flex items-center gap-2 text-sm font-bold text-[var(--color-text-main)]"><FileText size={16} />{t('projectIntake.section.basic')}</h3>
+                  <div className="mb-3 rounded-lg border border-sky-200 bg-sky-50 px-3 py-2 text-xs font-semibold text-sky-900">
+                    프로젝트번호: {draft.projectNo || '수주 완료 시 YYYY + 연도별 3자리 순번으로 자동 발급'}
+                  </div>
                   <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
                     {([
-                      ['projectName', 'projectIntake.field.projectName'], ['projectNo', 'projectIntake.field.projectNo'],
+                      ['projectName', 'projectIntake.field.projectName'],
                       ['company', 'projectIntake.field.company'], ['client', 'projectIntake.field.client'],
                       ['usage', 'projectIntake.field.usage'], ['area', 'projectIntake.field.area'],
                       ['buildings', 'projectIntake.field.buildings'], ['floors', 'projectIntake.field.floors'],

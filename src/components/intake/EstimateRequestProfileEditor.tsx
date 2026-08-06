@@ -90,7 +90,7 @@ export function EstimateRequestProfileEditor({ request, mode, disabled = false, 
       <SectionTitle number="01" icon={Building2} title="프로젝트 정보" description="견적서·DB·메일 초안이 함께 사용하는 Canonical 정보입니다." />
       <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <ProfileField disabled={!editable} label="프로젝트명" required value={profile.projectName} onChange={(value) => set('projectName', value)} field="projectName" />
-        <ProfileField disabled={!editable} label="프로젝트번호" value={profile.projectNo} onChange={(value) => set('projectNo', value)} field="projectNo" />
+        <ReadOnly label="프로젝트번호" value={profile.projectNo || '수주 완료 시 자동 발급'} />
         <MemoryField disabled={!editable} label="거래처/업체" required value={profile.vendor} onChange={(value) => set('vendor', value)} field="vendor" />
         <ProfileField disabled={!editable} label="발주처" required value={profile.client} onChange={(value) => set('client', value)} field="client" />
         <MemoryField disabled={!editable} label="업무구분" required value={profile.workCategory} onChange={(value) => set('workCategory', value)} field="workCategory" />
@@ -126,7 +126,7 @@ export function EstimateRequestProfileEditor({ request, mode, disabled = false, 
     <section id="estimate-step-03" className={sectionClass}>
       <SectionTitle number="03" icon={ClipboardPen} title="기본정보 수정" description="저장하면 DRAFT 견적서의 자동연결 Cell만 동기화됩니다." />
       <div className="mt-4 grid gap-3 sm:grid-cols-3">
-        <ReadOnly label="의뢰번호" value={profile.requestNo} /><ReadOnly label="의뢰상태" value={request.status} /><ReadOnly label="버전" value={`v${request.version}`} />
+        <ReadOnly label="프로젝트번호 상태" value={profile.projectNo || '발급 대기'} /><ReadOnly label="의뢰상태" value={request.status} /><ReadOnly label="버전" value={`v${request.version}`} />
       </div>
       <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t pt-4">
         <p className="text-xs text-[var(--color-text-sub)]">{language === 'vi' ? 'Ô màu vàng nhạt là trường bắt buộc.' : '연한 노란색 입력칸은 필수입니다.'}</p>

@@ -2,6 +2,9 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import type { EstimateRequest, EstimateSheet } from '@/types/models';
 import {
+  filterActiveEstimateRequestWorklist,
+  getEstimateRequestWorklistState,
+  matchesEstimateDbWorklistFilter,
   mergeEstimateRequestIntoIntakeDraft,
   resolveEstimateRequestDeletePolicy,
   resolveEstimateRequestEditPolicy,
@@ -24,19 +27,47 @@ const sheet = (overrides: Partial<EstimateSheet> = {}): EstimateSheet => ({
   versions: [], submissions: [], exports: [], ...overrides,
 });
 
-test('unlinked estimate request is directly editable and deletable', () => {
+test('unlinked estimate request is directly editable and archived from the worklist', () => {
   assert.equal(resolveEstimateRequestEditPolicy(request()).mode, 'EDIT');
-  assert.equal(resolveEstimateRequestDeletePolicy(request()).kind, 'DELETE_REQUEST');
+  assert.equal(resolveEstimateRequestDeletePolicy(request()).kind, 'ARCHIVE_REQUEST');
 });
 
-test('draft estimate sheet is included in cascade preview', () => {
-  assert.equal(resolveEstimateRequestDeletePolicy(request({ estimateId: 'sheet-demo' }), sheet()).kind, 'DELETE_DRAFT_SHEET_AND_REQUEST');
+test('draft estimate sheet is retained in an archive preview', () => {
+  const policy = resolveEstimateRequestDeletePolicy(request({ estimateId: 'sheet-demo' }), sheet());
+  assert.equal(policy.kind, 'ARCHIVE_REQUEST');
+  assert.match(policy.description, /DB에 보관/);
 });
 
 test('won project is correction-only and protected from hard delete', () => {
   const won = request({ status: 'WON', projectId: 'project-demo', projectIntakeId: 'intake-demo' });
   assert.equal(resolveEstimateRequestEditPolicy(won).editable, false);
-  assert.equal(resolveEstimateRequestDeletePolicy(won).kind, 'RESTRICTED');
+  assert.equal(resolveEstimateRequestDeletePolicy(won).kind, 'ARCHIVE_REQUEST');
+});
+
+test('legacy requests default to ACTIVE and a 200-record worklist excludes transferred and archived rows', () => {
+  assert.equal(getEstimateRequestWorklistState(request()), 'ACTIVE');
+  const records = Array.from({ length: 200 }, (_, index) => request({
+    id: `request-${index}`,
+    worklistState: index < 120 ? 'ACTIVE' : index < 160 ? 'TRANSFERRED_TO_INTAKE' : 'ARCHIVED',
+  }));
+  const active = filterActiveEstimateRequestWorklist(records);
+  assert.equal(active.length, 120);
+  assert.ok(active.every((item) => item.worklistState === 'ACTIVE'));
+});
+
+test('DB worklist filters distinguish active, transferred, archived, completed-won, and closed requests', () => {
+  const active = request({ worklistState: 'ACTIVE' });
+  const transferred = request({ worklistState: 'TRANSFERRED_TO_INTAKE', status: 'WON' });
+  const archived = request({ worklistState: 'ARCHIVED' });
+  const completed = request({
+    worklistState: 'TRANSFERRED_TO_INTAKE', status: 'WON',
+    projectIntake: { status: 'ACCEPTED' } as EstimateRequest['projectIntake'],
+  });
+  assert.equal(matchesEstimateDbWorklistFilter(active, 'ACTIVE'), true);
+  assert.equal(matchesEstimateDbWorklistFilter(transferred, 'TRANSFERRED_TO_INTAKE'), true);
+  assert.equal(matchesEstimateDbWorklistFilter(archived, 'ARCHIVED'), true);
+  assert.equal(matchesEstimateDbWorklistFilter(completed, 'WON_COMPLETED'), true);
+  assert.equal(matchesEstimateDbWorklistFilter(request({ status: 'LOST' }), 'CLOSED'), true);
 });
 
 test('won project with intake draft permits pre-intake correction', () => {

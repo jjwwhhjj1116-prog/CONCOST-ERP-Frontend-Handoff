@@ -34,6 +34,7 @@ export const buildEstimatePipelineDbInput = (
   const client = draft?.client || request.client || request.company || '';
   const targetUnitIds = draft?.targetUnitIds || request.targetUnitIds || [];
   const primaryUnitId = draft?.primaryUnitId || request.primaryUnitId || '';
+  const officialProjectNo = draft?.projectNo || request.projectNo || '';
   const wonAt = context.decision === 'WON'
     ? occurredAt
     : request.commercialDecisions?.find((item) => item.decision === 'WON')?.decidedAt || '';
@@ -41,12 +42,12 @@ export const buildEstimatePipelineDbInput = (
     section: 'PJ',
     projectId,
     sourceRecordId: request.id,
-    pjNo: request.requestNo,
+    pjNo: officialProjectNo || request.requestNo,
     year: yearOf(request, context.occurredAt),
     data: {
       '최초생성날짜': request.createdAt.slice(0, 10),
       '접수번호': request.requestNo,
-      'PJ NO': request.requestNo,
+      'PJ NO': officialProjectNo,
       '프로젝트 연결': projectId || '',
       '거래처명': company,
       '프로젝트명': projectName,
@@ -79,6 +80,7 @@ export const buildEstimatePipelineDbInput = (
       'Execution Unit IDs': targetUnitIds.join(','),
       'Primary Unit ID': primaryUnitId,
       'Pipeline Stage': context.stage,
+      'Worklist State': request.worklistState || 'ACTIVE',
       'Estimate Sheet ID': context.estimateSheetId || request.estimateId || '',
       'Estimate Sheet Status': context.estimateSheetStatus || '',
       'Estimate Sheet Version': context.estimateSheetVersion ?? '',

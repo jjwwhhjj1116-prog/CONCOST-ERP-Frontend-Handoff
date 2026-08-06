@@ -2,20 +2,30 @@
 
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
-import { ArrowLeft, Copy, Database, Download, FileJson, Info, LockKeyhole, Pencil, Plus, RefreshCw, Save, Search, Trash2, Undo2, X } from 'lucide-react';
+import { ArchiveRestore, ArrowLeft, Copy, Database, Download, FileJson, FolderOpen, Info, LockKeyhole, Pencil, Plus, RefreshCw, Save, Search, Trash2, Undo2, X } from 'lucide-react';
 import { ESTIMATE_DB_COLUMNS, ESTIMATE_DB_VENDOR_COLUMNS, exportEstimateDbJson, exportEstimateDbXlsx } from '@/lib/estimateDatabase';
 import { useTranslation } from '@/lib/localization';
 import { useAuthStore } from '@/store/authStore';
 import { useEstimateDatabaseStore } from '@/store/estimateDatabaseStore';
+import { useEstimateRequestStore } from '@/store/estimateRequestStore';
 import { useTranslationStore } from '@/store/translationStore';
 import { evaluateEstimateAccess } from '@/lib/accessControl';
 import { InputHistoryInput } from '@/components/ui/InputHistoryInput';
+import { getEstimateRequestWorklistState, matchesEstimateDbWorklistFilter, type EstimateDbWorklistFilter } from '@/lib/estimateRequestUx';
 import type { EstimateDbPayload, EstimateDbRecord, EstimateDbSection, EstimateDbTargetType, EstimateDbVendor } from '@/types/models';
 
 type Tab = EstimateDbSection | 'REPORTS';
 const TABS: Tab[] = ['PJ', 'PROGRESS', 'MEP_CONTRACT', 'REPORTS'];
 const PAGE_SIZE = 50;
 const targetTypes: EstimateDbTargetType[] = ['ORDER', 'SALES', 'DEPOSIT'];
+const WORKLIST_FILTERS: Array<{ value: EstimateDbWorklistFilter; label: string }> = [
+  { value: 'ALL', label: '전체' },
+  { value: 'ACTIVE', label: '활성' },
+  { value: 'TRANSFERRED_TO_INTAKE', label: '접수 이관' },
+  { value: 'ARCHIVED', label: '보관' },
+  { value: 'WON_COMPLETED', label: '수주완료' },
+  { value: 'CLOSED', label: '취소·실주' },
+];
 const fieldClass = 'w-full min-w-[110px] rounded border bg-[var(--color-surface)] px-2 py-1.5 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]';
 const buttonClass = 'inline-flex min-h-9 items-center justify-center gap-1.5 rounded border bg-[var(--color-surface)] px-3 text-sm font-semibold transition hover:border-orange-300 hover:bg-orange-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] disabled:cursor-not-allowed disabled:opacity-50';
 const autoLinkedColumns = new Set(['접수번호', 'PJ NO', '프로젝트 연결', '최초생성날짜']);
@@ -39,9 +49,11 @@ export function EstimateDatabaseWorkbench() {
   const { settings } = useTranslationStore();
   const t = useTranslation(settings.uiLanguage);
   const store = useEstimateDatabaseStore();
+  const requestStore = useEstimateRequestStore();
   const [tab, setTab] = useState<Tab>('PJ');
   const [query, setQuery] = useState('');
   const [year, setYear] = useState(new Date().getFullYear());
+  const [worklistFilter, setWorklistFilter] = useState<EstimateDbWorklistFilter>('ALL');
   const [page, setPage] = useState(1);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -54,12 +66,16 @@ export function EstimateDatabaseWorkbench() {
 
   useEffect(() => { const timer = window.setTimeout(() => void store.sync(year), 0); return () => window.clearTimeout(timer); }, [year]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const requestById = useMemo(() => new Map(requestStore.requests.map((request) => [request.id, request])), [requestStore.requests]);
   const rows = useMemo(() => tab === 'REPORTS' ? [] : store.records
     .filter((row) => row.section === tab && (!row.year || row.year === year))
-    .filter((row) => !query || `${row.pjNo || ''} ${JSON.stringify(row.data)}`.toLowerCase().includes(query.toLowerCase())), [query, store.records, tab, year]);
+    .filter((row) => tab !== 'PJ' || matchesEstimateDbWorklistFilter(requestById.get(row.sourceRecordId || ''), worklistFilter))
+    .filter((row) => !query || `${row.pjNo || ''} ${JSON.stringify(row.data)}`.toLowerCase().includes(query.toLowerCase())), [query, requestById, store.records, tab, worklistFilter, year]);
   const pageCount = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
   const visibleRows = rows.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
   const report = store.report(year);
+  const selectedRecord = store.records.find((item) => item.id === selectedId);
+  const selectedRequest = selectedRecord?.sourceRecordId ? requestById.get(selectedRecord.sourceRecordId) : undefined;
 
   const beginEdit = (row: EstimateDbRecord) => { setSelectedId(row.id); setEditingId(row.id); setDraft({ ...row.data }); setMessage(''); };
   const openMemoryPicker = (row: EstimateDbRecord, column: string) => {
@@ -92,10 +108,30 @@ export function EstimateDatabaseWorkbench() {
   };
   const remove = async () => {
     const row = store.records.find((item) => item.id === selectedId);
+    if (selectedRequest) {
+      setMessage('견적 의뢰와 연결된 DB 행은 삭제할 수 없습니다. 의뢰관리에서 보관하거나 정정 절차를 사용하세요.');
+      return;
+    }
     if (!row || !window.confirm(t('estimateDb.deleteConfirm'))) return;
     await store.deleteRecord(row); setSelectedId(null); setEditingId(null); setSelectedCell(null); setDraft({});
   };
   const refresh = async () => { setBusy(true); try { await store.sync(year); setMessage(t('estimateDb.refreshed')); } finally { setBusy(false); } };
+  const restoreRequest = async () => {
+    if (!selectedRequest || !currentUser) return;
+    const linkedMessage = selectedRequest.projectIntakeId
+      ? '\n기존 프로젝트 접수는 그대로 유지되며 새 접수나 Project를 만들지 않습니다.'
+      : '\n동일 estimateRequestId로 활성 Worklist에만 복구합니다.';
+    if (!window.confirm(`'${selectedRequest.projectName}' 의뢰를 복구할까요?${linkedMessage}`)) return;
+    setBusy(true);
+    try {
+      const restored = await requestStore.restoreRequest(selectedRequest.id, currentUser.id);
+      setMessage(`${restored.projectName} 의뢰를 같은 ID로 의뢰관리 목록에 복구했습니다.`);
+    } catch (caught) {
+      setMessage(caught instanceof Error ? caught.message : '의뢰 복구에 실패했습니다.');
+    } finally {
+      setBusy(false);
+    }
+  };
 
   if (!currentUser) return <p className="p-8 text-center">{t('header.loginRequired')}</p>;
   if (!evaluateEstimateAccess(currentUser).allowed) return <p className="p-8 text-center font-semibold text-[var(--color-danger)]">{t('estimateDb.permissionDenied')}</p>;
@@ -131,7 +167,9 @@ export function EstimateDatabaseWorkbench() {
             <span className="mr-1 text-[10px] font-black uppercase text-[var(--color-text-sub)]">Record</span>
             <button type="button" onClick={() => void add()} disabled={busy} className={buttonClass}><Plus className="size-4" />{t('estimateDb.add')}</button>
             <button type="button" onClick={() => void duplicate()} disabled={!selectedId || busy} title={!selectedId ? '먼저 행을 선택하세요.' : '선택한 행을 복제합니다.'} className={buttonClass}><Copy className="size-4" />{t('estimateDb.duplicate')}</button>
-            <button type="button" onClick={() => void remove()} disabled={!selectedId || busy} title={!selectedId ? '먼저 행을 선택하세요.' : '선택한 행을 삭제합니다.'} className={`${buttonClass} text-[var(--color-danger)]`}><Trash2 className="size-4" />{t('estimateDb.delete')}</button>
+            <button type="button" onClick={() => void remove()} disabled={!selectedId || busy || Boolean(selectedRequest)} title={!selectedId ? '먼저 행을 선택하세요.' : selectedRequest ? '견적 의뢰 연결 행은 삭제 대신 의뢰관리 보관·복구를 사용하세요.' : '연결되지 않은 수동 DB 행을 삭제합니다.'} className={`${buttonClass} text-[var(--color-danger)]`}><Trash2 className="size-4" />{t('estimateDb.delete')}</button>
+            {selectedRequest && getEstimateRequestWorklistState(selectedRequest) !== 'ACTIVE' && <button type="button" onClick={() => void restoreRequest()} disabled={busy} className={`${buttonClass} border-orange-300 text-orange-700`}><ArchiveRestore className="size-4" />의뢰관리로 복구</button>}
+            {selectedRequest?.projectIntakeId && <Link href={`/projects/intake?tab=PROJECT_INTAKE&intakeId=${encodeURIComponent(selectedRequest.projectIntakeId)}`} className={buttonClass}><FolderOpen className="size-4" />기존 프로젝트 접수 열기</Link>}
           </div>
           <div className="flex flex-wrap items-center gap-1 border-l pl-2" aria-label="Edit tools">
             <span className="mr-1 text-[10px] font-black uppercase text-[var(--color-text-sub)]">Edit</span>
@@ -145,8 +183,9 @@ export function EstimateDatabaseWorkbench() {
             <button type="button" onClick={() => void exportEstimateDbJson(store.records, store.vendors, store.targets)} className={buttonClass}><FileJson className="size-4" />JSON</button>
           </div>
           </div>
-          <div className="grid gap-2 sm:grid-cols-[minmax(220px,1fr)_120px]" aria-label="Search tools">
+          <div className="grid gap-2 sm:grid-cols-[minmax(220px,1fr)_160px_120px]" aria-label="Search tools">
             <label className="relative"><Search className="pointer-events-none absolute left-3 top-2.5 size-4 text-[var(--color-text-sub)]" /><input value={query} onChange={(event) => { setQuery(event.target.value); setPage(1); setSelectedId(null); setEditingId(null); setSelectedCell(null); setDraft({}); }} aria-label={t('estimateDb.search')} placeholder={t('estimateDb.search')} className={`${fieldClass} rounded pl-9`} /></label>
+            <select value={worklistFilter} onChange={(event) => { setWorklistFilter(event.target.value as EstimateDbWorklistFilter); setPage(1); setSelectedId(null); }} aria-label="의뢰관리 상태 필터" className={fieldClass}>{WORKLIST_FILTERS.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}</select>
             <input type="number" min="2000" max="2200" value={year} onChange={(event) => { setYear(Number(event.target.value)); setPage(1); setSelectedId(null); setEditingId(null); setSelectedCell(null); setDraft({}); }} aria-label={t('estimateDb.year')} className={`${fieldClass} rounded`} />
           </div>
         </section>

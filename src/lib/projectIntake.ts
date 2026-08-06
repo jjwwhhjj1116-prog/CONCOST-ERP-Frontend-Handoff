@@ -215,7 +215,6 @@ export const buildProjectIntakeDraft = (intake: ProjectIntake): ProjectIntakeDra
 export const evaluateProjectIntakeCompleteness = (draft: ProjectIntakeDraft) => {
   const missing: string[] = [];
   if (!draft.projectName.trim()) missing.push('projectName');
-  if (!draft.projectNo.trim()) missing.push('projectNo');
   if (!draft.company.trim() && !draft.client.trim()) missing.push('client');
   if (!draft.workContent.trim() && draft.scopes.length === 0) missing.push('workContent');
   if (draft.targetUnitIds.length === 0 || !draft.primaryUnitId) missing.push('targetUnitIds');

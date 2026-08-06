@@ -17,9 +17,12 @@ test('builds one canonical won chain without assigning a PM', () => {
   assert.equal(result.intake.id, 'project-intake-estimate-request-1');
   assert.equal(result.decision.id, 'commercial-decision-estimate-request-1');
   assert.equal(result.project.publicationStatus, 'DRAFT');
+  assert.equal(result.project.projectNo, undefined);
+  assert.equal(result.intake.projectNo, '');
   assert.equal(result.project.pmId, undefined);
   assert.equal(result.intake.draft?.primaryUnitId, 'FINISH');
   assert.deepEqual(result.project.assignedUnitIds, ['FINISH', 'STRUCTURE']);
+  assert.equal(result.request.worklistState, 'TRANSFERRED_TO_INTAKE');
 });
 
 test('uses stable IDs for an idempotent retry', () => {

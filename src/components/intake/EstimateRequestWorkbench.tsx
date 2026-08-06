@@ -34,6 +34,7 @@ import { ProjectExecutionUnitSelector } from '@/components/intake/ProjectExecuti
 import { EstimateRequestProfileEditor } from '@/components/intake/EstimateRequestProfileEditor';
 import { evaluateEstimateAccess } from '@/lib/accessControl';
 import {
+  filterActiveEstimateRequestWorklist,
   mergeEstimateRequestIntoIntakeDraft,
   resolveEstimateRequestDeletePolicy,
   resolveEstimateRequestEditPolicy,
@@ -131,7 +132,7 @@ export function EstimateRequestWorkbench({ currentUser, t }: Props) {
     sync,
     createRequest,
     duplicateRequest,
-    deleteRequest,
+    archiveRequest,
     updateRequest,
     changeStatus,
     recordDecision,
@@ -160,19 +161,18 @@ export function EstimateRequestWorkbench({ currentUser, t }: Props) {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleteConfirmed, setDeleteConfirmed] = useState(false);
   const sheets = useEstimateSheetStore((state) => state.sheets);
-  const deleteDraftSheet = useEstimateSheetStore((state) => state.deleteDraft);
 
   useEffect(() => { void sync(); }, [sync]);
   const filtered = useMemo(() => {
     const normalized = query.trim().toLowerCase();
-    return requests.filter((request) => {
+    return filterActiveEstimateRequestWorklist(requests).filter((request) => {
       const matchesStatus = statusFilter === 'ALL' || request.status === statusFilter;
       const haystack = [request.requestNo, request.projectName, request.company, request.client, request.contact]
         .filter(Boolean).join(' ').toLowerCase();
       return matchesStatus && (!normalized || haystack.includes(normalized));
     });
   }, [query, requests, statusFilter]);
-  const selected = requests.find((request) => request.id === selectedId) || filtered[0] || null;
+  const selected = filtered.find((request) => request.id === selectedId) || filtered[0] || null;
   const editPolicy = selected ? resolveEstimateRequestEditPolicy(selected) : null;
   const deletePolicy = selected ? resolveEstimateRequestDeletePolicy(selected, sheets[selected.id]) : null;
 
@@ -290,16 +290,13 @@ export function EstimateRequestWorkbench({ currentUser, t }: Props) {
   };
 
   const handleDelete = async () => {
-    if (!selected || !deletePolicy || deletePolicy.kind === 'RESTRICTED' || !deleteConfirmed) return;
-    const deletedId = selected.id;
-    const deleted = await run(async () => {
-      if (deletePolicy.kind === 'DELETE_DRAFT_SHEET_AND_REQUEST') {
-        await deleteDraftSheet(deletedId, currentUser.id);
-      }
-      await deleteRequest(deletedId);
-    }, '견적 의뢰를 삭제했습니다.');
-    if (deleted) {
-      selectRequest(requests.find((item) => item.id !== deletedId)?.id || null, 'replace');
+    if (!selected || !deletePolicy || !deleteConfirmed) return;
+    const archivedId = selected.id;
+    const archived = await run(async () => {
+      await archiveRequest(archivedId, currentUser.id);
+    }, '의뢰관리 목록에서 제거하고 DB에 보관했습니다.');
+    if (archived) {
+      selectRequest(filtered.find((item) => item.id !== archivedId)?.id || null, 'replace');
       setDeleteOpen(false);
       setDeleteConfirmed(false);
     }
@@ -388,7 +385,7 @@ export function EstimateRequestWorkbench({ currentUser, t }: Props) {
           <div className="space-y-2">
             {filtered.length === 0 ? <p className="p-8 text-center text-sm text-[var(--color-text-sub)]">{t('estimateRequest.empty')}</p> : filtered.map((request) => (
               <button key={request.id} type="button" aria-current={selected?.id === request.id ? 'true' : undefined} onClick={() => selectRequest(request.id)} className={`relative grid w-full grid-cols-[1fr_auto] gap-3 rounded-md border p-4 pl-5 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] ${selected?.id === request.id ? 'border-orange-400 bg-orange-50 shadow-[0_8px_20px_rgba(234,88,12,.15)] before:absolute before:inset-y-2 before:left-0 before:w-1 before:rounded-r before:bg-[var(--color-primary)]' : 'border-[var(--color-border)] bg-[var(--color-surface)] hover:-translate-y-0.5 hover:border-orange-300 hover:bg-orange-50/40 hover:shadow-sm'}`}>
-                <span className="min-w-0"><span className="block truncate font-semibold">{request.projectName}</span><span className="mt-1 block truncate text-xs text-[var(--color-text-sub)]">{request.requestNo} · {request.company || request.client || '-'}</span></span>
+                <span className="min-w-0"><span className="block truncate font-semibold">{request.projectName}</span><span className="mt-1 block truncate text-xs text-[var(--color-text-sub)]">{request.projectNo || '프로젝트번호 발급 대기'} · {request.company || request.client || '-'}</span></span>
                 <span className="flex flex-col items-end gap-1 self-center text-xs font-semibold text-[var(--color-primary)]">{selected?.id === request.id && <span className="rounded-full bg-[var(--color-primary)] px-2 py-0.5 text-[10px] text-white">선택됨</span>}<span>{statusText(t, request.status)}</span></span>
               </button>
             ))}
@@ -399,7 +396,7 @@ export function EstimateRequestWorkbench({ currentUser, t }: Props) {
           {!selected ? <p className="p-8 text-center text-sm text-[var(--color-text-sub)]">{t('estimateRequest.selectPrompt')}</p> : (
             <div className="space-y-5">
               <div className="flex flex-wrap items-start justify-between gap-3 rounded-lg border border-orange-300 bg-gradient-to-r from-orange-50 via-white to-white p-4 shadow-sm">
-                <div><p className="text-xs font-semibold text-[var(--color-primary)]">{selected.requestNo}</p><h2 className="mt-1 text-xl font-bold">{selected.projectName}</h2><p className="mt-1 text-sm text-[var(--color-text-sub)]">{selected.company || selected.client || '-'}</p></div>
+                <div><p className="text-xs font-semibold text-[var(--color-primary)]">{selected.projectNo || '수주 완료 시 프로젝트번호 발급'}</p><h2 className="mt-1 text-xl font-bold">{selected.projectName}</h2><p className="mt-1 text-sm text-[var(--color-text-sub)]">{selected.company || selected.client || '-'}</p></div>
                 <div className="flex flex-wrap items-center gap-2">
                   <button type="button" onClick={() => {
                     if (!editPolicy) return;
@@ -496,7 +493,7 @@ export function EstimateRequestWorkbench({ currentUser, t }: Props) {
           <section role="dialog" aria-modal="true" aria-labelledby="estimate-delete-title" className="w-full max-w-xl rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] shadow-[0_24px_70px_rgba(15,23,42,.35)]">
             <header className="flex items-start justify-between gap-4 border-b p-5">
               <div>
-                <p className="text-[10px] font-black tracking-[.12em] text-red-600">DELETE POLICY PREVIEW</p>
+                <p className="text-[10px] font-black tracking-[.12em] text-red-600">WORKLIST ARCHIVE PREVIEW</p>
                 <h2 id="estimate-delete-title" className="mt-1 text-lg font-black">{deletePolicy.title}</h2>
                 <p className="mt-2 text-sm leading-6 text-[var(--color-text-sub)]">{deletePolicy.description}</p>
               </div>
@@ -511,32 +508,16 @@ export function EstimateRequestWorkbench({ currentUser, t }: Props) {
                 </ul>
               </div>
 
-              {deletePolicy.kind === 'RESTRICTED' ? (
-                <>
-                  <div className="grid gap-2 sm:grid-cols-3">
-                    {[
-                      ['취소', '업무를 취소 상태로 전환하고 이력은 보존합니다.'],
-                      ['보관', '목록 기본 조회에서 제외하고 감사 이력은 유지합니다.'],
-                      ['정정 요청', '승인된 정보는 정정 Workflow에서 새 Revision으로 처리합니다.'],
-                    ].map(([label, description]) => (
-                      <div key={label} className="rounded-md border bg-white p-3"><strong className="text-sm">{label}</strong><p className="mt-1 text-xs leading-5 text-[var(--color-text-sub)]">{description}</p></div>
-                    ))}
-                  </div>
-                  <p className="rounded-md border border-amber-200 bg-amber-50 p-3 text-xs font-semibold text-amber-900">현재 연결 상태에서는 직접 삭제를 실행하지 않습니다. 서버 정정·보관 API가 연결되기 전에는 성공으로 표시하지 않습니다.</p>
-                  <div className="flex justify-end"><button type="button" onClick={() => setDeleteOpen(false)} className="rounded border px-4 py-2 text-sm font-semibold transition hover:border-orange-300 hover:bg-orange-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]">확인</button></div>
-                </>
-              ) : (
-                <>
+              <>
                   <label className="flex cursor-pointer items-start gap-3 rounded-md border border-red-200 bg-red-50 p-4 text-sm">
                     <input type="checkbox" checked={deleteConfirmed} onChange={(event) => setDeleteConfirmed(event.target.checked)} className="mt-0.5 size-4 accent-red-600" />
-                    <span><strong className="block text-red-800">삭제 대상을 확인했습니다</strong><span className="mt-1 block text-xs leading-5 text-red-700">이 작업은 DEMO_LOCAL 데이터에서만 실행되며 삭제 후 복구할 수 없습니다.</span></span>
+                    <span><strong className="block text-red-800">목록 제거 대상을 확인했습니다</strong><span className="mt-1 block text-xs leading-5 text-red-700">업무 데이터와 연결 계보는 삭제하지 않으며 DB관리에서 같은 의뢰 ID로 복구할 수 있습니다.</span></span>
                   </label>
                   <div className="flex justify-end gap-2">
                     <button type="button" onClick={() => setDeleteOpen(false)} className="rounded border px-4 py-2 text-sm font-semibold transition hover:border-orange-300 hover:bg-orange-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]">취소</button>
-                    <button type="button" disabled={!deleteConfirmed || busy} title={!deleteConfirmed ? '삭제 대상 확인에 체크해 주세요.' : '확인한 대상을 삭제합니다.'} onClick={() => void handleDelete()} className="inline-flex items-center gap-2 rounded bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 disabled:cursor-not-allowed disabled:opacity-50"><Trash2 className="size-4" />삭제 실행</button>
+                    <button type="button" disabled={!deleteConfirmed || busy} title={!deleteConfirmed ? '보관 대상 확인에 체크해 주세요.' : '의뢰관리에서 제거하고 DB에 보관합니다.'} onClick={() => void handleDelete()} className="inline-flex items-center gap-2 rounded bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 disabled:cursor-not-allowed disabled:opacity-50"><Trash2 className="size-4" />목록에서 제거</button>
                   </div>
-                </>
-              )}
+              </>
             </div>
           </section>
         </div>
