@@ -25,6 +25,7 @@ import {
 import { HandoffLanguageToggle } from '@/components/handoff/HandoffLanguageToggle';
 import { RuntimeCapabilityPanel } from '@/components/handoff/RuntimeCapabilityPanel';
 import { useHandoffLocale } from '@/components/handoff/useHandoffLocale';
+import { ActionButtonGroup, SemanticActionButton } from '@/components/ui/SemanticActionButton';
 import {
   executeFrontendMutation,
   getFrontendModuleBoundary,
@@ -382,14 +383,7 @@ export function DriveWorkspace() {
                     QUEUED → UPLOADING → SCANNING → READY
                   </p>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => inputRef.current?.click()}
-                  className="inline-flex min-h-11 items-center gap-2 bg-[var(--color-primary)] px-4 text-sm font-black text-white"
-                >
-                  <UploadCloud className="h-4 w-4" />
-                  {t.upload}
-                </button>
+                <SemanticActionButton variant="add-resource" icon={<UploadCloud className="h-4 w-4" />} tooltip={t.upload} onClick={() => inputRef.current?.click()}>{t.upload}</SemanticActionButton>
                 <input ref={inputRef} hidden multiple type="file" onChange={addFiles} />
               </div>
               <div className="min-h-56">
@@ -425,28 +419,12 @@ export function DriveWorkspace() {
                             <StateIcon className="h-4 w-4" />
                             {meta.label}
                           </span>
-                          <div className="flex items-center gap-1">
+                          <ActionButtonGroup label={`${item.name} 업로드 작업`}>
                             {!['READY', 'FAILED'].includes(item.state) && (
-                              <button
-                                type="button"
-                                onClick={() => advanceUpload(item.id)}
-                                title="Advance demo state"
-                                className="grid h-9 w-9 place-items-center border border-[var(--color-border)]"
-                              >
-                                <RefreshCw className="h-4 w-4" />
-                              </button>
+                              <SemanticActionButton size="icon" variant="neutral" icon={<RefreshCw className="h-4 w-4" />} tooltip="Demo 상태 진행" onClick={() => advanceUpload(item.id)} />
                             )}
-                            <button
-                              type="button"
-                              onClick={() =>
-                                setUploads((items) => items.filter((candidate) => candidate.id !== item.id))
-                              }
-                              title="Remove"
-                              className="grid h-9 w-9 place-items-center border border-[var(--color-border)] text-red-600"
-                            >
-                              <X className="h-4 w-4" />
-                            </button>
-                          </div>
+                            <SemanticActionButton size="icon" variant="danger" icon={<X className="h-4 w-4" />} tooltip="업로드 항목 제거" onClick={() => setUploads((items) => items.filter((candidate) => candidate.id !== item.id))} />
+                          </ActionButtonGroup>
                         </li>
                       );
                     })}

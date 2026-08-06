@@ -26,6 +26,7 @@ import {
 
 import { HandoffLanguageToggle } from '@/components/handoff/HandoffLanguageToggle';
 import { MailNavigationPanel } from '@/components/mail/MailNavigationPanel';
+import { ActionButtonGroup, SemanticActionButton, type SemanticActionVariant } from '@/components/ui/SemanticActionButton';
 import { RuntimeCapabilityPanel } from '@/components/handoff/RuntimeCapabilityPanel';
 import { useHandoffLocale } from '@/components/handoff/useHandoffLocale';
 import {
@@ -563,14 +564,7 @@ export function MailWorkspace() {
             {currentFolderLabel}
           </button>
           <HandoffLanguageToggle locale={locale} onChange={setLocale} />
-          <button
-            type="button"
-            onClick={() => openComposer('NEW')}
-            className="inline-flex min-h-11 items-center gap-2 bg-[var(--color-primary)] px-5 text-sm font-black text-white"
-          >
-            <PenLine className="h-4 w-4" />
-            {copy.compose}
-          </button>
+          <SemanticActionButton variant="primary" icon={<PenLine className="h-4 w-4" />} tooltip={copy.compose} onClick={() => openComposer('NEW')}>{copy.compose}</SemanticActionButton>
         </div>
       </section>
 
@@ -699,36 +693,42 @@ export function MailWorkspace() {
             <MailAction
               icon={Trash2}
               label={copy.remove}
+              variant="danger"
               onClick={() => moveSelected('TRASH')}
               disabled={!selected.length}
             />
             <MailAction
               icon={CircleAlert}
               label={copy.spam}
+              variant="archive"
               onClick={() => moveSelected('SPAM')}
               disabled={!selected.length}
             />
             <MailAction
               icon={Reply}
               label={copy.reply}
+              variant="edit"
               onClick={() => openComposer('REPLY')}
               disabled={!selected.length}
             />
             <MailAction
               icon={ReplyAll}
               label={copy.replyAll}
+              variant="view"
               onClick={() => openComposer('REPLY_ALL')}
               disabled={!selected.length}
             />
             <MailAction
               icon={Forward}
               label={copy.forward}
+              variant="duplicate"
               onClick={() => openComposer('FORWARD')}
               disabled={!selected.length}
             />
             <MailAction
               icon={AlarmClock}
               label={copy.reminder}
+              variant="warning"
               onClick={() => {
                 patchSelected({ reminder: true });
                 setSelected([]);
@@ -935,32 +935,11 @@ export function MailWorkspace() {
                     </section>
                   )}
 
-                  <div className="grid grid-cols-3 gap-2">
-                    <button
-                      type="button"
-                      onClick={() => openComposer('REPLY')}
-                      className="inline-flex min-h-10 items-center justify-center gap-1.5 bg-[var(--color-primary)] text-[10px] font-black text-white"
-                    >
-                      <Reply className="h-3.5 w-3.5" />
-                      {copy.reply}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => openComposer('REPLY_ALL')}
-                      className="inline-flex min-h-10 items-center justify-center gap-1.5 border border-[var(--color-border)] text-[10px] font-black"
-                    >
-                      <ReplyAll className="h-3.5 w-3.5" />
-                      {copy.replyAll}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => openComposer('FORWARD')}
-                      className="inline-flex min-h-10 items-center justify-center gap-1.5 border border-[var(--color-border)] text-[10px] font-black"
-                    >
-                      <Forward className="h-3.5 w-3.5" />
-                      {copy.forward}
-                    </button>
-                  </div>
+                  <ActionButtonGroup label="메일 상세 작업" className="grid grid-cols-3">
+                    <SemanticActionButton size="sm" variant="edit" icon={<Reply className="h-3.5 w-3.5" />} tooltip={copy.reply} onClick={() => openComposer('REPLY')}>{copy.reply}</SemanticActionButton>
+                    <SemanticActionButton size="sm" variant="view" icon={<ReplyAll className="h-3.5 w-3.5" />} tooltip={copy.replyAll} onClick={() => openComposer('REPLY_ALL')}>{copy.replyAll}</SemanticActionButton>
+                    <SemanticActionButton size="sm" variant="duplicate" icon={<Forward className="h-3.5 w-3.5" />} tooltip={copy.forward} onClick={() => openComposer('FORWARD')}>{copy.forward}</SemanticActionButton>
+                  </ActionButtonGroup>
                 </div>
               </aside>
             )}
@@ -1051,13 +1030,7 @@ export function MailWorkspace() {
                 </ul>
               )}
               <footer className="flex justify-end">
-                <button
-                  type="submit"
-                  className="inline-flex min-h-10 items-center gap-2 bg-[var(--color-primary)] px-5 text-sm font-black text-white"
-                >
-                  <Send className="h-4 w-4" />
-                  {copy.send}
-                </button>
+                <SemanticActionButton type="submit" variant="primary" icon={<Send className="h-4 w-4" />} tooltip={copy.send}>{copy.send}</SemanticActionButton>
               </footer>
             </div>
           </form>
@@ -1072,22 +1045,25 @@ function MailAction({
   label,
   onClick,
   disabled,
+  variant = 'neutral',
 }: {
   icon: typeof Inbox;
   label: string;
   onClick: () => void;
   disabled?: boolean;
+  variant?: SemanticActionVariant;
 }) {
   return (
-    <button
-      type="button"
-      title={label}
+    <SemanticActionButton
+      variant={variant}
+      size="sm"
+      icon={<Icon className="h-3.5 w-3.5" />}
+      tooltip={label}
       onClick={onClick}
       disabled={disabled}
-      className="inline-flex min-h-9 items-center gap-1.5 border border-[var(--color-border)] px-2.5 text-[10px] font-bold disabled:opacity-35"
+      disabledReason={disabled ? '메일을 먼저 선택해 주세요.' : undefined}
     >
-      <Icon className="h-3.5 w-3.5" />
       <span className="hidden sm:inline">{label}</span>
-    </button>
+    </SemanticActionButton>
   );
 }
