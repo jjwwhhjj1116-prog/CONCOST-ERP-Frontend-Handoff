@@ -190,7 +190,7 @@ export default function ProjectBoardPage() {
         alert(t('projects.noAuthAlert'));
         return;
       }
-      if (!isProjectStaffingReady(assignment)) {
+      if (!assignment || !isProjectStaffingReady(assignment)) {
         setStaffingProject(project);
         return;
       }
@@ -212,7 +212,7 @@ export default function ProjectBoardPage() {
 
   const openDispatchForProject = (project: Project) => {
     const assignment = getProjectAssignment(project, assignmentUnitId);
-    if (!isProjectStaffingReady(assignment)) {
+    if (!assignment || !isProjectStaffingReady(assignment)) {
       setStaffingProject(project);
       return;
     }

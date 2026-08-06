@@ -6,6 +6,7 @@ import {
   createProjectStaffingPlan,
   getEligibleProjectPersonnel,
   getProjectAssignment,
+  getProjectAssignmentForContext,
   getProjectStaffingMemberIds,
   getSupportProjectPersonnel,
   isProjectStaffingReady,
@@ -87,4 +88,14 @@ test('keeps one canonical project while combining staffing and task members with
   const tasks = [{ id: 'task-1', projectId: 'project-1', assigneeId: 'finish-worker' }] as TaskCard[];
   assert.deepEqual(getProjectStaffingMemberIds({ id: 'project-1', executionAssignments: staffed, primaryUnitId: 'FINISH' }, tasks, 'FINISH'), ['finish-pm', 'finish-worker']);
   assert.equal(getProjectAssignment({ executionAssignments: staffed, primaryUnitId: 'FINISH' }, 'STRUCTURE')?.projectId, 'project-1');
+  assert.equal(getProjectAssignment({ executionAssignments: staffed, primaryUnitId: 'FINISH' }, 'CLAIM'), undefined);
+});
+
+test('uses the actual screen unit context without falling back to another assignment', () => {
+  const project = { executionAssignments: assignments, primaryUnitId: 'FINISH' as const };
+  assert.equal(getProjectAssignmentForContext(project, 'FINISH')?.unitId, 'FINISH');
+  assert.equal(getProjectAssignmentForContext(project, 'STRUCTURE')?.unitId, 'STRUCTURE');
+  assert.equal(getProjectAssignmentForContext(project, 'CLAIM'), undefined);
+  assert.equal(getProjectAssignmentForContext(project, 'DEVELOPMENT'), undefined);
+  assert.equal(getProjectAssignmentForContext(project, null)?.unitId, 'FINISH');
 });

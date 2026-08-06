@@ -76,14 +76,28 @@ export const getProjectAssignment = (
 ) => {
   const assignments = project.executionAssignments || [];
   if (preferredUnitId) {
-    const exact = assignments.find((assignment) => assignment.unitId === preferredUnitId);
-    if (exact) return exact;
+    return assignments.find((assignment) => assignment.unitId === preferredUnitId);
   }
   if (project.primaryUnitId) {
     const primary = assignments.find((assignment) => assignment.unitId === project.primaryUnitId);
     if (primary) return primary;
   }
-  return assignments.find((assignment) => assignment.role === 'PRIMARY') || assignments[0];
+  return assignments.find((assignment) => assignment.role === 'PRIMARY');
+};
+
+export const getProjectAssignmentForContext = (
+  project: Pick<Project, 'executionAssignments' | 'primaryUnitId'>,
+  contextUnitId?: ProjectExecutionUnitId | null,
+) => {
+  const assignments = project.executionAssignments || [];
+  if (contextUnitId) {
+    return assignments.find((assignment) => assignment.unitId === contextUnitId);
+  }
+  if (project.primaryUnitId) {
+    const primary = assignments.find((assignment) => assignment.unitId === project.primaryUnitId);
+    if (primary) return primary;
+  }
+  return assignments.find((assignment) => assignment.role === 'PRIMARY');
 };
 
 export const getProjectStaffingUnitLabel = (unitId: ProjectExecutionUnitId, language: 'ko' | 'vi' | 'en' = 'ko') => {

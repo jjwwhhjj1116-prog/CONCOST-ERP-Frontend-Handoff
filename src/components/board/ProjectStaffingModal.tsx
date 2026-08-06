@@ -16,7 +16,7 @@ import { isDemoLocalMode } from '@/lib/runtimeExecutionMode';
 import {
   createProjectStaffingPlan,
   getEligibleProjectPersonnel,
-  getProjectAssignment,
+  getProjectAssignmentForContext,
   getProjectStaffingRoleLabel,
   getProjectStaffingUnitLabel,
   getSupportProjectPersonnel,
@@ -38,6 +38,7 @@ const copy = {
     search: '이름·직책 검색', empty: '선택 가능한 인력이 없습니다.', draft: '배정 임시저장', confirm: '배정 확정',
     startNow: '배정 확정 및 착수', pmHelp: 'PM은 정확히 1명, 나머지 공종은 여러 명을 선택할 수 있습니다.',
     history: '저장할 때 이전·이후 배정과 사유·담당자·시각·Revision을 기록합니다.', reason: '배정 사유',
+    missingContext: '현재 화면의 담당부서가 이 프로젝트에 배정되어 있지 않습니다. 임의의 부서로 바꾸지 않았습니다.',
   },
   vi: {
     eyebrow: 'Kế hoạch nhân sự', title: 'Phân công hạng mục và nhân sự', unit: 'Đơn vị', role: 'Hạng mục', people: 'Nhân sự',
@@ -45,6 +46,7 @@ const copy = {
     search: 'Tìm tên / chức danh', empty: 'Không có nhân sự phù hợp.', draft: 'Lưu nháp phân công', confirm: 'Xác nhận phân công',
     startNow: 'Xác nhận và bắt đầu', pmHelp: 'PM phải đúng 1 người; các hạng mục khác cho phép chọn nhiều người.',
     history: 'Mỗi lần lưu ghi nhận trước/sau, lý do, người thao tác, thời gian và revision.', reason: 'Lý do phân công',
+    missingContext: 'Đơn vị của màn hình hiện tại chưa được gán cho dự án này. Hệ thống không tự động chọn đơn vị khác.',
   },
   en: {
     eyebrow: 'Unit staffing plan', title: 'Assign roles and personnel', unit: 'Execution unit', role: 'Role', people: 'Personnel',
@@ -52,6 +54,7 @@ const copy = {
     search: 'Search name or title', empty: 'No eligible personnel found.', draft: 'Save staffing draft', confirm: 'Confirm staffing',
     startNow: 'Confirm and start', pmHelp: 'Exactly one PM is required; every other role supports multiple people.',
     history: 'Each save records before/after, reason, actor, timestamp, and revision.', reason: 'Assignment reason',
+    missingContext: 'The unit for the current screen is not assigned to this project. No other unit was selected automatically.',
   },
 };
 
@@ -64,7 +67,8 @@ export const ProjectStaffingModal: React.FC<ProjectStaffingModalProps> = ({ proj
   const t = useTranslation(settings.uiLanguage);
   const text = copy[settings.uiLanguage];
   const assignments = useMemo(() => project.executionAssignments || [], [project.executionAssignments]);
-  const initialAssignment = getProjectAssignment(project, initialUnitId);
+  const initialAssignment = getProjectAssignmentForContext(project, initialUnitId);
+  const contextAssignmentMissing = Boolean(initialUnitId && !initialAssignment);
   const [unitId, setUnitId] = useState<ProjectExecutionUnitId | null>(initialAssignment?.unitId || null);
   const [plan, setPlan] = useState<ProjectStaffingRoleAssignment[]>(() => initialAssignment
     ? createProjectStaffingPlan(initialAssignment.unitId, initialAssignment.staffingPlan)
@@ -169,7 +173,8 @@ export const ProjectStaffingModal: React.FC<ProjectStaffingModalProps> = ({ proj
         <div className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-6">
           <div className="grid gap-4 lg:grid-cols-[250px_minmax(0,1fr)]">
             <aside className="space-y-3">
-              <label className="block rounded-xl border bg-[var(--cc-surface-2)] p-4 text-xs font-black">{text.unit}<select value={unitId || ''} onChange={(event) => handleUnitChange(event.target.value as ProjectExecutionUnitId)} className="mt-2 min-h-11 w-full rounded-lg border bg-white px-3 text-sm font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]">{assignments.map((item) => <option key={item.id} value={item.unitId}>{getProjectStaffingUnitLabel(item.unitId, settings.uiLanguage)}</option>)}</select></label>
+              <label className="block rounded-xl border bg-[var(--cc-surface-2)] p-4 text-xs font-black">{text.unit}<select value={unitId || ''} onChange={(event) => handleUnitChange(event.target.value as ProjectExecutionUnitId)} className="mt-2 min-h-11 w-full rounded-lg border bg-white px-3 text-sm font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]"><option value="" disabled>{text.unit}</option>{assignments.map((item) => <option key={item.id} value={item.unitId}>{getProjectStaffingUnitLabel(item.unitId, settings.uiLanguage)}</option>)}</select></label>
+              {contextAssignmentMissing && !unitId && <div role="status" className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-xs font-semibold leading-5 text-amber-950"><ShieldAlert className="mb-2 size-5 text-amber-600" />{text.missingContext}</div>}
               <div className="rounded-xl border border-sky-200 bg-sky-50 p-4 text-xs leading-5 text-sky-950"><strong className="block">{text.pmHelp}</strong><span className="mt-1 block">{text.history}</span></div>
               <label className="block rounded-xl border bg-white p-4 text-xs font-black">{text.reason}<textarea value={reason} onChange={(event) => setReason(event.target.value)} rows={3} className="mt-2 w-full resize-y rounded-lg border p-2 text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]" /></label>
               <dl className="grid grid-cols-2 gap-2 rounded-xl border bg-white p-4 text-xs"><dt className="text-[var(--color-text-sub)]">상태</dt><dd className="text-right font-black">{assignment?.staffingStatus || 'DRAFT'}</dd><dt className="text-[var(--color-text-sub)]">Revision</dt><dd className="text-right font-black">{assignment?.staffingRevision || 0}</dd><dt className="text-[var(--color-text-sub)]">총 인원</dt><dd className="text-right font-black">{selectedMemberIds.length}</dd></dl>
