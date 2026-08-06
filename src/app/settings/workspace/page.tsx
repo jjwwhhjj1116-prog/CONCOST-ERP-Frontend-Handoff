@@ -9,6 +9,7 @@ import { Settings, Save, Edit2 } from 'lucide-react';
 import { exportWorkspaceData, downloadJson, saveDraftToLocalStorage, validateImportData, applyImportData } from '@/lib/jsonHandoff';
 import { useTranslationStore } from '@/store/translationStore';
 import { useTranslation } from '@/lib/localization';
+import { ActionButtonGroup, DangerActionSection, SemanticActionButton } from '@/components/ui/SemanticActionButton';
 
 export default function WorkspaceSettingsPage() {
   const { settings: translationSettings } = useTranslationStore();
@@ -114,9 +115,7 @@ export default function WorkspaceSettingsPage() {
                   <p className="text-sm text-[var(--color-text-sub)] mt-1">{setting.description}</p>
                 </div>
                 {canEdit && !isEditing && (
-                  <button onClick={() => handleEditClick(setting.key, setting.value)} className="p-2 text-[var(--color-text-sub)] hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]">
-                    <Edit2 className="w-4 h-4" />
-                  </button>
+                  <SemanticActionButton size="icon" variant="edit" icon={<Edit2 className="h-4 w-4" />} tooltip={`${setting.key} 수정`} onClick={() => handleEditClick(setting.key, setting.value)} />
                 )}
               </div>
 
@@ -134,14 +133,10 @@ export default function WorkspaceSettingsPage() {
                         className="w-full border rounded p-2 text-sm font-mono focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]"
                       />
                     )}
-                    <div className="flex flex-col gap-2 shrink-0">
-                      <button onClick={() => handleSave(setting.key, setting.value)} className="px-3 py-1.5 bg-indigo-600 text-white text-xs font-bold rounded shadow-sm hover:bg-indigo-700 flex items-center justify-center gap-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]">
-                        <Save className="w-3 h-3" /> {t('settings.workspace.btnSave')}
-                      </button>
-                      <button onClick={() => setEditingKey(null)} className="px-3 py-1.5 border text-[var(--color-text-sub)] text-xs font-bold rounded hover:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]">
-                        {t('settings.workspace.btnCancel')}
-                      </button>
-                    </div>
+                    <ActionButtonGroup label={`${setting.key} 편집`} className="shrink-0 flex-col">
+                      <SemanticActionButton size="sm" variant="save" icon={<Save className="h-3 w-3" />} tooltip={t('settings.workspace.btnSave')} onClick={() => handleSave(setting.key, setting.value)}>{t('settings.workspace.btnSave')}</SemanticActionButton>
+                      <SemanticActionButton size="sm" variant="neutral" tooltip={t('settings.workspace.btnCancel')} onClick={() => setEditingKey(null)}>{t('settings.workspace.btnCancel')}</SemanticActionButton>
+                    </ActionButtonGroup>
                   </div>
                 ) : (
                   <div className="w-full flex justify-between items-end">
@@ -164,18 +159,15 @@ export default function WorkspaceSettingsPage() {
         <h2 className="text-lg font-bold text-red-700 mb-2">{t('settings.workspace.dangerZoneTitle')}</h2>
         <div className="flex justify-between items-center">
           <p className="text-sm text-[var(--color-text-sub)]">{t('settings.workspace.dangerZoneDesc')}</p>
-          <button 
-            onClick={() => {
+          <DangerActionSection>
+          <SemanticActionButton variant="danger" tooltip={t('settings.workspace.btnBatchClose')} onClick={() => {
               if (confirm(t('settings.workspace.dangerZoneConfirm'))) {
                 batchCloseOverdueProjects(currentUser.id);
                 setSuccessMsg(t('settings.workspace.dangerZoneSuccess'));
                 setTimeout(() => setSuccessMsg(''), 3000);
               }
-            }}
-            className="px-4 py-2 bg-red-600 text-white rounded text-sm font-bold hover:bg-red-700 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]"
-          >
-            {t('settings.workspace.btnBatchClose')}
-          </button>
+            }}>{t('settings.workspace.btnBatchClose')}</SemanticActionButton>
+          </DangerActionSection>
         </div>
       </div>
 
@@ -183,8 +175,7 @@ export default function WorkspaceSettingsPage() {
         <h2 className="text-lg font-bold text-indigo-700 mb-2">{t('settings.workspace.fixtureTitle')}</h2>
         <div className="flex justify-between items-center">
           <p className="text-sm text-[var(--color-text-sub)]">{t('settings.workspace.fixtureDesc')}</p>
-          <button 
-            onClick={() => {
+          <SemanticActionButton variant="warning" tooltip={t('settings.workspace.btnInject')} disabled={appMode !== 'ADMIN_VALIDATION'} disabledReason={appMode !== 'ADMIN_VALIDATION' ? t('settings.workspace.fixtureOnlyAdmin') : undefined} onClick={() => {
               if (appMode !== 'ADMIN_VALIDATION') {
                 alert(t('settings.workspace.fixtureOnlyAdmin'));
                 return;
@@ -196,11 +187,7 @@ export default function WorkspaceSettingsPage() {
                 setSuccessMsg(t('settings.workspace.fixtureSuccess'));
                 setTimeout(() => setSuccessMsg(''), 3000);
               }
-            }}
-            className={`px-4 py-2 rounded text-sm font-bold transition ${appMode === 'ADMIN_VALIDATION' ? 'bg-indigo-600 text-white hover:bg-indigo-700' : 'bg-gray-300 text-[var(--color-text-sub)] cursor-not-allowed'} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]`}
-          >
-            {t('settings.workspace.btnInject')}
-          </button>
+            }}>{t('settings.workspace.btnInject')}</SemanticActionButton>
         </div>
       </div>
 
@@ -212,21 +199,15 @@ export default function WorkspaceSettingsPage() {
         </p>
 
         <div className="space-y-4">
-          <div className="flex flex-wrap gap-4 border-b pb-6">
-            <button onClick={handleSaveDraft} className="px-4 py-2 border border-[var(--color-border-strong)] rounded text-sm hover:bg-[var(--color-bg)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]">
-              {t('settings.workspace.btnSaveDraft')}
-            </button>
-            <button onClick={handleExportJson} className="px-4 py-2 border border-blue-500 text-blue-600 rounded text-sm hover:bg-blue-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]">
-              {t('settings.workspace.btnExport')}
-            </button>
+          <ActionButtonGroup label="인수인계 데이터 작업" className="border-b pb-6">
+            <SemanticActionButton variant="save" tooltip={t('settings.workspace.btnSaveDraft')} onClick={handleSaveDraft}>{t('settings.workspace.btnSaveDraft')}</SemanticActionButton>
+            <SemanticActionButton variant="document" tooltip={t('settings.workspace.btnExport')} onClick={handleExportJson}>{t('settings.workspace.btnExport')}</SemanticActionButton>
             <label className="px-4 py-2 border border-[var(--color-border-strong)] rounded text-sm hover:bg-[var(--color-bg)] cursor-pointer focus-within:outline-none focus-within:ring-2 focus-within:ring-[var(--color-primary)]">
               {t('settings.workspace.btnImport')}
               <input type="file" accept=".json" className="hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]" onChange={handleImportJson} />
             </label>
-            <button onClick={generateHandoffPackage} className="px-4 py-2 bg-gray-800 text-white rounded text-sm hover:bg-gray-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]">
-              {t('settings.workspace.btnGeneratePackage')}
-            </button>
-          </div>
+            <SemanticActionButton variant="view" tooltip={t('settings.workspace.btnGeneratePackage')} onClick={generateHandoffPackage}>{t('settings.workspace.btnGeneratePackage')}</SemanticActionButton>
+          </ActionButtonGroup>
           
           <div className="bg-yellow-50 text-yellow-800 p-4 rounded text-sm border border-yellow-200">
             <strong>{t('settings.workspace.noticeLabel')}</strong> {t('settings.workspace.noticeMsg1')}<code>/json</code>{t('settings.workspace.noticeMsg2')}

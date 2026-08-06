@@ -16,6 +16,7 @@ import type { LucideIcon } from 'lucide-react';
 
 import { ConfigurableCard, type ConfigurableCardState } from '@/components/ui/ConfigurableCard';
 import { DetailDrawer } from '@/components/ui/DetailDrawer';
+import { ActionButtonGroup, SemanticActionButton, type SemanticActionVariant } from '@/components/ui/SemanticActionButton';
 import { canManageWorkspaceConfiguration } from '@/lib/accessControl';
 import {
   createDriveIntegrationDraft,
@@ -244,14 +245,7 @@ export function DriveIntegrationSettings() {
             <span className="text-[10px] font-bold text-[var(--color-text-sub)]">
               현재 Provider: {providerState}
             </span>
-            <button
-              type="button"
-              disabled={!canEdit || !dirty}
-              onClick={saveDraft}
-              className="min-h-11 bg-[#172554] px-4 text-xs font-black text-white disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              Demo 설정 초안 적용
-            </button>
+            <SemanticActionButton variant="save" disabled={!canEdit || !dirty} disabledReason={!canEdit ? '관리자만 Drive 설정을 변경할 수 있습니다.' : !dirty ? '변경된 설정이 없습니다.' : undefined} tooltip="Demo 설정 초안 적용" onClick={saveDraft}>Demo 설정 초안 적용</SemanticActionButton>
           </div>
         }
       >
@@ -277,24 +271,25 @@ export function DriveIntegrationSettings() {
                 </div>
               ))}
             </section>
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            <ActionButtonGroup label="Drive Provider 연결 작업" className="grid grid-cols-2 sm:grid-cols-4">
               {[
                 ['CONNECT', Link2],
                 ['CHANGE', RefreshCw],
                 ['REAUTH', CheckCircle2],
                 ['DISCONNECT', Unplug],
-              ].map(([action, Icon]) => (
-                <button
+              ].map(([action, Icon]) => {
+                const variant: SemanticActionVariant = action === 'DISCONNECT' ? 'danger' : action === 'CONNECT' ? 'add-resource' : 'edit';
+                return <SemanticActionButton
                   key={String(action)}
-                  type="button"
+                  variant={variant}
+                  icon={<Icon className="h-4 w-4" />}
+                  tooltip={String(action)}
                   onClick={() => providerAction(action as 'CONNECT' | 'CHANGE' | 'REAUTH' | 'DISCONNECT')}
-                  className="flex min-h-16 flex-col items-center justify-center gap-1 border border-[var(--color-border)] text-[10px] font-black hover:bg-[var(--cc-surface-2)]"
                 >
-                  <Icon className="h-4 w-4" />
                   {String(action)}
-                </button>
-              ))}
-            </div>
+                </SemanticActionButton>;
+              })}
+            </ActionButtonGroup>
 
             <fieldset disabled={!canEdit} className="space-y-4">
               <legend className="text-sm font-black text-[var(--color-text-main)]">

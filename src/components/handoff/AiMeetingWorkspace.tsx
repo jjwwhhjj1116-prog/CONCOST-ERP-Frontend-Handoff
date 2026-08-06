@@ -23,6 +23,7 @@ import {
 import { useMemo, useState } from 'react';
 
 import { HandoffLanguageToggle } from '@/components/handoff/HandoffLanguageToggle';
+import { ActionButtonGroup, SemanticActionButton } from '@/components/ui/SemanticActionButton';
 import { RuntimeCapabilityPanel } from '@/components/handoff/RuntimeCapabilityPanel';
 import { useHandoffLocale } from '@/components/handoff/useHandoffLocale';
 import {
@@ -485,24 +486,10 @@ export function AiMeetingWorkspace() {
               <ShieldCheck className="mb-2 h-5 w-5" />
               {t.providerPolicy}
             </div>
-            <div className="mt-4 flex gap-2">
-              <button
-                type="button"
-                onClick={() => void runJob()}
-                className="flex min-h-11 flex-1 items-center justify-center gap-2 bg-[#235ec7] px-4 text-xs font-black text-white"
-              >
-                <Play className="h-4 w-4" />
-                {t.run}
-              </button>
-              <button
-                type="button"
-                onClick={reset}
-                className="flex min-h-11 items-center gap-2 border border-[var(--color-border)] px-4 text-xs font-black text-[var(--color-text-sub)]"
-              >
-                <RotateCcw className="h-4 w-4" />
-                {t.reset}
-              </button>
-            </div>
+            <ActionButtonGroup label="AI 회의록 생성 작업" className="mt-4">
+              <SemanticActionButton variant="primary" className="flex-1" icon={<Play className="h-4 w-4" />} tooltip={t.run} onClick={() => void runJob()}>{t.run}</SemanticActionButton>
+              <SemanticActionButton variant="neutral" icon={<RotateCcw className="h-4 w-4" />} tooltip={t.reset} onClick={reset}>{t.reset}</SemanticActionButton>
+            </ActionButtonGroup>
           </article>
         </div>
 
@@ -641,16 +628,7 @@ export function AiMeetingWorkspace() {
                 );
               })}
             </div>
-            <button
-              type="button"
-              onClick={() => void saveMinute()}
-              disabled={!minutes}
-              className="mt-4 flex min-h-12 w-full items-center justify-center gap-2 bg-[#eb6300] px-5 text-sm font-black text-white disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              <Save className="h-4 w-4" />
-              {t.save}
-              <Link2 className="h-4 w-4" />
-            </button>
+            <SemanticActionButton variant="save" className="mt-4 w-full" icon={<Save className="h-4 w-4" />} tooltip={t.save} disabled={!minutes} disabledReason="AI 초안을 먼저 생성해 주세요." onClick={() => void saveMinute()}>{t.save}<Link2 className="h-4 w-4" /></SemanticActionButton>
           </article>
         </div>
       </section>

@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/Badge';
 import { useTranslationStore } from '@/store/translationStore';
 import { useTranslation } from '@/lib/localization';
 import { ModuleHandoffPanel } from '@/components/handoff/ModuleHandoffPanel';
+import { ActionButtonGroup, SemanticActionButton } from '@/components/ui/SemanticActionButton';
 import {
   executeFrontendMutation,
   getFrontendModuleBoundary,
@@ -107,12 +108,7 @@ export default function MyTasksPage() {
                     </div>
                   </div>
                   {task.status === 'IN_PROGRESS' && (
-                    <button 
-                      onClick={() => setSelectedTask(task)}
-                      className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-indigo-700 transition-colors shadow-sm font-bold"
-                    >
-                      {t('myTasks.btnFinishReq')}
-                    </button>
+                    <SemanticActionButton variant="warning" tooltip={t('myTasks.btnFinishReq')} onClick={() => setSelectedTask(task)}>{t('myTasks.btnFinishReq')}</SemanticActionButton>
                   )}
                 </div>
               ))}
@@ -135,20 +131,10 @@ export default function MyTasksPage() {
                       <h3 className="font-bold text-[var(--color-text-main)]">{task.title}</h3>
                       <p className="text-sm text-[var(--color-text-sub)] max-w-lg truncate">{task.description}</p>
                     </div>
-                    <div className="space-x-2 flex">
-                      <button 
-                        onClick={() => void handleReviewCompletion(task.id, true)}
-                        className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] bg-green-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-green-700"
-                      >
-                        {t('myTasks.btnApprove')}
-                      </button>
-                      <button 
-                        onClick={() => void handleReviewCompletion(task.id, false)}
-                        className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] bg-red-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-red-700"
-                      >
-                        {t('myTasks.btnReject')}
-                      </button>
-                    </div>
+                    <ActionButtonGroup label={`${task.title} 완료 검토`}>
+                      <SemanticActionButton variant="success" tooltip={t('myTasks.btnApprove')} onClick={() => void handleReviewCompletion(task.id, true)}>{t('myTasks.btnApprove')}</SemanticActionButton>
+                      <SemanticActionButton variant="reject" tooltip={t('myTasks.btnReject')} onClick={() => void handleReviewCompletion(task.id, false)}>{t('myTasks.btnReject')}</SemanticActionButton>
+                    </ActionButtonGroup>
                   </div>
                 ))}
               </div>
@@ -172,21 +158,7 @@ export default function MyTasksPage() {
                 placeholder={t('myTasks.modalMemoPh')}
               />
             </div>
-            <div className="px-6 py-4 bg-[var(--color-bg)] border-t border-[var(--color-border)] flex justify-end gap-2">
-              <button 
-                onClick={() => setSelectedTask(null)}
-                className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] px-4 py-2 text-[var(--color-text-main)] bg-[var(--color-surface)] border border-[var(--color-border-strong)] rounded-lg text-sm font-medium hover:bg-[var(--color-bg)] transition-colors"
-              >
-                {t('myTasks.btnCancel')}
-              </button>
-              <button 
-                onClick={() => void handleRequestCompletion()}
-                disabled={!memo.trim()}
-                className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-bold hover:bg-indigo-700 disabled:opacity-50 transition-colors shadow-sm"
-              >
-                {t('myTasks.btnSubmit')}
-              </button>
-            </div>
+            <div className="border-t border-[var(--color-border)] bg-[var(--color-bg)] px-6 py-4"><ActionButtonGroup label="완료 요청 제출" className="justify-end"><SemanticActionButton variant="neutral" tooltip={t('myTasks.btnCancel')} onClick={() => setSelectedTask(null)}>{t('myTasks.btnCancel')}</SemanticActionButton><SemanticActionButton variant="primary" tooltip={t('myTasks.btnSubmit')} onClick={() => void handleRequestCompletion()} disabled={!memo.trim()} disabledReason="완료 메모를 입력해 주세요.">{t('myTasks.btnSubmit')}</SemanticActionButton></ActionButtonGroup></div>
           </div>
         </div>
       )}

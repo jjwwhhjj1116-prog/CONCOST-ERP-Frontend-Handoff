@@ -11,6 +11,7 @@ import { useScheduleStore } from '@/store/scheduleStore';
 import { useUiStore } from '@/store/uiStore';
 import type { PersonalSchedule, ScheduleType } from '@/types/models';
 import { ModuleHandoffPanel } from '@/components/handoff/ModuleHandoffPanel';
+import { ActionButtonGroup, SemanticActionButton } from '@/components/ui/SemanticActionButton';
 import {
   executeFrontendMutation,
   getFrontendModuleBoundary,
@@ -157,7 +158,7 @@ export default function CalendarPage() {
         <h1 className="mt-1 text-2xl font-black text-[var(--color-text-main)]">{view === 'TODAY' ? '오늘 일정' : view === 'UPCOMING' ? '예정된 일정' : '일정 관리'}</h1>
         <p className="mt-1 text-sm text-[var(--color-text-sub)]">개인 일정과 회의, 프로젝트 연결 일정을 한곳에서 확인합니다.</p>
       </div>
-      <button type="button" onClick={() => openFormForDate()} className="inline-flex min-h-10 items-center gap-2 rounded-md bg-[var(--color-primary)] px-4 text-sm font-bold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2"><Plus className="h-4 w-4" />일정 추가</button>
+      <SemanticActionButton variant="primary" icon={<Plus className="h-4 w-4" />} tooltip="일정 추가" onClick={() => openFormForDate()}>일정 추가</SemanticActionButton>
     </header>
 
     <ModuleHandoffPanel
@@ -234,7 +235,7 @@ export default function CalendarPage() {
           <label className="text-xs font-bold text-[var(--color-text-sub)]">종료<input type="datetime-local" className={`${inputClass} mt-1`} value={endDateTime} onChange={(event) => setEndDateTime(event.target.value)} /></label>
           <label className="md:col-span-2 text-xs font-bold text-[var(--color-text-sub)]">메모<textarea className={`${inputClass} mt-1 min-h-24 resize-y`} value={description} onChange={(event) => setDescription(event.target.value)} /></label>
         </div>
-        <footer className="flex justify-end gap-2 border-t border-[var(--color-border)] px-5 py-4"><button type="button" onClick={() => setShowForm(false)} className="rounded-md border border-[var(--color-border)] px-4 py-2 text-sm font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]">취소</button><button type="button" disabled={!title.trim() || new Date(endDateTime) < new Date(startDateTime)} onClick={submitSchedule} className="rounded-md bg-[var(--color-primary)] px-4 py-2 text-sm font-bold text-white disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]">저장</button></footer>
+        <footer className="border-t border-[var(--color-border)] px-5 py-4"><ActionButtonGroup label="일정 저장 작업" className="justify-end"><SemanticActionButton variant="neutral" tooltip="취소" onClick={() => setShowForm(false)}>취소</SemanticActionButton><SemanticActionButton variant="save" tooltip="일정 저장" disabled={!title.trim() || new Date(endDateTime) < new Date(startDateTime)} disabledReason={!title.trim() ? '일정 제목을 입력해 주세요.' : '종료일시는 시작일시보다 빠를 수 없습니다.'} onClick={submitSchedule}>저장</SemanticActionButton></ActionButtonGroup></footer>
       </section>
     </div>}
   </div>;

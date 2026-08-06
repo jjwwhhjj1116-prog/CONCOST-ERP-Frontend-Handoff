@@ -4,6 +4,7 @@ import { ArrowRight, BriefcaseBusiness, CircleDollarSign, Plus } from 'lucide-re
 import { FormEvent, useMemo, useState } from 'react';
 
 import { HandoffLanguageToggle } from '@/components/handoff/HandoffLanguageToggle';
+import { SemanticActionButton } from '@/components/ui/SemanticActionButton';
 import { RuntimeCapabilityPanel } from '@/components/handoff/RuntimeCapabilityPanel';
 import { useHandoffLocale } from '@/components/handoff/useHandoffLocale';
 import {
@@ -284,13 +285,7 @@ export function BusinessModuleWorkbench({ module }: BusinessModuleWorkbenchProps
               className="mt-1 min-h-24 w-full resize-y border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-sm font-semibold text-[var(--color-text-main)]"
             />
           </label>
-          <button
-            type="submit"
-            className="inline-flex min-h-11 items-center justify-center gap-2 bg-[var(--color-primary)] px-4 text-sm font-black text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2"
-          >
-            <Plus className="h-4 w-4" />
-            {t.create}
-          </button>
+          <SemanticActionButton type="submit" variant="primary" icon={<Plus className="h-4 w-4" />} tooltip={t.create}>{t.create}</SemanticActionButton>
         </form>
 
         <div className="grid min-w-0 gap-4 lg:grid-cols-[minmax(240px,.8fr)_minmax(280px,1.2fr)]">

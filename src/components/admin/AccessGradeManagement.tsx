@@ -5,6 +5,7 @@ import { BadgeDollarSign, Building2, ShieldCheck, UserRoundCog } from 'lucide-re
 
 import { ConfigurableCard } from '@/components/ui/ConfigurableCard';
 import { DetailDrawer } from '@/components/ui/DetailDrawer';
+import { SemanticActionButton } from '@/components/ui/SemanticActionButton';
 import {
   canManageWorkspaceConfiguration,
   evaluateFinanceAccess,
@@ -168,14 +169,7 @@ export function AccessGradeManagement() {
             <span className="text-[10px] font-bold text-[var(--color-text-sub)]">
               서버 Capability 저장 Endpoint 필요
             </span>
-            <button
-              type="button"
-              onClick={save}
-              disabled={!canEdit || !dirty}
-              className="min-h-11 bg-[#172554] px-4 text-xs font-black text-white disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              Demo 설정 적용
-            </button>
+            <SemanticActionButton variant="save" tooltip="Demo 설정 적용" onClick={save} disabled={!canEdit || !dirty} disabledReason={!canEdit ? '관리자만 접근 등급을 변경할 수 있습니다.' : !dirty ? '변경된 설정이 없습니다.' : undefined}>Demo 설정 적용</SemanticActionButton>
           </div>
         }
       >
