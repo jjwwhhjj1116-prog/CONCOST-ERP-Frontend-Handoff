@@ -1,7 +1,7 @@
 import React from 'react';
 import { Project, ProjectExecutionUnitId, TaskCard } from '@/types/models';
 import { getProjectOverallProgress, getProjectDeliveryLifecycle, getProjectDeliveryBadge, getProjectBoardColumn } from '@/lib/selectors';
-import { Activity, AlertCircle, BarChart3, CalendarClock, CheckCircle, ClipboardCheck, Clock, LayoutDashboard, PackageCheck, PencilLine, User, UsersRound } from 'lucide-react';
+import { Activity, AlertCircle, BarChart3, CalendarClock, CheckCircle, ClipboardCheck, Clock, PackageCheck, PencilLine, User, UsersRound } from 'lucide-react';
 import { useProjectStore } from '@/store/projectStore';
 import { useAuthStore } from '@/store/authStore';
 import { Badge } from '@/components/ui/Badge';
@@ -10,6 +10,7 @@ import { useTranslationStore } from '@/store/translationStore';
 import { ProjectWorkflowSummary, ProjectWorkflowTab } from '@/lib/projectWorkflow';
 import { ProjectWorkflowProgress } from '@/components/projects/ProjectWorkflowProgress';
 import { getProjectAssignment, getProjectStaffingMemberIds, getProjectStaffingRoleLabel, isProjectStaffingReady } from '@/lib/projectStaffing';
+import { SemanticActionButton, type SemanticActionVariant } from '@/components/ui/SemanticActionButton';
 
 interface Props {
   project: Project;
@@ -39,6 +40,7 @@ export const ProjectSummaryCard: React.FC<Props> = ({ project, tasks, onClick, d
     .filter((user): user is NonNullable<typeof user> => Boolean(user));
   const memberTeams = Array.from(new Set(projectMembers.map((user) => user.teamName || user.subDepartmentName || user.departmentName).filter(Boolean)));
   const staffingRoles = assignment?.staffingPlan || [];
+  const assignedStaffingMemberCount = new Set(staffingRoles.flatMap((role) => role.personnelIds)).size;
   const unassignedRoleCount = staffingRoles.filter((role) => role.personnelIds.length === 0).length;
   const staffingReady = isProjectStaffingReady(assignment);
   const staffingStatusLabel = assignment?.staffingStatus === 'ACTIVE'
@@ -46,6 +48,13 @@ export const ProjectSummaryCard: React.FC<Props> = ({ project, tasks, onClick, d
     : assignment?.staffingStatus === 'CONFIRMED'
       ? '확정'
       : '미확정';
+  const staffingActionLabel = !assignment || assignedStaffingMemberCount === 0
+    ? '투입인원 배정'
+    : assignment.staffingStatus === 'ACTIVE'
+      ? '투입인원 변경'
+      : assignment.staffingStatus === 'CONFIRMED'
+        ? '투입인원 보기·수정'
+        : '투입인원 계속 배정';
   const activeRevisionsCount = revisionRequests.filter(r => r.projectId === project.id && (r.status === 'PENDING' || r.status === 'ACCEPTED')).length;
   const boardColumn = getProjectBoardColumn(project, new Date(), activeRevisionsCount > 0);
   const cardAccent = boardColumn === 'PRE_WORK' ? 'border-l-slate-400' : boardColumn === 'IN_PROGRESS' ? 'border-l-sky-500' : boardColumn === 'COMPLETED' ? 'border-l-emerald-500' : 'border-l-orange-500';
@@ -178,12 +187,11 @@ export const ProjectSummaryCard: React.FC<Props> = ({ project, tasks, onClick, d
         <WorkflowAction icon={<BarChart3 className="h-3.5 w-3.5" />} label={t('projectWorkflow.phase.PROFIT')} onClick={() => onOperationClick(project.id, 'PROFIT')} />
       </div>}
 
-      <div className="grid grid-cols-2 gap-1.5 border-t border-[var(--color-border)] pt-2">
-        <ProjectAction icon={<LayoutDashboard className="h-3.5 w-3.5" />} label={t('board.summary.openBoard')} tone="bg-white text-slate-700 border-slate-200" onClick={() => onClick(project.id)} />
-        {onProjectAction && <ProjectAction icon={<UsersRound className="h-3.5 w-3.5" />} label="투입인원 배정" tone="bg-sky-50 text-sky-700 border-sky-200" onClick={() => onProjectAction(project, 'START')} />}
-        {boardColumn === 'IN_PROGRESS' && onProjectAction && <><ProjectAction icon={<CalendarClock className="h-3.5 w-3.5" />} label="납품 예정" tone="bg-amber-50 text-amber-700 border-amber-200" onClick={() => onProjectAction(project, 'DUE')} /><ProjectAction icon={<PackageCheck className="h-3.5 w-3.5" />} label="납품 완료" tone="bg-emerald-50 text-emerald-700 border-emerald-200" onClick={() => onProjectAction(project, 'COMPLETE')} /></>}
-        {boardColumn === 'COMPLETED' && onProjectAction && <ProjectAction icon={<PackageCheck className="h-3.5 w-3.5" />} label="납품 이력" tone="bg-emerald-50 text-emerald-700 border-emerald-200" onClick={() => onProjectAction(project, 'COMPLETE')} />}
-        {boardColumn === 'REVISION' && onProjectAction && <ProjectAction icon={<PencilLine className="h-3.5 w-3.5" />} label="수정 등록" tone="bg-orange-50 text-orange-700 border-orange-200" onClick={() => onProjectAction(project, 'REVISION')} />}
+      <div className="grid grid-cols-1 gap-1.5 border-t border-[var(--color-border)] pt-2 sm:grid-cols-2">
+        {onProjectAction && <ProjectAction icon={<UsersRound className="h-3.5 w-3.5" />} label={staffingActionLabel} variant={!assignment || assignedStaffingMemberCount === 0 ? 'add-resource' : 'edit'} onClick={() => onProjectAction(project, 'START')} />}
+        {boardColumn === 'IN_PROGRESS' && onProjectAction && <><ProjectAction icon={<CalendarClock className="h-3.5 w-3.5" />} label="납품 예정" variant="warning" onClick={() => onProjectAction(project, 'DUE')} /><ProjectAction icon={<PackageCheck className="h-3.5 w-3.5" />} label="납품 완료" variant="success" onClick={() => onProjectAction(project, 'COMPLETE')} /></>}
+        {boardColumn === 'COMPLETED' && onProjectAction && <ProjectAction icon={<PackageCheck className="h-3.5 w-3.5" />} label="납품 이력" variant="view" onClick={() => onProjectAction(project, 'COMPLETE')} />}
+        {boardColumn === 'REVISION' && onProjectAction && <ProjectAction icon={<PencilLine className="h-3.5 w-3.5" />} label="수정 등록" variant="edit" onClick={() => onProjectAction(project, 'REVISION')} />}
       </div>
     </article>
   );
@@ -193,6 +201,6 @@ function WorkflowAction({ icon, label, onClick }: { icon: React.ReactNode; label
   return <button type="button" title={label} onClick={onClick} className="inline-flex min-w-0 items-center justify-center gap-1 rounded px-1.5 py-1 text-[10px] font-semibold text-[var(--color-text-sub)] hover:bg-[var(--color-bg)] hover:text-[var(--color-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]">{icon}<span className="truncate">{label}</span></button>;
 }
 
-function ProjectAction({ icon, label, tone, onClick }: { icon: React.ReactNode; label: string; tone: string; onClick: () => void }) {
-  return <button type="button" onClick={onClick} className={`inline-flex min-h-8 items-center justify-center gap-1.5 rounded-lg border px-2 text-[10px] font-black transition hover:-translate-y-0.5 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] ${tone}`}>{icon}{label}</button>;
+function ProjectAction({ icon, label, variant, onClick }: { icon: React.ReactNode; label: string; variant: SemanticActionVariant; onClick: () => void }) {
+  return <SemanticActionButton variant={variant} size="sm" icon={icon} tooltip={label} onClick={onClick} className="w-full text-[10px]">{label}</SemanticActionButton>;
 }

@@ -23,10 +23,17 @@ import {
   updateExecutionAssignmentStaffing,
   validateProjectStaffingPlan,
 } from '@/lib/projectStaffing';
+import { ActionButtonGroup, SemanticActionButton } from '@/components/ui/SemanticActionButton';
 
 interface ProjectStaffingModalProps {
   project: Project;
   initialUnitId?: ProjectExecutionUnitId | null;
+  workspaceContext: {
+    group?: 'TECHNICAL' | 'CLAIM' | 'DEVELOPMENT' | null;
+    unitId?: ProjectExecutionUnitId | null;
+    projectId: string;
+    sourceRoute: string;
+  };
   onClose: () => void;
   onSaved: (unitId: ProjectExecutionUnitId, status: ProjectStaffingPlanStatus) => void;
 }
@@ -58,7 +65,7 @@ const copy = {
   },
 };
 
-export const ProjectStaffingModal: React.FC<ProjectStaffingModalProps> = ({ project, initialUnitId, onClose, onSaved }) => {
+export const ProjectStaffingModal: React.FC<ProjectStaffingModalProps> = ({ project, initialUnitId, workspaceContext, onClose, onSaved }) => {
   const { users, currentUser } = useAuthStore();
   const updateProjectField = useProjectStore((state) => state.updateProjectField);
   const addNotification = useNotificationStore((state) => state.addNotification);
@@ -67,8 +74,9 @@ export const ProjectStaffingModal: React.FC<ProjectStaffingModalProps> = ({ proj
   const t = useTranslation(settings.uiLanguage);
   const text = copy[settings.uiLanguage];
   const assignments = useMemo(() => project.executionAssignments || [], [project.executionAssignments]);
+  const contextMatchesProject = workspaceContext.projectId === project.id;
   const initialAssignment = getProjectAssignmentForContext(project, initialUnitId);
-  const contextAssignmentMissing = Boolean(initialUnitId && !initialAssignment);
+  const contextAssignmentMissing = Boolean(!contextMatchesProject || (initialUnitId && !initialAssignment));
   const [unitId, setUnitId] = useState<ProjectExecutionUnitId | null>(initialAssignment?.unitId || null);
   const [plan, setPlan] = useState<ProjectStaffingRoleAssignment[]>(() => initialAssignment
     ? createProjectStaffingPlan(initialAssignment.unitId, initialAssignment.staffingPlan)
@@ -190,7 +198,7 @@ export const ProjectStaffingModal: React.FC<ProjectStaffingModalProps> = ({ proj
                     <div className="min-w-0"><div className="flex items-center gap-2"><div className="flex -space-x-2">{selectedPeople.slice(0, 4).map((person) => <span key={person!.id} title={getUserDisplayName(person!)} className="grid size-8 place-items-center rounded-full border-2 border-white bg-sky-700 text-[10px] font-black text-white">{getUserDisplayName(person!).slice(0, 1)}</span>)}</div>{selectedPeople.length > 4 && <span className="text-xs font-black text-[var(--color-primary)]">+{selectedPeople.length - 4}</span>}{selectedPeople.length === 0 && <span className="text-xs font-semibold text-amber-700">미배정</span>}</div><p className="mt-1 truncate text-[10px] text-[var(--color-text-sub)]">{selectedPeople.map((person) => getUserDisplayName(person!)).join(', ') || text.add}</p></div>
                     <label className="text-[10px] font-bold text-[var(--color-text-sub)] md:text-transparent">{text.start}<input type="date" value={role.startDate || ''} onChange={(event) => updateRole(role.roleId, { startDate: event.target.value || null })} className="mt-1 min-h-10 w-full rounded-lg border bg-white px-2 text-xs text-[var(--color-text-main)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] md:mt-0" /></label>
                     <label className="text-[10px] font-bold text-[var(--color-text-sub)] md:text-transparent">{text.end}<input type="date" value={role.endDate || ''} onChange={(event) => updateRole(role.roleId, { endDate: event.target.value || null })} className="mt-1 min-h-10 w-full rounded-lg border bg-white px-2 text-xs text-[var(--color-text-main)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] md:mt-0" /></label>
-                    <button type="button" onClick={() => { setActiveRoleId(role.roleId); setShowSupport(false); }} className="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-lg border bg-white px-2 text-xs font-black transition hover:border-orange-300 hover:bg-orange-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]"><UserPlus className="size-4" />{text.add}</button>
+                    <SemanticActionButton variant="add-resource" size="sm" icon={<UserPlus className="size-4" />} tooltip={text.add} onClick={() => { setActiveRoleId(role.roleId); setShowSupport(false); }}>{text.add}</SemanticActionButton>
                   </div>;
                 })}</div>
               </div>
@@ -210,10 +218,12 @@ export const ProjectStaffingModal: React.FC<ProjectStaffingModalProps> = ({ proj
         </div>
 
         <footer className="flex shrink-0 flex-col gap-2 border-t bg-[var(--cc-surface-2)] px-4 py-4 sm:flex-row sm:justify-end sm:px-6">
-          <button type="button" onClick={onClose} className="min-h-11 rounded-lg border bg-white px-4 text-sm font-bold hover:bg-slate-50">{t('common.cancel')}</button>
-          <button type="button" onClick={() => handleSave('DRAFT')} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-orange-300 bg-white px-4 text-sm font-black text-orange-800 hover:bg-orange-50"><Save className="size-4" />{text.draft}</button>
-          <button type="button" onClick={() => handleSave('CONFIRMED')} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-sky-700 px-4 text-sm font-black text-white hover:bg-sky-800"><CalendarDays className="size-4" />{text.confirm}</button>
-          <button type="button" onClick={() => handleSave('ACTIVE')} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-[var(--color-primary)] px-4 text-sm font-black text-white shadow-lg shadow-orange-500/15 hover:brightness-95"><Play className="size-4" />{text.startNow}</button>
+          <ActionButtonGroup label={text.title} className="w-full justify-end">
+            <SemanticActionButton variant="neutral" tooltip={t('common.cancel')} onClick={onClose}>{t('common.cancel')}</SemanticActionButton>
+            <SemanticActionButton variant="save" icon={<Save className="size-4" />} tooltip={text.draft} onClick={() => handleSave('DRAFT')}>{text.draft}</SemanticActionButton>
+            <SemanticActionButton variant="edit" icon={<CalendarDays className="size-4" />} tooltip={text.confirm} onClick={() => handleSave('CONFIRMED')}>{text.confirm}</SemanticActionButton>
+            <SemanticActionButton variant="success" icon={<Play className="size-4" />} tooltip={text.startNow} onClick={() => handleSave('ACTIVE')}>{text.startNow}</SemanticActionButton>
+          </ActionButtonGroup>
         </footer>
       </section>
     </div>

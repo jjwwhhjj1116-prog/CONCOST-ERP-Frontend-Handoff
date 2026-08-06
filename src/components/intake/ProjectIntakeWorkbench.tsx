@@ -27,11 +27,15 @@ import { resolveProjectIntakeSelection } from '@/lib/projectIntakeMode';
 import { getAcceptedIntakeRevisionDiff } from '@/lib/projectIntakeRevision';
 import { projectBoardHref } from '@/lib/projectExecutionUnits';
 import { useProjectIntakeStore } from '@/store/projectIntakeStore';
+import { useTranslationStore } from '@/store/translationStore';
 import { ProjectExecutionUnitSelector } from '@/components/intake/ProjectExecutionUnitSelector';
 import { ResponsiveDialogShell } from '@/components/ui/ResponsiveDialogShell';
+import { ActionButtonGroup, SemanticActionButton } from '@/components/ui/SemanticActionButton';
+import { getProjectStaffingUnitLabel } from '@/lib/projectStaffing';
 import {
   PersonnelCard,
   ProjectIntakeContact,
+  ProjectIntakeCompletionResult,
   ProjectIntakeDraft,
   ProjectIntakeMaterial,
   ProjectIntakeSecretReference,
@@ -44,8 +48,6 @@ type Props = { currentUser: PersonnelCard; t: Translate; requestedIntakeId?: str
 const STATUSES: ProjectIntakeStatus[] = ['DRAFT', 'REVIEWED', 'ACCEPTED'];
 const MATERIAL_STATUSES: ProjectIntakeMaterial['status'][] = ['NOT_RECEIVED', 'PARTIAL', 'RECEIVED', 'CONFIRMED'];
 const inputClass = 'w-full min-w-0 border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-text-main)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] disabled:cursor-not-allowed disabled:opacity-60';
-const iconButtonClass = 'inline-flex h-9 w-9 shrink-0 items-center justify-center border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text-sub)] hover:bg-[var(--color-bg-sub)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]';
-
 const statusClass: Record<ProjectIntakeStatus, string> = {
   DRAFT: 'bg-amber-50 text-amber-700 border-amber-200',
   REVIEWED: 'bg-blue-50 text-blue-700 border-blue-200',
@@ -118,6 +120,7 @@ export function ProjectIntakeWorkbench({ currentUser, t, requestedIntakeId }: Pr
     reviseAcceptedIntake,
   } = useProjectIntakeStore();
   const router = useRouter();
+  const { settings } = useTranslationStore();
   const actor = useMemo(() => ({ id: currentUser.id, role: currentUser.role, departmentId: currentUser.departmentId }), [currentUser]);
   const [selectedId, setSelectedId] = useState('');
   const [query, setQuery] = useState('');
@@ -131,6 +134,7 @@ export function ProjectIntakeWorkbench({ currentUser, t, requestedIntakeId }: Pr
   const [validationMissing, setValidationMissing] = useState<string[]>([]);
   const [acceptedEditMode, setAcceptedEditMode] = useState(false);
   const [revisionReason, setRevisionReason] = useState('');
+  const [completionSummary, setCompletionSummary] = useState<(ProjectIntakeCompletionResult & { completedAt: string }) | null>(null);
   const finalizingRef = useRef(false);
   const hydratedSelectionId = useRef('');
 
@@ -179,6 +183,7 @@ export function ProjectIntakeWorkbench({ currentUser, t, requestedIntakeId }: Pr
         setActiveStep(1);
         setAcceptedEditMode(false);
         setRevisionReason('');
+        setCompletionSummary(null);
       }
     }, 0);
     return () => window.clearTimeout(timeout);
@@ -224,13 +229,7 @@ export function ProjectIntakeWorkbench({ currentUser, t, requestedIntakeId }: Pr
     try {
       const result = await finalizeWonIntake(selected.id, draft, reviewNote, actor);
       setMessage(t('projectIntake.message.accept'));
-      const destinationUnitIds = result.project.primaryUnitId
-        ? [result.project.primaryUnitId, ...(result.project.assignedUnitIds || [])]
-        : (result.project.assignedUnitIds || []);
-      router.push(projectBoardHref(destinationUnitIds, {
-        projectId: result.project.id,
-        view: 'PART',
-      }));
+      setCompletionSummary({ ...result, completedAt: new Date().toISOString() });
     } catch (caught) {
       setActionError(caught instanceof Error ? caught.message : t('projectIntake.error.generic'));
     } finally {
@@ -314,14 +313,6 @@ export function ProjectIntakeWorkbench({ currentUser, t, requestedIntakeId }: Pr
     }
   };
 
-  const openProjectBoard = () => {
-    if (!selected?.projectId || !draft) return;
-    router.push(projectBoardHref(draft.targetUnitIds, {
-      projectId: selected.projectId,
-      view: 'PART',
-    }));
-  };
-
   const beginAcceptedEdit = (step = 1) => {
     setAcceptedEditMode(true);
     setActiveStep(step);
@@ -385,9 +376,15 @@ export function ProjectIntakeWorkbench({ currentUser, t, requestedIntakeId }: Pr
           <span className="border border-[var(--color-border)] bg-[var(--color-bg-sub)] px-2 py-1">
             {persistenceMode === 'SERVER' ? t('projectIntake.persistence.server') : t('projectIntake.persistence.local')}
           </span>
-          <button type="button" title={t('common.refresh')} className={iconButtonClass} onClick={() => void sync(actor)} disabled={loading}>
-            <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
-          </button>
+          <SemanticActionButton
+            size="icon"
+            variant="neutral"
+            tooltip={t('common.refresh')}
+            icon={<RefreshCw size={16} className={loading ? 'animate-spin' : ''} />}
+            onClick={() => void sync(actor)}
+            disabled={loading}
+            disabledReason={loading ? '접수 목록을 새로고침하고 있습니다.' : undefined}
+          />
         </div>
       </div>
 
@@ -419,7 +416,7 @@ export function ProjectIntakeWorkbench({ currentUser, t, requestedIntakeId }: Pr
             {filtered.length === 0 ? (
               <div className="px-4 py-8 text-center">
                 <p className="text-sm font-semibold text-[var(--color-text-main)]">견적 의뢰관리에서 수주를 확정하면 자동 등록됩니다.</p>
-                <button type="button" onClick={() => router.push('/projects/intake?tab=CLIENT_ORDER')} className="mt-4 inline-flex min-h-10 items-center bg-[var(--color-primary)] px-4 text-sm font-black text-white hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2">견적 의뢰관리로 이동</button>
+                <SemanticActionButton className="mt-4" variant="primary" onClick={() => router.push('/projects/intake?tab=CLIENT_ORDER')}>견적 의뢰관리로 이동</SemanticActionButton>
               </div>
             ) : filtered.map((intake) => {
               const itemDraft = intake.draft || buildProjectIntakeDraft(intake);
@@ -453,7 +450,7 @@ export function ProjectIntakeWorkbench({ currentUser, t, requestedIntakeId }: Pr
             <div className="flex min-h-[420px] flex-col items-center justify-center p-8 text-center">
               <p className="text-sm font-semibold text-[var(--color-text-main)]">견적 의뢰관리에서 수주를 확정하면 자동 등록됩니다.</p>
               <p className="mt-2 text-xs text-[var(--color-text-sub)]">프로젝트 접수는 견적 수주에서 생성된 작업 대기열입니다.</p>
-              <button type="button" onClick={() => router.push('/projects/intake?tab=CLIENT_ORDER')} className="mt-5 inline-flex min-h-10 items-center bg-[var(--color-primary)] px-4 text-sm font-black text-white hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2">견적 의뢰관리로 이동</button>
+              <SemanticActionButton className="mt-5" variant="primary" onClick={() => router.push('/projects/intake?tab=CLIENT_ORDER')}>견적 의뢰관리로 이동</SemanticActionButton>
             </div>
           ) : (
             <div>
@@ -466,31 +463,28 @@ export function ProjectIntakeWorkbench({ currentUser, t, requestedIntakeId }: Pr
                       <span className={`border px-2 py-0.5 text-xs font-semibold ${statusClass[selected.status]}`}>{t(`projectIntake.status.${selected.status}` as Parameters<Translate>[0])}</span>
                     </div>
                     <p className="mt-2 text-xs font-semibold text-[var(--color-text-sub)]">
-                      {draft.projectNo ? `공식 프로젝트번호 ${draft.projectNo}` : '수주 완료 시 공식 프로젝트번호가 자동 발급됩니다.'}
+                      {draft.projectNo ? `공식 프로젝트번호 ${draft.projectNo}` : '접수 완료 시 공식 프로젝트번호가 자동 발급됩니다.'}
                     </p>
                   </div>
-                  <div className="flex flex-wrap gap-2">
+                  {!completionSummary && <ActionButtonGroup label="프로젝트 접수 작업">
                     {selected.status === 'ACCEPTED' && !acceptedEditMode && selected.permissions?.canEdit && (
                       <>
-                        <button type="button" onClick={() => beginAcceptedEdit(1)} disabled={busy} className="inline-flex items-center gap-2 border border-[var(--color-border)] px-3 py-2 text-sm font-semibold text-[var(--color-text-main)] hover:bg-[var(--color-bg-sub)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] disabled:opacity-60"><Pencil size={16} />접수 내용 수정</button>
-                        <button type="button" onClick={beginAdditionalMaterial} disabled={busy} className="inline-flex items-center gap-2 border border-[var(--color-border)] px-3 py-2 text-sm font-semibold text-[var(--color-text-main)] hover:bg-[var(--color-bg-sub)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] disabled:opacity-60"><Upload size={16} />추가자료 등록</button>
+                        <SemanticActionButton variant="edit" icon={<Pencil size={16} />} tooltip="접수 내용 수정" disabled={busy} onClick={() => beginAcceptedEdit(1)}>접수 내용 수정</SemanticActionButton>
+                        <SemanticActionButton variant="add-resource" icon={<Upload size={16} />} tooltip="추가자료 등록" disabled={busy} onClick={beginAdditionalMaterial}>추가자료 등록</SemanticActionButton>
                       </>
                     )}
                     {selected.status === 'ACCEPTED' && (
                       <>
-                        <button type="button" onClick={() => { setActiveStep(4); window.setTimeout(() => document.querySelector('[data-intake-history]')?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 0); }} className="inline-flex items-center gap-2 border border-[var(--color-border)] px-3 py-2 text-sm font-semibold text-[var(--color-text-main)] hover:bg-[var(--color-bg-sub)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]"><History size={16} />변경이력</button>
-                        <button type="button" onClick={openProjectBoard} className="inline-flex items-center gap-2 bg-[var(--color-primary)] px-3 py-2 text-sm font-semibold text-white hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2"><ArrowRight size={16} />프로젝트 보드</button>
+                        <SemanticActionButton variant="view" icon={<History size={16} />} tooltip="변경이력" onClick={() => { setActiveStep(4); window.setTimeout(() => document.querySelector('[data-intake-history]')?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 0); }}>변경이력</SemanticActionButton>
                       </>
                     )}
                     {selected.permissions?.canEdit && selected.status !== 'ACCEPTED' && (
-                      <button type="button" onClick={() => setActiveStep(1)} disabled={busy} className="inline-flex items-center gap-2 border border-[var(--color-border)] px-3 py-2 text-sm font-semibold text-[var(--color-text-main)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] disabled:opacity-60"><Pencil size={16} />수정</button>
+                      <SemanticActionButton variant="edit" icon={<Pencil size={16} />} tooltip="접수 정보 수정" disabled={busy} onClick={() => setActiveStep(1)}>수정</SemanticActionButton>
                     )}
                     {selected.permissions?.canEdit && selected.status !== 'ACCEPTED' && (
-                      <button type="button" onClick={() => void run('save')} disabled={busy} className="inline-flex items-center gap-2 bg-[var(--color-primary)] px-3 py-2 text-sm font-semibold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2 disabled:opacity-60">
-                        <Save size={16} />{t('projectIntake.action.save')}
-                      </button>
+                      <SemanticActionButton variant="save" icon={<Save size={16} />} loading={busy} tooltip={t('projectIntake.action.save')} onClick={() => void run('save')}>{t('projectIntake.action.save')}</SemanticActionButton>
                     )}
-                  </div>
+                  </ActionButtonGroup>}
                 </div>
                 <div className={`mt-4 border px-3 py-2 text-xs ${missing.length ? 'border-amber-200 bg-amber-50 text-amber-800' : 'border-emerald-200 bg-emerald-50 text-emerald-700'}`}>
                   {missing.length ? `${t('projectIntake.completeness.missing')}: ${missing.map((key) => t(`projectIntake.missing.${key}` as Parameters<Translate>[0])).join(', ')}` : t('projectIntake.completeness.complete')}
@@ -508,12 +502,32 @@ export function ProjectIntakeWorkbench({ currentUser, t, requestedIntakeId }: Pr
                 </ol>
               </header>
 
+              {completionSummary && (
+                <section data-intake-completion-summary className="m-4 rounded-xl border border-emerald-200 bg-emerald-50 p-5 shadow-sm md:m-6">
+                  <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                    <div><p className="inline-flex items-center gap-2 text-xs font-black text-emerald-800"><CheckCircle2 className="h-5 w-5" />접수 완료</p><h3 className="mt-2 text-xl font-black text-emerald-950">담당부서 전달 완료</h3><p className="mt-1 text-sm font-semibold text-emerald-800">동일한 프로젝트 계보로 접수와 부서 배정을 완료했습니다.</p></div>
+                    <span className="rounded-full border border-emerald-300 bg-white px-3 py-1 text-xs font-black text-emerald-800">{completionSummary.idempotent ? '중복 요청 안전 처리' : '신규 전달'}</span>
+                  </div>
+                  <dl className="mt-5 grid gap-3 text-sm sm:grid-cols-2 xl:grid-cols-4">
+                    <div className="rounded-lg bg-white p-3"><dt className="text-xs font-bold text-[var(--color-text-sub)]">Project번호</dt><dd className="mt-1 font-black text-[var(--color-text-main)]">{completionSummary.projectNo}</dd></div>
+                    <div className="rounded-lg bg-white p-3"><dt className="text-xs font-bold text-[var(--color-text-sub)]">주관부서</dt><dd className="mt-1 font-black text-[var(--color-text-main)]">{completionSummary.project.primaryUnitId ? getProjectStaffingUnitLabel(completionSummary.project.primaryUnitId, settings.uiLanguage) : '-'}</dd></div>
+                    <div className="rounded-lg bg-white p-3"><dt className="text-xs font-bold text-[var(--color-text-sub)]">참여부서</dt><dd className="mt-1 font-black text-[var(--color-text-main)]">{completionSummary.assignments.filter((item) => item.unitId !== completionSummary.project.primaryUnitId).map((item) => getProjectStaffingUnitLabel(item.unitId, settings.uiLanguage)).join(', ') || '-'}</dd></div>
+                    <div className="rounded-lg bg-white p-3"><dt className="text-xs font-bold text-[var(--color-text-sub)]">전달시각</dt><dd className="mt-1 font-black text-[var(--color-text-main)]">{new Date(completionSummary.completedAt).toLocaleString()}</dd></div>
+                  </dl>
+                  <ActionButtonGroup label="접수 완료 후 작업" className="mt-5 justify-end">
+                    <SemanticActionButton variant="neutral" tooltip="완료 요약 닫기" onClick={() => setCompletionSummary(null)}>닫기</SemanticActionButton>
+                    <SemanticActionButton variant="neutral" tooltip="프로젝트 접수 목록으로 이동" onClick={() => { setCompletionSummary(null); router.push('/projects/intake?tab=PROJECT_INTAKE'); }}>접수 목록</SemanticActionButton>
+                    <SemanticActionButton variant="view" icon={<ArrowRight className="h-4 w-4" />} tooltip="담당부서 전달 상태 보기" onClick={() => router.push(projectBoardHref(completionSummary.project.assignedUnitIds || [], { projectId: completionSummary.project.id, view: 'PART' }))}>전달 상태 보기</SemanticActionButton>
+                  </ActionButtonGroup>
+                </section>
+              )}
+
               <div className="divide-y divide-[var(--color-border)]">
                 {activeStep === 1 && (
                 <section data-intake-step="1" className="p-4 md:p-6">
                   <h3 className="mb-3 flex items-center gap-2 text-sm font-bold text-[var(--color-text-main)]"><FileText size={16} />{t('projectIntake.section.basic')}</h3>
                   <div className="mb-3 rounded-lg border border-sky-200 bg-sky-50 px-3 py-2 text-xs font-semibold text-sky-900">
-                    프로젝트번호: {draft.projectNo || '수주 완료 시 YYYY + 연도별 3자리 순번으로 자동 발급'}
+                    프로젝트번호: {draft.projectNo || '접수 완료 시 YYYY + 연도별 3자리 순번으로 자동 발급'}
                   </div>
                   <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
                     {([
@@ -557,7 +571,7 @@ export function ProjectIntakeWorkbench({ currentUser, t, requestedIntakeId }: Pr
                 <section data-intake-step="4" className="p-4 md:p-6">
                   <div className="mb-3 flex items-center justify-between">
                     <h3 className="flex items-center gap-2 text-sm font-bold text-[var(--color-text-main)]"><UserRound size={16} />{t('projectIntake.section.contacts')}</h3>
-                    {!readOnly && <button type="button" title={t('projectIntake.action.addContact')} className={iconButtonClass} onClick={() => updateDraft('contacts', [...draft.contacts, makeContact()])}><Plus size={16} /></button>}
+                    {!readOnly && <SemanticActionButton size="icon" variant="add-resource" tooltip={t('projectIntake.action.addContact')} icon={<Plus size={16} />} onClick={() => updateDraft('contacts', [...draft.contacts, makeContact()])} />}
                   </div>
                   <div className="space-y-3">
                     {draft.contacts.map((contact, index) => (
@@ -568,7 +582,7 @@ export function ProjectIntakeWorkbench({ currentUser, t, requestedIntakeId }: Pr
                             <input type={key === 'email' ? 'email' : 'text'} disabled={readOnly} value={contact[key]} onChange={(event) => updateContact(index, { [key]: event.target.value })} className={inputClass} />
                           </label>
                         ))}
-                        {!readOnly && <button type="button" title={t('common.delete')} className={`${iconButtonClass} self-end text-red-600`} onClick={() => updateDraft('contacts', draft.contacts.filter((_, itemIndex) => itemIndex !== index))}><Trash2 size={15} /></button>}
+                        {!readOnly && <SemanticActionButton className="self-end" size="icon" variant="danger" tooltip={t('common.delete')} icon={<Trash2 size={15} />} onClick={() => updateDraft('contacts', draft.contacts.filter((_, itemIndex) => itemIndex !== index))} />}
                       </div>
                     ))}
                   </div>
@@ -579,7 +593,7 @@ export function ProjectIntakeWorkbench({ currentUser, t, requestedIntakeId }: Pr
                 <section data-intake-step="2" className="p-4 md:p-6">
                   <div className="mb-3 flex items-center justify-between">
                     <h3 className="flex items-center gap-2 text-sm font-bold text-[var(--color-text-main)]"><FileCheck2 size={16} />{t('projectIntake.section.materials')}</h3>
-                    {!readOnly && <button type="button" title={t('projectIntake.action.addMaterial')} className={iconButtonClass} onClick={() => updateDraft('materials', [...draft.materials, makeMaterial()])}><Plus size={16} /></button>}
+                    {!readOnly && <SemanticActionButton size="icon" variant="add-resource" tooltip={t('projectIntake.action.addMaterial')} icon={<Plus size={16} />} onClick={() => updateDraft('materials', [...draft.materials, makeMaterial()])} />}
                   </div>
                   <div className="max-w-full overflow-x-auto border border-[var(--color-border)] overscroll-x-contain">
                     <table className="w-full min-w-[850px] text-left text-xs">
@@ -592,7 +606,7 @@ export function ProjectIntakeWorkbench({ currentUser, t, requestedIntakeId }: Pr
                             <td className="max-w-56 p-2 text-[var(--color-text-sub)]"><label className={`inline-flex min-h-9 cursor-pointer items-center gap-2 border border-dashed border-[var(--color-border)] px-2 text-[11px] font-bold ${readOnly ? 'pointer-events-none opacity-60' : 'hover:border-[var(--color-primary)]'}`}><Upload className="h-3.5 w-3.5" /><span className="max-w-36 truncate">{material.originalName || '파일 선택'}</span><input type="file" disabled={readOnly} className="sr-only" accept=".pdf,.dwg,.dxf,.xlsx,.xls,.hwp,.hwpx,.doc,.docx,.zip,.jpg,.jpeg,.png,.txt" onChange={(event) => attachMaterialFile(index, event.target.files?.[0])} /></label>{material.size ? <span className="mt-1 block text-[10px]">{Math.max(1, Math.round(material.size / 1024))} KB</span> : null}</td>
                             <td className="p-2"><input disabled={readOnly} value={material.memo} onChange={(event) => updateMaterial(index, { memo: event.target.value })} className={inputClass} /></td>
                             <td className="p-2"><input disabled={readOnly} value={material.comment} onChange={(event) => updateMaterial(index, { comment: event.target.value })} className={inputClass} /></td>
-                            <td className="p-2">{!readOnly && <button type="button" title={t('common.delete')} className={`${iconButtonClass} text-red-600`} onClick={() => updateDraft('materials', draft.materials.filter((_, itemIndex) => itemIndex !== index))}><Trash2 size={15} /></button>}</td>
+                            <td className="p-2">{!readOnly && <SemanticActionButton size="icon" variant="danger" tooltip={t('common.delete')} icon={<Trash2 size={15} />} onClick={() => updateDraft('materials', draft.materials.filter((_, itemIndex) => itemIndex !== index))} />}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -640,7 +654,7 @@ export function ProjectIntakeWorkbench({ currentUser, t, requestedIntakeId }: Pr
                       <h3 className="flex items-center gap-2 text-sm font-bold text-[var(--color-text-main)]"><KeyRound size={16} />{t('projectIntake.section.secrets')}</h3>
                       <p className="mt-1 text-xs text-[var(--color-text-sub)]">{t('projectIntake.secrets.notice')}</p>
                     </div>
-                    {!readOnly && <button type="button" title={t('projectIntake.action.addSecret')} className={iconButtonClass} onClick={() => updateDraft('secretReferences', [...draft.secretReferences, makeSecretReference()])}><Plus size={16} /></button>}
+                    {!readOnly && <SemanticActionButton size="icon" variant="add-resource" tooltip={t('projectIntake.action.addSecret')} icon={<Plus size={16} />} onClick={() => updateDraft('secretReferences', [...draft.secretReferences, makeSecretReference()])} />}
                   </div>
                   <div className="space-y-2">
                     {draft.secretReferences.length === 0 && <p className="border border-dashed border-[var(--color-border)] px-3 py-5 text-center text-xs text-[var(--color-text-sub)]">{t('projectIntake.secrets.empty')}</p>}
@@ -649,7 +663,7 @@ export function ProjectIntakeWorkbench({ currentUser, t, requestedIntakeId }: Pr
                         {(['label', 'provider', 'reference', 'note'] as const).map((key) => (
                           <label key={key} className="text-[11px] text-[var(--color-text-sub)]"><span className="mb-1 block">{t(`projectIntake.secret.${key}` as Parameters<Translate>[0])}</span><input disabled={readOnly} value={secret[key]} onChange={(event) => updateSecret(index, { [key]: event.target.value })} className={inputClass} placeholder={key === 'reference' ? 'vault://workspace/project' : ''} /></label>
                         ))}
-                        {!readOnly && <button type="button" title={t('common.delete')} className={`${iconButtonClass} self-end text-red-600`} onClick={() => updateDraft('secretReferences', draft.secretReferences.filter((_, itemIndex) => itemIndex !== index))}><Trash2 size={15} /></button>}
+                        {!readOnly && <SemanticActionButton className="self-end" size="icon" variant="danger" tooltip={t('common.delete')} icon={<Trash2 size={15} />} onClick={() => updateDraft('secretReferences', draft.secretReferences.filter((_, itemIndex) => itemIndex !== index))} />}
                       </div>
                     ))}
                   </div>
@@ -698,24 +712,26 @@ export function ProjectIntakeWorkbench({ currentUser, t, requestedIntakeId }: Pr
                 )}
 
                 <footer className="flex items-center justify-between gap-3 p-4 md:p-6">
-                  <button type="button" onClick={() => setActiveStep((step) => Math.max(1, step - 1))} disabled={activeStep === 1} className="inline-flex min-h-10 items-center gap-2 border border-[var(--color-border)] px-4 text-sm font-black text-[var(--color-text-main)] disabled:opacity-40"><ArrowLeft className="h-4 w-4" />이전 단계</button>
+                  <SemanticActionButton variant="neutral" icon={<ArrowLeft className="h-4 w-4" />} tooltip="이전 단계" disabled={activeStep === 1 || Boolean(completionSummary)} disabledReason={activeStep === 1 ? '첫 단계입니다.' : '접수 완료 요약을 먼저 닫아 주세요.'} onClick={() => setActiveStep((step) => Math.max(1, step - 1))}>이전 단계</SemanticActionButton>
                   <span className="text-xs font-black text-[var(--color-text-sub)]">{activeStep} / 4</span>
-                  {activeStep < 4 ? (
-                    <button type="button" onClick={() => setActiveStep((step) => Math.min(4, step + 1))} className="inline-flex min-h-10 items-center gap-2 bg-[var(--color-primary)] px-4 text-sm font-black text-white">다음 단계<ArrowRight className="h-4 w-4" /></button>
+                  {completionSummary ? (
+                    <span className="text-xs font-black text-emerald-700">담당부서 전달 완료</span>
+                  ) : activeStep < 4 ? (
+                    <SemanticActionButton variant="primary" icon={<ArrowRight className="h-4 w-4" />} tooltip="다음 단계" onClick={() => setActiveStep((step) => Math.min(4, step + 1))}>다음 단계</SemanticActionButton>
                   ) : selected.status === 'ACCEPTED' && acceptedEditMode ? (
-                    <button type="button" onClick={() => void saveAcceptedRevision()} disabled={busy} className="inline-flex min-h-10 items-center gap-2 bg-[var(--color-primary)] px-4 text-sm font-black text-white hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2 disabled:opacity-50"><Save className="h-4 w-4" />수정본 저장 및 부서 알림</button>
-                  ) : selected.status === 'ACCEPTED' ? (
-                    <button type="button" onClick={openProjectBoard} className="inline-flex min-h-10 items-center gap-2 bg-[var(--color-primary)] px-4 text-sm font-black text-white hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2">프로젝트 보드<ArrowRight className="h-4 w-4" /></button>
-                  ) : (
-                    <button
-                      type="button"
+                    <SemanticActionButton variant="save" icon={<Save className="h-4 w-4" />} loading={busy} tooltip="수정본 저장 및 부서 알림" onClick={() => void saveAcceptedRevision()}>수정본 저장 및 부서 알림</SemanticActionButton>
+                  ) : selected.status === 'ACCEPTED' ? null : (
+                    <SemanticActionButton
+                      variant="success"
                       onClick={() => void completeWonIntake()}
                       disabled={busy || !selected.permissions?.canReview}
-                      className="inline-flex min-h-10 items-center gap-2 bg-emerald-600 px-4 text-sm font-black text-white hover:bg-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                      disabledReason={!selected.permissions?.canReview ? '접수 완료 권한이 필요합니다.' : undefined}
+                      loading={busy}
+                      icon={<CheckCircle2 className="h-4 w-4" />}
+                      tooltip={t('projectIntake.action.accept')}
                     >
-                      <CheckCircle2 className="h-4 w-4" />
                       {t('projectIntake.action.accept')}
-                    </button>
+                    </SemanticActionButton>
                   )}
                 </footer>
               </div>
@@ -726,7 +742,7 @@ export function ProjectIntakeWorkbench({ currentUser, t, requestedIntakeId }: Pr
       {validationMissing.length > 0 && (
         <ResponsiveDialogShell
           eyebrow="PROJECT INTAKE VALIDATION"
-          title="수주 완료 전 확인이 필요합니다"
+          title="접수 완료 전 확인이 필요합니다"
           description="현재 단계에 입력값을 보존했습니다. 이동할 항목을 직접 선택해 주세요."
           widthClassName="sm:max-w-xl"
           onClose={() => setValidationMissing([])}

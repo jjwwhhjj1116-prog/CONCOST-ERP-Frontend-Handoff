@@ -27,7 +27,7 @@ import { ProjectOperationModal } from '@/components/projects/ProjectOperationMod
 import { ProjectMilestoneModal } from '@/components/projects/ProjectMilestoneModal';
 import { PROJECT_WORKFLOW_TABS, ProjectWorkflowTab } from '@/lib/projectWorkflow';
 import { useProjectWorkflowOverviewSync } from '@/hooks/useProjectWorkflow';
-import { getProjectBoardScope, getProjectBoardScopeLabel, matchesProjectBoardScope } from '@/lib/projectExecutionUnits';
+import { PROJECT_EXECUTION_UNITS, getProjectBoardScope, getProjectBoardScopeLabel, matchesProjectBoardScope } from '@/lib/projectExecutionUnits';
 import { getProjectAssignment, isProjectStaffingReady } from '@/lib/projectStaffing';
 
 export type ExtendedViewType = BoardViewType | 'PART' | 'HISTORY';
@@ -163,6 +163,14 @@ export default function ProjectBoardPage() {
 
   const selectedProject = projects.find(p => p.id === selectedProjectId);
   const assignmentUnitId: ProjectExecutionUnitId | null = projectScope?.kind === 'UNIT' ? projectScope.unitId : null;
+  const staffingContextUnitId = (() => {
+    if (assignmentUnitId) return assignmentUnitId;
+    if (!staffingProject || projectScope?.kind !== 'GROUP') return null;
+    const matchingUnits = (staffingProject.executionAssignments || [])
+      .map((assignment) => assignment.unitId)
+      .filter((unitId) => PROJECT_EXECUTION_UNITS.some((unit) => unit.id === unitId && unit.group === projectScope.group));
+    return matchingUnits.length === 1 ? matchingUnits[0] : null;
+  })();
   const selectedAssignment = selectedProject ? getProjectAssignment(selectedProject, assignmentUnitId) : undefined;
   const selectedStaffingReady = isProjectStaffingReady(selectedAssignment);
   const now = new Date();
@@ -596,7 +604,13 @@ export default function ProjectBoardPage() {
       {staffingProject && (
         <ProjectStaffingModal
           project={staffingProject}
-          initialUnitId={assignmentUnitId}
+          initialUnitId={staffingContextUnitId}
+          workspaceContext={{
+            group: projectScope?.kind === 'GROUP' ? projectScope.group : PROJECT_EXECUTION_UNITS.find((unit) => unit.id === staffingContextUnitId)?.group ?? null,
+            unitId: staffingContextUnitId,
+            projectId: staffingProject.id,
+            sourceRoute: `/projects?${searchParams.toString()}`,
+          }}
           onClose={() => setStaffingProject(null)}
           onSaved={(unitId, status) => {
             if (status === 'ACTIVE') {
