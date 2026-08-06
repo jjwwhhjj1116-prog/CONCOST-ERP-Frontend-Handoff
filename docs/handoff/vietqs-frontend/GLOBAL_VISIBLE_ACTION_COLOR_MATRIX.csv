@@ -1,0 +1,66 @@
+Route,Screen,Component,Action Label,Action Meaning,Current Variant,Required Variant,Primary Rank,Icon,Hover,Focus,Loading,Disabled Reason,Mobile,Test,Screenshot,Status
+/workspace,Home,WorkspaceWidgetPortal,위젯 설정,Edit,edit,edit,secondary,Settings,YES,YES,N/A,N/A,YES,inventory,15-admin-actions.png,CLASSIFIED
+/mail,Mail,MailWorkspace,메일쓰기,Create,primary,primary,primary,PenLine,YES,YES,N/A,N/A,YES,semanticActions,10-mail-actions.png,COMPLETE
+/mail,Mail,MailWorkspace,답장,Reply,primary,edit,secondary,Reply,YES,YES,N/A,selection,YES,semanticActions,10-mail-actions.png,COMPLETE
+/mail,Mail,MailWorkspace,전체답장,Reply all,edit,view,secondary,ReplyAll,YES,YES,N/A,selection,YES,semanticActions,10-mail-actions.png,COMPLETE
+/mail,Mail,MailWorkspace,전달,Forward,document,duplicate,secondary,Forward,YES,YES,N/A,selection,YES,semanticActions,10-mail-actions.png,COMPLETE
+/mail,Mail,MailWorkspace,삭제,Delete,danger,danger,danger,Trash2,YES,YES,N/A,selection,YES,semanticActions,10-mail-actions.png,COMPLETE
+/mail,Mail,MailWorkspace,스팸,Spam,archive,warning,secondary,CircleAlert,YES,YES,N/A,selection,YES,semanticActions,10-mail-actions.png,COMPLETE
+/mail,Mail,MailWorkspace,리마인드,Reminder,warning,warning,secondary,AlarmClock,YES,YES,N/A,selection,YES,semanticActions,10-mail-actions.png,COMPLETE
+/approvals,Approval,ApprovalWorkspace,문서 작성,Create,primary,primary,primary,FilePlus2,YES,YES,N/A,N/A,YES,semanticActions,09-approval-actions.png,COMPLETE
+/approvals,Approval,ApprovalWorkspace,결재선 설정,Configure,view,view,secondary,UsersRound,YES,YES,N/A,N/A,YES,semanticActions,09-approval-actions.png,COMPLETE
+/approvals,Approval,ApprovalWorkspace,승인,Approve,success,success,primary,Check,YES,YES,N/A,permission,YES,semanticActions,09-approval-actions.png,COMPLETE
+/approvals,Approval,ApprovalWorkspace,반려,Reject,reject,reject,danger,X,YES,YES,N/A,permission,YES,semanticActions,09-approval-actions.png,COMPLETE
+/approvals,Approval,ApprovalWorkspace,수정요청,Request changes,warning,warning,secondary,RotateCcw,YES,YES,N/A,permission,YES,semanticActions,09-approval-actions.png,COMPLETE
+/approvals,Approval,ApprovalWorkspace,회수,Recall,archive,archive,secondary,RotateCcw,YES,YES,N/A,state,YES,semanticActions,09-approval-actions.png,COMPLETE
+/approvals,Approval line,ApprovalLineManager,결재선 저장,Save,save,save,secondary,Save,YES,YES,N/A,N/A,YES,semanticActions,09-approval-actions.png,COMPLETE
+/approvals,Approval line,ApprovalLineManager,결재선 복사,Duplicate,duplicate,duplicate,secondary,Copy,YES,YES,N/A,saved line,YES,semanticActions,09-approval-actions.png,COMPLETE
+/approvals,Approval line,ApprovalLineManager,결재선 삭제,Delete,danger,danger,danger,Trash2,YES,YES,N/A,saved line,YES,semanticActions,09-approval-actions.png,COMPLETE
+/calendar,Calendar,CalendarPage,일정 추가,Create,primary,primary,primary,Plus,YES,YES,N/A,N/A,YES,semanticActions,12-calendar-actions.png,COMPLETE
+/calendar,Calendar,CalendarPage,일정 저장,Save,save,save,primary,Save,YES,YES,N/A,required fields,YES,semanticActions,12-calendar-actions.png,COMPLETE
+/tasks/my,Tasks,MyTasksPage,완료 요청,Request completion,warning,warning,primary,Check,YES,YES,N/A,state,YES,semanticActions,12-calendar-actions.png,COMPLETE
+/tasks/my,Tasks,MyTasksPage,승인,Approve,success,success,primary,Check,YES,YES,N/A,permission,YES,semanticActions,12-calendar-actions.png,COMPLETE
+/tasks/my,Tasks,MyTasksPage,반려,Reject,reject,reject,danger,X,YES,YES,N/A,permission,YES,semanticActions,12-calendar-actions.png,COMPLETE
+/projects/intake?tab=CLIENT_ORDER,Estimate request,EstimateRequestWorkbench,신규 의뢰,Create,primary,primary,primary,Plus,YES,YES,YES,permission,YES,semanticActions,01-estimate-view-actions.png,COMPLETE
+/projects/intake?tab=CLIENT_ORDER,Estimate request,EstimateRequestWorkbench,수정,Edit,edit,edit,secondary,Pencil,YES,YES,N/A,permission,YES,semanticActions,01-estimate-view-actions.png,COMPLETE
+/projects/intake?tab=CLIENT_ORDER,Estimate request,EstimateRequestProfileEditor,수정 저장,Save,save,save,primary,Save,YES,YES,YES,validation,YES,semanticActions,02-estimate-edit-sticky-save.png,COMPLETE
+/projects/intake?tab=CLIENT_ORDER,Estimate request,EstimateRequestWorkbench,복제,Duplicate,duplicate,duplicate,secondary,Copy,YES,YES,N/A,state,YES,semanticActions,01-estimate-view-actions.png,COMPLETE
+/projects/intake?tab=CLIENT_ORDER,Estimate request,EstimateRequestWorkbench,삭제,Delete,danger,danger,danger,Trash2,YES,YES,N/A,delete policy,YES,semanticActions,01-estimate-view-actions.png,COMPLETE
+/projects/intake?tab=CLIENT_ORDER,Estimate request,EstimateRequestWorkbench,견적서 작성,Document,document,document,secondary,FileText,YES,YES,N/A,state,YES,semanticActions,01-estimate-view-actions.png,COMPLETE
+/projects/intake?tab=CLIENT_ORDER,Estimate request,EstimateRequestWorkbench,수주,Win,success,success,secondary,Check,YES,YES,N/A,decision,YES,semanticActions,03-estimate-decision-colors.png,COMPLETE
+/projects/intake?tab=CLIENT_ORDER,Estimate request,EstimateRequestWorkbench,실주,Lost,reject,reject,secondary,X,YES,YES,N/A,decision,YES,semanticActions,03-estimate-decision-colors.png,COMPLETE
+/projects/intake?tab=CLIENT_ORDER,Estimate request,EstimateRequestWorkbench,보류,Hold,warning,warning,secondary,Pause,YES,YES,N/A,decision,YES,semanticActions,03-estimate-decision-colors.png,COMPLETE
+/projects/intake?tab=CLIENT_ORDER,Estimate request,EstimateRequestWorkbench,DB에 보관,Archive,archive,archive,danger,Archive,YES,YES,N/A,delete policy,YES,semanticActions,03-estimate-decision-colors.png,COMPLETE
+/projects/intake?tab=ESTIMATE_SHEETS,Estimate sheet,EstimateSheetWorkbench,저장,Save,save,save,primary,Save,YES,YES,YES,dirty state,YES,semanticActions,08-estimate-management-actions.png,COMPLETE
+/projects/intake?tab=ESTIMATE_SHEETS,Estimate sheet,EstimateSheetWorkbench,Excel 불러오기,Document,document,document,secondary,Upload,YES,YES,YES,file validation,YES,semanticActions,08-estimate-management-actions.png,COMPLETE
+/projects/intake?tab=ESTIMATE_SHEETS,Estimate sheet,EstimateSheetWorkbench,PDF,Document,document,document,secondary,File,YES,YES,YES,state,YES,semanticActions,08-estimate-management-actions.png,COMPLETE
+/projects/intake?tab=ESTIMATE_SHEETS,Estimate sheet,EstimateSheetWorkbench,수정본 생성,Revision,duplicate,duplicate,secondary,Copy,YES,YES,YES,published state,YES,semanticActions,08-estimate-management-actions.png,COMPLETE
+/projects/intake?tab=ESTIMATE_DB,Estimate database,EstimateDatabaseWorkbench,행 추가,Add resource,add-resource,add-resource,secondary,Plus,YES,YES,N/A,permission,YES,semanticActions,07-db-toolbar-actions.png,COMPLETE
+/projects/intake?tab=ESTIMATE_DB,Estimate database,EstimateDatabaseWorkbench,수정,Edit,edit,edit,secondary,Pencil,YES,YES,N/A,selection,YES,semanticActions,07-db-toolbar-actions.png,COMPLETE
+/projects/intake?tab=ESTIMATE_DB,Estimate database,EstimateDatabaseWorkbench,저장,Save,save,save,primary,Save,YES,YES,N/A,edit mode,YES,semanticActions,07-db-toolbar-actions.png,COMPLETE
+/projects/intake?tab=ESTIMATE_DB,Estimate database,EstimateDatabaseWorkbench,복제,Duplicate,duplicate,duplicate,secondary,Copy,YES,YES,N/A,selection,YES,semanticActions,07-db-toolbar-actions.png,COMPLETE
+/projects/intake?tab=ESTIMATE_DB,Estimate database,EstimateDatabaseWorkbench,삭제,Delete,danger,danger,danger,Trash2,YES,YES,N/A,selection,YES,semanticActions,07-db-toolbar-actions.png,COMPLETE
+/projects/intake?tab=PROJECT_INTAKE,Project Intake,ProjectIntakeWorkbench,다음 단계,Proceed,primary,primary,primary,ArrowRight,YES,YES,N/A,N/A,YES,semanticActions,04-intake-actions.png,COMPLETE
+/projects/intake?tab=PROJECT_INTAKE,Project Intake,ProjectIntakeWorkbench,접수 완료,Complete,success,success,primary,CheckCircle2,YES,YES,YES,permission and validation,YES,semanticActions,04-intake-actions.png,COMPLETE
+/projects/intake?tab=PROJECT_INTAKE,Project Intake,ProjectIntakeWorkbench,접수 내용 수정,Edit,edit,edit,secondary,Pencil,YES,YES,N/A,permission,YES,semanticActions,05-intake-revision-actions.png,COMPLETE
+/projects/intake?tab=PROJECT_INTAKE,Project Intake,ProjectIntakeWorkbench,수정본 저장 및 부서 알림,Save,save,save,primary,Save,YES,YES,YES,revision reason,YES,semanticActions,05-intake-revision-actions.png,COMPLETE
+/projects/intake?tab=PROJECT_INTAKE,Project Intake,ProjectIntakeWorkbench,추가자료 등록,Add resource,add-resource,add-resource,secondary,Upload,YES,YES,N/A,permission,YES,semanticActions,05-intake-revision-actions.png,COMPLETE
+/projects,Project board,ProjectSummaryCard,투입인원 배정,Add resource,add-resource,add-resource,primary,UserPlus,YES,YES,N/A,assignment,YES,semanticActions,06-project-staffing-actions.png,COMPLETE
+/projects,Project board,ProjectSummaryCard,투입인원 계속 배정,Edit,edit,edit,primary,UserPlus,YES,YES,N/A,assignment,YES,semanticActions,06-project-staffing-actions.png,COMPLETE
+/projects,Project board,ProjectSummaryCard,투입인원 보기·수정,Edit,edit,edit,primary,UserPlus,YES,YES,N/A,assignment,YES,semanticActions,06-project-staffing-actions.png,COMPLETE
+/projects,Project board,ProjectStaffingModal,배정 임시저장,Save,save,save,secondary,Save,YES,YES,YES,staffing validation,YES,semanticActions,06-project-staffing-actions.png,COMPLETE
+/projects,Project board,ProjectStaffingModal,배정 확정,Complete,edit,success,secondary,Check,YES,YES,YES,staffing validation,YES,semanticActions,06-project-staffing-actions.png,COMPLETE
+/projects,Project board,ProjectStaffingModal,배정 확정 및 착수,Complete,success,success,primary,Play,YES,YES,YES,staffing validation,YES,semanticActions,06-project-staffing-actions.png,COMPLETE
+/drive,Drive,DriveWorkspace,업로드,Add resource,add-resource,add-resource,primary,UploadCloud,YES,YES,N/A,provider state,YES,semanticActions,11-drive-actions.png,COMPLETE
+/drive,Drive,DriveWorkspace,업로드 제거,Delete,danger,danger,danger,X,YES,YES,N/A,N/A,YES,semanticActions,11-drive-actions.png,COMPLETE
+/settings/admin,Drive settings,DriveIntegrationSettings,연결,Connect,add-resource,add-resource,secondary,Link2,YES,YES,N/A,admin permission,YES,semanticActions,15-admin-actions.png,COMPLETE
+/settings/admin,Drive settings,DriveIntegrationSettings,재인증,Edit,edit,edit,secondary,Refresh,YES,YES,N/A,admin permission,YES,semanticActions,15-admin-actions.png,COMPLETE
+/settings/admin,Drive settings,DriveIntegrationSettings,연결해제,Delete,danger,danger,danger,Unplug,YES,YES,N/A,admin permission,YES,semanticActions,15-admin-actions.png,COMPLETE
+/settings/workspace,Admin settings,WorkspaceSettingsPage,설정 수정,Edit,edit,edit,secondary,Edit2,YES,YES,N/A,role,YES,semanticActions,15-admin-actions.png,COMPLETE
+/settings/workspace,Admin settings,WorkspaceSettingsPage,설정 저장,Save,save,save,primary,Save,YES,YES,N/A,N/A,YES,semanticActions,15-admin-actions.png,COMPLETE
+/settings/workspace,Admin settings,WorkspaceSettingsPage,일괄 종료,Danger,danger,danger,danger,Alert,YES,YES,N/A,confirm,YES,semanticActions,15-admin-actions.png,COMPLETE
+/sales,Sales,BusinessModuleWorkbench,등록,Create,primary,primary,primary,Plus,YES,YES,YES,required fields,YES,semanticActions,13-sales-actions.png,COMPLETE
+/finance,Finance,BusinessModuleWorkbench,등록,Create,primary,primary,primary,Plus,YES,YES,YES,required fields,YES,semanticActions,14-finance-actions.png,COMPLETE
+/ai,AI,AiMeetingWorkspace,AI 초안 생성,Generate,primary,primary,primary,Play,YES,YES,YES,provider state,YES,semanticActions,15-admin-actions.png,COMPLETE
+/ai,AI,AiMeetingWorkspace,회의록 저장,Save,save,save,primary,Save,YES,YES,YES,generated result,YES,semanticActions,15-admin-actions.png,COMPLETE
+/organization,Organization,OrganizationDirectory,회사 전환,Navigation,NAVIGATION,NAVIGATION,N/A,Building,YES,YES,N/A,allowed company,YES,inventory,15-admin-actions.png,CLASSIFIED
