@@ -24,6 +24,7 @@ import { useProjectPmScheduleStore } from '@/store/projectPmScheduleStore';
 import { useProjectProfitStore } from '@/store/projectProfitStore';
 import { useProjectQcStore } from '@/store/projectQcStore';
 import { useProjectStore } from '@/store/projectStore';
+import { useNotificationStore } from '@/store/notificationStore';
 import type { EstimateRequest, PmSchedulePlan, Project } from '@/types/models';
 
 const manager = { id: 'manager-1', role: 'DEPARTMENT_MANAGER' as const, departmentId: 'dept-a' };
@@ -43,6 +44,7 @@ const resetStores = () => {
   useProjectQcStore.setState({ checklists: [], terms: [], persistenceMode: 'LOCAL_DEMO', loading: false, error: null });
   useProjectDeliveryStore.setState({ workspaces: [], persistenceMode: 'LOCAL_DEMO', loading: false, error: null });
   useProjectProfitStore.setState({ analyses: [], unitPriceTables: [], persistenceMode: 'LOCAL_DEMO', loading: false, error: null });
+  useNotificationStore.setState({ notifications: [] });
   useAuditStore.getState().resetLogs();
 };
 
@@ -176,6 +178,31 @@ test('C/E/F/H: WON follows one canonical lineage through archive with guarded fa
   assert.equal(repeatedCompletion.assignments.length, 2);
   assert.equal(useProjectStore.getState().projects.length, projectCountAfterCompletion);
 
+  const revisedDraft: typeof finalDraft = {
+    ...finalDraft,
+    workContent: `${finalDraft.workContent}\nApproved scope revision`,
+    targetUnitIds: ['STRUCTURE', 'DEVELOPMENT'],
+    primaryUnitId: 'STRUCTURE',
+  };
+  const revised = await useProjectIntakeStore.getState().reviseAcceptedIntake(
+    completedIntake.intake.id,
+    revisedDraft,
+    '개발팀 참여 및 수행범위 변경',
+    admin,
+  );
+  assert.equal(revised.intake.id, completedIntake.intake.id);
+  assert.equal(revised.intake.projectId, projectId);
+  assert.equal(revised.intake.projectNo, completedIntake.projectNo);
+  assert.equal(revised.intake.status, 'ACCEPTED');
+  assert.equal(revised.project.id, projectId);
+  assert.equal(revised.assignments.find((item) => item.unitId === 'CLAIM')?.status, 'REMOVED');
+  assert.equal(revised.assignments.find((item) => item.unitId === 'DEVELOPMENT')?.status, 'START_PLANNED');
+  assert.equal(revised.assignments.filter((item) => item.role === 'PRIMARY' && item.status !== 'REMOVED').length, 1);
+  const revisionNotifications = useNotificationStore.getState().notifications.filter((item) => item.groupId?.startsWith(`project-intake-revision:${completedIntake.intake.id}:`));
+  assert.ok(revisionNotifications.length >= revised.eventTypes.length);
+  assert.equal(new Set(revisionNotifications.map((item) => item.groupId)).size, revisionNotifications.length);
+  assert.ok(revisionNotifications.every((item) => item.groupId?.includes(`:${revised.revision}:`)));
+
   await useProjectPmScheduleStore.getState().sync(manager);
   await useProjectPmScheduleStore.getState().assign(projectId, { primaryPmId: pm.id, finishPmId: '', structurePmId: pm.id, bimPmId: pm.id, civilPmId: '' }, manager);
   await useProjectPmScheduleStore.getState().requestDraft(projectId, { pmIds: [pm.id], teamLeaderIds: [] }, 'Submit two alternatives', manager);
@@ -308,13 +335,9 @@ test('D2: convenience actions duplicate editable records and archive linked hist
   assert.equal(useEstimateSheetStore.getState().sheets[request.id], undefined);
   assert.equal(useEstimateRequestStore.getState().requests.find((item) => item.id === request.id)?.status, 'REQUEST_MEMO');
 
-  const intake = useProjectIntakeStore.getState().createDraft(manager);
-  const duplicatedIntake = useProjectIntakeStore.getState().duplicateDraft(intake.id, manager);
-  assert.match(buildProjectIntakeDraft(duplicatedIntake).projectName, /복사본/);
-  assert.equal(duplicatedIntake.status, 'DRAFT');
-  assert.equal(duplicatedIntake.estimateRequestId, '');
-  useProjectIntakeStore.getState().deleteDraft(duplicatedIntake.id, manager);
-  assert.equal(useProjectIntakeStore.getState().intakes.some((item) => item.id === duplicatedIntake.id), false);
+  const intakeState = useProjectIntakeStore.getState() as unknown as Record<string, unknown>;
+  assert.equal(intakeState.createDraft, undefined);
+  assert.equal(intakeState.duplicateDraft, undefined);
 });
 
 test('F/G: secret references, migration schema and approved brand asset remain exact', { concurrency: false }, () => {

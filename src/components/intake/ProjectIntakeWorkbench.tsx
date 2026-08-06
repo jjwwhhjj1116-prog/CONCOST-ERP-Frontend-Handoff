@@ -8,7 +8,6 @@ import {
   AlertTriangle,
   CheckCircle2,
   ClipboardCheck,
-  Copy,
   FileCheck2,
   FileText,
   History,
@@ -25,10 +24,9 @@ import {
 import { useTranslation } from '@/lib/localization';
 import { buildProjectIntakeDraft, evaluateProjectIntakeCompleteness } from '@/lib/projectIntake';
 import { resolveProjectIntakeSelection } from '@/lib/projectIntakeMode';
+import { getAcceptedIntakeRevisionDiff } from '@/lib/projectIntakeRevision';
 import { projectBoardHref } from '@/lib/projectExecutionUnits';
-import { getProjectIntakeCreateBlockedCopy } from '@/lib/runtimeBoundaryCopy';
 import { useProjectIntakeStore } from '@/store/projectIntakeStore';
-import { useUiStore } from '@/store/uiStore';
 import { ProjectExecutionUnitSelector } from '@/components/intake/ProjectExecutionUnitSelector';
 import { ResponsiveDialogShell } from '@/components/ui/ResponsiveDialogShell';
 import {
@@ -41,7 +39,7 @@ import {
 } from '@/types/models';
 
 type Translate = ReturnType<typeof useTranslation>;
-type Props = { currentUser: PersonnelCard; t: Translate; view?: 'CREATE' | 'LIST'; requestedIntakeId?: string };
+type Props = { currentUser: PersonnelCard; t: Translate; requestedIntakeId?: string };
 
 const STATUSES: ProjectIntakeStatus[] = ['DRAFT', 'REVIEWED', 'ACCEPTED'];
 const MATERIAL_STATUSES: ProjectIntakeMaterial['status'][] = ['NOT_RECEIVED', 'PARTIAL', 'RECEIVED', 'CONFIRMED'];
@@ -53,6 +51,26 @@ const statusClass: Record<ProjectIntakeStatus, string> = {
   REVIEWED: 'bg-blue-50 text-blue-700 border-blue-200',
   ACCEPTED: 'bg-emerald-50 text-emerald-700 border-emerald-200',
 };
+
+type IntakeHistoryDetails = {
+  revision?: number;
+  reason?: string;
+  changedFields?: string[];
+  before?: unknown;
+  after?: unknown;
+};
+
+const parseHistoryDetails = (changesJson?: string | null): IntakeHistoryDetails | null => {
+  if (!changesJson) return null;
+  try {
+    const parsed = JSON.parse(changesJson) as IntakeHistoryDetails;
+    return parsed && typeof parsed === 'object' ? parsed : null;
+  } catch {
+    return null;
+  }
+};
+
+const auditSnapshot = (value: unknown) => JSON.stringify(value ?? {}, null, 0);
 
 const makeContact = (): ProjectIntakeContact => ({
   id: `contact-${crypto.randomUUID()}`,
@@ -86,27 +104,22 @@ const makeSecretReference = (): ProjectIntakeSecretReference => ({
   note: '',
 });
 
-export function ProjectIntakeWorkbench({ currentUser, t, view = 'CREATE', requestedIntakeId }: Props) {
+export function ProjectIntakeWorkbench({ currentUser, t, requestedIntakeId }: Props) {
   const {
     intakes,
     persistenceMode,
     loading,
     error: syncError,
     sync,
-    createDraft,
-    duplicateDraft,
-    deleteDraft,
-    discardDraft,
     saveDraft,
     review,
     accept,
     finalizeWonIntake,
+    reviseAcceptedIntake,
   } = useProjectIntakeStore();
-  const boundaryLocale = useUiStore((state) => state.brandWorkspace === 'VIET_QS' ? 'vi' : 'ko');
   const router = useRouter();
   const actor = useMemo(() => ({ id: currentUser.id, role: currentUser.role, departmentId: currentUser.departmentId }), [currentUser]);
   const [selectedId, setSelectedId] = useState('');
-  const [createdDraftId, setCreatedDraftId] = useState('');
   const [query, setQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<ProjectIntakeStatus | 'ALL'>('ALL');
   const [draft, setDraft] = useState<ProjectIntakeDraft | null>(null);
@@ -116,7 +129,8 @@ export function ProjectIntakeWorkbench({ currentUser, t, view = 'CREATE', reques
   const [actionError, setActionError] = useState('');
   const [activeStep, setActiveStep] = useState(1);
   const [validationMissing, setValidationMissing] = useState<string[]>([]);
-  const activeCreateDraftId = useRef('');
+  const [acceptedEditMode, setAcceptedEditMode] = useState(false);
+  const [revisionReason, setRevisionReason] = useState('');
   const finalizingRef = useRef(false);
   const hydratedSelectionId = useRef('');
 
@@ -131,12 +145,11 @@ export function ProjectIntakeWorkbench({ currentUser, t, view = 'CREATE', reques
       .some((value) => value.toLowerCase().includes(search));
   }), [intakes, query, statusFilter]);
 
-  const selectionMode = requestedIntakeId ? 'EDIT' : view;
+  const selectionMode = requestedIntakeId ? 'EDIT' : 'LIST';
   const selection = resolveProjectIntakeSelection({
     mode: selectionMode,
     requestedIntakeId,
     selectedId,
-    createdDraftId,
     availableIds: intakes.map((item) => item.id),
     filteredIds: filtered.map((item) => item.id),
   });
@@ -162,13 +175,17 @@ export function ProjectIntakeWorkbench({ currentUser, t, view = 'CREATE', reques
       if (selected.id !== selectedId) setSelectedId(selected.id);
       setDraft(buildProjectIntakeDraft(selected));
       setReviewNote(selected.reviewNote || '');
-      if (selectionChanged) setActiveStep(1);
+      if (selectionChanged) {
+        setActiveStep(1);
+        setAcceptedEditMode(false);
+        setRevisionReason('');
+      }
     }, 0);
     return () => window.clearTimeout(timeout);
   }, [loading, persistenceMode, selected, selectedId, selection.requestedIdMissing]);
 
   const missing = draft ? evaluateProjectIntakeCompleteness(draft) : [];
-  const readOnly = !selected?.permissions?.canEdit || selected.status === 'ACCEPTED';
+  const readOnly = !selected?.permissions?.canEdit || (selected.status === 'ACCEPTED' && !acceptedEditMode);
 
   const updateDraft = <K extends keyof ProjectIntakeDraft>(key: K, value: ProjectIntakeDraft[K]) => {
     setDraft((current) => current ? { ...current, [key]: value } : current);
@@ -247,27 +264,37 @@ export function ProjectIntakeWorkbench({ currentUser, t, view = 'CREATE', reques
 
   const attachMaterialFile = (index: number, file: File | undefined) => {
     if (!file) return;
+    const nextVersion = (draft?.materials[index]?.fileVersion || 0) + 1;
     updateMaterial(index, {
       originalName: file.name,
       size: file.size,
       mimeType: file.type || 'application/octet-stream',
-      storageKey: `pending://${file.name}`,
-      status: 'RECEIVED',
+      storageKey: persistenceMode === 'LOCAL_DEMO'
+        ? `demo-ready://${draft?.materials[index]?.id || 'material'}/v${nextVersion}`
+        : `pending://${file.name}`,
+      status: persistenceMode === 'LOCAL_DEMO' ? 'CONFIRMED' : 'RECEIVED',
+      fileStatus: persistenceMode === 'LOCAL_DEMO' ? 'READY' : 'PENDING',
+      fileVersion: nextVersion,
+      fileId: `${draft?.materials[index]?.id || 'material'}:v${nextVersion}`,
     });
   };
 
   const attachRequestFile = (file: File | undefined) => {
     if (!draft || !file) return;
+    const material = makeMaterial();
     updateDraft('materials', [...draft.materials, {
-      ...makeMaterial(),
+      ...material,
       category: 'client-request',
       label: '수주시 요청사항',
       memo: draft.request,
-      status: 'RECEIVED',
+      status: persistenceMode === 'LOCAL_DEMO' ? 'CONFIRMED' : 'RECEIVED',
       originalName: file.name,
       size: file.size,
       mimeType: file.type || 'application/octet-stream',
-      storageKey: `pending://${file.name}`,
+      storageKey: persistenceMode === 'LOCAL_DEMO' ? `demo-ready://${material.id}/v1` : `pending://${file.name}`,
+      fileStatus: persistenceMode === 'LOCAL_DEMO' ? 'READY' : 'PENDING',
+      fileVersion: 1,
+      fileId: `${material.id}:v1`,
     }]);
   };
 
@@ -276,84 +303,65 @@ export function ProjectIntakeWorkbench({ currentUser, t, view = 'CREATE', reques
     updateDraft('secretReferences', draft.secretReferences.map((item, itemIndex) => itemIndex === index ? { ...item, ...patch } : item));
   };
 
-  const startNewDraft = () => {
-    if (persistenceMode !== 'LOCAL_DEMO') {
-      setMessage('');
-      setActionError(getProjectIntakeCreateBlockedCopy(boundaryLocale));
-      return;
-    }
-    if (activeCreateDraftId.current) {
-      setSelectedId(activeCreateDraftId.current);
-      return;
-    }
-    try {
-      const created = createDraft(actor);
-      activeCreateDraftId.current = created.id;
-      setCreatedDraftId(created.id);
-      setSelectedId(created.id);
-      setDraft(buildProjectIntakeDraft(created));
-      setActiveStep(1);
-      setMessage('새 프로젝트 접수를 시작했습니다.');
-      setActionError('');
-    } catch (caught) {
-      setActionError(caught instanceof Error ? caught.message : t('projectIntake.error.generic'));
-    }
-  };
-
   const cancelCurrent = () => {
-    if (selectionMode === 'CREATE' && createdDraftId) {
-      try {
-        discardDraft(createdDraftId, actor);
-        activeCreateDraftId.current = '';
-        setCreatedDraftId('');
-        setSelectedId('');
-        setDraft(null);
-        setReviewNote('');
-        setMessage('');
-        setActionError('');
-      } catch (caught) {
-        setActionError(caught instanceof Error ? caught.message : t('projectIntake.error.generic'));
-      }
-      return;
-    }
     if (selected) {
       setDraft(buildProjectIntakeDraft(selected));
       setReviewNote(selected.reviewNote || '');
+      setAcceptedEditMode(false);
+      setRevisionReason('');
       setMessage('');
       setActionError('');
     }
   };
 
-  const duplicateCurrent = () => {
-    if (!selected) return;
-    try {
-      const duplicated = duplicateDraft(selected.id, actor);
-      activeCreateDraftId.current = duplicated.id;
-      setCreatedDraftId(duplicated.id);
-      setSelectedId(duplicated.id);
-      setDraft(buildProjectIntakeDraft(duplicated));
-      setActiveStep(1);
-      setMessage('프로젝트 접수를 복제했습니다. 복사본을 수정해 주세요.');
-      setActionError('');
-    } catch (caught) {
-      setActionError(caught instanceof Error ? caught.message : t('projectIntake.error.generic'));
-    }
+  const openProjectBoard = () => {
+    if (!selected?.projectId || !draft) return;
+    router.push(projectBoardHref(draft.targetUnitIds, {
+      projectId: selected.projectId,
+      view: 'PART',
+    }));
   };
 
-  const deleteCurrent = () => {
-    if (!selected || !window.confirm(`'${draft?.projectName || t('projectIntake.untitled')}' 프로젝트 접수 초안을 삭제할까요? 수주 계보에 연결된 접수는 삭제되지 않습니다.`)) return;
+  const beginAcceptedEdit = (step = 1) => {
+    setAcceptedEditMode(true);
+    setActiveStep(step);
+    setMessage('');
+    setActionError('');
+    window.setTimeout(() => {
+      document.querySelector<HTMLElement>(`[data-intake-step="${step}"] input:not([disabled]), [data-intake-step="${step}"] textarea:not([disabled]), [data-intake-step="${step}"] select:not([disabled])`)?.focus();
+    }, 0);
+  };
+
+  const beginAdditionalMaterial = () => {
+    if (!draft) return;
+    setDraft({ ...draft, materials: [...draft.materials, makeMaterial()] });
+    beginAcceptedEdit(2);
+  };
+
+  const saveAcceptedRevision = async () => {
+    if (busy || !selected || !draft || selected.status !== 'ACCEPTED') return;
+    if (!revisionReason.trim()) {
+      setActionError('수정 사유를 입력해 주세요.');
+      document.querySelector<HTMLInputElement>('[data-revision-reason]')?.focus();
+      return;
+    }
+    const before = buildProjectIntakeDraft(selected);
+    const diff = getAcceptedIntakeRevisionDiff(before, draft);
+    const important = diff.changedFields.some((field) => ['scope', 'schedule', 'primaryUnitId', 'unitAdded', 'unitRemoved'].includes(field));
+    if (important && !window.confirm('업무범위, 담당부서, 주관부서 또는 일정이 변경됩니다. 같은 프로젝트와 접수번호를 유지한 채 수정본을 저장하고 관련 부서에 알릴까요?')) return;
+    setBusy(true);
+    setMessage('');
+    setActionError('');
     try {
-      deleteDraft(selected.id, actor);
-      activeCreateDraftId.current = '';
-      setCreatedDraftId('');
-      setSelectedId('');
-      setDraft(null);
-      setReviewNote('');
-      setMessage('프로젝트 접수 초안을 삭제했습니다.');
-      setActionError('');
-      router.replace('/projects/intake?tab=PROJECT_INTAKE');
+      const result = await reviseAcceptedIntake(selected.id, draft, revisionReason, actor);
+      setDraft(buildProjectIntakeDraft(result.intake));
+      setAcceptedEditMode(false);
+      setRevisionReason('');
+      setMessage(`수정본 ${result.revision}을 저장하고 관련 부서 알림을 생성했습니다.`);
     } catch (caught) {
       setActionError(caught instanceof Error ? caught.message : t('projectIntake.error.generic'));
+    } finally {
+      setBusy(false);
     }
   };
 
@@ -365,15 +373,7 @@ export function ProjectIntakeWorkbench({ currentUser, t, view = 'CREATE', reques
           <p className="mt-1 text-sm text-[var(--color-text-sub)]">{t('projectIntake.subtitle')}</p>
         </div>
         <div className="flex flex-wrap items-center gap-2 text-xs text-[var(--color-text-sub)]">
-          <button
-            type="button"
-            className="inline-flex h-9 items-center gap-2 bg-[var(--color-primary)] px-3 font-bold text-white hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2"
-            onClick={startNewDraft}
-          >
-            <Plus size={15} />
-            새 프로젝트 접수
-          </button>
-          {(createdDraftId || selected?.id) && (
+          {acceptedEditMode && selected?.id && (
             <button
               type="button"
               onClick={cancelCurrent}
@@ -417,7 +417,10 @@ export function ProjectIntakeWorkbench({ currentUser, t, view = 'CREATE', reques
           </div>
           <div className="max-h-72 overflow-y-auto lg:max-h-[690px]">
             {filtered.length === 0 ? (
-              <p className="px-4 py-8 text-center text-sm text-[var(--color-text-sub)]">{t('projectIntake.empty')}</p>
+              <div className="px-4 py-8 text-center">
+                <p className="text-sm font-semibold text-[var(--color-text-main)]">견적 의뢰관리에서 수주를 확정하면 자동 등록됩니다.</p>
+                <button type="button" onClick={() => router.push('/projects/intake?tab=CLIENT_ORDER')} className="mt-4 inline-flex min-h-10 items-center bg-[var(--color-primary)] px-4 text-sm font-black text-white hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2">견적 의뢰관리로 이동</button>
+              </div>
             ) : filtered.map((intake) => {
               const itemDraft = intake.draft || buildProjectIntakeDraft(intake);
               return (
@@ -425,11 +428,7 @@ export function ProjectIntakeWorkbench({ currentUser, t, view = 'CREATE', reques
                   key={intake.id}
                   type="button"
                   onClick={() => {
-                    if (intake.id === createdDraftId) {
-                      setSelectedId(intake.id);
-                    } else {
-                      router.push(`/projects/intake?tab=PROJECT_INTAKE&intakeId=${encodeURIComponent(intake.id)}`);
-                    }
+                    router.push(`/projects/intake?tab=PROJECT_INTAKE&intakeId=${encodeURIComponent(intake.id)}`);
                     setMessage('');
                     setActionError('');
                   }}
@@ -451,7 +450,11 @@ export function ProjectIntakeWorkbench({ currentUser, t, view = 'CREATE', reques
 
         <main className="min-w-0">
           {!selected || !draft ? (
-            <div className="flex min-h-[420px] items-center justify-center p-8 text-center text-sm text-[var(--color-text-sub)]">{t('projectIntake.selectPrompt')}</div>
+            <div className="flex min-h-[420px] flex-col items-center justify-center p-8 text-center">
+              <p className="text-sm font-semibold text-[var(--color-text-main)]">견적 의뢰관리에서 수주를 확정하면 자동 등록됩니다.</p>
+              <p className="mt-2 text-xs text-[var(--color-text-sub)]">프로젝트 접수는 견적 수주에서 생성된 작업 대기열입니다.</p>
+              <button type="button" onClick={() => router.push('/projects/intake?tab=CLIENT_ORDER')} className="mt-5 inline-flex min-h-10 items-center bg-[var(--color-primary)] px-4 text-sm font-black text-white hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2">견적 의뢰관리로 이동</button>
+            </div>
           ) : (
             <div>
               <header className="border-b border-[var(--color-border)] px-4 py-4 md:px-6">
@@ -467,11 +470,21 @@ export function ProjectIntakeWorkbench({ currentUser, t, view = 'CREATE', reques
                     </p>
                   </div>
                   <div className="flex flex-wrap gap-2">
+                    {selected.status === 'ACCEPTED' && !acceptedEditMode && selected.permissions?.canEdit && (
+                      <>
+                        <button type="button" onClick={() => beginAcceptedEdit(1)} disabled={busy} className="inline-flex items-center gap-2 border border-[var(--color-border)] px-3 py-2 text-sm font-semibold text-[var(--color-text-main)] hover:bg-[var(--color-bg-sub)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] disabled:opacity-60"><Pencil size={16} />접수 내용 수정</button>
+                        <button type="button" onClick={beginAdditionalMaterial} disabled={busy} className="inline-flex items-center gap-2 border border-[var(--color-border)] px-3 py-2 text-sm font-semibold text-[var(--color-text-main)] hover:bg-[var(--color-bg-sub)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] disabled:opacity-60"><Upload size={16} />추가자료 등록</button>
+                      </>
+                    )}
+                    {selected.status === 'ACCEPTED' && (
+                      <>
+                        <button type="button" onClick={() => { setActiveStep(4); window.setTimeout(() => document.querySelector('[data-intake-history]')?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 0); }} className="inline-flex items-center gap-2 border border-[var(--color-border)] px-3 py-2 text-sm font-semibold text-[var(--color-text-main)] hover:bg-[var(--color-bg-sub)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]"><History size={16} />변경이력</button>
+                        <button type="button" onClick={openProjectBoard} className="inline-flex items-center gap-2 bg-[var(--color-primary)] px-3 py-2 text-sm font-semibold text-white hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2"><ArrowRight size={16} />프로젝트 보드</button>
+                      </>
+                    )}
                     {selected.permissions?.canEdit && selected.status !== 'ACCEPTED' && (
                       <button type="button" onClick={() => setActiveStep(1)} disabled={busy} className="inline-flex items-center gap-2 border border-[var(--color-border)] px-3 py-2 text-sm font-semibold text-[var(--color-text-main)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] disabled:opacity-60"><Pencil size={16} />수정</button>
                     )}
-                    <button type="button" onClick={duplicateCurrent} disabled={busy} className="inline-flex items-center gap-2 border border-[var(--color-border)] px-3 py-2 text-sm font-semibold text-[var(--color-text-main)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] disabled:opacity-60"><Copy size={16} />복제</button>
-                    <button type="button" onClick={deleteCurrent} disabled={busy} className="inline-flex items-center gap-2 border border-red-200 px-3 py-2 text-sm font-semibold text-red-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 disabled:opacity-60"><Trash2 size={16} />삭제</button>
                     {selected.permissions?.canEdit && selected.status !== 'ACCEPTED' && (
                       <button type="button" onClick={() => void run('save')} disabled={busy} className="inline-flex items-center gap-2 bg-[var(--color-primary)] px-3 py-2 text-sm font-semibold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2 disabled:opacity-60">
                         <Save size={16} />{t('projectIntake.action.save')}
@@ -648,16 +661,37 @@ export function ProjectIntakeWorkbench({ currentUser, t, view = 'CREATE', reques
                   <div>
                     <h3 className="mb-3 flex items-center gap-2 text-sm font-bold text-[var(--color-text-main)]"><ClipboardCheck size={16} />{t('projectIntake.section.review')}</h3>
                     <textarea disabled={!selected.permissions?.canReview || selected.status === 'ACCEPTED'} value={reviewNote} onChange={(event) => setReviewNote(event.target.value)} rows={5} className={inputClass} placeholder={t('projectIntake.review.placeholder')} />
+                    {selected.status === 'ACCEPTED' && acceptedEditMode && (
+                      <label className="mt-4 block rounded-lg border border-orange-200 bg-orange-50 p-3 text-xs font-bold text-orange-950">
+                        <span className="mb-1 flex items-center gap-2"><Pencil size={14} />수정 사유 <strong className="text-red-600">필수</strong></span>
+                        <input data-revision-reason value={revisionReason} onChange={(event) => setRevisionReason(event.target.value)} className={`${inputClass} bg-white`} placeholder="수정 사유를 구체적으로 입력해 주세요." />
+                        <span className="mt-2 block font-medium text-orange-800">동일한 접수·프로젝트·프로젝트번호를 유지하며 변경이력과 부서 알림이 생성됩니다.</span>
+                      </label>
+                    )}
                   </div>
-                  <div>
+                  <div data-intake-history>
                     <h3 className="mb-3 flex items-center gap-2 text-sm font-bold text-[var(--color-text-main)]"><History size={16} />{t('projectIntake.section.history')}</h3>
-                    <div className="max-h-40 overflow-y-auto border border-[var(--color-border)]">
-                      {(selected.histories || []).length === 0 ? <p className="p-3 text-xs text-[var(--color-text-sub)]">{t('projectIntake.history.empty')}</p> : (selected.histories || []).map((history) => (
-                        <div key={history.id} className="border-b border-[var(--color-border)] px-3 py-2 text-xs last:border-b-0">
-                          <div className="flex items-center justify-between gap-2"><strong className="text-[var(--color-text-main)]">{history.action}</strong><span className="text-[var(--color-text-sub)]">{new Date(history.createdAt).toLocaleString()}</span></div>
-                          <p className="mt-1 text-[var(--color-text-sub)]">{history.actorId}</p>
-                        </div>
-                      ))}
+                    <div className="max-h-72 overflow-y-auto border border-[var(--color-border)]">
+                      {(selected.histories || []).length === 0 ? <p className="p-3 text-xs text-[var(--color-text-sub)]">{t('projectIntake.history.empty')}</p> : (selected.histories || []).map((history) => {
+                        const details = parseHistoryDetails(history.changesJson);
+                        return (
+                          <div key={history.id} className="border-b border-[var(--color-border)] px-3 py-2 text-xs last:border-b-0">
+                            <div className="flex flex-wrap items-center justify-between gap-2">
+                              <strong className="text-[var(--color-text-main)]">{history.action}</strong>
+                              <span className="text-[var(--color-text-sub)]">{new Date(history.createdAt).toLocaleString()}</span>
+                            </div>
+                            <p className="mt-1 text-[var(--color-text-sub)]">수정자 {history.actorId}{details?.revision ? ` · Revision ${details.revision}` : ''}</p>
+                            {details?.reason && <p data-history-reason className="mt-2 rounded bg-orange-50 px-2 py-1 font-semibold text-orange-900">사유: {details.reason}</p>}
+                            {details?.changedFields?.length ? <p className="mt-1 text-[var(--color-text-sub)]">변경 항목: {details.changedFields.join(', ')}</p> : null}
+                            {details?.before !== undefined && details?.after !== undefined && (
+                              <div data-history-before-after className="mt-2 grid gap-2 sm:grid-cols-2">
+                                <div className="rounded bg-[var(--color-bg)] p-2"><strong className="block text-[var(--color-text-main)]">변경 전</strong><span className="mt-1 block break-all text-[10px] text-[var(--color-text-sub)]">{auditSnapshot(details.before)}</span></div>
+                                <div className="rounded bg-emerald-50 p-2"><strong className="block text-emerald-900">변경 후</strong><span className="mt-1 block break-all text-[10px] text-emerald-800">{auditSnapshot(details.after)}</span></div>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 </section>
@@ -668,15 +702,19 @@ export function ProjectIntakeWorkbench({ currentUser, t, view = 'CREATE', reques
                   <span className="text-xs font-black text-[var(--color-text-sub)]">{activeStep} / 4</span>
                   {activeStep < 4 ? (
                     <button type="button" onClick={() => setActiveStep((step) => Math.min(4, step + 1))} className="inline-flex min-h-10 items-center gap-2 bg-[var(--color-primary)] px-4 text-sm font-black text-white">다음 단계<ArrowRight className="h-4 w-4" /></button>
+                  ) : selected.status === 'ACCEPTED' && acceptedEditMode ? (
+                    <button type="button" onClick={() => void saveAcceptedRevision()} disabled={busy} className="inline-flex min-h-10 items-center gap-2 bg-[var(--color-primary)] px-4 text-sm font-black text-white hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2 disabled:opacity-50"><Save className="h-4 w-4" />수정본 저장 및 부서 알림</button>
+                  ) : selected.status === 'ACCEPTED' ? (
+                    <button type="button" onClick={openProjectBoard} className="inline-flex min-h-10 items-center gap-2 bg-[var(--color-primary)] px-4 text-sm font-black text-white hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2">프로젝트 보드<ArrowRight className="h-4 w-4" /></button>
                   ) : (
                     <button
                       type="button"
                       onClick={() => void completeWonIntake()}
-                      disabled={busy || selected.status === 'ACCEPTED' || !selected.permissions?.canReview}
+                      disabled={busy || !selected.permissions?.canReview}
                       className="inline-flex min-h-10 items-center gap-2 bg-emerald-600 px-4 text-sm font-black text-white hover:bg-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       <CheckCircle2 className="h-4 w-4" />
-                      {selected.status === 'ACCEPTED' ? '수주 완료됨' : t('projectIntake.action.accept')}
+                      {t('projectIntake.action.accept')}
                     </button>
                   )}
                 </footer>

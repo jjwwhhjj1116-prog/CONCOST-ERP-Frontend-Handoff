@@ -1,4 +1,6 @@
-export type ProjectIntakeSelectionMode = 'CREATE' | 'EDIT' | 'LIST';
+export const DIRECT_INTAKE_ENABLED = false as const;
+
+export type ProjectIntakeSelectionMode = 'EDIT' | 'LIST';
 
 export type ProjectIntakeSelection = {
   selectedId: string | null;
@@ -9,7 +11,6 @@ export function resolveProjectIntakeSelection(input: {
   mode: ProjectIntakeSelectionMode;
   requestedIntakeId?: string;
   selectedId?: string;
-  createdDraftId?: string;
   availableIds: readonly string[];
   filteredIds?: readonly string[];
 }): ProjectIntakeSelection {
@@ -21,14 +22,6 @@ export function resolveProjectIntakeSelection(input: {
     return {
       selectedId: available.has(requestedId) ? requestedId : null,
       requestedIdMissing: !available.has(requestedId),
-    };
-  }
-
-  if (input.mode === 'CREATE') {
-    const selectedId = input.createdDraftId?.trim();
-    return {
-      selectedId: selectedId && available.has(selectedId) ? selectedId : null,
-      requestedIdMissing: false,
     };
   }
 

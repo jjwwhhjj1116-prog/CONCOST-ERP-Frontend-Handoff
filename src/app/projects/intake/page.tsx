@@ -18,7 +18,6 @@ type IntakeTab = ProjectSourceType | 'PROJECT_INTAKE';
 function IntakePageContent() {
   const searchParams = useSearchParams();
   const requestedIntakeId = searchParams.get('intakeId') || undefined;
-  const intakeView = searchParams.get('view') === 'LIST' ? 'LIST' : 'CREATE';
   const { currentUser, users } = useAuthStore();
   const { settings } = useTranslationStore();
   const t = useTranslation(settings.uiLanguage);
@@ -129,7 +128,7 @@ function IntakePageContent() {
     <div className="w-full min-w-0 mx-auto space-y-6 md:space-y-8 animate-in fade-in duration-500">
       
       {activeTab === 'PROJECT_INTAKE' ? (
-        <ProjectIntakeWorkbench currentUser={currentUser} t={t} view={intakeView} requestedIntakeId={requestedIntakeId} />
+        <ProjectIntakeWorkbench currentUser={currentUser} t={t} requestedIntakeId={requestedIntakeId} />
       ) : isClient ? (
         <EstimateRequestWorkbench currentUser={currentUser} t={t} />
       ) : (

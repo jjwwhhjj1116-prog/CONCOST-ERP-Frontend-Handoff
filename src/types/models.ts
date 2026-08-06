@@ -106,7 +106,7 @@ export type CommercialDecisionType = 'WON' | 'LOST' | 'CANCELLED' | 'ON_HOLD';
 
 export type ProjectExecutionUnitId = 'FINISH' | 'STRUCTURE' | 'CIVIL_LANDSCAPE' | 'CLAIM' | 'DEVELOPMENT';
 export type ProjectExecutionUnitAssignmentRole = 'PRIMARY' | 'PARTICIPATING';
-export type ProjectExecutionUnitAssignmentStatus = 'AWARD_CONFIRMED' | 'INTAKE_IN_PROGRESS' | 'START_PLANNED' | 'ACTIVE' | 'COMPLETED';
+export type ProjectExecutionUnitAssignmentStatus = 'AWARD_CONFIRMED' | 'INTAKE_IN_PROGRESS' | 'START_PLANNED' | 'ACTIVE' | 'COMPLETED' | 'REMOVED';
 export type ProjectStaffingPlanStatus = 'DRAFT' | 'CONFIRMED' | 'ACTIVE' | 'COMPLETED';
 
 export interface ProjectStaffingRoleAssignment {
@@ -196,6 +196,9 @@ export interface ProjectIntakeMaterial {
   size: number | null;
   mimeType: string;
   storageKey: string;
+  fileStatus?: 'PENDING' | 'READY' | 'REJECTED';
+  fileVersion?: number;
+  fileId?: string | null;
 }
 
 export interface ProjectIntakeSecretReference {
@@ -300,6 +303,23 @@ export interface ProjectIntakeCompletionResult {
   projectNo: string;
   startDateStatus: ProjectIntakeStartDateStatus;
   idempotent: boolean;
+}
+
+export type ProjectIntakeRevisionEventType =
+  | 'PROJECT_INTAKE_UPDATED'
+  | 'PROJECT_INTAKE_ADDITIONAL_MATERIAL_ADDED'
+  | 'PROJECT_INTAKE_SCOPE_CHANGED'
+  | 'PROJECT_INTAKE_SCHEDULE_CHANGED'
+  | 'PROJECT_INTAKE_UNIT_ADDED'
+  | 'PROJECT_INTAKE_UNIT_REMOVED';
+
+export interface ProjectIntakeRevisionResult {
+  intake: ProjectIntake;
+  project: Project;
+  assignments: ProjectExecutionUnitAssignment[];
+  revision: number;
+  changedFields: string[];
+  eventTypes: ProjectIntakeRevisionEventType[];
 }
 
 export interface CommercialDecisionInput {

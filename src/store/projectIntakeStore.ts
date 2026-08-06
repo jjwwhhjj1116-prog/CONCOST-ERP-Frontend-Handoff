@@ -7,13 +7,14 @@ import {
 } from '@/lib/projectIntakeApi';
 import {
   buildProjectIntakeDraft,
-  createBlankProjectIntakeDraft,
   evaluateProjectIntakeCompleteness,
   validateSecretReferences,
 } from '@/lib/projectIntake';
 import { getProjectIntakePersistenceMode } from '@/lib/runtimeExecutionMode';
 import { buildEstimatePipelineDbInput } from '@/lib/estimatePipelineDatabase';
 import { completeExecutionAssignments } from '@/lib/projectExecutionUnits';
+import { buildAcceptedIntakeRevision } from '@/lib/projectIntakeRevision';
+import { getEligibleProjectPersonnel } from '@/lib/projectStaffing';
 import { allocateAnnualProjectNo } from '@/lib/projectNumber';
 import { useEstimateDatabaseStore } from '@/store/estimateDatabaseStore';
 import { useEstimateRequestStore } from '@/store/estimateRequestStore';
@@ -22,12 +23,15 @@ import { useProjectPmScheduleStore } from '@/store/projectPmScheduleStore';
 import { useNotificationStore } from '@/store/notificationStore';
 import { useAuditStore } from '@/store/auditStore';
 import { useUiStore } from '@/store/uiStore';
+import { useAuthStore } from '@/store/authStore';
 import {
   Project,
   ProjectIntake,
   ProjectIntakeCompletionResult,
   ProjectIntakeDraft,
   ProjectIntakeHistory,
+  ProjectIntakeRevisionResult,
+  ProjectIntakeRevisionEventType,
   ProjectIntakeStatus,
   Role,
 } from '@/types/models';
@@ -42,14 +46,11 @@ interface ProjectIntakeState {
   loading: boolean;
   error: string | null;
   sync: (actor: IntakeActor) => Promise<void>;
-  createDraft: (actor: IntakeActor) => ProjectIntake;
-  duplicateDraft: (id: string, actor: IntakeActor) => ProjectIntake;
-  deleteDraft: (id: string, actor: IntakeActor) => void;
-  discardDraft: (id: string, actor: IntakeActor) => void;
   saveDraft: (id: string, draft: ProjectIntakeDraft, actor: IntakeActor) => Promise<ProjectIntake>;
   review: (id: string, draft: ProjectIntakeDraft, note: string, actor: IntakeActor) => Promise<ProjectIntake>;
   accept: (id: string, note: string, actor: IntakeActor) => Promise<ProjectIntake>;
   finalizeWonIntake: (id: string, draft: ProjectIntakeDraft, note: string, actor: IntakeActor) => Promise<ProjectIntakeCompletionResult>;
+  reviseAcceptedIntake: (id: string, draft: ProjectIntakeDraft, reason: string, actor: IntakeActor) => Promise<ProjectIntakeRevisionResult>;
 }
 
 const now = () => new Date().toISOString();
@@ -88,13 +89,15 @@ const localPermissions = (intake: ProjectIntake, actor: IntakeActor) => {
   const source = findSourceRequest(intake);
   const isAdmin = ['SUPER_ADMIN', 'SYSTEM_ADMIN'].includes(actor.role);
   const isManager = actor.role === 'DEPARTMENT_MANAGER' && source?.departmentId === actor.departmentId;
+  const draft = intake.draft || buildProjectIntakeDraft(intake);
+  const isAssignedUnitManager = actor.role === 'DEPARTMENT_MANAGER' && draft.targetUnitIds.some((unitId) => unitId === actor.departmentId);
   const isOwnedStandaloneDraft = !intake.estimateRequestId
     && !intake.commercialDecisionId
     && intake.createdBy === actor.id
     && ['PM', 'DEPARTMENT_MANAGER'].includes(actor.role);
   return {
-    canEdit: intake.status !== 'ACCEPTED' && (isAdmin || isManager || isOwnedStandaloneDraft),
-    canReview: intake.status !== 'ACCEPTED' && (isAdmin || isManager || (isOwnedStandaloneDraft && actor.role === 'DEPARTMENT_MANAGER')),
+    canEdit: isAdmin || isManager || isAssignedUnitManager || isOwnedStandaloneDraft,
+    canReview: intake.status !== 'ACCEPTED' && (isAdmin || isManager || isAssignedUnitManager || (isOwnedStandaloneDraft && actor.role === 'DEPARTMENT_MANAGER')),
   };
 };
 
@@ -145,7 +148,6 @@ const mergeIntakesFromRequests = (existing: ProjectIntake[], actor: IntakeActor)
 
 const assertEdit = (intake: ProjectIntake, actor: IntakeActor) => {
   if (!localPermissions(intake, actor).canEdit) throw new Error('You do not have permission to edit this project intake');
-  if (intake.status === 'ACCEPTED') throw new Error('An accepted project intake is immutable');
 };
 
 const assertReview = (intake: ProjectIntake, actor: IntakeActor) => {
@@ -192,6 +194,50 @@ const completionFromProject = (
   return result;
 };
 
+const revisionEventTitle: Record<ProjectIntakeRevisionEventType, string> = {
+  PROJECT_INTAKE_UPDATED: '프로젝트 접수 수정',
+  PROJECT_INTAKE_ADDITIONAL_MATERIAL_ADDED: '프로젝트 접수 추가자료',
+  PROJECT_INTAKE_SCOPE_CHANGED: '프로젝트 수행범위 변경',
+  PROJECT_INTAKE_SCHEDULE_CHANGED: '프로젝트 일정 변경',
+  PROJECT_INTAKE_UNIT_ADDED: '프로젝트 담당부서 추가',
+  PROJECT_INTAKE_UNIT_REMOVED: '프로젝트 담당부서 해제',
+};
+
+const revisionRecipients = (project: Project, actorId: string) => {
+  const users = useAuthStore.getState().users;
+  const assignments = project.executionAssignments || [];
+  const ids = new Set<string>([actorId]);
+  assignments.forEach((assignment) => {
+    if (assignment.pmId) ids.add(assignment.pmId);
+    assignment.personnelIds?.forEach((userId) => ids.add(userId));
+    getEligibleProjectPersonnel(users, project, assignment.unitId)
+      .filter((person) => person.role === 'DEPARTMENT_MANAGER' || person.organizationRank === 'TEAM_LEADER' || person.organizationRank === 'MANAGER')
+      .forEach((person) => ids.add(person.id));
+  });
+  if (project.pmId) ids.add(project.pmId);
+  return Array.from(ids);
+};
+
+const notifyAcceptedRevision = (result: ProjectIntakeRevisionResult, actorId: string, reason: string) => {
+  const store = useNotificationStore.getState();
+  const recipients = revisionRecipients(result.project, actorId);
+  result.eventTypes.forEach((eventType) => {
+    recipients.forEach((userId) => {
+      const groupId = `project-intake-revision:${result.intake.id}:${result.revision}:${eventType}:${userId}`;
+      if (store.notifications.some((notification) => notification.userId === userId && notification.groupId === groupId)) return;
+      store.addNotification({
+        userId,
+        type: eventType,
+        title: revisionEventTitle[eventType],
+        message: `[${result.project.title}] ${reason.trim()} (Revision ${result.revision})`,
+        priority: eventType === 'PROJECT_INTAKE_UPDATED' ? 'NORMAL' : 'HIGH',
+        relatedProjectId: result.project.id,
+        groupId,
+      });
+    });
+  });
+};
+
 export const useProjectIntakeStore = create<ProjectIntakeState>()(persist((set, get) => ({
   intakes: [],
   scopeCompanyId: null,
@@ -231,120 +277,12 @@ export const useProjectIntakeStore = create<ProjectIntakeState>()(persist((set, 
     }
   },
 
-  createDraft: (actor) => {
-    if (get().persistenceMode !== 'LOCAL_DEMO') {
-      throw new Error('서버 CREATE API가 준비되지 않아 접수를 생성하지 않았습니다.');
-    }
-    const timestamp = now();
-    const id = newId('project-intake');
-    const projectId = newId('pending-project');
-    const draft = createBlankProjectIntakeDraft(id, projectId);
-    const intake = hydrateLocal({
-      id,
-      estimateRequestId: '',
-      commercialDecisionId: '',
-      projectId,
-      status: 'DRAFT',
-      projectNo: '',
-      sourceSnapshotJson: JSON.stringify({ source: {}, project: {}, decision: {}, attachments: [] }),
-      draft,
-      draftJson: JSON.stringify(draft),
-      version: 1,
-      createdBy: actor.id,
-      updatedBy: actor.id,
-      createdAt: timestamp,
-      updatedAt: timestamp,
-      histories: [],
-    }, actor);
-    set((state) => ({
-      intakes: [intake, ...state.intakes],
-      scopeCompanyId: selectedCompanyId(),
-    }));
-    return intake;
-  },
-
-  duplicateDraft: (id, actor) => {
-    if (get().persistenceMode !== 'LOCAL_DEMO') {
-      throw new Error('프로젝트 접수 복제 API가 준비되지 않았습니다. 서버 데이터는 변경하지 않았습니다.');
-    }
-    const sourceIntake = get().intakes.find((item) => item.id === id);
-    if (!sourceIntake) throw new Error('Project intake not found');
-    const timestamp = now();
-    const intakeId = newId('project-intake');
-    const projectId = newId('pending-project');
-    const sourceDraft = buildProjectIntakeDraft(sourceIntake);
-    const draft: ProjectIntakeDraft = {
-      ...structuredClone(sourceDraft),
-      projectName: `${sourceDraft.projectName || '새 프로젝트'} (복사본)`,
-      projectNo: '',
-      contacts: sourceDraft.contacts.map((contact) => ({ ...contact, id: newId('contact') })),
-      materials: sourceDraft.materials.map((material) => ({ ...material, id: newId('material') })),
-      secretReferences: sourceDraft.secretReferences.map((secret) => ({ ...secret, id: newId('secret-reference') })),
-      source: {
-        estimateRequestId: '',
-        requestNo: intakeId,
-        estimateId: null,
-        estimateSheetId: null,
-        estimateSubmissionId: null,
-        estimateDocumentHash: null,
-        commercialDecisionId: '',
-        projectId,
-      },
-    };
-    const intake = hydrateLocal({
-      id: intakeId,
-      estimateRequestId: '',
-      commercialDecisionId: '',
-      projectId,
-      status: 'DRAFT',
-      projectNo: '',
-      sourceSnapshotJson: JSON.stringify({ duplicatedFrom: id }),
-      draft,
-      draftJson: JSON.stringify(draft),
-      version: 1,
-      createdBy: actor.id,
-      updatedBy: actor.id,
-      createdAt: timestamp,
-      updatedAt: timestamp,
-      histories: [],
-    }, actor);
-    set((state) => ({ intakes: [intake, ...state.intakes] }));
-    return intake;
-  },
-
-  deleteDraft: (id, actor) => {
-    if (get().persistenceMode !== 'LOCAL_DEMO') {
-      throw new Error('프로젝트 접수 삭제 API가 준비되지 않았습니다. 서버 데이터는 삭제하지 않았습니다.');
-    }
-    const intake = get().intakes.find((item) => item.id === id);
-    if (!intake) throw new Error('Project intake not found');
-    assertEdit(intake, actor);
-    if (intake.status !== 'DRAFT' || intake.estimateRequestId || intake.commercialDecisionId) {
-      throw new Error('수주 계보와 연결된 접수는 삭제할 수 없습니다. 접수 내용을 수정하거나 수주 정정 절차를 사용해 주세요.');
-    }
-    set((state) => ({ intakes: state.intakes.filter((item) => item.id !== id) }));
-  },
-
-  discardDraft: (id, actor) => {
-    if (get().persistenceMode !== 'LOCAL_DEMO') {
-      throw new Error('Server project intakes cannot be discarded locally');
-    }
-    const intake = get().intakes.find((item) => item.id === id);
-    if (!intake) return;
-    const isTemporaryDraft = intake.status === 'DRAFT'
-      && intake.createdBy === actor.id
-      && (intake.histories?.length || 0) === 0
-      && !intake.estimateRequestId
-      && !intake.commercialDecisionId;
-    if (!isTemporaryDraft) {
-      throw new Error('Only an unsaved project intake draft can be discarded');
-    }
-    set((state) => ({ intakes: state.intakes.filter((item) => item.id !== id) }));
-  },
-
   saveDraft: async (id, draft, actor) => {
     const current = get().intakes.find((item) => item.id === id);
     if (!current) throw new Error('Project intake not found');
+    if (current.status === 'ACCEPTED') {
+      throw new Error('수주 완료된 접수는 수정 사유와 함께 수정본으로 저장해야 합니다.');
+    }
     validateSecretReferences(draft.secretReferences);
     if (get().persistenceMode === 'SERVER') {
       const companyId = selectedCompanyId();
@@ -628,6 +566,62 @@ export const useProjectIntakeStore = create<ProjectIntakeState>()(persist((set, 
       entityType: 'PROJECT_INTAKE',
       entityId: updated.id,
       message: `Project intake completed for canonical project ${completedProject.id}; units=${executionAssignments.map((item) => item.unitId).join(',')}; startDateStatus=${startDateStatus}.`,
+    });
+    return result;
+  },
+
+  reviseAcceptedIntake: async (id, draft, reason, actor) => {
+    const current = get().intakes.find((item) => item.id === id);
+    if (!current) throw new Error('Project intake not found');
+    if (current.status !== 'ACCEPTED') throw new Error('수주 완료된 접수만 수정본을 저장할 수 있습니다.');
+    if (!reason.trim()) throw new Error('수정 사유를 입력해 주세요.');
+    validateSecretReferences(draft.secretReferences);
+    assertEdit(current, actor);
+    if (get().persistenceMode === 'SERVER') {
+      throw new ProjectIntakeApiError('BACKEND_REQUIRED: accepted intake revision adapter is not configured', 501);
+    }
+    if (get().persistenceMode !== 'LOCAL_DEMO') {
+      throw new Error('Project intake persistence is still being initialized. Please retry.');
+    }
+    const projectStore = useProjectStore.getState();
+    const currentProject = projectStore.projects.find((project) => project.id === current.projectId);
+    if (!currentProject) throw new Error('수주 접수와 연결된 canonical Project를 찾을 수 없습니다.');
+    const timestamp = now();
+    const result = buildAcceptedIntakeRevision({
+      intake: current,
+      project: currentProject,
+      draft: {
+        ...draft,
+        projectNo: current.projectNo,
+        source: { ...draft.source, projectId: current.projectId },
+      },
+      reason,
+      actorId: actor.id,
+      revisedAt: timestamp,
+      historyId: newId('project-intake-history'),
+    });
+
+    await upsertLocalPipelineRecord(result.intake, result.intake.draft!, result.intake.status, actor.id, timestamp);
+    projectStore.replaceProjects(projectStore.projects.map((project) => project.id === result.project.id ? result.project : project));
+    set((state) => ({ intakes: replace(state.intakes, hydrateLocal(result.intake, actor)) }));
+    await useProjectPmScheduleStore.getState().sync(actor);
+    notifyAcceptedRevision(result, actor.id, reason);
+    useAuditStore.getState().addLog({
+      actorId: actor.id,
+      action: 'UPDATE',
+      entityType: 'PROJECT_INTAKE',
+      entityId: result.intake.id,
+      beforeValue: JSON.stringify({
+        revision: current.version,
+        assignedUnitIds: currentProject.assignedUnitIds || [],
+        primaryUnitId: currentProject.primaryUnitId || null,
+      }),
+      afterValue: JSON.stringify({
+        revision: result.revision,
+        assignedUnitIds: result.project.assignedUnitIds || [],
+        primaryUnitId: result.project.primaryUnitId || null,
+      }),
+      message: `Accepted project intake revision ${result.revision}; reason=${reason.trim()}; actor=${actor.id}; timestamp=${timestamp}; changed=${result.changedFields.join(',')}.`,
     });
     return result;
   },
