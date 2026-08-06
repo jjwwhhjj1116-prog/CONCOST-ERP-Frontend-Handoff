@@ -10,6 +10,7 @@ import { useNotificationStore } from '@/store/notificationStore';
 import { useAuditStore } from '@/store/auditStore';
 import { useTranslationStore } from '@/store/translationStore';
 import { getUserDisplayName, useTranslation } from '@/lib/localization';
+import { projectNoForDisplay } from '@/lib/projectIdentifierPresentation';
 import { canEditProject } from '@/lib/permissions';
 import { isDemoLocalMode } from '@/lib/runtimeExecutionMode';
 import {
@@ -161,7 +162,7 @@ export const ProjectStaffingModal: React.FC<ProjectStaffingModalProps> = ({ proj
     <div className="fixed inset-0 z-[120] flex items-end justify-center overflow-hidden bg-slate-950/55 p-0 backdrop-blur-[2px] sm:items-center sm:p-4" onMouseDown={onClose}>
       <section role="dialog" aria-modal="true" aria-labelledby="project-staffing-title" onMouseDown={(event) => event.stopPropagation()} className="flex h-[100dvh] w-full min-w-0 flex-col overflow-hidden bg-[var(--color-surface)] shadow-2xl sm:h-auto sm:max-h-[calc(100dvh-2rem)] sm:max-w-6xl sm:rounded-2xl sm:border sm:border-[var(--color-border)]">
         <header className="flex shrink-0 items-start justify-between gap-4 border-b border-[var(--color-border)] bg-[linear-gradient(135deg,#fff8ee,#eff8fb)] px-4 py-4 sm:px-6">
-          <div className="min-w-0"><p className="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-[.14em] text-[var(--color-primary)]"><UsersRound className="size-4" />{text.eyebrow}</p><h2 id="project-staffing-title" className="mt-1 truncate text-xl font-black">{text.title}</h2><p className="mt-1 truncate text-sm text-[var(--color-text-sub)]">{project.projectNo ? `${project.projectNo} · ` : ''}{project.title}</p></div>
+          <div className="min-w-0"><p className="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-[.14em] text-[var(--color-primary)]"><UsersRound className="size-4" />{text.eyebrow}</p><h2 id="project-staffing-title" className="mt-1 truncate text-xl font-black">{text.title}</h2><p className="mt-1 truncate text-sm text-[var(--color-text-sub)]">{projectNoForDisplay(project.projectNo) ? `${projectNoForDisplay(project.projectNo)} · ` : ''}{project.title}</p></div>
           <button type="button" onClick={onClose} aria-label={t('common.close')} className="grid size-10 shrink-0 place-items-center rounded-full border bg-white transition hover:border-orange-300 hover:text-[var(--color-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]"><X className="size-5" /></button>
         </header>
 
