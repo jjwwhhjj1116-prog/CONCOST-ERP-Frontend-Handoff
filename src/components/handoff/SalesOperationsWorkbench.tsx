@@ -63,7 +63,9 @@ export function SalesOperationsWorkbench() {
   const activities = useMemo(() => companyActivities(store.activities, companyId), [companyId, store.activities]);
   const boundary = getFrontendModuleBoundary('SALES', { locale, adapterReady: false });
   const searchParams = useSearchParams(); const pathname = usePathname(); const router = useRouter();
-  const [view, setView] = useState<SalesView>((searchParams.get('salesView') as SalesView) || 'PIPELINE'); const [query, setQuery] = useState('');
+  const requestedView = searchParams.get('salesView') ?? searchParams.get('view');
+  const view: SalesView = requestedView === 'CUSTOMERS' || requestedView === 'CONTACTS' ? requestedView : 'PIPELINE';
+  const [query, setQuery] = useState('');
   const [drawer, setDrawer] = useState<DrawerMode>(null); const [message, setMessage] = useState(''); const fileRef = useRef<HTMLInputElement>(null);
   const [opForm, setOpForm] = useState<SalesOpportunityInput>(opportunityForm); const [custForm, setCustForm] = useState<SalesCustomerInput>(customerForm);
   const [personForm, setPersonForm] = useState<SalesContactInput>(contactForm); const [actForm, setActForm] = useState<SalesActivityInput>(activityForm);
@@ -74,7 +76,7 @@ export function SalesOperationsWorkbench() {
   const selectedCustomer = customers.find((item) => item.id === searchParams.get('customerId')) ?? customers.find((item) => item.id === selectedOpportunity?.customerId) ?? customers[0] ?? null;
 
   const setUrl = (changes: Record<string, string | null>) => { const next = new URLSearchParams(searchParams.toString()); Object.entries(changes).forEach(([key, value]) => value ? next.set(key, value) : next.delete(key)); router.replace(`${pathname}?${next.toString()}`, { scroll: false }); };
-  const switchView = (next: SalesView) => { setView(next); setUrl({ salesView: next }); };
+  const switchView = (next: SalesView) => setUrl({ salesView: next });
   const run = async <T,>(simulate: () => T) => { const result = await executeFrontendMutation(boundary, { simulate }); setMessage(result.message); return result; };
 
   const openOpportunity = (record?: SalesOpportunity) => { setOpForm(record ? { opportunityName: record.opportunityName, customerId: record.customerId, contactId: record.contactId, customerName: record.customerName, contactRole: record.contactRole, expectedValue: record.expectedValue, probability: record.probability, stage: record.stage, expectedCloseDate: record.expectedCloseDate, nextAction: record.nextAction, ownerId: record.ownerId, estimateRequestId: record.estimateRequestId, projectId: record.projectId } : { ...opportunityForm(), ownerId: actorId, customerId: selectedCustomer?.id ?? '', customerName: selectedCustomer?.name ?? '' }); setDrawer(record ? 'OPPORTUNITY_EDIT' : 'OPPORTUNITY_CREATE'); };
