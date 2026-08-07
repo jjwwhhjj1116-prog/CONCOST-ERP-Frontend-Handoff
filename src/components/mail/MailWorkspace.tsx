@@ -37,12 +37,14 @@ import {
 import { getRuntimeBoundaryCopy } from '@/lib/runtimeBoundaryCopy';
 import { getMailSendBoundary } from '@/lib/runtimeExecutionMode';
 import { readEstimateMailDraft } from '@/lib/estimateMailDraft';
+import { companyContacts, companySales } from '@/lib/businessOperations';
 import {
   getMailFolderHref,
   getMailFolderLabel,
   parseMailFolder,
   type MailFolderId,
 } from '@/lib/mailNavigation';
+import { useBusinessOperationsStore } from '@/store/businessOperationsStore';
 
 type Mailbox = MailFolderId;
 type StoredMailbox = 'INBOX' | 'SENT' | 'PENDING' | 'DRAFT' | 'SPAM' | 'TRASH';
@@ -345,6 +347,25 @@ export function MailWorkspace() {
   const requestedProjectId = searchParams.get('projectId');
   const requestedComposeMode = searchParams.get('compose');
   const requestedDraftToken = searchParams.get('draft');
+  const requestedContactId = searchParams.get('contactId');
+  const requestedOpportunityId = searchParams.get('opportunityId');
+  const contactEntries = useBusinessOperationsStore((state) => state.contacts);
+  const opportunityEntries = useBusinessOperationsStore((state) => state.sales);
+  const requestedOpportunity = useMemo(
+    () =>
+      companySales(opportunityEntries, workspaceId).find(
+        (item) => item.id === requestedOpportunityId,
+      ) ?? null,
+    [opportunityEntries, requestedOpportunityId, workspaceId],
+  );
+  const requestedContact = useMemo(
+    () =>
+      companyContacts(contactEntries, workspaceId).find(
+        (item) =>
+          item.id === (requestedContactId ?? requestedOpportunity?.contactId),
+      ) ?? null,
+    [contactEntries, requestedContactId, requestedOpportunity, workspaceId],
+  );
   const mailbox = parseMailFolder(requestedMailbox);
   const projectFilter =
     mailbox === 'PROJECT' ? (requestedProjectId ?? '') : '';
@@ -430,21 +451,36 @@ export function MailWorkspace() {
   }, [mailbox, projectFilter, workspaceId]);
 
   useEffect(() => {
-    if (!['NEW', 'MEMO'].includes(requestedComposeMode ?? '')) return;
+    if (!['1', 'NEW', 'MEMO'].includes(requestedComposeMode ?? '')) return;
     const timeoutId = window.setTimeout(() => {
       const estimateDraft = requestedDraftToken
         ? readEstimateMailDraft(requestedDraftToken, workspaceId)
         : null;
       setComposeMode('NEW');
-      setComposeTo(estimateDraft?.to || '');
-      setComposeSubject(estimateDraft?.subject || (requestedComposeMode === 'MEMO' ? '[Memo] ' : ''));
+      setComposeTo(estimateDraft?.to || requestedContact?.email || '');
+      setComposeSubject(
+        estimateDraft?.subject ||
+          (requestedOpportunity
+            ? `[${requestedOpportunity.customerName}] ${requestedOpportunity.opportunityName}`
+            : requestedComposeMode === 'MEMO'
+              ? '[Memo] '
+              : ''),
+      );
       setComposeBody(estimateDraft?.body || '');
-      setComposeProjectId(estimateDraft?.projectId || '');
+      setComposeProjectId(
+        estimateDraft?.projectId || requestedOpportunity?.projectId || '',
+      );
       setComposeFiles(estimateDraft?.attachmentNames || []);
       setOperationMessage(null);
     }, 0);
     return () => window.clearTimeout(timeoutId);
-  }, [requestedComposeMode, requestedDraftToken, workspaceId]);
+  }, [
+    requestedComposeMode,
+    requestedContact,
+    requestedDraftToken,
+    requestedOpportunity,
+    workspaceId,
+  ]);
 
   const navigateToMailbox = (nextMailbox: Mailbox) => {
     router.push(getMailFolderHref(nextMailbox));
