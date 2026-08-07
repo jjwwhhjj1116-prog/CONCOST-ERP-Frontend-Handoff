@@ -1103,6 +1103,9 @@ export interface ProjectProfitAnalysis {
 
 export interface Project {
   id: string;
+  /** Canonical Claim context. Present only for Claim Center projects. */
+  claimId?: string;
+  claimType?: 'INTERNAL_CLAIM' | 'CONSULTING_PROJECT';
   projectNo?: string;
   publicationStatus?: ProjectPublicationStatus;
   projectSourceType?: ProjectSourceType; // Default to CLIENT_ORDER if undefined
@@ -1444,6 +1447,8 @@ export interface ApprovalRequest {
   retentionPeriod?: string;
   securityLevel?: ApprovalSecurityLevel;
   claimId?: string;
+  reportId?: string;
+  reportVersionId?: string;
   requestedStartDate?: string;
   requestedDueDate?: string;
   reviewedBy?: UserId;

@@ -15,6 +15,8 @@ import { ProjectProfitPanel } from './ProjectProfitPanel';
 import { ProjectWorkflowProgress } from './ProjectWorkflowProgress';
 import { getProjectConnectedWorkspaceHref, ProjectConnectedWorkspace, ProjectWorkflowTab } from '@/lib/projectWorkflow';
 import { useProjectWorkflow } from '@/hooks/useProjectWorkflow';
+import { ClaimProjectWorkspace } from '@/components/claims/ClaimProjectWorkspace';
+import { isClaimProject } from '@/lib/claimOperations';
 
 type Props = { projectId: string; initialTab?: ProjectWorkflowTab; onTabChange?: (tab: ProjectWorkflowTab) => void; onClose: () => void };
 
@@ -44,6 +46,7 @@ export function ProjectOperationModal({ projectId, initialTab = 'OVERVIEW', onTa
   const [reason, setReason] = useState('');
   const hasTimelineChanges = awardDate !== null || expectedDate !== null || actualDate !== null;
   const workflow = useProjectWorkflow(project || { id: projectId, title: operation?.project.name || '', priority: 'NORMAL', status: 'INTAKE_RECEIVED', departmentId: operation?.project.departmentId || '' });
+  const claimWorkspace = isClaimProject(project);
 
   const actor = currentUser ? { id: currentUser.id, role: currentUser.role, departmentId: currentUser.departmentId } : null;
   useEffect(() => { if (actor) void sync(actor); }, [currentUser?.id]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -105,16 +108,17 @@ export function ProjectOperationModal({ projectId, initialTab = 'OVERVIEW', onTa
           <button type="button" aria-label={t('common.close')} onClick={onClose} className="rounded-md p-2 text-[var(--color-text-sub)] hover:bg-[var(--color-bg)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]"><X className="h-5 w-5" /></button>
         </header>
 
-        <div className="border-b border-[var(--color-border)] bg-[var(--color-bg)]/40 px-4 py-3 md:px-6">
+        {!claimWorkspace && <div className="border-b border-[var(--color-border)] bg-[var(--color-bg)]/40 px-4 py-3 md:px-6">
           <ProjectWorkflowProgress summary={workflow} onPhaseClick={(phase) => { setTab(phase.tab); onTabChange?.(phase.tab); }} />
-        </div>
+        </div>}
 
-        <div className="flex overflow-x-auto border-b border-[var(--color-border)] px-2 md:px-5" role="tablist">
+        {!claimWorkspace && <div className="flex overflow-x-auto border-b border-[var(--color-border)] px-2 md:px-5" role="tablist">
           {tabs.map(([value, label]) => <button key={value} type="button" role="tab" aria-selected={tab === value} onClick={() => { setTab(value); onTabChange?.(value); }} className={`whitespace-nowrap border-b-2 px-3 py-3 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--color-primary)] ${tab === value ? 'border-[var(--color-primary)] text-[var(--color-primary)]' : 'border-transparent text-[var(--color-text-sub)] hover:text-[var(--color-text-main)]'}`}>{label}</button>)}
-        </div>
+        </div>}
 
         <div className="min-h-0 flex-1 overflow-y-auto p-4 md:p-6">
-          {loading && !operation ? <p className="py-12 text-center text-sm text-[var(--color-text-sub)]">{t('projectOperation.loading')}</p>
+          {claimWorkspace && project ? <ClaimProjectWorkspace project={project} />
+            : loading && !operation ? <p className="py-12 text-center text-sm text-[var(--color-text-sub)]">{t('projectOperation.loading')}</p>
             : !operation ? <p className="py-12 text-center text-sm text-red-600">{error || t('projectOperation.empty')}</p>
               : <>
                 {message && <div className="mb-4 rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-800" role="status">{message}</div>}

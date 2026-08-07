@@ -33,6 +33,7 @@ import {
 import { matchesTechnicalDepartment } from '@/lib/departmentScope';
 import { useAuthStore } from '@/store/authStore';
 import { canManageWorkspaceConfiguration } from '@/lib/accessControl';
+import { ClaimDriveContextPanel } from '@/components/claims/ClaimDriveContextPanel';
 
 type DriveFolder = 'HOME' | 'TECHNICAL' | 'CLAIM' | 'DEVELOPMENT';
 type UploadState = 'QUEUED' | 'UPLOADING' | 'SCANNING' | 'READY' | 'FAILED';
@@ -165,10 +166,10 @@ export function DriveWorkspace() {
   const { brandWorkspace, locale, setLocale } = useHandoffLocale();
   const requestedProjectId = searchParams.get('projectId');
   const requestedClaimId = searchParams.get('claimId');
-  const routeBinding = requestedProjectId
-    ? `project:${requestedProjectId}`
-    : requestedClaimId
-      ? `claim:${requestedClaimId}`
+  const routeBinding = requestedClaimId
+    ? `claim:${requestedClaimId}`
+    : requestedProjectId
+      ? `project:${requestedProjectId}`
       : 'project:unassigned';
   const [uploads, setUploads] = useState<UploadItem[]>([]);
   const [selectedBinding, setSelectedBinding] = useState<string | null>(null);
@@ -220,7 +221,7 @@ export function DriveWorkspace() {
   const bindingHref =
     bindingId && bindingId !== 'unassigned'
       ? bindingType === 'claim'
-        ? `/projects?department=CLAIM&claimId=${encodeURIComponent(bindingId)}`
+        ? `/projects?group=CLAIM&workflow=${encodeURIComponent(requestedProjectId || '')}&claimId=${encodeURIComponent(bindingId)}`
         : `/projects?projectId=${encodeURIComponent(bindingId)}`
       : null;
 
@@ -370,6 +371,10 @@ export function DriveWorkspace() {
                 );
               })}
             </section>
+          )}
+
+          {folder === 'CLAIM' && requestedProjectId && requestedClaimId && (
+            <ClaimDriveContextPanel projectId={requestedProjectId} claimId={requestedClaimId} locale={locale} />
           )}
 
           <section className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_360px]">

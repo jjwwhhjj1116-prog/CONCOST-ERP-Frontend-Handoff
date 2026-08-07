@@ -21,6 +21,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 
 import { HandoffLanguageToggle } from '@/components/handoff/HandoffLanguageToggle';
 import { ActionButtonGroup, SemanticActionButton } from '@/components/ui/SemanticActionButton';
@@ -31,6 +32,9 @@ import {
   getFrontendModuleBoundary,
   type FrontendLocale,
 } from '@/lib/frontendDataSource';
+import { createClaimChecksum, type ClaimAiProvenance } from '@/lib/claimOperations';
+import { useClaimOperationsStore } from '@/store/claimOperationsStore';
+import { useAuthStore } from '@/store/authStore';
 
 type JobState =
   | 'READY'
@@ -44,6 +48,7 @@ type StructuredMinutes = {
   decisions: string[];
   issues: string[];
   actions: string[];
+  nextSchedule: string;
   citations: string[];
 };
 
@@ -217,6 +222,7 @@ const buildDemoMinutes = (notes: string, audioName?: string): StructuredMinutes 
     decisions: decisionLines.length ? decisionLines.slice(0, 4) : ['Human review required'],
     issues: issueLines.length ? issueLines.slice(0, 4) : ['No issue identified in demo parsing'],
     actions: actionLines.length ? actionLines.slice(0, 4) : ['Assign owner and due date'],
+    nextSchedule: 'User confirmation required',
     citations: [
       ...source.slice(0, 3).map((line, index) => `NOTE-${index + 1}: ${line}`),
       ...(audioName ? [`AUDIO-01: ${audioName}`] : []),
@@ -225,20 +231,28 @@ const buildDemoMinutes = (notes: string, audioName?: string): StructuredMinutes 
 };
 
 export function AiMeetingWorkspace() {
+  const searchParams = useSearchParams();
+  const queryProjectId = searchParams.get('projectId') || '';
+  const queryClaimId = searchParams.get('claimId') || '';
+  const queryMeetingId = searchParams.get('meetingId') || '';
+  const currentUser = useAuthStore((state) => state.currentUser);
   const { brandWorkspace, locale, setLocale } = useHandoffLocale();
   const t = copy[locale];
-  const [notes, setNotes] = useState('');
+  const claimRecord = useClaimOperationsStore((state) => state.records.find((record) => record.projectId === queryProjectId && record.claimId === queryClaimId));
+  const claimMeeting = claimRecord?.meetings.find((meeting) => meeting.id === queryMeetingId);
+  const saveAiReview = useClaimOperationsStore((state) => state.saveAiReview);
+  const [notes, setNotes] = useState(claimMeeting?.roughNotes ?? '');
   const [audio, setAudio] = useState<File | null>(null);
-  const [consent, setConsent] = useState(false);
-  const [classification, setClassification] = useState<'INTERNAL' | 'RESTRICTED_LEGAL'>('INTERNAL');
-  const [linkType, setLinkType] = useState<'PROJECT' | 'CLAIM'>('PROJECT');
-  const [linkId, setLinkId] = useState('');
+  const [consent, setConsent] = useState(claimMeeting?.audioConsent ?? false);
+  const [classification, setClassification] = useState<'INTERNAL' | 'RESTRICTED_LEGAL'>(claimMeeting?.classification === 'RESTRICTED_LEGAL' ? 'RESTRICTED_LEGAL' : 'INTERNAL');
+  const [linkType, setLinkType] = useState<'PROJECT' | 'CLAIM'>(queryClaimId ? 'CLAIM' : 'PROJECT');
+  const [linkId, setLinkId] = useState(queryClaimId || queryProjectId);
   const [jobState, setJobState] = useState<JobState>('READY');
   const [message, setMessage] = useState('');
   const [minutes, setMinutes] = useState<StructuredMinutes | null>(null);
   const [reviewed, setReviewed] = useState(false);
   const [candidates, setCandidates] = useState<string[]>([]);
-
+  const [provenance, setProvenance] = useState<ClaimAiProvenance | null>(null);
   const providerReady = process.env.NEXT_PUBLIC_AI_PROVIDER_READY === 'true';
   const privateProviderReady =
     process.env.NEXT_PUBLIC_PRIVATE_AI_PROVIDER_READY === 'true';
@@ -260,15 +274,18 @@ export function AiMeetingWorkspace() {
   );
 
   const reset = () => {
-    setNotes('');
+    setNotes(claimMeeting?.roughNotes ?? '');
     setAudio(null);
-    setConsent(false);
-    setLinkId('');
+    setConsent(claimMeeting?.audioConsent ?? false);
+    setClassification(claimMeeting?.classification === 'RESTRICTED_LEGAL' ? 'RESTRICTED_LEGAL' : 'INTERNAL');
+    setLinkType(queryClaimId ? 'CLAIM' : 'PROJECT');
+    setLinkId(queryClaimId || queryProjectId);
     setJobState('READY');
     setMessage('');
     setMinutes(null);
     setReviewed(false);
     setCandidates([]);
+    setProvenance(null);
   };
 
   const runJob = async () => {
@@ -297,7 +314,24 @@ export function AiMeetingWorkspace() {
       setMessage(result.message);
       return;
     }
+    const generatedAt = new Date().toISOString();
     setMinutes(result.data);
+    setProvenance({
+      provider: boundary.isSimulation ? 'DEMO_AI_SIMULATION' : 'PROVIDER_ADAPTER',
+      model: boundary.isSimulation ? 'demo-structured-minutes' : 'PROVIDER_TBD',
+      modelVersion: boundary.isSimulation ? '1.0' : 'BACKEND_CAPABILITY',
+      systemInstructionId: 'AI-MINUTES-SYSTEM-v1',
+      taskInstructionId: 'CLAIM-MEETING-STRUCTURE-v1',
+      inputSourceIds: [queryMeetingId || `${linkType}:${linkId || 'unlinked'}`],
+      inputScope: `notes:${notes.length};audio:${audio?.name || claimMeeting?.audioName || 'none'};classification:${classification}`,
+      sourceHash: createClaimChecksum(`${notes}:${audio?.name || claimMeeting?.audioName || ''}`),
+      outputHash: createClaimChecksum(JSON.stringify(result.data)),
+      requestedBy: currentUser?.id || 'UNASSIGNED',
+      generatedBy: boundary.isSimulation ? 'DEMO_AI_SIMULATION' : 'PROVIDER_ADAPTER',
+      generatedAt,
+      reviewStatus: 'PENDING_HUMAN_REVIEW',
+      citations: result.data.citations,
+    });
     setReviewed(false);
     setCandidates([]);
     setJobState('REVIEW_REQUIRED');
@@ -313,7 +347,7 @@ export function AiMeetingWorkspace() {
   };
 
   const saveMinute = async () => {
-    if (!reviewed || !linkId.trim() || !minutes) {
+    if (!reviewed || !linkId.trim() || !minutes || !provenance) {
       setJobState('BLOCKED');
       setMessage(t.saveBlocked);
       return;
@@ -331,6 +365,18 @@ export function AiMeetingWorkspace() {
       setJobState('BLOCKED');
       setMessage(result.message);
       return;
+    }
+    if (claimRecord && queryMeetingId && currentUser) {
+      const stored = saveAiReview(claimRecord.claimId, queryMeetingId, minutes, {
+        ...provenance,
+        outputHash: createClaimChecksum(JSON.stringify(minutes)),
+        citations: minutes.citations,
+      }, currentUser.id);
+      if (!stored) {
+        setJobState('BLOCKED');
+        setMessage('The linked Claim meeting could not be found.');
+        return;
+      }
     }
     setJobState('CANDIDATE_READY');
     setMessage(t.savedDemo);
@@ -373,6 +419,14 @@ export function AiMeetingWorkspace() {
       </section>
 
       <RuntimeCapabilityPanel boundary={boundary} />
+
+      {claimRecord && (
+        <section className="grid gap-3 border border-teal-200 bg-teal-50 p-4 sm:grid-cols-3" data-ai-claim-context>
+          <div><span className="text-[10px] font-black text-teal-800">PROJECT</span><strong className="mt-1 block break-all font-mono text-xs">{claimRecord.projectId}</strong></div>
+          <div><span className="text-[10px] font-black text-teal-800">CLAIM</span><strong className="mt-1 block break-all font-mono text-xs">{claimRecord.claimId}</strong></div>
+          <div><span className="text-[10px] font-black text-teal-800">MEETING</span><strong className="mt-1 block break-all font-mono text-xs">{queryMeetingId || 'UNSELECTED'}</strong></div>
+        </section>
+      )}
 
       <section className="grid gap-5 xl:grid-cols-[minmax(360px,.78fr)_minmax(560px,1.22fr)]">
         <div className="space-y-5">
@@ -557,24 +611,29 @@ export function AiMeetingWorkspace() {
                           <Icon className="h-4 w-4 text-blue-700" />
                           {group.title}
                         </h3>
-                        <ul className="mt-3 space-y-2 text-xs font-semibold leading-5 text-[var(--color-text-sub)]">
-                          {values.map((value, index) => (
-                            <li key={`${group.key}-${index}`}>• {value}</li>
-                          ))}
-                        </ul>
+                        <textarea
+                          value={values.join('\n')}
+                          onChange={(event) => setMinutes((current) => current ? { ...current, [group.key]: event.target.value.split('\n').map((value) => value.trim()).filter(Boolean) } : current)}
+                          className="mt-3 min-h-28 w-full resize-y border border-[var(--color-border)] bg-[var(--color-surface)] p-3 text-xs font-semibold leading-5 text-[var(--color-text-sub)]"
+                        />
                       </section>
                     );
                   })}
                 </div>
+                <section className="border border-[var(--color-border)] bg-[var(--color-bg)] p-4">
+                  <h3 className="text-xs font-black text-[var(--color-text-main)]">Next schedule</h3>
+                  <input value={minutes.nextSchedule} onChange={(event) => setMinutes((current) => current ? { ...current, nextSchedule: event.target.value } : current)} className="mt-3 min-h-10 w-full border border-[var(--color-border)] bg-[var(--color-surface)] px-3 text-xs font-semibold" />
+                </section>
+                {provenance && <details className="border border-violet-200 bg-violet-50 p-4"><summary className="cursor-pointer text-xs font-black text-violet-950">AI Provenance</summary><dl className="mt-3 grid gap-2 text-[10px] font-semibold text-violet-900 sm:grid-cols-2">{Object.entries(provenance).filter(([key]) => key !== 'citations').map(([key, value]) => <div key={key}><dt className="font-black">{key}</dt><dd className="break-all">{Array.isArray(value) ? value.join(', ') : String(value || '-')}</dd></div>)}</dl></details>}
                 <details className="border border-[var(--color-border)] bg-[var(--color-bg)] p-4">
                   <summary className="cursor-pointer text-xs font-black text-[var(--color-text-main)]">
                     {t.citations}
                   </summary>
-                  <ul className="mt-3 space-y-2 text-[11px] font-semibold text-[var(--color-text-sub)]">
-                    {minutes.citations.map((citation) => (
-                      <li key={citation}>{citation}</li>
-                    ))}
-                  </ul>
+                  <textarea
+                    value={minutes.citations.join('\n')}
+                    onChange={(event) => setMinutes((current) => current ? { ...current, citations: event.target.value.split('\n').map((value) => value.trim()).filter(Boolean) } : current)}
+                    className="mt-3 min-h-24 w-full resize-y border border-[var(--color-border)] bg-[var(--color-surface)] p-3 text-[11px] font-semibold leading-5 text-[var(--color-text-sub)]"
+                  />
                 </details>
                 <label className="flex gap-3 border border-blue-200 bg-blue-50 p-4">
                   <input
@@ -613,7 +672,7 @@ export function AiMeetingWorkspace() {
                   <button
                     key={item.id}
                     type="button"
-                    disabled={!minutes}
+                    disabled={!minutes || !reviewed}
                     aria-pressed={selected}
                     onClick={() => toggleCandidate(item.id)}
                     className={`flex min-h-16 items-center gap-3 border px-3 text-left text-xs font-black disabled:cursor-not-allowed disabled:opacity-45 ${
@@ -628,7 +687,7 @@ export function AiMeetingWorkspace() {
                 );
               })}
             </div>
-            <SemanticActionButton variant="save" className="mt-4 w-full" icon={<Save className="h-4 w-4" />} tooltip={t.save} disabled={!minutes} disabledReason="AI 초안을 먼저 생성해 주세요." onClick={() => void saveMinute()}>{t.save}<Link2 className="h-4 w-4" /></SemanticActionButton>
+            <SemanticActionButton variant="save" className="mt-4 w-full" icon={<Save className="h-4 w-4" />} tooltip={t.save} disabled={!minutes || !reviewed} disabledReason={t.saveBlocked} onClick={() => void saveMinute()}>{t.save}<Link2 className="h-4 w-4" /></SemanticActionButton>
           </article>
         </div>
       </section>

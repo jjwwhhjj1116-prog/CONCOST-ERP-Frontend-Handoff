@@ -56,11 +56,15 @@ interface Props {
   currentUser: PersonnelCard;
   users: PersonnelCard[];
   form: ApprovalFormDefinition;
+  initialProjectId?: string;
+  initialClaimId?: string;
+  initialReportId?: string;
+  initialReportVersionId?: string;
   onClose: () => void;
   onSubmitted: (requestId: string) => void;
 }
 
-export function ApprovalDocumentComposer({ locale, companyId, currentUser, users, form, onClose, onSubmitted }: Props) {
+export function ApprovalDocumentComposer({ locale, companyId, currentUser, users, form, initialProjectId = '', initialClaimId = '', initialReportId = '', initialReportVersionId = '', onClose, onSubmitted }: Props) {
   const copy = COPY[locale];
   const savedLines = useApprovalStore((state) => state.savedLines);
   const addRequest = useApprovalStore((state) => state.addRequest);
@@ -88,8 +92,8 @@ export function ApprovalDocumentComposer({ locale, companyId, currentUser, users
   const [title, setTitle] = useState(form.name[locale]);
   const [retention, setRetention] = useState('5Y');
   const [security, setSecurity] = useState<'GENERAL' | 'INTERNAL' | 'CONFIDENTIAL' | 'RESTRICTED'>('INTERNAL');
-  const [projectId, setProjectId] = useState('');
-  const [claimId, setClaimId] = useState('');
+  const [projectId, setProjectId] = useState(initialProjectId);
+  const [claimId, setClaimId] = useState(initialClaimId);
   const [values, setValues] = useState<Record<string, string>>({});
   const [attachments, setAttachments] = useState<ApprovalAttachmentReference[]>([]);
   const [distributionKind, setDistributionKind] = useState<ApprovalDistributionKind>('REFERENCE');
@@ -110,6 +114,8 @@ export function ApprovalDocumentComposer({ locale, companyId, currentUser, users
     securityLevel: security,
     projectId: projectId.trim() || undefined,
     claimId: claimId.trim() || undefined,
+    reportId: initialReportId.trim() || undefined,
+    reportVersionId: initialReportVersionId.trim() || undefined,
     approvalLine: line.steps.map((step) => ({ ...step, status: 'PENDING' })),
     approvalSnapshot: createApprovalSnapshot(line, policy.version),
     currentApprovalStep: 0,

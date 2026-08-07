@@ -1,6 +1,7 @@
 'use client';
 
 import { Fragment, useMemo, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import {
   Archive,
   BookOpenCheck,
@@ -100,6 +101,11 @@ const getActionableSteps = (request: ApprovalRequest) => {
 };
 
 export function ApprovalWorkspace() {
+  const searchParams = useSearchParams();
+  const contextProjectId = searchParams.get('projectId') || '';
+  const contextClaimId = searchParams.get('claimId') || '';
+  const contextReportId = searchParams.get('reportId') || '';
+  const contextReportVersionId = searchParams.get('reportVersionId') || '';
   const currentUser = useAuthStore((state) => state.currentUser);
   const users = useAuthStore((state) => state.users);
   const requests = useApprovalStore((state) => state.requests);
@@ -109,7 +115,7 @@ export function ApprovalWorkspace() {
   const companyId: CompanyId = brandWorkspace === 'VIET_QS' ? 'VIET_QS' : 'CON_COST';
   const copy = COPY[locale];
   const boundary = getFrontendModuleBoundary('APPROVAL', { locale, adapterReady: process.env.NEXT_PUBLIC_APPROVAL_ADAPTER_READY === 'true' && process.env.NEXT_PUBLIC_APPROVAL_POLICY_READY === 'true' });
-  const [tab, setTab] = useState<QueueTab>('ACTION');
+  const [tab, setTab] = useState<QueueTab>(contextProjectId || contextClaimId ? 'DRAFT' : 'ACTION');
   const [catalogOpen, setCatalogOpen] = useState(false);
   const [composerFormId, setComposerFormId] = useState<string | null>(null);
   const [lineManagerOpen, setLineManagerOpen] = useState(false);
@@ -117,14 +123,14 @@ export function ApprovalWorkspace() {
   const [decision, setDecision] = useState<{ request: ApprovalRequest; action: ReviewAction } | null>(null);
   const [comment, setComment] = useState('');
   const [message, setMessage] = useState<{ kind: 'info' | 'error'; text: string } | null>(null);
-
   const companyUsers = useMemo(() => users.filter((user) => user.companyId === companyId), [companyId, users]);
   if (!currentUser) return null;
 
   const scopedRequests = boundary.state === 'DEMO_SIMULATION'
     ? requests.filter((request) => request.companyId ? request.companyId === companyId : companyUsers.some((user) => user.id === request.requestedBy))
     : [];
-  const visibleRequests = scopedRequests.filter((request) => currentUser.role === 'SUPER_ADMIN' || request.requestedBy === currentUser.id || request.approvalLine?.some((step) => step.approverId === currentUser.id || !step.approverId && step.approverRole === currentUser.role) || request.pmId === currentUser.id || request.managerId === currentUser.id);
+  const permittedRequests = scopedRequests.filter((request) => currentUser.role === 'SUPER_ADMIN' || request.requestedBy === currentUser.id || request.approvalLine?.some((step) => step.approverId === currentUser.id || !step.approverId && step.approverRole === currentUser.role) || request.pmId === currentUser.id || request.managerId === currentUser.id);
+  const visibleRequests = permittedRequests.filter((request) => (!contextProjectId || request.projectId === contextProjectId) && (!contextClaimId || request.claimId === contextClaimId));
   const isActionable = (request: ApprovalRequest) => !TERMINAL.has(request.status) && request.status !== 'DRAFT' && getActionableSteps(request).some((step) => currentUser.role === 'SUPER_ADMIN' || step.approverId === currentUser.id || !step.approverId && step.approverRole === currentUser.role);
   const queue = visibleRequests.filter((request) => {
     if (tab === 'DRAFT') return request.status === 'DRAFT' && request.requestedBy === currentUser.id;
@@ -188,6 +194,8 @@ export function ApprovalWorkspace() {
         </div>
       </header>
 
+      {(contextProjectId || contextClaimId) && <section className="grid gap-3 rounded-xl border border-teal-200 bg-teal-50 p-4 text-xs font-bold text-teal-950 sm:grid-cols-2" data-approval-canonical-context><div><span className="block text-[9px] font-black text-teal-700">PROJECT</span><span className="break-all font-mono">{contextProjectId || '-'}</span></div><div><span className="block text-[9px] font-black text-teal-700">CLAIM</span><span className="break-all font-mono">{contextClaimId || '-'}</span></div></section>}
+
       <RuntimeCapabilityPanel boundary={boundary} />
       {message && <div role="status" className={`rounded-xl border p-3 text-xs font-bold ${message.kind === 'error' ? 'border-red-200 bg-red-50 text-red-800' : 'border-blue-200 bg-blue-50 text-blue-900'}`}>{message.text}</div>}
 
@@ -220,7 +228,7 @@ export function ApprovalWorkspace() {
       </section>
 
       {catalogOpen && <ResponsiveDialogShell title={copy.formCatalog} description={copy.description} onClose={() => setCatalogOpen(false)}><div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">{approvalFormCatalog.map((form) => <button key={form.id} type="button" onClick={() => { setComposerFormId(form.id); setCatalogOpen(false); }} className="cc-tactile-card flex min-h-[132px] items-start gap-4 p-4 text-left"><span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-orange-50 text-orange-700"><FileText className="h-5 w-5" /></span><span><span className="text-[9px] font-black text-[var(--color-primary)]">{form.category}</span><strong className="mt-1 block text-sm font-black">{form.name[locale]}</strong><small className="mt-1 block text-[10px] font-semibold leading-5 text-[var(--color-text-sub)]">{form.description[locale]}</small></span></button>)}</div></ResponsiveDialogShell>}
-      {composerForm && <ApprovalDocumentComposer locale={locale} companyId={companyId} currentUser={currentUser} users={companyUsers} form={composerForm} onClose={() => setComposerFormId(null)} onSubmitted={(requestId) => setMessage({ kind: 'info', text: `${copy.simulated} · ${requestId}` })} />}
+      {composerForm && <ApprovalDocumentComposer locale={locale} companyId={companyId} currentUser={currentUser} users={companyUsers} form={composerForm} initialProjectId={contextProjectId} initialClaimId={contextClaimId} initialReportId={contextReportId} initialReportVersionId={contextReportVersionId} onClose={() => setComposerFormId(null)} onSubmitted={(requestId) => setMessage({ kind: 'info', text: `${copy.simulated} · ${requestId}` })} />}
       {lineManagerOpen && <ApprovalLineManager locale={locale} companyId={companyId} currentUser={currentUser} users={companyUsers} formType="GENERAL_APPROVAL" initialSteps={genericLine.steps} onApply={(line: ApprovalLineDefinition) => { setMessage({ kind: 'info', text: `${copy.lineManager}: ${line.name}` }); setLineManagerOpen(false); }} onClose={() => setLineManagerOpen(false)} />}
       {decision && <ResponsiveDialogShell title={`${copy.confirm} · ${decision.action}`} onClose={() => setDecision(null)} widthClassName="sm:max-w-lg" footer={<ActionButtonGroup label="결재 결정 확인" className="justify-end"><SemanticActionButton variant="neutral" tooltip={copy.close} onClick={() => setDecision(null)}>{copy.close}</SemanticActionButton><SemanticActionButton variant={decision.action === 'APPROVE' ? 'success' : decision.action === 'REJECT' ? 'reject' : 'warning'} tooltip={copy.confirm} onClick={performReview}>{copy.confirm}</SemanticActionButton></ActionButtonGroup>}><p className="text-sm font-black">{decision.request.title}</p><label className="mt-4 block text-xs font-black">{copy.comment}<textarea rows={5} value={comment} onChange={(event) => setComment(event.target.value)} className="mt-1.5 w-full border border-[var(--color-border)] p-3 text-sm" /></label></ResponsiveDialogShell>}
       {detail && <ResponsiveDialogShell title={copy.detail} onClose={() => setDetail(null)} widthClassName="sm:max-w-4xl"><div className="space-y-5"><section><span className="text-[9px] font-black text-[var(--color-primary)]">{detail.formId ?? detail.type} · {detail.status}</span><h3 className="mt-2 text-xl font-black">{detail.title}</h3><p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-[var(--color-text-sub)]">{detail.reason}</p></section><section className="grid gap-3 sm:grid-cols-3">{[[copy.snapshot, `${detail.approvalSnapshot?.lineDefinitionId ?? 'legacy'} · v${detail.approvalSnapshot?.lineVersion ?? 0}`], [copy.distribution, String(detail.distributionTargets?.length ?? 0)], [copy.attachment, String(detail.attachments?.filter((file) => file.state === 'READY').length ?? 0)]].map(([label, value]) => <div key={label} className="rounded-xl border border-[var(--color-border)] bg-[var(--cc-surface-2)] p-4"><span className="text-[9px] font-black text-[var(--color-text-sub)]">{label}</span><strong className="mt-1 block text-sm">{value}</strong></div>)}</section><section><h4 className="mb-3 flex items-center gap-2 text-sm font-black"><CopyCheck className="h-4 w-4 text-violet-600" />{copy.snapshot}</h4><div className="space-y-2">{(detail.approvalSnapshot?.steps ?? detail.approvalLine ?? []).map((step, index) => <div key={step.id} className="flex items-center gap-3 rounded-xl border border-[var(--color-border)] p-3"><span className={`flex h-8 w-8 items-center justify-center rounded-full text-[10px] font-black ${step.status === 'APPROVED' ? 'bg-emerald-600 text-white' : step.status === 'REJECTED' || step.status === 'CHANGES_REQUESTED' ? 'bg-red-600 text-white' : 'bg-slate-100 text-slate-600'}`}>{index + 1}</span><span className="min-w-0"><strong className="block truncate text-xs">{step.label} · {step.kind}</strong><small className="text-[10px] text-[var(--color-text-sub)]">{step.approverId ? personName(companyUsers.find((user) => user.id === step.approverId)) : step.approverRole} · {step.executionMode} · {step.status}</small></span>{step.policyLocked && <ShieldCheck className="ml-auto h-4 w-4 text-amber-600" />}</div>)}</div></section><section className="rounded-xl border border-[var(--color-border)] p-4"><h4 className="flex items-center gap-2 text-sm font-black"><History className="h-4 w-4 text-blue-600" />{copy.history}</h4><p className="mt-2 text-xs text-[var(--color-text-sub)]">{detail.createdAt} · revision {detail.revision ?? 1} · {detail.reviewComment ?? detail.status}</p></section><section className="rounded-xl border border-blue-200 bg-blue-50 p-4 text-xs font-semibold text-blue-900"><BookOpenCheck className="mr-2 inline h-4 w-4" />{copy.permission}</section></div></ResponsiveDialogShell>}

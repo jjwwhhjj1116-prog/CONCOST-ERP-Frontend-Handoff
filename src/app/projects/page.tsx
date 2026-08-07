@@ -24,11 +24,13 @@ import { Badge } from '@/components/ui/Badge';
 import { useTranslationStore } from '@/store/translationStore';
 import { useTranslation } from '@/lib/localization';
 import { ProjectOperationModal } from '@/components/projects/ProjectOperationModal';
+import { ClaimProjectWorkspace } from '@/components/claims/ClaimProjectWorkspace';
 import { ProjectMilestoneModal } from '@/components/projects/ProjectMilestoneModal';
 import { PROJECT_WORKFLOW_TABS, ProjectWorkflowTab } from '@/lib/projectWorkflow';
 import { useProjectWorkflowOverviewSync } from '@/hooks/useProjectWorkflow';
 import { PROJECT_EXECUTION_UNITS, getProjectBoardScope, getProjectBoardScopeLabel, matchesProjectBoardScope } from '@/lib/projectExecutionUnits';
 import { getProjectAssignment, isProjectStaffingReady } from '@/lib/projectStaffing';
+import { isClaimProject } from '@/lib/claimOperations';
 
 export type ExtendedViewType = BoardViewType | 'PART' | 'HISTORY';
 
@@ -162,6 +164,11 @@ export default function ProjectBoardPage() {
   };
 
   const selectedProject = projects.find(p => p.id === selectedProjectId);
+  const selectedProjectIsClaim = Boolean(selectedProject && (
+    isClaimProject(selectedProject) ||
+    (projectScope?.kind === 'GROUP' && projectScope.group === 'CLAIM') ||
+    (projectScope?.kind === 'UNIT' && projectScope.unitId === 'CLAIM')
+  ));
   const assignmentUnitId: ProjectExecutionUnitId | null = projectScope?.kind === 'UNIT' ? projectScope.unitId : null;
   const staffingContextUnitId = (() => {
     if (assignmentUnitId) return assignmentUnitId;
@@ -405,7 +412,9 @@ export default function ProjectBoardPage() {
       </div>
 
       {selectedProjectId ? (
-        viewType === 'PART' ? (
+        selectedProjectIsClaim && selectedProject ? (
+          <ClaimProjectWorkspace project={selectedProject} />
+        ) : viewType === 'PART' ? (
           <ProjectPartBoard
             projectId={selectedProjectId}
             tasks={projectTasks}
