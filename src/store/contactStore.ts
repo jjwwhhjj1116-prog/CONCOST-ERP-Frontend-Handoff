@@ -1,33 +1,52 @@
-import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
 import type { BusinessCardFields } from '@/lib/businessCardOcr';
 
-export type BusinessContact = BusinessCardFields & {
+export const LEGACY_CONTACT_STORAGE_KEY = 'erp-contact-storage-v1';
+
+export type LegacyUnscopedContact = BusinessCardFields & {
   id: string;
-  source: 'BUSINESS_CARD_OCR' | 'MANUAL';
   confidence: number;
   imageName?: string;
   createdAt: string;
   updatedAt: string;
 };
 
-type ContactState = {
-  contacts: BusinessContact[];
-  upsertContact: (input: BusinessCardFields & { confidence?: number; imageName?: string }) => string;
-  removeContact: (id: string) => void;
-};
+const emptyFields = (): BusinessCardFields => ({
+  name: '', company: '', department: '', position: '', mobile: '', telephone: '', fax: '', email: '', homepage: '', address: '',
+});
 
-export const useContactStore = create<ContactState>()(persist((set) => ({
-  contacts: [],
-  upsertContact: (input) => {
-    const now = new Date().toISOString();
-    const id = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `contact_${Date.now()}`;
-    set((state) => {
-      const duplicate = state.contacts.find((contact) => (input.email && contact.email.toLowerCase() === input.email.toLowerCase()) || (input.mobile && contact.mobile.replace(/\D/g, '') === input.mobile.replace(/\D/g, '')));
-      if (duplicate) return { contacts: state.contacts.map((contact) => contact.id === duplicate.id ? { ...contact, ...input, source: 'BUSINESS_CARD_OCR', confidence: input.confidence || contact.confidence, updatedAt: now } : contact) };
-      return { contacts: [{ ...input, id, source: 'BUSINESS_CARD_OCR', confidence: input.confidence || 0, createdAt: now, updatedAt: now }, ...state.contacts] };
+const safeText = (value: unknown) => typeof value === 'string' ? value.trim() : '';
+
+export function readLegacyUnscopedContacts(storage: Pick<Storage, 'getItem'>): LegacyUnscopedContact[] {
+  try {
+    const raw = storage.getItem(LEGACY_CONTACT_STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw) as { state?: { contacts?: unknown[] } };
+    if (!Array.isArray(parsed?.state?.contacts)) return [];
+    return parsed.state.contacts.flatMap((candidate) => {
+      if (!candidate || typeof candidate !== 'object') return [];
+      const record = candidate as Record<string, unknown>;
+      const fields = emptyFields();
+      for (const key of Object.keys(fields) as Array<keyof BusinessCardFields>) fields[key] = safeText(record[key]);
+      if (!fields.name && !fields.company) return [];
+      return [{
+        ...fields,
+        id: safeText(record.id) || `legacy-contact-${Math.random().toString(36).slice(2)}`,
+        confidence: Number.isFinite(Number(record.confidence)) ? Number(record.confidence) : 0,
+        imageName: safeText(record.imageName) || undefined,
+        createdAt: safeText(record.createdAt),
+        updatedAt: safeText(record.updatedAt),
+      }];
     });
-    return id;
-  },
-  removeContact: (id) => set((state) => ({ contacts: state.contacts.filter((contact) => contact.id !== id) })),
-}), { name: 'erp-contact-storage-v1' }));
+  } catch {
+    return [];
+  }
+}
+
+export function clearLegacyUnscopedContacts(storage: Pick<Storage, 'removeItem'>) {
+  storage.removeItem(LEGACY_CONTACT_STORAGE_KEY);
+}
+
+// Legacy records have no companyId. They must never be silently assigned to a company.
+export function legacyContactsRequireExplicitCompanyReview(contacts: LegacyUnscopedContact[]) {
+  return contacts.map((contact) => ({ legacyId: contact.id, status: 'COMPANY_REVIEW_REQUIRED' as const }));
+}

@@ -4,6 +4,11 @@ export type SalesStage = 'LEAD' | 'QUALIFIED' | 'PROPOSAL' | 'NEGOTIATION' | 'WO
 export type CustomerStatus = 'PROSPECT' | 'ACTIVE' | 'INACTIVE';
 export type ContactSource = 'MANUAL' | 'BUSINESS_CARD_OCR' | 'IMPORT';
 export type DuplicateReviewStatus = 'CLEAR' | 'REVIEW_REQUIRED' | 'MERGED';
+export type ContactStatus = 'ACTIVE' | 'INACTIVE';
+export type GoogleContactSyncState = 'NOT_REQUESTED' | 'OPT_IN_PENDING' | 'PROVIDER_REQUIRED' | 'SYNCED';
+export type BusinessCardReviewStatus = 'REVIEW_REQUIRED' | 'REGISTERED' | 'MERGED' | 'ARCHIVED';
+export type BusinessCardCaptureSource = 'DESKTOP' | 'MOBILE' | 'MANUAL';
+export type BusinessCardRegistrationDecision = 'NEW_CONTACT' | 'MERGE_CONTACT' | 'DIFFERENT_PERSON';
 export type SalesActivityType = 'CALL' | 'MEETING' | 'MAIL' | 'MEMO' | 'TASK';
 export type SalesActivityStatus = 'OPEN' | 'DONE';
 
@@ -53,6 +58,36 @@ export interface SalesContact extends ScopedBusinessRecord {
   sourceBusinessCardId: string | null;
   duplicateStatus: DuplicateReviewStatus;
   lastContactAt: string | null;
+  companyName: string;
+  mobile: string;
+  telephone: string;
+  fax: string;
+  homepage: string;
+  address: string;
+  ownerId: string;
+  tags: string[];
+  memo: string;
+  status: ContactStatus;
+  googleContactsOptIn: boolean;
+  googleSyncState: GoogleContactSyncState;
+}
+
+export interface BusinessCardRecord extends ScopedBusinessRecord {
+  contactId: string | null;
+  customerId: string | null;
+  captureSource: BusinessCardCaptureSource;
+  fileName: string | null;
+  fileSize: number | null;
+  fileReferenceId: string | null;
+  ocrMode: 'DEMO_SIMULATION' | 'PROVIDER' | 'MANUAL';
+  ocrConfidence: Partial<Record<keyof import('@/lib/businessCardOcr').BusinessCardFields, number>>;
+  reviewStatus: BusinessCardReviewStatus;
+  registrationDecision: BusinessCardRegistrationDecision;
+  duplicateCandidateIds: string[];
+  reviewedFields: import('@/lib/businessCardOcr').BusinessCardFields;
+  selectedMergeFields: Array<keyof import('@/lib/businessCardOcr').BusinessCardFields>;
+  reviewedBy: string;
+  reviewedAt: string;
 }
 
 export interface SalesActivity extends ScopedBusinessRecord {
@@ -121,9 +156,27 @@ export interface FinanceClosingItem extends ScopedBusinessRecord {
 }
 
 export type SalesCustomerInput = Omit<SalesCustomer, keyof ScopedBusinessRecord | 'customerNo'>;
-export type SalesContactInput = Omit<SalesContact, keyof ScopedBusinessRecord | 'duplicateStatus'> & {
+export type SalesContactInput = Pick<SalesContact, 'customerId' | 'name' | 'department' | 'position' | 'email' | 'phone' | 'source' | 'sourceBusinessCardId' | 'lastContactAt'> & Partial<Pick<SalesContact, 'companyName' | 'mobile' | 'telephone' | 'fax' | 'homepage' | 'address' | 'ownerId' | 'tags' | 'memo' | 'status' | 'googleContactsOptIn' | 'googleSyncState'>> & {
   duplicateStatus?: DuplicateReviewStatus;
 };
+
+export interface BusinessCardRegistrationInput {
+  fields: import('@/lib/businessCardOcr').BusinessCardFields;
+  captureSource: BusinessCardCaptureSource;
+  fileName: string | null;
+  fileSize: number | null;
+  fileReferenceId?: string | null;
+  ocrMode: 'DEMO_SIMULATION' | 'PROVIDER' | 'MANUAL';
+  fieldConfidence: Partial<Record<keyof import('@/lib/businessCardOcr').BusinessCardFields, number>>;
+  decision: BusinessCardRegistrationDecision;
+  duplicateContactId?: string | null;
+  selectedMergeFields?: Array<keyof import('@/lib/businessCardOcr').BusinessCardFields>;
+  customerId?: string | null;
+  ownerId: string;
+  tags: string[];
+  memo: string;
+  googleContactsOptIn: boolean;
+}
 export type SalesActivityInput = Omit<SalesActivity, keyof ScopedBusinessRecord>;
 export type SalesOpportunityInput = Omit<SalesOpportunity, keyof ScopedBusinessRecord | 'estimateRequestId' | 'projectId'> & {
   estimateRequestId?: string | null;
@@ -175,10 +228,54 @@ export function findContactDuplicates(contacts: SalesContact[], candidate: Pick<
   ));
 }
 
+export function findBusinessCardDuplicateCandidates(
+  contacts: SalesContact[],
+  candidate: { companyId: CompanyId; email: string; mobile: string; name: string; companyName: string },
+) {
+  const email = cleanEmail(candidate.email);
+  const mobile = cleanDigits(candidate.mobile);
+  const name = candidate.name.trim().toLowerCase();
+  const companyName = candidate.companyName.trim().toLowerCase();
+  return contacts.filter((contact) => {
+    if (contact.companyId !== candidate.companyId || contact.archivedAt || contact.status === 'INACTIVE') return false;
+    const exactEmail = email.length > 0 && cleanEmail(contact.email) === email;
+    const exactMobile = mobile.length >= 8 && cleanDigits(contact.mobile || contact.phone) === mobile;
+    const samePersonAtCompany = name.length > 1 && companyName.length > 1
+      && contact.name.trim().toLowerCase() === name
+      && contact.companyName.trim().toLowerCase() === companyName;
+    return exactEmail || exactMobile || samePersonAtCompany;
+  });
+}
+
+export function mergeBusinessCardContact(
+  contact: SalesContact,
+  fields: import('@/lib/businessCardOcr').BusinessCardFields,
+  selectedFields: Array<keyof import('@/lib/businessCardOcr').BusinessCardFields>,
+) {
+  const after = { ...contact };
+  const assign = (key: keyof import('@/lib/businessCardOcr').BusinessCardFields, target: keyof SalesContact) => {
+    if (!selectedFields.includes(key)) return;
+    const value = fields[key].trim();
+    if (value) (after[target] as string) = value;
+  };
+  assign('name', 'name');
+  assign('company', 'companyName');
+  assign('department', 'department');
+  assign('position', 'position');
+  assign('mobile', 'mobile');
+  assign('mobile', 'phone');
+  assign('telephone', 'telephone');
+  assign('fax', 'fax');
+  assign('email', 'email');
+  assign('homepage', 'homepage');
+  assign('address', 'address');
+  return after;
+}
+
 export const companyCustomers = (entries: SalesCustomer[], companyId: CompanyId) =>
   entries.filter((entry) => entry.companyId === companyId && !entry.archivedAt);
 export const companyContacts = (entries: SalesContact[], companyId: CompanyId) =>
-  entries.filter((entry) => entry.companyId === companyId && !entry.archivedAt);
+  entries.filter((entry) => entry.companyId === companyId && !entry.archivedAt && entry.status !== 'INACTIVE');
 export const companyActivities = (entries: SalesActivity[], companyId: CompanyId) =>
   entries.filter((entry) => entry.companyId === companyId && !entry.archivedAt);
 export const companySales = (entries: SalesOpportunity[], companyId: CompanyId) =>
@@ -247,8 +344,8 @@ export const initialSalesCustomers: SalesCustomer[] = [
 ];
 
 export const initialSalesContacts: SalesContact[] = [
-  { ...baseRecord('contact-concost-001', 'CON_COST', '2026-08-01T09:10:00.000Z'), customerId: 'customer-concost-001', name: '데모 담당자', department: '견적팀', position: '매니저', email: 'contact.kr@example.invalid', phone: '010-0000-1001', source: 'BUSINESS_CARD_OCR', sourceBusinessCardId: 'demo-card-concost-001', duplicateStatus: 'CLEAR', lastContactAt: '2026-08-05T01:00:00.000Z' },
-  { ...baseRecord('contact-vietqs-001', 'VIET_QS', '2026-08-02T02:10:00.000Z'), customerId: 'customer-vietqs-001', name: 'Demo Contact VN', department: 'Cost', position: 'Manager', email: 'contact.vn@example.invalid', phone: '+84 000 000 1001', source: 'BUSINESS_CARD_OCR', sourceBusinessCardId: 'demo-card-vietqs-001', duplicateStatus: 'REVIEW_REQUIRED', lastContactAt: null },
+  { ...baseRecord('contact-concost-001', 'CON_COST', '2026-08-01T09:10:00.000Z'), customerId: 'customer-concost-001', name: '데모 담당자', companyName: 'DEMO 건설 파트너', department: '견적팀', position: '매니저', email: 'contact.kr@example.invalid', phone: '010-0000-1001', mobile: '010-0000-1001', telephone: '', fax: '', homepage: '', address: '', ownerId: 'demo-concost-admin-001', tags: ['DEMO', '명함'], memo: '합성 데모 연락처', status: 'ACTIVE', googleContactsOptIn: false, googleSyncState: 'NOT_REQUESTED', source: 'BUSINESS_CARD_OCR', sourceBusinessCardId: 'demo-card-concost-001', duplicateStatus: 'CLEAR', lastContactAt: '2026-08-05T01:00:00.000Z' },
+  { ...baseRecord('contact-vietqs-001', 'VIET_QS', '2026-08-02T02:10:00.000Z'), customerId: 'customer-vietqs-001', name: 'Demo Contact VN', companyName: 'DEMO Vietnam Client', department: 'Cost', position: 'Manager', email: 'contact.vn@example.invalid', phone: '+84 000 000 1001', mobile: '+84 000 000 1001', telephone: '', fax: '', homepage: '', address: '', ownerId: 'demo-vietqs-admin-001', tags: ['DEMO', 'Business card'], memo: 'Synthetic demo contact', status: 'ACTIVE', googleContactsOptIn: false, googleSyncState: 'NOT_REQUESTED', source: 'BUSINESS_CARD_OCR', sourceBusinessCardId: 'demo-card-vietqs-001', duplicateStatus: 'REVIEW_REQUIRED', lastContactAt: null },
 ];
 
 export const initialSalesOpportunities: SalesOpportunity[] = [

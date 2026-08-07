@@ -37,6 +37,7 @@ export function BusinessCardInbox() {
   const { brandWorkspace, locale } = useHandoffLocale();
   const t = copy[locale];
   const inboxItems = useBusinessCardMobileStore((state) => state.inbox);
+  const transitionInbox = useBusinessCardMobileStore((state) => state.transitionInbox);
   const inbox = inboxItems.filter((item) => item.companyId === brandWorkspace);
 
   return (
@@ -66,19 +67,19 @@ export function BusinessCardInbox() {
           </div>
         </section>
       ) : (
-        <ul className="divide-y divide-[var(--color-border)] border border-[var(--color-border)] bg-[var(--color-surface)]">
+        <ul className="divide-y divide-[var(--color-border)] overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-[var(--cc-shadow-1)]">
           {inbox.map((item) => (
-            <li key={item.id} className="grid gap-3 p-4 sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:items-center">
+            <li key={item.id} className="grid gap-3 p-4 transition hover:bg-emerald-50/40 sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:items-center">
               <span className="flex h-11 w-11 items-center justify-center bg-emerald-50 text-emerald-700">
                 <ScanLine className="h-5 w-5" />
               </span>
               <span className="min-w-0">
                 <strong className="block truncate text-sm text-[var(--color-text-main)]">{item.fileName}</strong>
                 <span className="mt-1 block text-[10px] font-semibold text-[var(--color-text-sub)]">
-                  {Math.max(1, Math.round(item.fileSize / 1024))} KB · {item.state} · {item.receivedAt}
+                  {Math.max(1, Math.round(item.fileSize / 1024))} KB · <span className="rounded-full bg-amber-50 px-2 py-0.5 font-black text-amber-700">{item.state}</span> · {item.receivedAt}
                 </span>
               </span>
-              <Link href="/sales/business-cards" className="inline-flex min-h-10 items-center justify-center gap-2 border border-[var(--color-border)] px-3 text-xs font-black text-[var(--color-text-main)]">
+              <Link href={`/sales/business-cards?inboxId=${encodeURIComponent(item.id)}`} onClick={() => item.state === 'RECEIVED' && transitionInbox(item.id, 'OCR_PENDING')} className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-emerald-300 bg-emerald-50 px-3 text-xs font-black text-emerald-800 transition hover:bg-emerald-100">
                 {t.review}
                 <ArrowRight className="h-4 w-4" />
               </Link>

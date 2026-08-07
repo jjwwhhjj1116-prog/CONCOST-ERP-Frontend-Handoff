@@ -6,6 +6,7 @@ import {
   createAuditEntry,
   financeBalance,
   findContactDuplicates,
+  findBusinessCardDuplicateCandidates,
   initialFinanceClosingItems,
   initialFinanceEntries,
   initialSalesActivities,
@@ -13,6 +14,8 @@ import {
   initialSalesCustomers,
   initialSalesOpportunities,
   type DuplicateReviewStatus,
+  type BusinessCardRecord,
+  type BusinessCardRegistrationInput,
   type FinanceClosingItem,
   type FinanceEntry,
   type FinanceEntryInput,
@@ -27,18 +30,22 @@ import {
   type SalesOpportunity,
   type SalesOpportunityInput,
   type SalesStage,
+  mergeBusinessCardContact,
 } from '@/lib/businessOperations';
 import type { CompanyId } from '@/types/models';
 
 interface BusinessOperationsState {
   customers: SalesCustomer[];
   contacts: SalesContact[];
+  businessCards: BusinessCardRecord[];
   activities: SalesActivity[];
   sales: SalesOpportunity[];
   finance: FinanceEntry[];
   closingItems: FinanceClosingItem[];
   createCustomer: (companyId: CompanyId, input: SalesCustomerInput, actorId: string) => string;
   createContact: (companyId: CompanyId, input: SalesContactInput, actorId: string) => string;
+  registerBusinessCard: (companyId: CompanyId, input: BusinessCardRegistrationInput, actorId: string) => { contactId: string; customerId: string; businessCardId: string; merged: boolean };
+  archiveContact: (id: string, actorId: string) => void;
   resolveContactDuplicate: (id: string, status: DuplicateReviewStatus, actorId: string) => void;
   createActivity: (companyId: CompanyId, input: SalesActivityInput, actorId: string) => string;
   createSales: (companyId: CompanyId, input: SalesOpportunityInput, actorId: string) => string;
@@ -63,6 +70,7 @@ const documentNo = (companyId: CompanyId, count: number) => `FIN-${companyId ===
 export const useBusinessOperationsStore = create<BusinessOperationsState>((set, get) => ({
   customers: initialSalesCustomers,
   contacts: initialSalesContacts,
+  businessCards: [],
   activities: initialSalesActivities,
   sales: initialSalesOpportunities,
   finance: initialFinanceEntries,
@@ -78,10 +86,160 @@ export const useBusinessOperationsStore = create<BusinessOperationsState>((set, 
     const id = nextId('contact');
     const createdAt = now();
     const duplicateStatus = findContactDuplicates(get().contacts, { companyId, email: input.email, phone: input.phone }).length ? 'REVIEW_REQUIRED' : (input.duplicateStatus ?? 'CLEAR');
-    const record: SalesContact = { ...input, id, companyId, duplicateStatus, revision: 1, createdAt, updatedAt: createdAt, archivedAt: null, audit: [createAuditEntry('CONTACT_CREATED', actorId, 1, null, { ...input, duplicateStatus }, createdAt)] };
+    const record: SalesContact = { ...input, id, companyId, companyName: input.companyName ?? '', mobile: input.mobile ?? input.phone, telephone: input.telephone ?? '', fax: input.fax ?? '', homepage: input.homepage ?? '', address: input.address ?? '', ownerId: input.ownerId ?? actorId, tags: input.tags ?? [], memo: input.memo ?? '', status: input.status ?? 'ACTIVE', googleContactsOptIn: input.googleContactsOptIn ?? false, googleSyncState: input.googleSyncState ?? 'NOT_REQUESTED', duplicateStatus, revision: 1, createdAt, updatedAt: createdAt, archivedAt: null, audit: [createAuditEntry('CONTACT_CREATED', actorId, 1, null, { ...input, duplicateStatus }, createdAt)] };
     set((state) => ({ contacts: [record, ...state.contacts] }));
     return id;
   },
+  registerBusinessCard: (companyId, input, actorId) => {
+    const createdAt = now();
+    const businessCardId = nextId('business-card');
+    const candidates = findBusinessCardDuplicateCandidates(get().contacts, {
+      companyId,
+      email: input.fields.email,
+      mobile: input.fields.mobile,
+      name: input.fields.name,
+      companyName: input.fields.company,
+    });
+    const duplicateIds = candidates.map((candidate) => candidate.id);
+    const target = input.duplicateContactId
+      ? candidates.find((candidate) => candidate.id === input.duplicateContactId)
+      : undefined;
+    if (input.decision === 'MERGE_CONTACT' && !target) throw new Error('DUPLICATE_CONTACT_REQUIRED');
+
+    const contactId = input.decision === 'MERGE_CONTACT' && target ? target.id : nextId('contact');
+    let customerId = input.customerId ?? (input.decision === 'MERGE_CONTACT' ? target?.customerId : '') ?? '';
+    let merged = false;
+
+    set((state) => {
+      let customers = state.customers;
+      let contacts = state.contacts;
+      let activities = state.activities;
+
+      if (!customerId && input.fields.company.trim()) {
+        const existingCustomer = customers.find((candidate) => candidate.companyId === companyId && !candidate.archivedAt && candidate.name.trim().toLowerCase() === input.fields.company.trim().toLowerCase());
+        if (existingCustomer) customerId = existingCustomer.id;
+        else {
+          customerId = nextId('customer');
+          const customer: SalesCustomer = {
+            id: customerId,
+            companyId,
+            customerNo: customerNo(companyId, customers.filter((candidate) => candidate.companyId === companyId).length),
+            name: input.fields.company.trim(),
+            industry: '',
+            ownerId: input.ownerId,
+            status: 'PROSPECT',
+            note: 'Created from reviewed business card',
+            revision: 1,
+            createdAt,
+            updatedAt: createdAt,
+            archivedAt: null,
+            audit: [createAuditEntry('CUSTOMER_CREATED_FROM_BUSINESS_CARD', actorId, 1, null, { businessCardId }, createdAt)],
+          };
+          customers = [customer, ...customers];
+        }
+      }
+
+      if (target && input.decision === 'MERGE_CONTACT') {
+        const selected = input.selectedMergeFields ?? [];
+        contacts = contacts.map((candidate) => {
+          if (candidate.id !== target.id) return candidate;
+          const mergedFields = mergeBusinessCardContact(candidate, input.fields, selected);
+          const revision = candidate.revision + 1;
+          const after = {
+            ...mergedFields,
+            customerId: customerId || candidate.customerId,
+            sourceBusinessCardId: businessCardId,
+            duplicateStatus: 'MERGED' as const,
+            ownerId: input.ownerId || candidate.ownerId,
+            tags: Array.from(new Set([...candidate.tags, ...input.tags])),
+            memo: input.memo.trim() || candidate.memo,
+            googleContactsOptIn: input.googleContactsOptIn || candidate.googleContactsOptIn,
+            googleSyncState: input.googleContactsOptIn ? 'OPT_IN_PENDING' as const : candidate.googleSyncState,
+            revision,
+            updatedAt: createdAt,
+          };
+          return { ...after, audit: [createAuditEntry('CONTACT_MERGED_FROM_BUSINESS_CARD', actorId, revision, candidate, after, createdAt), ...candidate.audit] };
+        });
+        merged = true;
+      } else {
+        const contact: SalesContact = {
+          id: contactId,
+          companyId,
+          customerId,
+          name: input.fields.name.trim(),
+          companyName: input.fields.company.trim(),
+          department: input.fields.department.trim(),
+          position: input.fields.position.trim(),
+          email: input.fields.email.trim(),
+          phone: input.fields.mobile.trim() || input.fields.telephone.trim(),
+          mobile: input.fields.mobile.trim(),
+          telephone: input.fields.telephone.trim(),
+          fax: input.fields.fax.trim(),
+          homepage: input.fields.homepage.trim(),
+          address: input.fields.address.trim(),
+          source: input.ocrMode === 'PROVIDER' ? 'BUSINESS_CARD_OCR' : 'MANUAL',
+          sourceBusinessCardId: businessCardId,
+          duplicateStatus: 'CLEAR',
+          lastContactAt: null,
+          ownerId: input.ownerId,
+          tags: input.tags,
+          memo: input.memo,
+          status: 'ACTIVE',
+          googleContactsOptIn: input.googleContactsOptIn,
+          googleSyncState: input.googleContactsOptIn ? 'OPT_IN_PENDING' : 'NOT_REQUESTED',
+          revision: 1,
+          createdAt,
+          updatedAt: createdAt,
+          archivedAt: null,
+          audit: [createAuditEntry('CONTACT_CREATED_FROM_BUSINESS_CARD', actorId, 1, null, { businessCardId, customerId, fields: input.fields }, createdAt)],
+        };
+        contacts = [contact, ...contacts];
+      }
+
+      const card: BusinessCardRecord = {
+        id: businessCardId,
+        companyId,
+        contactId,
+        customerId: customerId || null,
+        captureSource: input.captureSource,
+        fileName: input.fileName,
+        fileSize: input.fileSize,
+        fileReferenceId: input.fileReferenceId ?? null,
+        ocrMode: input.ocrMode,
+        ocrConfidence: input.fieldConfidence,
+        reviewStatus: merged ? 'MERGED' : 'REGISTERED',
+        registrationDecision: input.decision,
+        duplicateCandidateIds: duplicateIds,
+        reviewedFields: input.fields,
+        selectedMergeFields: input.selectedMergeFields ?? [],
+        reviewedBy: actorId,
+        reviewedAt: createdAt,
+        revision: 1,
+        createdAt,
+        updatedAt: createdAt,
+        archivedAt: null,
+        audit: [createAuditEntry('BUSINESS_CARD_REVIEW_COMPLETED', actorId, 1, null, { contactId, customerId, decision: input.decision }, createdAt)],
+      };
+
+      if (customerId) {
+        const activity: SalesActivity = {
+          id: nextId('activity'), companyId, customerId, opportunityId: null, contactId,
+          type: 'MEMO', status: 'DONE', title: 'Business card registered',
+          detail: merged ? 'Reviewed business card merged into an existing contact.' : 'Reviewed business card created a canonical contact.',
+          happenedAt: createdAt, ownerId: actorId, revision: 1, createdAt, updatedAt: createdAt, archivedAt: null,
+          audit: [createAuditEntry('BUSINESS_CARD_ACTIVITY_CREATED', actorId, 1, null, { businessCardId, contactId }, createdAt)],
+        };
+        activities = [activity, ...activities];
+      }
+      return { customers, contacts, activities, businessCards: [card, ...state.businessCards] };
+    });
+    return { contactId, customerId, businessCardId, merged };
+  },
+  archiveContact: (id, actorId) => set((state) => ({ contacts: state.contacts.map((record) => {
+    if (record.id !== id) return record;
+    const archivedAt = now(); const revision = record.revision + 1;
+    return { ...record, status: 'INACTIVE', archivedAt, updatedAt: archivedAt, revision, audit: [createAuditEntry('CONTACT_ARCHIVED', actorId, revision, record, { status: 'INACTIVE', archivedAt }, archivedAt), ...record.audit] };
+  }) })),
   resolveContactDuplicate: (id, status, actorId) => set((state) => ({ contacts: state.contacts.map((record) => {
     if (record.id !== id) return record;
     const updatedAt = now(); const revision = record.revision + 1;

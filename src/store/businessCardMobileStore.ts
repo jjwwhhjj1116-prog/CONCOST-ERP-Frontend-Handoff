@@ -1,9 +1,11 @@
 import { create } from 'zustand';
 
 import {
+  canTransitionBusinessCardInbox,
   createBusinessCardInboxItem,
   createOneTimeUploadSession,
   type BusinessCardInboxItem,
+  type BusinessCardInboxState,
   type MobileUploadSession,
 } from '@/lib/mobileBusinessCard';
 import type { CompanyId } from '@/types/models';
@@ -16,6 +18,7 @@ type BusinessCardMobileState = {
     session: MobileUploadSession,
     file: Pick<File, 'name' | 'size'>,
   ) => BusinessCardInboxItem;
+  transitionInbox: (id: string, nextState: BusinessCardInboxState) => void;
 };
 
 export const useBusinessCardMobileStore = create<BusinessCardMobileState>((set) => ({
@@ -36,4 +39,11 @@ export const useBusinessCardMobileStore = create<BusinessCardMobileState>((set) 
     }));
     return item;
   },
+  transitionInbox: (id, nextState) => set((state) => ({
+    inbox: state.inbox.map((item) => {
+      if (item.id !== id) return item;
+      if (!canTransitionBusinessCardInbox(item.state, nextState)) return item;
+      return { ...item, state: nextState };
+    }),
+  })),
 }));
