@@ -111,7 +111,11 @@ export function BusinessCardWorkspace() {
   const [legacyContacts, setLegacyContacts] = useState<LegacyUnscopedContact[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const createMobileSession = useBusinessCardMobileStore((state) => state.createSession);
-  const mobileSessions = useBusinessCardMobileStore((state) => state.sessions.filter((item) => item.companyId === brandWorkspace));
+  const allMobileSessions = useBusinessCardMobileStore((state) => state.sessions);
+  const mobileSessions = useMemo(
+    () => allMobileSessions.filter((item) => item.companyId === brandWorkspace),
+    [allMobileSessions, brandWorkspace],
+  );
   const sourceInbox = useBusinessCardMobileStore((state) => state.inbox.find((item) => item.id === searchParams.get('inboxId') && item.companyId === brandWorkspace));
   const transitionInbox = useBusinessCardMobileStore((state) => state.transitionInbox);
 
