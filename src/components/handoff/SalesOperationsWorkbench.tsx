@@ -66,8 +66,17 @@ export function SalesOperationsWorkbench() {
   const requestedView = searchParams.get('salesView') ?? searchParams.get('view');
   const view: SalesView = requestedView === 'CUSTOMERS' || requestedView === 'CONTACTS' ? requestedView : 'PIPELINE';
   const [query, setQuery] = useState('');
-  const [drawer, setDrawer] = useState<DrawerMode>(null); const [message, setMessage] = useState(''); const fileRef = useRef<HTMLInputElement>(null);
-  const [opForm, setOpForm] = useState<SalesOpportunityInput>(opportunityForm); const [custForm, setCustForm] = useState<SalesCustomerInput>(customerForm);
+  const [drawer, setDrawer] = useState<DrawerMode>(view === 'PIPELINE' && searchParams.get('new') === '1' ? 'OPPORTUNITY_CREATE' : null); const [message, setMessage] = useState(''); const fileRef = useRef<HTMLInputElement>(null);
+  const [opForm, setOpForm] = useState<SalesOpportunityInput>(() => {
+    const customerId = searchParams.get('customerId') ?? '';
+    return {
+      ...opportunityForm(),
+      customerId,
+      customerName: customers.find((item) => item.id === customerId)?.name ?? '',
+      contactId: searchParams.get('contactId'),
+      ownerId: actorId,
+    };
+  }); const [custForm, setCustForm] = useState<SalesCustomerInput>(customerForm);
   const [personForm, setPersonForm] = useState<SalesContactInput>(contactForm); const [actForm, setActForm] = useState<SalesActivityInput>(activityForm);
   const [importRows, setImportRows] = useState<ContactImportRow[]>([]); const [importErrors, setImportErrors] = useState<string[]>([]);
   const summary = useMemo(() => summarizeSales(opportunities), [opportunities]);
