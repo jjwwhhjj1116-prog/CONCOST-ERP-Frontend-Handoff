@@ -1109,6 +1109,8 @@ export interface Project {
   clientId?: string;
   clientName?: string;
   title: string;
+  /** Adapter-only display alias; canonical project name remains `title`. */
+  name?: string;
   description?: string;
   priority: 'URGENT' | 'HIGH' | 'NORMAL' | 'LOW';
   status: ProjectStatus;

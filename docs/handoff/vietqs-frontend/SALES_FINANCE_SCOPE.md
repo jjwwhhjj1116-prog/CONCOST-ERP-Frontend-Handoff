@@ -1,54 +1,61 @@
-# Sales and Finance Scope
+# Sales and Finance Operational MVP Scope
 
-## Sales v1 Frontend
+Status: `READY_WITH_BACKEND_DEPENDENCIES`
 
-Implemented for handoff:
+The RC3 frontend replaces the generic business-module placeholder with dedicated Sales and Finance operational workbenches. Demo data is synthetic, company-scoped, session-only data. It is not an operational system of record.
 
-- dashboard shell
-- Opportunity list and detail
-- basic Opportunity input
-- Demo/Sandbox/Production boundary
-- loading, empty, error, permission, and Backend-required states
-- OpenAPI mapping for `listOpportunities` and `createOpportunity`
-
-The existing ERP sales dashboard remains available. Business-card review links
-to the Contact capability. Sales Quote reuses the Project Chain Estimate
-Request; no second quote system should be created.
-
-Deferred:
-
-- advanced CRM automation
-- company pipeline editor
-- advanced reports
-- real Google Contacts sync
-- Backend persistence
-
-## Finance v1 Frontend
+## Sales Operational MVP
 
 Implemented for handoff:
 
-- dashboard shell
-- transaction list and detail
-- basic transaction input
-- Project profitability entry point
-- Demo/Sandbox/Production boundary
-- loading, empty, error, permission, Provider, and Backend-required states
-- OpenAPI mapping for dashboard, list, and create transaction
+- Customer 360 with contacts, opportunities, and activity timeline
+- Contact Directory linked to the existing business-card OCR review flow
+- duplicate-contact review status and merge-request action boundary
+- opportunity Pipeline Kanban and editable opportunity details
+- calls, meetings, mail, notes, and task activity records
+- Mail Draft, Calendar, Task, and canonical Estimate Request links
+- Contact XLSX/CSV import preview and XLSX/CSV export
+- CON-COST/Viet QS data isolation and KO/VI/EN workbench copy
+- explicit `DEMO_LOCAL`, `API_SANDBOX`, and `PRODUCTION_SERVER` behavior
 
-Deferred:
+Sales Quote continues to reuse the Project Chain Estimate Request and Estimate Sheet. Opportunity conversion must not create a second quote or project system.
 
-- statutory ledger
-- automatic journal entry
-- tax filing
-- real-time bank and corporate-card integration
-- live tax invoice Provider
-- advanced closing
+## Finance Operational MVP
 
-Demo amounts are sample values only and are not real balances. Provider-missing
-states never show issuance, reconciliation, payment, or live-balance success.
+Implemented for handoff:
+
+- finance dashboard and sales/purchase ledger
+- canonical Project picker and Project number lineage
+- supply amount, VAT, total, paid amount, balance, due date, and overdue state
+- partial collection/payment recording
+- READY evidence metadata with checksum and restricted classification
+- electronic approval Draft linkage
+- tax-invoice Provider state without false issuance success
+- expense/corporate-card, budget/actual, treasury Provider, and monthly-closing views
+- Finance XLSX/CSV import preview and XLSX export
+- CON-COST/Viet QS data isolation and KO/VI/EN workbench copy
+- non-finance projection guard for menu, direct route, search, widget, and export boundaries
+
+No live bank balance, tax invoice, card settlement, or statutory ledger is represented as connected.
 
 ## Authorization
 
-Finance detail permissions must be separated by role and sensitivity. HR title
-or rank does not automatically grant finance, approval, or administrative
-permissions.
+Frontend access follows the approved policy:
+
+- `ADMIN`
+- `GRADE_1`
+- active `MANAGEMENT_SUPPORT` membership
+
+The backend remains authoritative and must also require `FINANCE_ACCESS`. Rank alone must never grant finance access. Unauthorized responses must not include amounts, counterparties, evidence names, or document metadata.
+
+## Persistence Boundary
+
+- `DEMO_LOCAL`: synthetic session simulation with a visible disclosure
+- `API_SANDBOX`: requires the approved backend adapter; no local success fallback
+- `PRODUCTION_SERVER`: requires server authorization, revision, idempotency, audit, and company scope
+
+The browser store is deliberately not persisted and must not be treated as production SSOT.
+
+## Backend Handoff
+
+Implement the capabilities listed in `BACKEND_DELTA_RC3_SALES_FINANCE_MVP.md`. Official OpenAPI contracts are unchanged in this frontend phase.

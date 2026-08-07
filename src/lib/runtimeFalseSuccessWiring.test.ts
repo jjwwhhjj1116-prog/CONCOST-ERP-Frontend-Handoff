@@ -68,11 +68,19 @@ test('notification read state cannot mutate outside the runtime boundary', () =>
 });
 
 test('sales and finance demo entries cannot masquerade as server ledger writes', () => {
-  const business = source('src/components/handoff/BusinessModuleWorkbench.tsx');
-  const submit = business.match(/const submit = async[\s\S]*?\n  };/)?.[0] || '';
+  const dispatcher = source('src/components/handoff/BusinessModuleWorkbench.tsx');
+  const sales = source('src/components/handoff/SalesOperationsWorkbench.tsx');
+  const finance = source('src/components/handoff/FinanceOperationsWorkbench.tsx');
+  const store = source('src/store/businessOperationsStore.ts');
 
-  assert.match(submit, /executeFrontendMutation\(boundary/);
-  assert.match(submit, /simulate:\s*\(\)\s*=>\s*\{/);
-  assert.doesNotMatch(business, /localStorage|sessionStorage/);
-  assert.match(business, /not saved to a server ledger/);
+  assert.match(dispatcher, /SalesOperationsWorkbench/);
+  assert.match(dispatcher, /FinanceOperationsWorkbench/);
+  assert.match(sales, /executeFrontendMutation\(boundary/);
+  assert.match(finance, /executeFrontendMutation\(boundary/);
+  assert.match(sales, /RuntimeCapabilityPanel/);
+  assert.match(finance, /RuntimeCapabilityPanel/);
+  assert.match(finance, /NEXT_PUBLIC_TAX_PROVIDER_READY/);
+  assert.match(finance, /disabledReason=\{t\.taxBlocked\}/);
+  assert.doesNotMatch(`${sales}\n${finance}\n${store}`, /localStorage|sessionStorage/);
+  assert.doesNotMatch(store, /persist\s*\(/);
 });
