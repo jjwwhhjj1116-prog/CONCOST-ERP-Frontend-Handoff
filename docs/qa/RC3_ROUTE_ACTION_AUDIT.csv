@@ -1,0 +1,90 @@
+ID,Area,Requirement,Route,Visible action or invariant,Status,Evidence,Backend dependency
+A01,PROJECT_CHAIN,Estimate request starts the chain,/projects/estimate-requests,Create or select estimate request,COMPLETE,estimateRequestStore + estimate request workbench,NONE
+A02,PROJECT_CHAIN,Estimate sheet is linked to request,/projects/intake/estimates,Create estimate sheet from selected request,COMPLETE,estimateSheetStore + estimateSheet tests,NONE
+A03,PROJECT_CHAIN,WON decision is explicit,/projects/estimate-requests,Select WON and confirm,COMPLETE,projectPipeline.test.ts,NONE
+A04,PROJECT_CHAIN,One reserved canonical project is created,/projects/estimate-requests,Confirm WON,COMPLETE,projectPipeline.ts deterministic projectId,SERVER_TRANSACTION
+A05,PROJECT_CHAIN,One intake draft is created,/projects/intake,Open transferred intake,COMPLETE,projectPipeline.test.ts,SERVER_TRANSACTION
+A06,PROJECT_CHAIN,Intake has four steps,/projects/intake,Step 01 through Step 04,COMPLETE,ProjectIntakeWorkbench.tsx,NONE
+A07,PROJECT_CHAIN,Step 4 completes intake,/projects/intake,접수 완료,COMPLETE,semanticActions.test.ts + public DOM,SERVER_TRANSACTION
+A08,PROJECT_CHAIN,Project number is YYYYNNN,/projects/intake,Completion receipt,COMPLETE,projectNumber.test.ts,SERVER_SEQUENCE
+A09,PROJECT_CHAIN,Project becomes PUBLISHED,/projects,intake completion postcondition,COMPLETE,projectExecutionUnits.test.ts,SERVER_TRANSACTION
+A10,PROJECT_CHAIN,Selected units become PRE_WORK,/projects?unit=FINISH,Board pre-work column,COMPLETE,projectExecutionUnits.test.ts,SERVER_TRANSACTION
+A11,PROJECT_CHAIN,Canonical projectId remains unchanged,/projects,Project board and detail links,COMPLETE,projectPipeline.test.ts,NONE
+A12,PROJECT_CHAIN,Retry creates no duplicate,/projects/intake,Repeat completion command,COMPLETE,projectPipeline idempotency test,IDEMPOTENCY_STORE
+A13,PROJECT_CHAIN,Board hides project before intake completion,/projects?unit=FINISH,Pre-work board,COMPLETE,projectExecutionUnits.test.ts,NONE
+A14,PROJECT_CHAIN,Step 4 has no premature board button,/projects/intake,Final step actions,COMPLETE,semanticActions.test.ts,NONE
+A15,PROJECT_CHAIN,Legacy 수주 완료 label is absent,/projects/intake,Completion command label,COMPLETE,semanticActions.test.ts,NONE
+A16,PROJECT_CHAIN,Completion does not force board navigation,/projects/intake,Completion receipt actions,COMPLETE,ProjectIntakeWorkbench.tsx,NONE
+B17,WORKLIST_DB,Estimate requests default to active queue,/projects/estimate-requests,Request navigator,COMPLETE,estimateRequestUx.test.ts,NONE
+B18,WORKLIST_DB,Transferred request leaves active queue,/projects/estimate-requests,WON confirmation,COMPLETE,estimateRequestUx.test.ts,SERVER_TRANSACTION
+B19,WORKLIST_DB,Transferred request remains in database,/projects/intake/database,접수 이관 filter,COMPLETE,estimatePipelineDatabase.test.ts,NONE
+B20,WORKLIST_DB,Delete archives request,/projects/estimate-requests,Delete dialog,COMPLETE,estimateRequestUx.test.ts,SERVER_MUTATION
+B21,WORKLIST_DB,Database can restore archived request,/projects/intake/database,의뢰관리로 복구,COMPLETE,estimateRequestUx.test.ts,SERVER_MUTATION
+B22,WORKLIST_DB,Restore keeps estimateRequestId,/projects/intake/database,Restore action,COMPLETE,estimateRequestUx.test.ts,NONE
+B23,WORKLIST_DB,Restore creates no intake or project duplicate,/projects/intake/database,Restore action,COMPLETE,offPm16.e2e.test.ts,NONE
+B24,WORKLIST_DB,200-record default list contains ACTIVE only,/projects/estimate-requests,Default filter,COMPLETE,estimateRequestUx.test.ts,NONE
+B25,WORKLIST_DB,Manual cell opens memory picker and linked cell opens source drawer,/projects/intake/database,Enter or source icon,COMPLETE,inputSuggestionApi.test.ts + public DOM,INPUT_SUGGESTION_API
+C26,INTAKE_REVISION,Accepted intake is editable,/projects/intake,접수 내용 수정,COMPLETE,projectIntakeRevision.test.ts,SERVER_REVISION
+C27,INTAKE_REVISION,Revision preserves intake project and project number,/projects/intake,수정본 저장 및 부서 알림,COMPLETE,projectIntakeRevision.test.ts,NONE
+C28,INTAKE_REVISION,Revision increments monotonically,/projects/intake,Save revision,COMPLETE,projectIntakeRevision.test.ts,SERVER_REVISION
+C29,INTAKE_REVISION,Additional material uses READY file version,/projects/intake,추가자료 등록,COMPLETE,projectIntakeRevision.test.ts,FILE_PROVIDER
+C30,INTAKE_REVISION,Affected units receive notification,/projects/intake,수정본 저장 및 부서 알림,COMPLETE,projectIntakeRevision.ts,NOTIFICATION_PROVIDER
+C31,INTAKE_REVISION,Revision save action remains visible,/projects/intake,수정본 저장 및 부서 알림,COMPLETE,public DOM + semantic action system,NONE
+D32,STAFFING,Board unit supplies modal context,/projects?unit=FINISH,투입인원 배정,COMPLETE,projectStaffing.test.ts,NONE
+D33,STAFFING,Claim context never defaults to FINISH,/projects?unit=CLAIM,투입인원 배정,COMPLETE,projectStaffing.test.ts,NONE
+D34,STAFFING,No FINISH hard-code,/projects,Staffing modal initialization,COMPLETE,semanticActions.test.ts,NONE
+D35,STAFFING,No assignments zero fallback,/projects,Staffing modal initialization,COMPLETE,semanticActions.test.ts,NONE
+D36,STAFFING,Exactly one PM is required,/projects,배정 확정,COMPLETE,projectStaffing.test.ts,SERVER_MUTATION
+D37,STAFFING,Non-PM roles allow multiple people,/projects,Role row person selector,COMPLETE,projectStaffing.test.ts,SERVER_MUTATION
+D38,STAFFING,Duplicate project-board-open action is absent,/projects,Project card actions,COMPLETE,semanticActions.test.ts,NONE
+E39,BUSINESS_CARD_SALES,Card capture is available,/sales/business-cards,명함 이미지 or direct input,COMPLETE,businessCardOcr.test.ts,OCR_PROVIDER
+E40,BUSINESS_CARD_SALES,Demo OCR is explicitly identified,/sales/business-cards,DEMO OCR SIMULATION,COMPLETE,businessCardOcr.test.ts,NONE
+E41,BUSINESS_CARD_SALES,Human review precedes registration,/sales/business-cards,OCR 검수,COMPLETE,businessCardContact.test.ts,NONE
+E42,BUSINESS_CARD_SALES,Registration creates canonical contact,/sales/business-cards,고객DB 등록,COMPLETE,businessCardContact.test.ts,CONTACT_API
+E43,BUSINESS_CARD_SALES,Contact requires companyId,/sales?view=CONTACTS,Contact details,COMPLETE,businessCardContact.test.ts,NONE
+E44,BUSINESS_CARD_SALES,Contact appears in customer 360,/sales?salesView=CUSTOMERS,Customer timeline,COMPLETE,businessOperations.test.ts,NONE
+E45,BUSINESS_CARD_SALES,Opportunity is linked to customer and contact,/sales?salesView=PIPELINE,영업기회 등록,COMPLETE,businessOperations.test.ts,SALES_API
+E46,BUSINESS_CARD_SALES,Mail draft preserves sales context,/sales,메일 Draft,COMPLETE,SalesOperationsWorkbench.tsx,MAIL_PROVIDER
+E47,BUSINESS_CARD_SALES,Opportunity links to estimate request,/sales,견적 의뢰 연결,COMPLETE,SalesOperationsWorkbench.tsx,ESTIMATE_API
+E48,BUSINESS_CARD_SALES,No parallel quote or project duplicate,/sales,Opportunity conversion,COMPLETE,businessOperations state tests,NONE
+F49,FINANCE,Finance access contract is preserved,/finance,Direct route guard,COMPLETE,accessControl.test.ts,FINANCE_ACCESS_CAPABILITY
+F50,FINANCE,Unauthorized users see no route search export or amount,/finance,Route and projection guard,COMPLETE,accessControl.test.ts,SERVER_PERMISSION
+F51,FINANCE,Ledger uses canonical projectId and projectNo,/finance,Project picker and ledger row,COMPLETE,businessOperations.test.ts,FINANCE_API
+F52,FINANCE,Cashflow derives from receivable payable and balance,/finance?financeView=CASHFLOW,Cashflow workbench,COMPLETE,businessOperations.test.ts,FINANCE_API
+F53,FINANCE,Expense creates approval draft candidate,/finance,전자결재 Draft,COMPLETE,FinanceOperationsWorkbench.tsx,APPROVAL_API
+F54,FINANCE,Unconfigured tax or bank provider cannot report success,/finance,Provider-disabled actions with reason,COMPLETE,runtimeFalseSuccessWiring.test.ts,TAX_BANK_PROVIDER
+G55,CLAIM_FLOW,Claim retains canonical projectId and claimId,/projects?unit=CLAIM,Claim project card,COMPLETE,claimOperations.test.ts,NONE
+G56,CLAIM_FLOW,Drive deep link retains claim context,/drive?folder=CLAIM,Claim drive,COMPLETE,claimOperationsStore.ts,DRIVE_PROVIDER
+G57,CLAIM_FLOW,Evidence stores file state version checksum classification and issue link,/drive?folder=CLAIM,Evidence drawer,COMPLETE,claimOperations.test.ts,FILE_PROVIDER
+G58,CLAIM_FLOW,Meeting captures structured source context,/projects?unit=CLAIM&view=MEETINGS,새 회의록,COMPLETE,ClaimOperationsWorkbench.tsx,CLAIM_API
+G59,CLAIM_FLOW,Rough note can request AI structuring,/ai-assistant,AI로 정리,COMPLETE,ClaimOperationsWorkbench.tsx,AI_PROVIDER
+G60,CLAIM_FLOW,AI result requires human review,/ai-assistant,검수 완료,COMPLETE,claimOperations.test.ts,AI_PROVIDER
+G61,CLAIM_FLOW,Audio requires consent or legal basis,/ai-assistant,동의 확인,COMPLETE,ClaimOperationsWorkbench.tsx,STT_PROVIDER
+G62,CLAIM_FLOW,Restricted legal AI is blocked without private capability,/ai-assistant,Restricted Legal guard,COMPLETE,ClaimOperationsWorkbench.tsx,PRIVATE_AI_CAPABILITY
+G63,CLAIM_FLOW,Issue links evidence and meeting,/projects?unit=CLAIM&view=ISSUES,Issue workspace,COMPLETE,claimOperations.ts,CLAIM_API
+G64,CLAIM_FLOW,Workpaper links issues,/projects?unit=CLAIM&view=WORKPAPERS,Workpaper,COMPLETE,claimOperations.ts,CLAIM_API
+G65,CLAIM_FLOW,Report follows draft review approval flow,/projects?unit=CLAIM&view=REPORTS,Report transition,COMPLETE,claimOperations.test.ts,CLAIM_API
+G66,CLAIM_FLOW,Existing approval engine is reused,/approvals,Claim report approval draft,COMPLETE,ClaimOperationsWorkbench.tsx,APPROVAL_API
+G67,CLAIM_FLOW,Final report is hidden before approval,/projects?unit=CLAIM&view=REPORTS,Final candidate guard,COMPLETE,claimOperations.test.ts,NONE
+G68,CLAIM_FLOW,Approved report can be delivered,/projects?unit=CLAIM&view=DELIVERY,Delivery action,COMPLETE,claimOperations.test.ts,CLAIM_API
+G69,CLAIM_FLOW,Delivered revision preserves immutable prior version,/projects?unit=CLAIM&view=DELIVERY,New revision,COMPLETE,claimOperations.test.ts,NONE
+G70,CLAIM_FLOW,Conflicts route is not reused for claims,/conflicts,Conflict workspace only,COMPLETE,route source audit,NONE
+H71,CROSS_CUTTING,Company data is isolated,all company routes,Workspace switch and selectors,COMPLETE,company-scope tests,SERVER_SCOPE
+H72,CROSS_CUTTING,Runtime modes are explicit,all mutation routes,DEMO_LOCAL API_SANDBOX PRODUCTION_SERVER,COMPLETE,runtimeExecutionMode.test.ts,NONE
+H73,CROSS_CUTTING,Server mode has no demo fallback,all mutation routes,Blocked runtime result,COMPLETE,runtimeFalseSuccessWiring.test.ts,NONE
+H74,CROSS_CUTTING,Permission is applied before projection,mail approval finance search,Route and data guards,COMPLETE,access and frozen contract tests,SERVER_PERMISSION
+H75,CROSS_CUTTING,Global search respects permission and company scope,global top bar,Search result selection,COMPLETE,GlobalSearch.tsx + access tests,SEARCH_API
+H76,CROSS_CUTTING,Notifications preserve deep links,/notifications,Notification row link,COMPLETE,notificationStore.ts,NOTIFICATION_API
+H77,CROSS_CUTTING,Internal identifiers are not exposed as primary labels,all operational lists,Project number or human label,COMPLETE,projectIdentifierPresentation.test.ts,NONE
+H78,CROSS_CUTTING,Dead buttons are absent,all audited routes,Visible actions,COMPLETE,semanticActions.test.ts + browser action audit,NONE
+H79,CROSS_CUTTING,Wrong-route actions are absent,all audited routes,Action href and router targets,COMPLETE,route action audit,NONE
+H80,CROSS_CUTTING,Disabled controls explain why,all audited routes,Tooltip or disabledReason,COMPLETE,semanticActions.test.ts + public DOM,NONE
+H81,CROSS_CUTTING,Save actions remain visible,estimate intake staffing sales finance claim,Save or backend-required action,COMPLETE,public DOM + visible action matrix,NONE
+H82,CROSS_CUTTING,Semantic action system is used,priority workspaces,ActionButtonGroup and SemanticActionButton,COMPLETE,semanticActions.test.ts,NONE
+H83,CROSS_CUTTING,Core copy supports KO VI EN,priority workspaces,Language toggles,COMPLETE,workspaceShellLocalization.test.ts,NONE
+H84,CROSS_CUTTING,Six viewports remain usable,all priority routes,1920 1440 1280 1024 768 390,COMPLETE,browser evidence set,NONE
+H85,CROSS_CUTTING,Four zoom equivalents remain usable,all priority routes,100 125 150 200 percent layout,COMPLETE,browser evidence set,NONE
+H86,CROSS_CUTTING,Page horizontal overflow is zero,all priority routes,Viewport metrics,COMPLETE,browser evidence set,NONE
+H87,CROSS_CUTTING,Console errors are zero,all priority routes,Browser console,COMPLETE,browser evidence set,NONE
+H88,CROSS_CUTTING,Release source contains no actual PII,changed and tracked release files,PII gate,COMPLETE,releasePiiGate.test.ts,NONE
+H89,CROSS_CUTTING,Release source contains no secret,changed and tracked release files,Secret scan,COMPLETE,secret gate,NONE

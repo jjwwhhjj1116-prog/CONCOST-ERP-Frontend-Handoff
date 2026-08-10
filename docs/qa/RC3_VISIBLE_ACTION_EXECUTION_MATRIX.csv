@@ -1,0 +1,51 @@
+Area,Route,Visible action,Execution boundary,Success evidence,Failure or disabled explanation,Status
+Global,/,Workspace switch,WorkspaceProvider,Logo theme locale and company scope change,Unauthorized company restores previous workspace,COMPLETE
+Global,/,Global search,Search provider registry,Permission-scoped result opens exact route,Loading empty error and provider isolation,COMPLETE
+Global,/,KR VI EN language,UI locale state,Priority module copy changes immediately,Unsupported copy falls back to approved key,COMPLETE
+Estimate,/projects/estimate-requests,New request,DEMO_LOCAL store or request API,New active request selected,Server modes require adapter,COMPLETE
+Estimate,/projects/estimate-requests,Edit or correction,Estimate request mutation boundary,Save refreshes selected row and lineage,Published project requires correction request,COMPLETE
+Estimate,/projects/estimate-requests,Delete,Archive command,Request leaves active queue and remains in DB,Linked records show archive or correction reason,COMPLETE
+Estimate,/projects/estimate-requests,Create estimate sheet,Estimate sheet store or API,DRAFT appears in estimate list,Permission and validation errors remain visible,COMPLETE
+Estimate,/projects/estimate-requests,Confirm WON,Canonical pipeline command,One project one intake and assignments,No selected unit blocks with explicit summary,COMPLETE
+Estimate sheets,/projects/intake/estimates,KPI filter,URL or local filter,Table reflects active KPI,Empty state remains actionable,COMPLETE
+Estimate sheets,/projects/intake/estimates,New revision,Immutable version command,New DRAFT retains parent lineage,Published version cannot be edited,COMPLETE
+Estimate sheets,/projects/intake/estimates,Open mail draft,Mail compose boundary,Context and file references prefill,Provider does not claim send success,COMPLETE
+Estimate DB,/projects/intake/database,Restore request,Worklist restore command,Same request id returns to active queue,Existing intake opens instead of duplication,COMPLETE
+Estimate DB,/projects/intake/database,Enter memory picker,Input suggestion boundary,Selected or typed value applies,Personal or secret fields do not enable memory,COMPLETE
+Estimate DB,/projects/intake/database,Source drawer,Read-only lineage projection,Source id and field lineage shown,Auto-linked cell remains locked,COMPLETE
+Estimate DB,/projects/intake/database,Excel or JSON export,Export boundary,Current company records exported,Unauthorized user has no action or amount projection,COMPLETE
+Intake,/projects/intake,Open queue item,Explicit intake id selection,Existing draft or accepted item opens,Missing id never manufactures a draft,COMPLETE
+Intake,/projects/intake,Next and previous step,Local wizard navigation,Four-step position retained,Validation does not navigate without user action,COMPLETE
+Intake,/projects/intake,접수 완료,Atomic completion command,Receipt verifies accepted published assignments and projectNo,Postcondition failure suppresses success toast,COMPLETE
+Intake,/projects/intake,Edit accepted intake,Revision command,Same canonical ids and revision plus one,Reason and READY file requirements explained,COMPLETE
+Intake,/projects/intake,Save revision and notify,Revision and outbox boundary,Board and affected-unit notifications update,Missing server capability is BACKEND_REQUIRED,COMPLETE
+Project board,/projects?unit=FINISH,Open project detail,Canonical project route,Project board opens exact projectId,Unknown id shows empty or not-found state,COMPLETE
+Project board,/projects?unit=CLAIM,Assign staffing,Staffing plan boundary,Modal defaults to CLAIM,Unit absent from project blocks rather than guessing,COMPLETE
+Staffing,/projects,Save draft,Staffing draft mutation,Draft roles and dates persist in demo,Server mode requires adapter,COMPLETE
+Staffing,/projects,Confirm assignment,Staffing confirmation mutation,Exactly one PM and multi-person roles,Validation explains missing PM or dates,COMPLETE
+Staffing,/projects,Confirm and start,Project state transition,Assigned unit moves from pre-work,Invalid transition stays unchanged,COMPLETE
+Business card,/sales/business-cards,Capture or upload,Business card record boundary,Inbox item created without Base64 persistence,OCR provider absence is explicit,COMPLETE
+Business card,/sales/business-cards,Review OCR,Human review state,All fields editable before registration,Low confidence remains reviewable,COMPLETE
+Business card,/sales/business-cards,Register contact,Canonical contact command,Contact customer and timeline are created,Server mode without adapter is blocked,COMPLETE
+Business card,/sales/business-cards,Merge field,Contact merge command,Existing contactId and nonblank values preserved,Blank incoming values never erase existing values,COMPLETE
+Sales,/sales?salesView=CUSTOMERS,Open customer 360,URL selected customer,Contacts activities and opportunities are scoped,Missing record shows actionable empty state,COMPLETE
+Sales,/sales?salesView=PIPELINE,Create opportunity,Sales command,Opportunity linked to customer contact and owner,Server mode requires adapter,COMPLETE
+Sales,/sales,Link estimate request,Canonical estimate lineage,Existing estimate module opens with context,No duplicate quote subsystem is created,COMPLETE
+Sales,/sales,Create mail draft,Mail compose boundary,Customer contact and opportunity context prefill,No provider means no send success,COMPLETE
+Finance,/finance,Create ledger entry,Finance mutation boundary,Project id projectNo amounts and evidence are retained,Nonfinance users are blocked before projection,COMPLETE
+Finance,/finance,Record receipt or payment,Finance mutation boundary,Balance and audit before after update,Amount over remaining balance is rejected,COMPLETE
+Finance,/finance,Create approval draft,Approval draft boundary,Expense context and READY evidence prefill,Policy or server absence is explicit,COMPLETE
+Finance,/finance,Issue tax invoice,Provider capability,Only provider success may set issued state,Disabled tooltip explains missing provider,COMPLETE
+Finance,/finance,Export,Finance export boundary,Selected company data only,Unauthorized user has no export action,COMPLETE
+Claim,/projects?unit=CLAIM,Open claim workspace,Canonical project and claim context,Tabs retain projectId and claimId,Nonclaim project cannot initialize claim context,COMPLETE
+Claim,/drive?folder=CLAIM,Open Drive,Drive context route,Folder and file references retain claim context,Provider absence does not claim upload success,COMPLETE
+Claim,/projects?unit=CLAIM,Create meeting,Claim meeting command,Meeting rough notes participants evidence and issue links persist,Server mode requires adapter,COMPLETE
+Claim,/ai-assistant,Structure rough note,AI capability boundary,Result contains provenance and citations,Restricted data without private AI is blocked,COMPLETE
+Claim,/ai-assistant,Human review,Claim meeting review command,Reviewed result becomes candidate for official minutes,Unreviewed AI output remains unofficial,COMPLETE
+Claim,/projects?unit=CLAIM,Create issue or workpaper,Claim operations boundary,Canonical links and history update,Invalid context cannot save,COMPLETE
+Claim,/projects?unit=CLAIM,Submit report for approval,Approval engine boundary,Report becomes approval pending with READY ref,Nonready file and missing policy block,COMPLETE
+Claim,/projects?unit=CLAIM,Deliver report,Claim delivery command,Approved immutable version becomes delivered,Preapproval delivery is rejected,COMPLETE
+Approval,/approvals,Create document,Approval draft boundary,Schema form policy preview and line snapshot persist,Server mode without policy blocks submit,COMPLETE
+Approval,/approvals,Approve reject or request changes,Approval decision boundary,Valid role and revision produce decision,Current-user approver fallback is absent,COMPLETE
+Drive,/drive,Upload file,File lifecycle boundary,QUEUED through READY states visible,Unconfigured provider never claims READY,COMPLETE
+Notifications,/notifications,Open deep link,Notification route,Exact project claim approval or task route opens,Unauthorized target remains hidden,COMPLETE
