@@ -9,6 +9,8 @@ secrets and must not replace Backend authorization.
 |---|---|---|
 | `NEXT_PUBLIC_BASE_PATH` | path such as `/workspace` | Next.js deployment base path |
 | `NEXT_PUBLIC_RUNTIME_MODE` | `DEMO_LOCAL`, `API_SANDBOX`, `PRODUCTION_SERVER` | immutable runtime mode |
+| `NEXT_PUBLIC_API_BASE_URL` | HTTPS or same-origin API path | public API origin/path; no credentials or query tokens |
+| `NEXT_PUBLIC_AUTH_ADAPTER_READY` | `true` or unset | session and company adapter capability |
 | `NEXT_PUBLIC_PROJECT_ADAPTER_READY` | `true` or unset | Project adapter capability |
 | `NEXT_PUBLIC_DRIVE_PROVIDER_READY` | `true` or unset | Drive Provider capability |
 | `NEXT_PUBLIC_DRIVE_ADAPTER_READY` | `true` or unset | Drive API adapter capability |
@@ -24,6 +26,10 @@ secrets and must not replace Backend authorization.
 | `NEXT_PUBLIC_AI_PROVIDER_READY` | `true` or unset | AI capability |
 | `NEXT_PUBLIC_PRIVATE_AI_PROVIDER_READY` | `true` or unset | private AI capability |
 | `NEXT_PUBLIC_AI_ADAPTER_READY` | `true` or unset | AI API adapter |
+| `NEXT_PUBLIC_SALES_ADAPTER_READY` | `true` or unset | Sales CRM adapter capability |
+| `NEXT_PUBLIC_FINANCE_ADAPTER_READY` | `true` or unset | Finance adapter capability |
+| `NEXT_PUBLIC_CLAIM_ADAPTER_READY` | `true` or unset | Claim adapter capability |
+| `NEXT_PUBLIC_*_INTEGRATION_HEALTH` | `HEALTHY`, `DEGRADED`, `ERROR` | non-secret diagnostic declaration for Project, Collaboration, Business, or Claim/AI |
 
 Do not expose API keys, OAuth credentials, SMTP credentials, storage tokens, or
 database connection strings through public variables.
@@ -45,6 +51,9 @@ NEXT_PUBLIC_RUNTIME_MODE=API_SANDBOX
 
 Set an adapter or Provider flag only after its capability endpoint and
 permission tests pass. Missing capabilities remain blocked.
+
+Build-time `READY` is not a smoke-test PASS. The Integration Diagnostics page
+keeps each M0-M7 milestone `NOT_TESTED` until an explicit probe result exists.
 
 ### Production
 

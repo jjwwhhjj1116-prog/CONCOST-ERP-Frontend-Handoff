@@ -20,6 +20,7 @@ This register separates frontend-complete behavior from capabilities that the Vi
 | DRIFT-14 | Notifications | Event candidates and deep links | Notification event, preference, delivery, and read-state APIs | BACKEND_REQUIRED | Cross-device delivery blocked |
 | DRIFT-15 | Search | Permission-scoped grouped frontend UX | Provider registry with permission-before-projection | BACKEND_REQUIRED | Production search incomplete |
 | DRIFT-16 | Localization | KO/VI/EN priority copy | Server error and reference-data localization | BACKEND_REQUIRED | Some server copy pending |
+| DRIFT-17 | Integration diagnostics | Admin-only safe registry and request correlation metadata | M0-M7 probe endpoints/evidence and backend health declarations | BACKEND_REQUIRED | Sandbox certification remains NOT_TESTED/BLOCKED |
 
 ## Non-Drift Boundaries
 

@@ -1,0 +1,12 @@
+Milestone,Capability ID,Frontend Adapter,Provider,DEMO_LOCAL,API_SANDBOX without backend,Ready declaration,Required probe,Production false fallback
+M0,RUNTIME,RuntimeExecutionMode,Not required,DEMO_SIMULATED,READY,READY,M0 runtime boundary probe,Forbidden
+M1,AUTH_COMPANY,Auth/Company adapter,Session provider,DEMO_SIMULATED,BACKEND_REQUIRED,READY,M1 session and company scope probe,Forbidden
+M2,PROJECT_CORE,Project adapter,Not required,DEMO_SIMULATED,BACKEND_REQUIRED,READY,M2 canonical project probe,Forbidden
+M3,FILE_DRIVE,Drive adapter,Google Shared Drive,DEMO_SIMULATED,BACKEND_REQUIRED or PROVIDER_NOT_CONFIGURED,READY,M3 READY-file and binding probe,Forbidden
+M4,APPROVAL,Approval adapter and policy,Approval server,DEMO_SIMULATED,BACKEND_REQUIRED or PROVIDER_NOT_CONFIGURED,READY,M4 approval policy and mutation probe,Forbidden
+M4,MAIL,Mail adapter,Mail provider,DEMO_SIMULATED,BACKEND_REQUIRED or PROVIDER_NOT_CONFIGURED,READY,M4 send/provider probe,Forbidden
+M5,BUSINESS_CARD_CONTACT,Business card adapter,OCR provider,DEMO_SIMULATED,BACKEND_REQUIRED or PROVIDER_NOT_CONFIGURED,READY,M5 OCR review and Contact probe,Forbidden
+M6,SALES,Sales adapter,Not required,DEMO_SIMULATED,BACKEND_REQUIRED,READY,M6 customer/opportunity probe,Forbidden
+M6,FINANCE,Finance adapter,Tax/Bank providers,DEMO_SIMULATED,BACKEND_REQUIRED or PROVIDER_NOT_CONFIGURED,READY,M6 permission and ledger probe,Forbidden
+M7,CLAIM,Claim adapter,Not required,DEMO_SIMULATED,BACKEND_REQUIRED,READY,M7 claim/evidence probe,Forbidden
+M7,AI,AI adapter,AI/STT provider,DEMO_SIMULATED,BACKEND_REQUIRED or PROVIDER_NOT_CONFIGURED,READY,M7 provenance and review probe,Forbidden

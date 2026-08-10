@@ -24,6 +24,10 @@ The following approved handoff documents are the implementation entry points for
 | 18 | Mail and approval | `APPROVAL_MAIL_INTEGRATION.md` | Provider and cross-module context |
 | 19 | AI | `AI_ASSISTANT_INTEGRATION.md` | AI/STT job, provenance, citations, and human review |
 | 20 | Current drift | `RC3_FRONTEND_BACKEND_CONTRACT_DRIFT_REGISTER.md` | Remaining frontend-to-backend capability gaps |
+| 21 | Integration matrix | `FRONTEND_INTEGRATION_CAPABILITY_MATRIX.csv` | Map M0-M7 adapters, providers, and no-fallback gates |
+| 22 | Sandbox milestones | `API_SANDBOX_SMOKE_MILESTONES.md` | Produce explicit NOT_TESTED/BLOCKED/FAIL/PASS evidence |
+| 23 | Typed errors | `TYPED_INTEGRATION_ERROR_TAXONOMY.md` | Return safe stable codes and correlation identifiers |
+| 24 | Reading order | `BACKEND_READING_ORDER.md` | Apply baseline, contracts, deltas, drift, then matrix |
 
 ## Immediate Backend Order
 
@@ -34,5 +38,6 @@ The following approved handoff documents are the implementation entry points for
 5. Contacts, OCR, Sales, and Finance adapters.
 6. Claim evidence, AI/STT, report approval, and delivery.
 7. Search provider registry and cross-module notification deep links.
+8. Execute M0-M7 in order and retain explicit probe evidence.
 
 Every implementation must preserve canonical ids, company isolation, immutable file and report versions, explicit provider states, and zero production fallback to browser-local demo data.
