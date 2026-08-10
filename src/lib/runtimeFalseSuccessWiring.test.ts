@@ -31,7 +31,7 @@ test('project intake is an estimate-origin queue without a direct local create a
   const intake = source('src/components/intake/ProjectIntakeWorkbench.tsx');
   const mode = source('src/lib/projectIntakeMode.ts');
   const store = source('src/store/projectIntakeStore.ts');
-  const reviseBlock = store.match(/reviseAcceptedIntake: async[\s\S]*?return result;\n  },/)?.[0] || '';
+  const reviseBlock = store.match(/reviseAcceptedIntake: async[\s\S]*?return result;\r?\n  },/)?.[0] || '';
   assert.doesNotMatch(intake, /startNewDraft|createDraft\(actor\)|새 프로젝트 접수/);
   assert.match(mode, /DIRECT_INTAKE_ENABLED = false/);
   assert.match(intake, /견적 의뢰관리에서 수주를 확정하면 자동 등록됩니다/);
