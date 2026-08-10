@@ -104,6 +104,7 @@ const VI_SHELL_TEXT: Record<string, string> = {
   '언어·번역 설정': 'Ngôn ngữ & dịch thuật',
   '접근등급·권한 관리': 'Cấp truy cập & quyền',
   'Google Drive 연결': 'Kết nối Google Drive',
+  '통합 진단': 'Chẩn đoán tích hợp',
   '인력현황 관리': 'Quản lý nhân sự',
   '워크스페이스 관리': 'Quản lý workspace',
   '데이터 품질 관리': 'Quản lý chất lượng dữ liệu',

@@ -249,6 +249,7 @@ const exactVisuals: Record<string, NavigationVisual> = {
   'settings-translation': { tone: 'blue', pictogram: 'translation' },
   'admin-permissions': { tone: 'rose', pictogram: 'permissionManagement' },
   'admin-drive-integration': { tone: 'blue', pictogram: 'driveConnection' },
+  'admin-integration-diagnostics': { tone: 'indigo', pictogram: 'dataQuality' },
   'admin-personnel': { tone: 'teal', pictogram: 'personnel' },
   'admin-workspace': { tone: 'violet', pictogram: 'workspaceSettings' },
   'admin-data-quality': { tone: 'green', pictogram: 'dataQuality' },

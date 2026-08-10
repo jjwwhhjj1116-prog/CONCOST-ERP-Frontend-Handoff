@@ -4,6 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
 import {
+  Activity,
   Bot,
   Camera,
   CalendarCheck2,
@@ -229,6 +230,7 @@ const panelMenus: Record<string, NavigationItem[]> = {
   'admin-settings': [
     { id: 'admin-permissions', label: '접근등급·권한 관리', href: '/settings/permissions', icon: ShieldCheck, roles: ['SUPER_ADMIN', 'SYSTEM_ADMIN'] },
     { id: 'admin-drive-integration', label: 'Google Drive 연결', href: '/settings/integrations/drive', icon: Cloud, roles: ['SUPER_ADMIN', 'SYSTEM_ADMIN'] },
+    { id: 'admin-integration-diagnostics', label: '통합 진단', href: '/settings/integrations/diagnostics', icon: Activity, roles: ['SUPER_ADMIN', 'SYSTEM_ADMIN'] },
     { id: 'admin-personnel', label: '인력현황 관리', href: '/settings/personnel', roles: ['SUPER_ADMIN', 'SYSTEM_ADMIN'] },
     { id: 'admin-workspace', label: '워크스페이스 관리', href: '/settings/workspace', roles: ['SUPER_ADMIN', 'SYSTEM_ADMIN'] },
     { id: 'admin-data-quality', label: '데이터 품질 관리', href: '/settings/data-quality', roles: ['SUPER_ADMIN', 'SYSTEM_ADMIN'] },
