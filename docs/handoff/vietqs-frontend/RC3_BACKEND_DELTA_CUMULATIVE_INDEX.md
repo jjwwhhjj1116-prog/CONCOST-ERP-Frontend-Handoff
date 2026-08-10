@@ -28,6 +28,7 @@ The following approved handoff documents are the implementation entry points for
 | 22 | Sandbox milestones | `API_SANDBOX_SMOKE_MILESTONES.md` | Produce explicit NOT_TESTED/BLOCKED/FAIL/PASS evidence |
 | 23 | Typed errors | `TYPED_INTEGRATION_ERROR_TAXONOMY.md` | Return safe stable codes and correlation identifiers |
 | 24 | Reading order | `BACKEND_READING_ORDER.md` | Apply baseline, contracts, deltas, drift, then matrix |
+| 25 | Finance ERP redesign | `BACKEND_DELTA_RC3_FINANCE_ERP_BENCHMARK_REDESIGN.md` | Revenue/AR, purchase/AP, settlement, expense, tax, budget, treasury, profitability, close, control, and Excel adapters |
 
 ## Immediate Backend Order
 
@@ -35,9 +36,10 @@ The following approved handoff documents are the implementation entry points for
 2. Project conversion, Intake completion, assignments, revisions, notifications, and staffing.
 3. File lifecycle and Drive binding.
 4. Approval and Mail providers.
-5. Contacts, OCR, Sales, and Finance adapters.
-6. Claim evidence, AI/STT, report approval, and delivery.
-7. Search provider registry and cross-module notification deep links.
-8. Execute M0-M7 in order and retain explicit probe evidence.
+5. Contacts, OCR, and Sales adapters.
+6. Finance ERP adapters in the dedicated redesign delta, including access, company scope, revision, idempotency, providers, and close locks.
+7. Claim evidence, AI/STT, report approval, and delivery.
+8. Search provider registry and cross-module notification deep links.
+9. Execute M0-M7 in order and retain explicit probe evidence.
 
 Every implementation must preserve canonical ids, company isolation, immutable file and report versions, explicit provider states, and zero production fallback to browser-local demo data.
