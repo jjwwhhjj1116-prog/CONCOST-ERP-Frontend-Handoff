@@ -9,6 +9,19 @@ export interface ApiClientOptions extends RequestInit {
   rejectStaleCompanyResponse?: boolean;
 }
 
+export type ApiRequestDiagnosticState = 'PENDING' | 'SUCCESS' | 'ERROR' | 'BLOCKED';
+
+export interface ApiRequestDiagnostic {
+  requestId: string;
+  endpoint: string;
+  method: string;
+  companyId: ApiCompanyId | null;
+  state: ApiRequestDiagnosticState;
+  status: number | null;
+  code: string | null;
+  updatedAt: string;
+}
+
 export class ApiClientError extends Error {
   constructor(
     message: string,
@@ -22,12 +35,43 @@ export class ApiClientError extends Error {
 }
 
 let activeCompanyId: ApiCompanyId | null = null;
+let lastApiRequestDiagnostic: ApiRequestDiagnostic | null = null;
+const diagnosticSubscribers = new Set<(diagnostic: ApiRequestDiagnostic) => void>();
 
 export const setApiCompanyId = (companyId: ApiCompanyId | null) => {
   activeCompanyId = companyId;
 };
 
 export const getApiCompanyId = () => activeCompanyId;
+
+export const getLastApiRequestDiagnostic = () => lastApiRequestDiagnostic;
+
+export const subscribeApiRequestDiagnostics = (
+  subscriber: (diagnostic: ApiRequestDiagnostic) => void,
+) => {
+  diagnosticSubscribers.add(subscriber);
+  return () => {
+    diagnosticSubscribers.delete(subscriber);
+  };
+};
+
+const safeDiagnosticCode = (code: string | null | undefined) => {
+  if (!code) return null;
+  const normalized = code.toUpperCase().replace(/[^A-Z0-9_.-]/g, '_').slice(0, 64);
+  return normalized || 'UNKNOWN_ERROR';
+};
+
+const safeDiagnosticEndpoint = (endpoint: string) => endpoint.split(/[?#]/, 1)[0] || '/';
+
+const publishRequestDiagnostic = (
+  diagnostic: Omit<ApiRequestDiagnostic, 'updatedAt'>,
+) => {
+  lastApiRequestDiagnostic = {
+    ...diagnostic,
+    updatedAt: new Date().toISOString(),
+  };
+  diagnosticSubscribers.forEach((subscriber) => subscriber(lastApiRequestDiagnostic!));
+};
 
 const requestId = () => globalThis.crypto?.randomUUID?.() || `request-${Date.now()}`;
 
@@ -52,7 +96,20 @@ export const apiClient = async <T = Record<string, string>>(
   } = options;
   const scoped = companyScope !== 'none';
   const requestCompanyId = scoped ? companyId ?? activeCompanyId : null;
+  const correlationId = requestId();
+  const diagnosticBase = {
+    requestId: correlationId,
+    endpoint: safeDiagnosticEndpoint(endpoint),
+    method: (requestOptions.method || 'GET').toUpperCase(),
+    companyId: requestCompanyId,
+  };
   if (companyScope === 'required' && !requestCompanyId) {
+    publishRequestDiagnostic({
+      ...diagnosticBase,
+      state: 'BLOCKED',
+      status: 400,
+      code: 'COMPANY_REQUIRED',
+    });
     throw new ApiClientError(
       'A selected company is required for this request.',
       400,
@@ -60,6 +117,12 @@ export const apiClient = async <T = Record<string, string>>(
     );
   }
   if (companyId && activeCompanyId && companyId !== activeCompanyId) {
+    publishRequestDiagnostic({
+      ...diagnosticBase,
+      state: 'BLOCKED',
+      status: 409,
+      code: 'COMPANY_CONTEXT_MISMATCH',
+    });
     throw new ApiClientError(
       'The requested company does not match the active workspace.',
       409,
@@ -77,13 +140,31 @@ export const apiClient = async <T = Record<string, string>>(
   } else {
     headers.delete('X-Company-Id');
   }
-  headers.set('X-Request-Id', requestId());
+  headers.set('X-Request-Id', correlationId);
 
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-    ...requestOptions,
-    headers,
-    credentials: 'include',
+  publishRequestDiagnostic({
+    ...diagnosticBase,
+    state: 'PENDING',
+    status: null,
+    code: null,
   });
+
+  let response: Response;
+  try {
+    response = await fetch(`${API_BASE_URL}${endpoint}`, {
+      ...requestOptions,
+      headers,
+      credentials: 'include',
+    });
+  } catch (error) {
+    publishRequestDiagnostic({
+      ...diagnosticBase,
+      state: 'ERROR',
+      status: null,
+      code: 'NETWORK_ERROR',
+    });
+    throw error;
+  }
 
   if (
     scoped
@@ -92,6 +173,12 @@ export const apiClient = async <T = Record<string, string>>(
     && activeCompanyId
     && activeCompanyId !== requestCompanyId
   ) {
+    publishRequestDiagnostic({
+      ...diagnosticBase,
+      state: 'BLOCKED',
+      status: 409,
+      code: 'STALE_COMPANY_RESPONSE',
+    });
     throw new ApiClientError(
       'The selected company changed while this request was in flight.',
       409,
@@ -102,13 +189,27 @@ export const apiClient = async <T = Record<string, string>>(
   const body = await responseBody(response);
   if (!response.ok) {
     const error = (body || {}) as { error?: string; message?: string; code?: string };
+    const code = safeDiagnosticCode(error.code) || 'HTTP_ERROR';
+    publishRequestDiagnostic({
+      ...diagnosticBase,
+      state: 'ERROR',
+      status: response.status,
+      code,
+    });
     throw new ApiClientError(
       error.error || error.message || `HTTP error! status: ${response.status}`,
       response.status,
-      error.code || 'HTTP_ERROR',
+      code,
       body,
     );
   }
+
+  publishRequestDiagnostic({
+    ...diagnosticBase,
+    state: 'SUCCESS',
+    status: response.status,
+    code: null,
+  });
 
   return body as T;
 };
