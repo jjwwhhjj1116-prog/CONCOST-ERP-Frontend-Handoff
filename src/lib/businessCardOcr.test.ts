@@ -11,6 +11,8 @@ import {
   canUseLocalBusinessCardOcr,
   defaultBusinessCardLanguageProfile,
   resolveBusinessCardLanguages,
+  scoreBusinessCardOcrPass,
+  shouldRetryBusinessCardRotation,
 } from './localBusinessCardOcr';
 
 test('normalizes CLOVA name-card fields into the ERP contact schema', () => {
@@ -134,6 +136,78 @@ test('handles mixed language text, blank OCR and noisy punctuation', () => {
   assert.equal(getConfidenceLevel(0.69), 'LOW');
   assert.equal(getConfidenceLevel(0.7), 'MEDIUM');
   assert.equal(getConfidenceLevel(0.9), 'HIGH');
+});
+
+test('rejects logo and marketing tokens as a person name or homepage', () => {
+  const result = parseBusinessCardTextDetailed([
+    'CON COST',
+    'No.1',
+    'BIM.7',
+    'Ver.2',
+    '홍길동',
+    'DEMO 건설 주식회사',
+    'Department: 영업본부 B12',
+    'Position: 부장',
+    'M 010-1111-2222',
+    'T 02-1111-2222',
+    'F 02-1111-2223',
+    'demo.person@example.invalid',
+  ].join('\n'), { overallConfidence: 0.91 });
+
+  assert.equal(result.contact.name, '홍길동');
+  assert.equal(result.contact.homepage, '');
+  assert.equal(result.contact.department, '영업본부');
+  assert.equal(result.contact.position, '부장');
+  assert.equal(result.contact.mobile, '010-1111-2222');
+  assert.equal(result.contact.telephone, '02-1111-2222');
+  assert.equal(result.contact.fax, '02-1111-2223');
+  assert.equal(result.contact.email, 'demo.person@example.invalid');
+  assert.ok(result.evidence?.candidates.some((candidate) => candidate.value === 'No.1' && candidate.rejectedReason === 'INVALID_HOSTNAME_OR_NUMERIC_TLD'));
+  assert.ok(result.evidence?.candidates.some((candidate) => candidate.value === 'CON COST' && candidate.rejectedReason === 'LOGO_OR_BRAND_TEXT'));
+});
+
+test('keeps multiline addresses and prefers blank over an invalid identity guess', () => {
+  const address = parseBusinessCardText([
+    'DEMO ENGINEERING CO., LTD.',
+    'Address: 100 Example Road',
+    'Demo City, District 1',
+    'www.demo-engineering.example',
+  ].join('\n'));
+  assert.equal(address.name, '');
+  assert.equal(address.address, '100 Example Road Demo City, District 1');
+  assert.equal(address.homepage, 'www.demo-engineering.example');
+});
+
+test('uses normalized layout evidence for candidate selection', () => {
+  const rawText = 'CON COST\nDEMO USER\nSales Team\nManager\ndemo.user@example.invalid';
+  const result = parseBusinessCardTextDetailed(rawText, {
+    overallConfidence: 0.9,
+    boxes: rawText.split('\n').map((text, index) => ({
+      id: `line-${index}`,
+      kind: 'LINE' as const,
+      text,
+      confidence: 0.9,
+      x0: 0.1,
+      y0: index * 0.15,
+      x1: 0.8,
+      y1: index * 0.15 + 0.1,
+      width: 0.7,
+      height: index === 1 ? 0.1 : 0.06,
+      lineIndex: index,
+      blockIndex: 0,
+    })),
+  });
+  assert.equal(result.contact.name, 'DEMO USER');
+  assert.equal(result.evidence?.boxes.length, 5);
+  assert.ok(result.evidence?.selectedCandidateIds.name);
+});
+
+test('scores structured passes and retries rotation only below threshold', () => {
+  const strong = parseBusinessCardTextDetailed('DEMO USER\nDEMO ENGINEERING CO., LTD.\ndemo.user@example.invalid', { overallConfidence: 0.94 });
+  const weak = parseBusinessCardTextDetailed('CON COST\nNo.1', { overallConfidence: 0.3 });
+  assert.ok(scoreBusinessCardOcrPass(strong).score > scoreBusinessCardOcrPass(weak).score);
+  assert.equal(shouldRetryBusinessCardRotation(0.71), true);
+  assert.equal(shouldRetryBusinessCardRotation(0.72), false);
 });
 
 test('keeps the browser OCR boundary free of fixed contacts, fixed confidence and image persistence', () => {

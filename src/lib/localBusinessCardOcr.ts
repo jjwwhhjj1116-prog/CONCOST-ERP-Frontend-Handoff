@@ -3,7 +3,10 @@
 import {
   parseBusinessCardTextDetailed,
   type BusinessCardLanguageProfile,
+  type BusinessCardOcrBox,
+  type BusinessCardCaptureQuality,
   type BusinessCardOcrLine,
+  type BusinessCardOcrPassSummary,
   type BusinessCardOcrResult,
 } from '@/lib/businessCardOcr';
 import type { CompanyId } from '@/types/models';
@@ -39,6 +42,8 @@ export interface LocalBusinessCardOcrOptions {
   signal?: AbortSignal;
   onProgress?: (progress: LocalBusinessCardOcrProgress) => void;
 }
+
+export type BusinessCardImageMode = 'STANDARD' | 'CONTRAST' | 'THRESHOLD';
 
 const TESSERACT_VERSION = '7.0.0';
 
@@ -109,6 +114,7 @@ export async function preprocessBusinessCardImage(
   file: File,
   rotation: 0 | 90 | 180 | 270,
   signal?: AbortSignal,
+  mode: BusinessCardImageMode = 'CONTRAST',
 ): Promise<HTMLCanvasElement> {
   assertNotAborted(signal);
   const image = await decodeImage(file);
@@ -139,17 +145,27 @@ export async function preprocessBusinessCardImage(
     context.save();
     context.translate(canvas.width / 2, canvas.height / 2);
     context.rotate((rotation * Math.PI) / 180);
-    context.filter = 'grayscale(1) contrast(1.18)';
+    context.filter = mode === 'STANDARD'
+      ? 'grayscale(1) contrast(1.04)'
+      : mode === 'CONTRAST'
+        ? 'grayscale(1) contrast(1.24)'
+        : 'grayscale(1) contrast(1.12)';
     context.imageSmoothingEnabled = true;
     context.imageSmoothingQuality = 'high';
     context.drawImage(image, -scaledWidth / 2, -scaledHeight / 2, scaledWidth, scaledHeight);
     context.restore();
 
-    // A light luminance cleanup removes isolated compression noise without binarizing thin glyphs.
+    // Keep a natural grayscale pass, a contrast pass, and one conservative threshold pass.
     const pixels = context.getImageData(0, 0, canvas.width, canvas.height);
     for (let offset = 0; offset < pixels.data.length; offset += 4) {
       const luminance = pixels.data[offset];
-      const cleaned = luminance > 242 ? 255 : luminance < 24 ? 0 : luminance;
+      const cleaned = mode === 'THRESHOLD'
+        ? (luminance >= 174 ? 255 : 0)
+        : luminance > 246
+          ? 255
+          : luminance < 20
+            ? 0
+            : luminance;
       pixels.data[offset] = cleaned;
       pixels.data[offset + 1] = cleaned;
       pixels.data[offset + 2] = cleaned;
@@ -162,18 +178,108 @@ export async function preprocessBusinessCardImage(
   }
 }
 
+type TesseractBBox = { x0: number; y0: number; x1: number; y1: number };
+type TesseractWord = { text: string; confidence: number; bbox: TesseractBBox };
+type TesseractLine = { text: string; confidence: number; bbox: TesseractBBox; words?: TesseractWord[] };
 type TesseractBlocks = Array<{
   paragraphs: Array<{
-    lines: Array<{ text: string; confidence: number }>;
+    lines: TesseractLine[];
   }>;
 }> | null;
 
-function extractLines(blocks: TesseractBlocks): BusinessCardOcrLine[] {
-  if (!blocks) return [];
-  return blocks.flatMap((block) => block.paragraphs)
-    .flatMap((paragraph) => paragraph.lines)
-    .map((line) => ({ text: line.text.trim(), confidence: Math.max(0, Math.min(1, line.confidence / 100)) }))
-    .filter((line) => Boolean(line.text));
+function normalizeBox(bbox: TesseractBBox, width: number, height: number) {
+  const x0 = Math.max(0, Math.min(1, bbox.x0 / width));
+  const y0 = Math.max(0, Math.min(1, bbox.y0 / height));
+  const x1 = Math.max(x0, Math.min(1, bbox.x1 / width));
+  const y1 = Math.max(y0, Math.min(1, bbox.y1 / height));
+  return { x0, y0, x1, y1, width: x1 - x0, height: y1 - y0 };
+}
+
+function extractStructuredEvidence(blocks: TesseractBlocks, width: number, height: number) {
+  const lines: BusinessCardOcrLine[] = [];
+  const boxes: BusinessCardOcrBox[] = [];
+  if (!blocks) return { lines, boxes };
+  let lineIndex = 0;
+  blocks.forEach((block, blockIndex) => {
+    block.paragraphs.forEach((paragraph) => {
+      paragraph.lines.forEach((line) => {
+        const lineText = line.text.trim();
+        if (!lineText) return;
+        const confidence = Math.max(0, Math.min(1, line.confidence / 100));
+        lines.push({ text: lineText, confidence });
+        boxes.push({
+          id: `line-${lineIndex}`,
+          kind: 'LINE',
+          text: lineText,
+          confidence,
+          ...normalizeBox(line.bbox, width, height),
+          lineIndex,
+          blockIndex,
+        });
+        (line.words ?? []).forEach((word, wordIndex) => {
+          const wordText = word.text.trim();
+          if (!wordText) return;
+          boxes.push({
+            id: `line-${lineIndex}-word-${wordIndex}`,
+            kind: 'WORD',
+            text: wordText,
+            confidence: Math.max(0, Math.min(1, word.confidence / 100)),
+            ...normalizeBox(word.bbox, width, height),
+            lineIndex,
+            blockIndex,
+            wordIndex,
+          });
+        });
+        lineIndex += 1;
+      });
+    });
+  });
+  return { lines, boxes };
+}
+
+export function assessBusinessCardCaptureQuality(canvas: HTMLCanvasElement): BusinessCardCaptureQuality {
+  const context = canvas.getContext('2d', { alpha: false, willReadFrequently: true });
+  if (!context) return { score: 0, width: canvas.width, height: canvas.height, contrast: 0, sharpness: 0, warnings: ['CAPTURE_ANALYSIS_UNAVAILABLE'] };
+  const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data;
+  const sampleStride = Math.max(4, Math.floor((canvas.width * canvas.height) / 120_000) * 4);
+  let count = 0;
+  let sum = 0;
+  let sumSquares = 0;
+  let edge = 0;
+  let previous = pixels[0] ?? 0;
+  for (let offset = 0; offset < pixels.length; offset += sampleStride) {
+    const luminance = pixels[offset] ?? 0;
+    count += 1;
+    sum += luminance;
+    sumSquares += luminance * luminance;
+    edge += Math.abs(luminance - previous);
+    previous = luminance;
+  }
+  const mean = count ? sum / count : 0;
+  const deviation = count ? Math.sqrt(Math.max(0, sumSquares / count - mean * mean)) : 0;
+  const contrast = Math.max(0, Math.min(1, deviation / 64));
+  const sharpness = Math.max(0, Math.min(1, (count ? edge / count : 0) / 42));
+  const resolution = Math.max(0, Math.min(1, Math.max(canvas.width, canvas.height) / 1800));
+  const score = Math.round((resolution * 0.35 + contrast * 0.35 + sharpness * 0.3) * 1000) / 1000;
+  const warnings: string[] = [];
+  if (resolution < 0.7) warnings.push('CAPTURE_LOW_RESOLUTION');
+  if (contrast < 0.32) warnings.push('CAPTURE_LOW_CONTRAST');
+  if (sharpness < 0.2) warnings.push('CAPTURE_BLUR_RISK');
+  return { score, width: canvas.width, height: canvas.height, contrast, sharpness, warnings };
+}
+
+export function scoreBusinessCardOcrPass(result: BusinessCardOcrResult) {
+  const identityCoverage = Number(Boolean(result.contact.name)) + Number(Boolean(result.contact.company));
+  const contactCoverage = Number(Boolean(result.contact.email || result.contact.mobile || result.contact.telephone));
+  const requiredFieldCoverage = (identityCoverage + contactCoverage) / 3;
+  const selectedScores = Object.values(result.fieldConfidence).filter((value): value is number => typeof value === 'number');
+  const candidateScore = selectedScores.length ? selectedScores.reduce((sum, value) => sum + value, 0) / selectedScores.length : 0;
+  const score = Math.round((requiredFieldCoverage * 0.5 + candidateScore * 0.35 + (result.overallConfidence ?? 0) * 0.15) * 1000) / 1000;
+  return { score, requiredFieldCoverage };
+}
+
+export function shouldRetryBusinessCardRotation(score: number) {
+  return score < 0.72;
 }
 
 export async function runLocalBusinessCardOcr(
@@ -183,8 +289,6 @@ export async function runLocalBusinessCardOcr(
   if (typeof window === 'undefined' || typeof document === 'undefined') throw new Error('LOCAL_OCR_BROWSER_REQUIRED');
   assertNotAborted(options.signal);
   options.onProgress?.({ phase: 'PREPARING_IMAGE', percent: 4, detail: 'Preparing image' });
-  const canvas = await preprocessBusinessCardImage(file, options.rotation, options.signal);
-  assertNotAborted(options.signal);
   options.onProgress?.({ phase: 'LOADING_ENGINE', percent: 12, detail: 'Loading tesseract.js' });
 
   const languages = resolveBusinessCardLanguages(options.languageProfile, options.companyId);
@@ -193,6 +297,7 @@ export async function runLocalBusinessCardOcr(
 
   let worker: Awaited<ReturnType<typeof createWorker>> | null = null;
   let workerError: unknown;
+  const canvases: HTMLCanvasElement[] = [];
   const abortWorker = () => {
     if (worker) void worker.terminate().catch(() => undefined);
   };
@@ -209,21 +314,87 @@ export async function runLocalBusinessCardOcr(
       preserve_interword_spaces: '1',
       user_defined_dpi: '300',
     });
-    options.onProgress?.({ phase: 'RECOGNIZING_TEXT', percent: 64, detail: 'Recognizing text' });
-    const recognition = await worker.recognize(canvas, { rotateAuto: false }, { text: true, blocks: true });
-    assertNotAborted(options.signal);
-    if (workerError) throw workerError;
-    const rawText = recognition.data.text.trim();
-    if (!rawText) throw new Error('OCR_NO_TEXT_DETECTED');
-    options.onProgress?.({ phase: 'PARSING_FIELDS', percent: 94, detail: 'Parsing contact fields' });
-    const result = parseBusinessCardTextDetailed(rawText, {
-      overallConfidence: recognition.data.confidence / 100,
-      lines: extractLines(recognition.data.blocks),
-      languageProfile: options.languageProfile,
-      languages,
-      engine: 'LOCAL_TESSERACT',
-      engineVersion: `tesseract.js@${TESSERACT_VERSION}`,
-    });
+    const activeWorker = worker;
+    const summaries: BusinessCardOcrPassSummary[] = [];
+    const passResults: Array<{ summary: BusinessCardOcrPassSummary; result: BusinessCardOcrResult }> = [];
+    let captureQuality: BusinessCardCaptureQuality | undefined;
+
+    const recognizePass = async (
+      mode: BusinessCardImageMode,
+      rotation: 0 | 90 | 180 | 270,
+      id: string,
+    ) => {
+      assertNotAborted(options.signal);
+      options.onProgress?.({ phase: 'PREPARING_IMAGE', percent: 58, detail: `${mode} · ${rotation}°` });
+      const canvas = await preprocessBusinessCardImage(file, rotation, options.signal, mode);
+      canvases.push(canvas);
+      if (!captureQuality && mode === 'STANDARD' && rotation === options.rotation) {
+        captureQuality = assessBusinessCardCaptureQuality(canvas);
+      }
+      options.onProgress?.({ phase: 'RECOGNIZING_TEXT', percent: 64, detail: `${mode} OCR · ${rotation}°` });
+      workerError = undefined;
+      const recognition = await activeWorker.recognize(canvas, { rotateAuto: false }, { text: true, blocks: true });
+      assertNotAborted(options.signal);
+      if (workerError) throw workerError;
+      const rawText = recognition.data.text.trim();
+      if (!rawText) return;
+      const evidence = extractStructuredEvidence(
+        recognition.data.blocks as unknown as TesseractBlocks,
+        canvas.width,
+        canvas.height,
+      );
+      const result = parseBusinessCardTextDetailed(rawText, {
+        overallConfidence: recognition.data.confidence / 100,
+        lines: evidence.lines,
+        boxes: evidence.boxes,
+        languageProfile: options.languageProfile,
+        languages,
+        engine: 'LOCAL_TESSERACT',
+        engineVersion: `tesseract.js@${TESSERACT_VERSION}`,
+      });
+      const scored = scoreBusinessCardOcrPass(result);
+      const summary: BusinessCardOcrPassSummary = {
+        id,
+        imageMode: mode,
+        rotation,
+        score: scored.score,
+        overallConfidence: result.overallConfidence ?? 0,
+        requiredFieldCoverage: scored.requiredFieldCoverage,
+      };
+      summaries.push(summary);
+      passResults.push({ summary, result });
+    };
+
+    const modes: BusinessCardImageMode[] = ['STANDARD', 'CONTRAST', 'THRESHOLD'];
+    for (const mode of modes) {
+      await recognizePass(mode, options.rotation, `base-${mode.toLocaleLowerCase()}`);
+    }
+    let best = [...passResults].sort((a, b) => b.summary.score - a.summary.score)[0];
+    if (best && shouldRetryBusinessCardRotation(best.summary.score)) {
+      const rotations = ([0, 90, 180, 270] as const).filter((rotation) => rotation !== options.rotation);
+      for (const rotation of rotations) {
+        await recognizePass('CONTRAST', rotation, `rotation-${rotation}`);
+      }
+      best = [...passResults].sort((a, b) => b.summary.score - a.summary.score)[0];
+    }
+    if (!best) throw new Error('OCR_NO_TEXT_DETECTED');
+
+    options.onProgress?.({ phase: 'PARSING_FIELDS', percent: 96, detail: 'Comparing structured OCR evidence' });
+    const result: BusinessCardOcrResult = {
+      ...best.result,
+      warnings: Array.from(new Set([
+        ...best.result.warnings,
+        ...(captureQuality?.warnings ?? []),
+      ])),
+      evidence: {
+        boxes: best.result.evidence?.boxes ?? [],
+        candidates: best.result.evidence?.candidates ?? [],
+        selectedCandidateIds: best.result.evidence?.selectedCandidateIds ?? {},
+        passes: summaries,
+        selectedPassId: best.summary.id,
+        captureQuality,
+      },
+    };
     options.onProgress?.({ phase: 'COMPLETE', percent: 100, detail: 'Complete' });
     return result;
   } catch (error) {
@@ -232,8 +403,10 @@ export async function runLocalBusinessCardOcr(
   } finally {
     options.signal?.removeEventListener('abort', abortWorker);
     if (worker) await worker.terminate().catch(() => undefined);
-    canvas.width = 1;
-    canvas.height = 1;
+    canvases.forEach((canvas) => {
+      canvas.width = 1;
+      canvas.height = 1;
+    });
   }
 }
 

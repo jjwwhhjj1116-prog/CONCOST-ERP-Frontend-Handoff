@@ -34,6 +34,68 @@ export interface BusinessCardOcrLine {
   confidence: number;
 }
 
+export type BusinessCardOcrBoxKind = 'LINE' | 'WORD';
+
+export interface BusinessCardOcrBox {
+  id: string;
+  kind: BusinessCardOcrBoxKind;
+  text: string;
+  confidence: number;
+  /** Normalized coordinates in the 0..1 range. */
+  x0: number;
+  y0: number;
+  x1: number;
+  y1: number;
+  width: number;
+  height: number;
+  lineIndex?: number;
+  blockIndex?: number;
+  wordIndex?: number;
+}
+
+export type BusinessCardFieldCandidate = {
+  id: string;
+  value: string;
+  field: keyof BusinessCardFields;
+  ocrConfidence: number;
+  patternScore: number;
+  labelScore: number;
+  layoutScore: number;
+  semanticScore: number;
+  exclusionPenalty: number;
+  finalScore: number;
+  sourceBoxIds: string[];
+  reason: string[];
+  rejectedReason?: string;
+};
+
+export type BusinessCardOcrPassSummary = {
+  id: string;
+  imageMode: 'STANDARD' | 'CONTRAST' | 'THRESHOLD';
+  rotation: 0 | 90 | 180 | 270;
+  score: number;
+  overallConfidence: number;
+  requiredFieldCoverage: number;
+};
+
+export type BusinessCardCaptureQuality = {
+  score: number;
+  width: number;
+  height: number;
+  contrast: number;
+  sharpness: number;
+  warnings: string[];
+};
+
+export type BusinessCardOcrEvidence = {
+  boxes: BusinessCardOcrBox[];
+  candidates: BusinessCardFieldCandidate[];
+  selectedCandidateIds: Partial<Record<keyof BusinessCardFields, string>>;
+  passes?: BusinessCardOcrPassSummary[];
+  selectedPassId?: string;
+  captureQuality?: BusinessCardCaptureQuality;
+};
+
 export type BusinessCardOcrResult = {
   contact: BusinessCardFields;
   overallConfidence: number | null;
@@ -47,6 +109,7 @@ export type BusinessCardOcrResult = {
   engineVersion?: string;
   rawText: string;
   warnings: string[];
+  evidence?: BusinessCardOcrEvidence;
 };
 
 const emptyContact = (): BusinessCardFields => ({ name: '', company: '', department: '', position: '', mobile: '', telephone: '', fax: '', email: '', homepage: '', address: '' });
@@ -85,6 +148,183 @@ function cleanLine(value: string) {
   return value.replace(/[|]+/g, ' ').replace(/\s+/g, ' ').trim();
 }
 
+const COMPANY_PATTERN = /(주식회사|\(주\)|㈜|유한회사|건설|건축|엔지니어링|컨설팅|CON.?COST|VIET\s*QS|CO\.?\b|CORP(?:ORATION)?\.?\b|COMPANY|LTD\.?\b|INC\.?\b|LLC\b|JSC\b|ENGINEERING|CONSTRUCTION|CÔNG\s*TY|CONG\s*TY|CTY\b|TNHH|CỔ\s*PHẦN|CO\s*PHAN)/i;
+const DEPARTMENT_PATTERN = /(본부|센터|사업부|[가-힣A-Za-zÀ-ỹ]+(?:팀|부|실|파트)|department|dept\.?\b|division|team\b|center\b|section\b|phòng(?:\s+[A-Za-zÀ-ỹ]+){0,3}|phong(?:\s+[A-Za-zÀ-ỹ]+){0,3}|ban(?:\s+[A-Za-zÀ-ỹ]+){0,3})/i;
+const POSITION_PATTERN = /(대표이사|대표|부사장|사장|전무|상무|이사|본부장|센터장|실장|팀장|부장|차장|과장|대리|주임|프로|선임|PM\b|general manager|senior manager|project manager|vice president|manager|director|president|engineer|consultant|lead\b|chief|ceo|giám đốc|giam doc|trưởng(?:\s+[A-Za-zÀ-ỹ]+){0,2}|truong(?:\s+[A-Za-zÀ-ỹ]+){0,2}|quản lý|quan ly)/i;
+const CODE_TOKEN_PATTERN = /\b(?:NO|BIM|VER|ID|CODE)[.\-_ ]?\d[A-Z0-9._-]*\b|\b[A-Z]{2,}[._-]\d[A-Z0-9._-]*\b|\b[A-Z]{1,4}\d{2,}\b/gi;
+const LOGO_TOKEN_PATTERN = /^(?:CON\s*[-·]?\s*COST|CONCOST|CON\s*COR|VIET\s*QS|NO\.?\s*1|SINCE\s*\d{4})$/i;
+
+function roundScore(value: number) {
+  return Math.round(clamp(value) * 1000) / 1000;
+}
+
+function normalizeComparable(value: string) {
+  return cleanLine(value).replace(/[^A-Za-zÀ-ỹ가-힣0-9]/g, '').toLocaleLowerCase();
+}
+
+function findSourceBoxes(value: string, boxes: BusinessCardOcrBox[]) {
+  const needle = normalizeComparable(value);
+  if (!needle) return [];
+  const matching = boxes.filter((box) => {
+    const haystack = normalizeComparable(box.text);
+    return haystack === needle || haystack.includes(needle) || needle.includes(haystack);
+  });
+  const lineMatches = matching.filter((box) => box.kind === 'LINE');
+  return (lineMatches.length ? lineMatches : matching).map((box) => box.id);
+}
+
+function boxesForIds(ids: string[], boxes: BusinessCardOcrBox[]) {
+  const idSet = new Set(ids);
+  return boxes.filter((box) => idSet.has(box.id));
+}
+
+function candidateHeightScore(sourceBoxes: BusinessCardOcrBox[], allBoxes: BusinessCardOcrBox[]) {
+  const lineBoxes = allBoxes.filter((box) => box.kind === 'LINE' && box.height > 0);
+  if (!sourceBoxes.length || !lineBoxes.length) return 0.5;
+  const ordered = lineBoxes.map((box) => box.height).sort((a, b) => a - b);
+  const median = ordered[Math.floor(ordered.length / 2)] || 1;
+  const height = Math.max(...sourceBoxes.map((box) => box.height));
+  return clamp(0.45 + ((height / median) - 1) * 0.35);
+}
+
+function candidateAdjacencyScore(value: string, field: keyof BusinessCardFields, boxes: BusinessCardOcrBox[]) {
+  const ids = findSourceBoxes(value, boxes);
+  const source = boxesForIds(ids, boxes).filter((box) => box.kind === 'LINE');
+  if (!source.length) return 0.5;
+  if (field !== 'name') return 0.55;
+  const anchor = source[0];
+  const nearby = boxes.filter((box) => box.kind === 'LINE'
+    && box.id !== anchor.id
+    && Math.abs(box.y0 - anchor.y1) <= Math.max(0.12, anchor.height * 3));
+  return nearby.some((box) => looksLikeDepartment(box.text) || looksLikePosition(box.text)) ? 0.95 : candidateHeightScore(source, boxes);
+}
+
+function isValidHostname(value: string) {
+  const cleaned = value.trim().replace(/[),;]+$/, '');
+  const withScheme = /^https?:\/\//i.test(cleaned) ? cleaned : `https://${cleaned}`;
+  try {
+    const hostname = new URL(withScheme).hostname.replace(/^www\./i, '');
+    const labels = hostname.split('.');
+    const tld = labels.at(-1) ?? '';
+    return labels.length >= 2
+      && /^[A-Za-z]{2,}$/.test(tld)
+      && labels.every((label) => /^[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?$/.test(label));
+  } catch {
+    return false;
+  }
+}
+
+function isLogoLike(value: string) {
+  const cleaned = cleanLine(value);
+  return LOGO_TOKEN_PATTERN.test(cleaned)
+    || /^(?:CON|COST|VIET|QS)(?:\s+(?:CON|COST|VIET|QS)){0,2}$/i.test(cleaned);
+}
+
+function isValidPersonName(value: string) {
+  const cleaned = stripLabel(value, 'name|full\\s*name|이름|성명|họ\\s*tên|ho\\s*ten');
+  if (!cleaned || cleaned.length > 42 || /\d|@|https?:|www\./i.test(cleaned)) return false;
+  if (isLogoLike(cleaned) || COMPANY_PATTERN.test(cleaned) || DEPARTMENT_PATTERN.test(cleaned) || POSITION_PATTERN.test(cleaned)) return false;
+  const withoutDemo = cleaned.replace(/^\[DEMO\]\s*/i, '');
+  if (/^[가-힣]{2,6}(?:\s+[가-힣]{1,8}){0,2}$/.test(withoutDemo)) return true;
+  const words = withoutDemo.split(/\s+/).filter(Boolean);
+  return words.length >= 2 && words.length <= 5 && words.every((word) => /^[A-Za-zÀ-ỹ][A-Za-zÀ-ỹ'.-]*$/.test(word));
+}
+
+function cleanCodeTokens(value: string) {
+  return cleanLine(value.replace(CODE_TOKEN_PATTERN, ''));
+}
+
+function extractDepartmentAndPosition(value: string) {
+  const fieldLabels = 'department|dept\\.?|division|부서|소속|phòng|phong|ban|position|title|직급|직책|chức\\s*vụ|chuc\\s*vu';
+  const withoutLabel = new RegExp(`^(?:${fieldLabels})\\s*[:：]`, 'i').test(value)
+    ? stripLabel(value, fieldLabels)
+    : value;
+  const cleaned = cleanCodeTokens(withoutLabel);
+  const positionMatch = cleaned.match(POSITION_PATTERN)?.[0] ?? '';
+  const departmentSource = cleanLine(cleaned.replace(POSITION_PATTERN, ''));
+  const departmentMatch = looksLikeDepartment(departmentSource)
+    ? departmentSource
+    : departmentSource.match(DEPARTMENT_PATTERN)?.[0] ?? '';
+  return { department: cleanLine(departmentMatch), position: cleanLine(positionMatch) };
+}
+
+function createCandidate(
+  field: keyof BusinessCardFields,
+  value: string,
+  scores: { pattern: number; label: number; layout?: number; semantic: number; penalty?: number },
+  boxes: BusinessCardOcrBox[],
+  evidenceLines: BusinessCardOcrLine[],
+  overallConfidence: number,
+  reason: string[],
+  rejectedReason?: string,
+): BusinessCardFieldCandidate {
+  const sourceBoxIds = findSourceBoxes(value, boxes);
+  const ocrConfidence = lineConfidence(value, evidenceLines, overallConfidence || 0.78);
+  const layoutScore = scores.layout ?? candidateAdjacencyScore(value, field, boxes);
+  const exclusionPenalty = scores.penalty ?? 0;
+  const finalScore = roundScore(
+    ocrConfidence * 0.28
+    + scores.pattern * 0.25
+    + scores.label * 0.17
+    + layoutScore * 0.15
+    + scores.semantic * 0.15
+    - exclusionPenalty,
+  );
+  return {
+    id: `${field}:${normalizeComparable(value) || 'empty'}`,
+    value,
+    field,
+    ocrConfidence: roundScore(ocrConfidence),
+    patternScore: roundScore(scores.pattern),
+    labelScore: roundScore(scores.label),
+    layoutScore: roundScore(layoutScore),
+    semanticScore: roundScore(scores.semantic),
+    exclusionPenalty: roundScore(exclusionPenalty),
+    finalScore,
+    sourceBoxIds,
+    reason,
+    rejectedReason,
+  };
+}
+
+function chooseCandidate(candidates: BusinessCardFieldCandidate[], minimumScore: number) {
+  const ordered = [...candidates].sort((a, b) => b.finalScore - a.finalScore);
+  const selected = ordered.find((candidate) => !candidate.rejectedReason && candidate.finalScore >= minimumScore);
+  return { selected, ordered };
+}
+
+function syntheticBoxes(lines: string[]): BusinessCardOcrBox[] {
+  const height = lines.length ? 1 / lines.length : 1;
+  return lines.map((line, index) => ({
+    id: `line-${index}`,
+    kind: 'LINE' as const,
+    text: line,
+    confidence: 0.78,
+    x0: 0,
+    y0: index * height,
+    x1: 1,
+    y1: Math.min(1, (index + 1) * height),
+    width: 1,
+    height,
+    lineIndex: index,
+    blockIndex: 0,
+  }));
+}
+
+function multilineAddress(lines: string[], labeled: { value: string; line: string } | null) {
+  if (!labeled) return lines.find(looksLikeAddress) ?? '';
+  const start = lines.indexOf(labeled.line);
+  const parts = [labeled.value];
+  for (let index = start + 1; index < Math.min(lines.length, start + 3); index += 1) {
+    const line = lines[index];
+    if (looksLikeContactLine(line) || looksLikeCompany(line) || looksLikeDepartment(line) || looksLikePosition(line)) break;
+    if (/^(?:name|company|department|position|mobile|tel|fax|email|web|website)\b/i.test(line)) break;
+    if (/\d|street|road|district|city|province|구\b|로\b|길\b|동\b|호\b|quận|phường|đường/i.test(line)) parts.push(line);
+    else break;
+  }
+  return cleanLine(parts.join(' '));
+}
+
 function stripLabel(line: string, labels: string) {
   return cleanLine(line.replace(new RegExp(`^\\s*(?:${labels})\\s*[:：|.-]?\\s*`, 'i'), ''));
 }
@@ -106,13 +346,8 @@ function lineConfidence(value: string, lines: BusinessCardOcrLine[], fallback: n
     return haystack.includes(needle) || needle.includes(haystack);
   });
   if (!matching.length) return fallback;
-  return Math.max(...matching.map((line) => normalizeConfidence(line.confidence)));
-}
-
-function fieldScore(value: string, quality: number, lines: BusinessCardOcrLine[], overallConfidence: number): number | null {
-  if (!value) return null;
-  const evidence = lineConfidence(value, lines, overallConfidence || 0.55);
-  return evidence > 0 ? roundConfidence(evidence * quality) : null;
+  const measured = Math.max(...matching.map((line) => normalizeConfidence(line.confidence)));
+  return measured > 0 ? measured : fallback;
 }
 
 function looksLikeContactLine(line: string) {
@@ -158,6 +393,7 @@ export function parseBusinessCardTextDetailed(
   options: {
     overallConfidence?: number;
     lines?: BusinessCardOcrLine[];
+    boxes?: BusinessCardOcrBox[];
     languageProfile?: BusinessCardLanguageProfile;
     languages?: string[];
     engine?: BusinessCardOcrEngine;
@@ -173,13 +409,36 @@ export function parseBusinessCardTextDetailed(
   const lines = normalizedRawText.split(/\r?\n/).map(cleanLine).filter(Boolean);
   const evidenceLines = options.lines ?? lines.map((line) => ({ text: line, confidence: options.overallConfidence ?? 0 }));
   const overallConfidence = roundConfidence(options.overallConfidence ?? 0);
+  const boxes = options.boxes?.length ? options.boxes : syntheticBoxes(lines);
+  const candidates: BusinessCardFieldCandidate[] = [];
+  const add = (
+    field: keyof BusinessCardFields,
+    value: string,
+    scores: { pattern: number; label: number; layout?: number; semantic: number; penalty?: number },
+    reason: string[],
+    rejectedReason?: string,
+  ) => {
+    const cleaned = cleanLine(value);
+    if (!cleaned) return;
+    candidates.push(createCandidate(field, cleaned, scores, boxes, evidenceLines, overallConfidence, reason, rejectedReason));
+  };
 
-  const email = normalizedForPatterns.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i)?.[0] ?? '';
-  const labeledHomepage = labeledValue(lines, 'website|web|homepage|홈페이지|trang\\s*web');
-  const homepageLine = labeledHomepage?.value
-    || normalizedForPatterns.split(/\r?\n/).find((line) => !line.includes('@') && /(?:https?:\/\/|www\.|\b[A-Z0-9-]+(?:\.[A-Z0-9-]+)+\b)/i.test(line))
-    || '';
-  const homepage = homepageLine.match(/(?:https?:\/\/|www\.)[^\s,;]+|\b[A-Z0-9-]+(?:\.[A-Z0-9-]+)+\b/i)?.[0]?.replace(/[).,;]+$/, '') ?? '';
+  const emailMatches = Array.from(normalizedForPatterns.matchAll(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi));
+  emailMatches.forEach((match) => add('email', match[0], { pattern: 1, label: 0.75, semantic: 1 }, ['EMAIL_PATTERN']));
+
+  const homepageTokens = lines.flatMap((line) => {
+    if (line.includes('@')) return [];
+    const stripped = stripLabel(line, 'website|web|homepage|홈페이지|trang\\s*web');
+    return Array.from(stripped.matchAll(/(?:https?:\/\/|www\.)[^\s,;]+|\b[A-Z0-9-]+(?:\.[A-Z0-9-]+)+\b/gi))
+      .map((match) => ({ value: match[0].replace(/[).,;]+$/, ''), labeled: /^(?:website|web|homepage|홈페이지|trang\s*web)/i.test(line) }));
+  });
+  homepageTokens.forEach(({ value, labeled }) => add(
+    'homepage',
+    value,
+    { pattern: isValidHostname(value) ? 1 : 0.05, label: labeled ? 1 : 0.35, semantic: isValidHostname(value) ? 1 : 0.05, penalty: isValidHostname(value) ? 0 : 0.7 },
+    [labeled ? 'HOMEPAGE_LABEL' : 'DOMAIN_PATTERN'],
+    isValidHostname(value) ? undefined : 'INVALID_HOSTNAME_OR_NUMERIC_TLD',
+  ));
 
   const phonePattern = /(?:\+?84(?:[\s.-]?\d){9,10}|0[35789]\d(?:[\s.-]?\d){7}|(?:\+?\d{1,3}[\s.-]?)?(?:\(?\d{2,4}\)?[\s.-]?)\d{3,4}[\s.-]?\d{4})/g;
   const phoneCandidates = lines.flatMap((line) => Array.from(line.matchAll(phonePattern)).map((match) => {
@@ -194,6 +453,10 @@ export function parseBusinessCardTextDetailed(
   const faxCandidate = phoneCandidates.find(({ labelContext }) => /\b(?:f|fax)\b|팩스/i.test(labelContext));
   const telephoneCandidate = phoneCandidates.find(({ value, labelContext }) => value !== mobileCandidate?.value && value !== faxCandidate?.value && /\b(?:t|tel|phone)\b|전화|điện thoại|dien thoai/i.test(labelContext))
     ?? phoneCandidates.find(({ value }) => value !== mobileCandidate?.value && value !== faxCandidate?.value);
+
+  if (mobileCandidate) add('mobile', mobileCandidate.value, { pattern: 1, label: /\b(?:m|mobile|휴대|di động|di dong|đtdd)\b/i.test(mobileCandidate.line) ? 1 : 0.55, semantic: 1 }, ['MOBILE_PATTERN']);
+  if (telephoneCandidate) add('telephone', telephoneCandidate.value, { pattern: 0.98, label: /\b(?:t|tel|phone)\b|전화|điện thoại|dien thoai/i.test(telephoneCandidate.line) ? 1 : 0.45, semantic: 0.95 }, ['TELEPHONE_PATTERN']);
+  if (faxCandidate) add('fax', faxCandidate.value, { pattern: 1, label: 1, semantic: 1 }, ['FAX_LABEL']);
 
   const labeledName = labeledValue(lines, 'name|full\\s*name|이름|성명|họ\\s*tên|ho\\s*ten');
   const companyLabelCandidate = labeledValue(lines, 'company|organization|회사|업체|công\\s*ty|cong\\s*ty');
@@ -211,63 +474,87 @@ export function parseBusinessCardTextDetailed(
   const labeledPosition = labeledValue(lines, 'position|title|직급|직책|chức\\s*vụ|chuc\\s*vu');
   const labeledAddress = labeledValue(lines, 'address|주소|địa\\s*chỉ|dia\\s*chi');
 
-  const companyLine = labeledCompany?.value || lines.find(looksLikeCompany) || '';
-  const departmentLine = labeledDepartment?.value || lines.find((line) => looksLikeDepartment(line) && !looksLikeCompany(line)) || '';
-  const positionLine = labeledPosition?.value || lines.find((line) => looksLikePosition(line) && !looksLikeCompany(line)) || '';
-  const addressLine = labeledAddress?.value || lines.find(looksLikeAddress) || '';
+  lines.forEach((line) => {
+    const labeled = labeledCompany?.line === line;
+    const value = labeled ? labeledCompany.value : line;
+    if (looksLikeCompany(value)) add('company', value, { pattern: 0.98, label: labeled ? 1 : 0.25, semantic: 0.98 }, [labeled ? 'COMPANY_LABEL' : 'COMPANY_SEMANTIC']);
 
-  const excluded = new Set([
-    companyLine,
-    departmentLine,
-    positionLine,
-    addressLine,
-    mobileCandidate?.line ?? '',
-    telephoneCandidate?.line ?? '',
-    faxCandidate?.line ?? '',
-  ].filter(Boolean));
-  const nameLine = (labeledName?.value || lines.find((line) => {
-    const value = stripLabel(line, 'name|full\\s*name|이름|성명|họ\\s*tên|ho\\s*ten');
-    return !excluded.has(line)
-      && !looksLikeContactLine(line)
-      && !looksLikeCompany(line)
-      && !looksLikeDepartment(line)
-      && !looksLikePosition(line)
-      && !looksLikeAddress(line)
-      && !looksLikeFixtureHeading(line)
-      && /[A-Za-zÀ-ỹ가-힣]/.test(value)
-      && !/\d/.test(value)
-      && value.length >= 2
-      && value.length <= 40;
-  })) ?? '';
+    const labeledDept = labeledDepartment?.line === line;
+    const labeledRole = labeledPosition?.line === line;
+    const extracted = looksLikeCompany(line) ? { department: '', position: '' } : extractDepartmentAndPosition(line);
+    if (extracted.department && !looksLikeCompany(extracted.department)) {
+      add('department', extracted.department, { pattern: 0.92, label: labeledDept ? 1 : 0.25, semantic: 0.94 }, [labeledDept ? 'DEPARTMENT_LABEL' : 'DEPARTMENT_SEMANTIC']);
+    }
+    if (extracted.position && !looksLikeCompany(extracted.position)) {
+      add('position', extracted.position, { pattern: 0.95, label: labeledRole ? 1 : 0.3, semantic: 0.96 }, [labeledRole ? 'POSITION_LABEL' : 'POSITION_SEMANTIC']);
+    }
 
-  const contact: BusinessCardFields = {
-    name: labeledName?.value || nameLine,
-    company: companyLine,
-    department: departmentLine,
-    position: positionLine,
-    mobile: mobileCandidate?.value ?? '',
-    telephone: telephoneCandidate?.value ?? '',
-    fax: faxCandidate?.value ?? '',
-    email,
-    homepage,
-    address: addressLine,
+    const nameValue = labeledName?.line === line
+      ? labeledName.value
+      : stripLabel(line, 'name|full\\s*name|이름|성명|họ\\s*tên|ho\\s*ten');
+    const nameRejected = isLogoLike(nameValue)
+      ? 'LOGO_OR_BRAND_TEXT'
+      : looksLikeCompany(nameValue)
+        ? 'COMPANY_TEXT'
+        : looksLikeDepartment(nameValue) || looksLikePosition(nameValue)
+          ? 'ORGANIZATION_OR_POSITION_TEXT'
+          : looksLikeContactLine(nameValue) || looksLikeAddress(nameValue) || looksLikeFixtureHeading(nameValue)
+            ? 'NON_PERSON_TEXT'
+            : isValidPersonName(nameValue)
+              ? undefined
+              : 'PERSON_NAME_VALIDATION_FAILED';
+    add(
+      'name',
+      nameValue,
+      { pattern: nameRejected ? 0.05 : 0.88, label: labeledName?.line === line ? 1 : 0.18, semantic: nameRejected ? 0.05 : 0.95, penalty: nameRejected ? 0.65 : 0 },
+      [labeledName?.line === line ? 'NAME_LABEL' : 'PERSON_NAME_SHAPE'],
+      nameRejected,
+    );
+  });
+
+  if (labeledDepartment && !candidates.some((item) => item.field === 'department' && item.value === labeledDepartment.value)) {
+    const cleaned = cleanCodeTokens(labeledDepartment.value);
+    add('department', cleaned, { pattern: 0.85, label: 1, semantic: 0.9 }, ['DEPARTMENT_LABEL']);
+  }
+  if (labeledPosition && !candidates.some((item) => item.field === 'position' && item.value === labeledPosition.value)) {
+    const cleaned = cleanCodeTokens(labeledPosition.value);
+    add('position', cleaned, { pattern: 0.88, label: 1, semantic: 0.92 }, ['POSITION_LABEL']);
+  }
+
+  const address = multilineAddress(lines, labeledAddress);
+  if (address) add('address', address, { pattern: 0.88, label: labeledAddress ? 1 : 0.25, semantic: 0.92 }, [labeledAddress ? 'ADDRESS_LABEL' : 'ADDRESS_SEMANTIC']);
+
+  const thresholds: Record<keyof BusinessCardFields, number> = {
+    name: 0.58,
+    company: 0.58,
+    department: 0.56,
+    position: 0.56,
+    mobile: 0.62,
+    telephone: 0.58,
+    fax: 0.62,
+    email: 0.65,
+    homepage: 0.68,
+    address: 0.56,
   };
-
-  const fieldConfidence: BusinessCardFieldConfidence = {
-    name: fieldScore(contact.name, labeledName ? 0.98 : 0.76, evidenceLines, overallConfidence),
-    company: fieldScore(contact.company, labeledCompany ? 0.98 : 0.88, evidenceLines, overallConfidence),
-    department: fieldScore(contact.department, labeledDepartment ? 0.97 : 0.83, evidenceLines, overallConfidence),
-    position: fieldScore(contact.position, labeledPosition ? 0.97 : 0.84, evidenceLines, overallConfidence),
-    mobile: fieldScore(contact.mobile, mobileCandidate && /\b(?:m|mobile|휴대|di động|di dong|đtdd)\b/i.test(mobileCandidate.line) ? 0.99 : 0.94, evidenceLines, overallConfidence),
-    telephone: fieldScore(contact.telephone, telephoneCandidate && /\b(?:t|tel|phone)\b|전화|điện thoại|dien thoai/i.test(telephoneCandidate.line) ? 0.98 : 0.87, evidenceLines, overallConfidence),
-    fax: fieldScore(contact.fax, faxCandidate ? 0.99 : 0.8, evidenceLines, overallConfidence),
-    email: fieldScore(contact.email, 0.99, evidenceLines, overallConfidence),
-    homepage: fieldScore(contact.homepage, 0.96, evidenceLines, overallConfidence),
-    address: fieldScore(contact.address, labeledAddress ? 0.97 : 0.84, evidenceLines, overallConfidence),
-  };
+  const contact = emptyContact();
+  const fieldConfidence: BusinessCardFieldConfidence = {};
+  const selectedCandidateIds: Partial<Record<keyof BusinessCardFields, string>> = {};
+  const orderedCandidates: BusinessCardFieldCandidate[] = [];
+  BUSINESS_CARD_FIELD_KEYS.forEach((field) => {
+    const selection = chooseCandidate(candidates.filter((candidate) => candidate.field === field), thresholds[field]);
+    orderedCandidates.push(...selection.ordered);
+    if (!selection.selected) {
+      fieldConfidence[field] = null;
+      return;
+    }
+    contact[field] = selection.selected.value;
+    fieldConfidence[field] = selection.selected.finalScore;
+    selectedCandidateIds[field] = selection.selected.id;
+  });
 
   const warnings: string[] = [];
   if (!contact.name && !contact.company) warnings.push('PARSER_NO_CANDIDATE');
+  if (!contact.name || !contact.company) warnings.push('REVIEW_REQUIRED_IDENTITY');
   if (overallConfidence > 0 && overallConfidence < 0.7) warnings.push('LOW_OVERALL_CONFIDENCE');
   if (Object.entries(fieldConfidence).some(([key, value]) => Boolean(contact[key as keyof BusinessCardFields]) && ['LOW', 'UNKNOWN'].includes(getConfidenceLevel(value)))) warnings.push('LOW_CONFIDENCE');
 
@@ -283,6 +570,11 @@ export function parseBusinessCardTextDetailed(
     engineVersion: options.engineVersion,
     rawText: normalizedRawText,
     warnings,
+    evidence: {
+      boxes,
+      candidates: orderedCandidates,
+      selectedCandidateIds,
+    },
   };
 }
 
