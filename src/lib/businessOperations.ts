@@ -79,8 +79,8 @@ export interface BusinessCardRecord extends ScopedBusinessRecord {
   fileName: string | null;
   fileSize: number | null;
   fileReferenceId: string | null;
-  ocrMode: 'DEMO_SIMULATION' | 'PROVIDER' | 'MANUAL';
-  ocrConfidence: Partial<Record<keyof import('@/lib/businessCardOcr').BusinessCardFields, number>>;
+  ocrMode: 'LOCAL_OCR' | 'DEMO_SIMULATION' | 'PROVIDER' | 'MANUAL';
+  ocrConfidence: import('@/lib/businessCardOcr').BusinessCardFieldConfidence;
   reviewStatus: BusinessCardReviewStatus;
   registrationDecision: BusinessCardRegistrationDecision;
   duplicateCandidateIds: string[];
@@ -166,8 +166,8 @@ export interface BusinessCardRegistrationInput {
   fileName: string | null;
   fileSize: number | null;
   fileReferenceId?: string | null;
-  ocrMode: 'DEMO_SIMULATION' | 'PROVIDER' | 'MANUAL';
-  fieldConfidence: Partial<Record<keyof import('@/lib/businessCardOcr').BusinessCardFields, number>>;
+  ocrMode: 'LOCAL_OCR' | 'DEMO_SIMULATION' | 'PROVIDER' | 'MANUAL';
+  fieldConfidence: import('@/lib/businessCardOcr').BusinessCardFieldConfidence;
   decision: BusinessCardRegistrationDecision;
   duplicateContactId?: string | null;
   selectedMergeFields?: Array<keyof import('@/lib/businessCardOcr').BusinessCardFields>;

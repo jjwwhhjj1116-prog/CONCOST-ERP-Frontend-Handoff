@@ -1,0 +1,50 @@
+{
+  "KOREAN": {
+    "file": "business-card-ko.png",
+    "languageProfile": "KO_EN",
+    "contact": {
+      "name": "홍길동",
+      "company": "DEMO 건설 주식회사",
+      "department": "기술본부",
+      "position": "부장",
+      "mobile": "010-1234-5678",
+      "telephone": "02-1234-5678",
+      "fax": "02-1234-5679",
+      "email": "hong.gildong@example.invalid",
+      "homepage": "www.demo-construction.example",
+      "address": "서울특별시 중구 테스트로 10"
+    }
+  },
+  "ENGLISH": {
+    "file": "business-card-en.png",
+    "languageProfile": "EN",
+    "contact": {
+      "name": "ALEX DEMO",
+      "company": "DEMO ENGINEERING CO., LTD.",
+      "department": "Project Controls",
+      "position": "Senior Manager",
+      "mobile": "+1 202-555-0142",
+      "telephone": "+1 202-555-0143",
+      "fax": "+1 202-555-0144",
+      "email": "alex.demo@example.invalid",
+      "homepage": "www.demo-engineering.example",
+      "address": "100 Example Road, Demo City"
+    }
+  },
+  "VIETNAMESE": {
+    "file": "business-card-vi.png",
+    "languageProfile": "VI_EN",
+    "contact": {
+      "name": "NGUYEN VAN DEMO",
+      "company": "DEMO VIETNAM JSC",
+      "department": "Dự án",
+      "position": "Project Manager",
+      "mobile": "+84 912 345 678",
+      "telephone": "+84 24 1234 5678",
+      "fax": "+84 24 1234 5679",
+      "email": "demo.vn@example.invalid",
+      "homepage": "www.demo-vietnam.example",
+      "address": "10 Đường Mẫu, Quận 1, Thành phố Demo"
+    }
+  }
+}
