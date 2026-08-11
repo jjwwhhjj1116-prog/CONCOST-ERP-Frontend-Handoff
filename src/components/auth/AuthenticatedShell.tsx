@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { Landmark, LockKeyhole } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
 import { LoginExperience } from './LoginExperience';
@@ -10,9 +10,16 @@ import { Header } from '@/components/layout/Header';
 import { SessionManager } from './SessionManager';
 import { DataLoader } from '@/components/layout/DataLoader';
 import { evaluateFinanceAccess } from '@/lib/accessControl';
+import { shouldNavigateBackFromUndoShortcut } from '@/lib/historyShortcut';
+
+const isEditableTarget = (target: EventTarget | null) => {
+  if (!(target instanceof HTMLElement)) return false;
+  return target.isContentEditable || Boolean(target.closest('input, textarea, select, [contenteditable]:not([contenteditable="false"])'));
+};
 
 export function AuthenticatedShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
   const currentUser = useAuthStore((state) => state.currentUser);
   const hasHydrated = useAuthStore((state) => state.hasHydrated);
   const isSessionReady = useAuthStore((state) => state.isSessionReady);
@@ -21,6 +28,25 @@ export function AuthenticatedShell({ children }: { children: React.ReactNode }) 
   React.useEffect(() => {
     if (hasHydrated && !isSessionReady) void initializeSession();
   }, [hasHydrated, initializeSession, isSessionReady]);
+  React.useEffect(() => {
+    const handleHistoryUndo = (event: KeyboardEvent) => {
+      if (!shouldNavigateBackFromUndoShortcut({
+        key: event.key,
+        ctrlKey: event.ctrlKey,
+        metaKey: event.metaKey,
+        altKey: event.altKey,
+        shiftKey: event.shiftKey,
+        defaultPrevented: event.defaultPrevented,
+        editableTarget: isEditableTarget(event.target),
+      })) return;
+
+      event.preventDefault();
+      router.back();
+    };
+
+    window.addEventListener('keydown', handleHistoryUndo);
+    return () => window.removeEventListener('keydown', handleHistoryUndo);
+  }, [router]);
 
   if (!hasHydrated || !isSessionReady) {
     return <main className="min-h-screen bg-[#e9edf2]" aria-busy="true" aria-label="Checking authentication status." />;
