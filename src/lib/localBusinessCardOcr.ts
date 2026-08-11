@@ -2,13 +2,17 @@
 
 import {
   parseBusinessCardTextDetailed,
+  mergeBusinessCardPanelResults,
   type BusinessCardLanguageProfile,
   type BusinessCardOcrBox,
   type BusinessCardCaptureQuality,
   type BusinessCardOcrLine,
   type BusinessCardOcrPassSummary,
   type BusinessCardOcrResult,
+  type BusinessCardPanel,
+  type BusinessCardPanelSelection,
 } from '@/lib/businessCardOcr';
+import { detectBusinessCardPanels } from '@/lib/businessCardPanels';
 import type { CompanyId } from '@/types/models';
 
 export type LocalBusinessCardOcrPhase =
@@ -39,6 +43,7 @@ export interface LocalBusinessCardOcrOptions {
   companyId: CompanyId;
   languageProfile: BusinessCardLanguageProfile;
   rotation: 0 | 90 | 180 | 270;
+  panelSelection?: BusinessCardPanelSelection;
   signal?: AbortSignal;
   onProgress?: (progress: LocalBusinessCardOcrProgress) => void;
 }
@@ -282,6 +287,67 @@ export function shouldRetryBusinessCardRotation(score: number) {
   return score < 0.72;
 }
 
+export function detectVerticalPanelSeparator(canvas: HTMLCanvasElement) {
+  if (canvas.width < canvas.height * 1.35) return { aspectRatio: canvas.width / canvas.height, separatorX: null, separatorConfidence: 0 };
+  const context = canvas.getContext('2d', { alpha: false, willReadFrequently: true });
+  if (!context) return { separatorX: null, separatorConfidence: 0 };
+  const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data;
+  const averageColumn = (x: number) => {
+    let total = 0;
+    let count = 0;
+    const stride = Math.max(1, Math.floor(canvas.height / 320));
+    for (let y = 0; y < canvas.height; y += stride) {
+      total += pixels[(y * canvas.width + x) * 4] ?? 255;
+      count += 1;
+    }
+    return count ? total / count : 255;
+  };
+  let best = { x: Math.round(canvas.width / 2), score: 0 };
+  const start = Math.round(canvas.width * 0.3);
+  const end = Math.round(canvas.width * 0.7);
+  const offset = Math.max(6, Math.round(canvas.width * 0.008));
+  for (let x = start; x <= end; x += Math.max(1, Math.floor(canvas.width / 700))) {
+    const current = averageColumn(x);
+    const left = averageColumn(Math.max(0, x - offset));
+    const right = averageColumn(Math.min(canvas.width - 1, x + offset));
+    const neighbors = (left + right) / 2;
+    const lineScore = current + 24 < neighbors ? (neighbors - current) / 80 : 0;
+    const gutterScore = current > 244 && Math.min(left, right) < 236 ? (current - Math.min(left, right)) / 45 : 0;
+    const score = Math.max(lineScore, gutterScore);
+    if (score > best.score) best = { x, score };
+  }
+  return {
+    aspectRatio: canvas.width / canvas.height,
+    separatorX: best.score >= 0.28 ? best.x / canvas.width : null,
+    separatorConfidence: Math.max(0, Math.min(1, best.score)),
+  };
+}
+
+function cropPanelCanvas(source: HTMLCanvasElement, panel: BusinessCardPanel) {
+  const x = Math.max(0, Math.floor(source.width * panel.x0));
+  const width = Math.max(1, Math.ceil(source.width * (panel.x1 - panel.x0)));
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = source.height;
+  const context = canvas.getContext('2d', { alpha: false });
+  if (!context) throw new Error('OCR_CANVAS_UNAVAILABLE');
+  context.fillStyle = '#ffffff';
+  context.fillRect(0, 0, canvas.width, canvas.height);
+  context.drawImage(source, x, 0, width, source.height, 0, 0, width, source.height);
+  return canvas;
+}
+
+function remapPanelBoxes(boxes: BusinessCardOcrBox[], panel: BusinessCardPanel) {
+  const width = panel.x1 - panel.x0;
+  return boxes.map((box) => ({
+    ...box,
+    id: panel.id.toLocaleLowerCase() + '-' + box.id,
+    panelId: panel.id,
+    x0: panel.x0 + box.x0 * width,
+    x1: panel.x0 + box.x1 * width,
+    width: box.width * width,
+  }));
+}
 export async function runLocalBusinessCardOcr(
   file: File,
   options: LocalBusinessCardOcrOptions,
@@ -323,13 +389,16 @@ export async function runLocalBusinessCardOcr(
       mode: BusinessCardImageMode,
       rotation: 0 | 90 | 180 | 270,
       id: string,
+      panel?: BusinessCardPanel,
     ) => {
       assertNotAborted(options.signal);
       options.onProgress?.({ phase: 'PREPARING_IMAGE', percent: 58, detail: `${mode} · ${rotation}°` });
-      const canvas = await preprocessBusinessCardImage(file, rotation, options.signal, mode);
-      canvases.push(canvas);
+      const fullCanvas = await preprocessBusinessCardImage(file, rotation, options.signal, mode);
+      canvases.push(fullCanvas);
+      const canvas = panel ? cropPanelCanvas(fullCanvas, panel) : fullCanvas;
+      if (panel) canvases.push(canvas);
       if (!captureQuality && mode === 'STANDARD' && rotation === options.rotation) {
-        captureQuality = assessBusinessCardCaptureQuality(canvas);
+        captureQuality = assessBusinessCardCaptureQuality(fullCanvas);
       }
       options.onProgress?.({ phase: 'RECOGNIZING_TEXT', percent: 64, detail: `${mode} OCR · ${rotation}°` });
       workerError = undefined;
@@ -346,7 +415,7 @@ export async function runLocalBusinessCardOcr(
       const result = parseBusinessCardTextDetailed(rawText, {
         overallConfidence: recognition.data.confidence / 100,
         lines: evidence.lines,
-        boxes: evidence.boxes,
+        boxes: panel ? remapPanelBoxes(evidence.boxes, panel) : evidence.boxes,
         languageProfile: options.languageProfile,
         languages,
         engine: 'LOCAL_TESSERACT',
@@ -365,34 +434,81 @@ export async function runLocalBusinessCardOcr(
       passResults.push({ summary, result });
     };
 
+    await recognizePass('STANDARD', options.rotation, 'discovery-standard');
+    const discovery = passResults[0];
+    if (!discovery) throw new Error('OCR_NO_TEXT_DETECTED');
+    const signalCanvas = await preprocessBusinessCardImage(file, options.rotation, options.signal, 'STANDARD');
+    canvases.push(signalCanvas);
+    const imageSignal = detectVerticalPanelSeparator(signalCanvas);
+    const panelAnalysis = detectBusinessCardPanels(
+      discovery.result.evidence?.boxes ?? [],
+      imageSignal,
+      options.panelSelection ?? 'AUTO',
+    );
+
     const modes: BusinessCardImageMode[] = ['STANDARD', 'CONTRAST', 'THRESHOLD'];
-    for (const mode of modes) {
-      await recognizePass(mode, options.rotation, `base-${mode.toLocaleLowerCase()}`);
-    }
-    let best = [...passResults].sort((a, b) => b.summary.score - a.summary.score)[0];
-    if (best && shouldRetryBusinessCardRotation(best.summary.score)) {
-      const rotations = ([0, 90, 180, 270] as const).filter((rotation) => rotation !== options.rotation);
-      for (const rotation of rotations) {
-        await recognizePass('CONTRAST', rotation, `rotation-${rotation}`);
+    let best: (typeof passResults)[number] | undefined;
+    let promoResult: BusinessCardOcrResult | undefined;
+
+    if (panelAnalysis.layout === 'DUAL_PANEL') {
+      const contactPanel = panelAnalysis.panels.find((item) => item.id === panelAnalysis.contactPanelId);
+      const promoPanel = panelAnalysis.panels.find((item) => item.id === panelAnalysis.promoPanelId);
+      if (!contactPanel || !promoPanel) throw new Error('OCR_PANEL_SELECTION_FAILED');
+      for (const mode of modes) {
+        await recognizePass(mode, options.rotation, 'contact-' + mode.toLocaleLowerCase(), contactPanel);
+      }
+      const contactResults = passResults.filter((item) => item.summary.id.startsWith('contact-'));
+      best = [...contactResults].sort((a, b) => b.summary.score - a.summary.score)[0];
+      await recognizePass('STANDARD', options.rotation, 'promo-standard', promoPanel);
+      promoResult = passResults.find((item) => item.summary.id === 'promo-standard')?.result;
+      if (promoResult && !promoResult.contact.company && !promoResult.contact.homepage) {
+        await recognizePass('CONTRAST', options.rotation, 'promo-contrast', promoPanel);
+        promoResult = passResults.find((item) => item.summary.id === 'promo-contrast')?.result ?? promoResult;
+      }
+    } else {
+      for (const mode of ['CONTRAST', 'THRESHOLD'] as const) {
+        await recognizePass(mode, options.rotation, 'base-' + mode.toLocaleLowerCase());
       }
       best = [...passResults].sort((a, b) => b.summary.score - a.summary.score)[0];
+      if (best && shouldRetryBusinessCardRotation(best.summary.score)) {
+        const rotations = ([0, 90, 180, 270] as const).filter((rotation) => rotation !== options.rotation);
+        for (const rotation of rotations) {
+          await recognizePass('CONTRAST', rotation, 'rotation-' + rotation);
+        }
+        best = [...passResults].sort((a, b) => b.summary.score - a.summary.score)[0];
+      }
     }
     if (!best) throw new Error('OCR_NO_TEXT_DETECTED');
 
     options.onProgress?.({ phase: 'PARSING_FIELDS', percent: 96, detail: 'Comparing structured OCR evidence' });
+    const merged = mergeBusinessCardPanelResults(best.result, promoResult);
+    const identityNeedsReview = (['name', 'company', 'department', 'position'] as const)
+      .some((field) => !merged.contact[field] || (merged.fieldConfidence[field] ?? 0) < 0.58);
     const result: BusinessCardOcrResult = {
       ...best.result,
+      contact: merged.contact,
+      fieldConfidence: merged.fieldConfidence,
+      rawText: promoResult ? best.result.rawText + '\n--- BRAND PROMO FACE ---\n' + promoResult.rawText : best.result.rawText,
       warnings: Array.from(new Set([
         ...best.result.warnings,
         ...(captureQuality?.warnings ?? []),
+        ...(identityNeedsReview ? ['REVIEW_REQUIRED_KEY_IDENTITY'] : []),
       ])),
       evidence: {
-        boxes: best.result.evidence?.boxes ?? [],
-        candidates: best.result.evidence?.candidates ?? [],
-        selectedCandidateIds: best.result.evidence?.selectedCandidateIds ?? {},
+        boxes: [
+          ...(best.result.evidence?.boxes ?? []),
+          ...(promoResult?.evidence?.boxes ?? []),
+        ],
+        candidates: [
+          ...(best.result.evidence?.candidates ?? []),
+          ...(promoResult?.evidence?.candidates ?? []),
+        ],
+        selectedCandidateIds: merged.selectedCandidateIds,
+        fieldSources: merged.fieldSources,
         passes: summaries,
         selectedPassId: best.summary.id,
         captureQuality,
+        panelAnalysis,
       },
     };
     options.onProgress?.({ phase: 'COMPLETE', percent: 100, detail: 'Complete' });

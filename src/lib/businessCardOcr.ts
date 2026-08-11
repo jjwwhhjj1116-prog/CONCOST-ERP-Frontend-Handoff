@@ -51,6 +51,46 @@ export interface BusinessCardOcrBox {
   lineIndex?: number;
   blockIndex?: number;
   wordIndex?: number;
+  panelId?: string;
+}
+
+export type BusinessCardPanelKind = 'CONTACT_FACE' | 'BRAND_PROMO_FACE' | 'UNKNOWN';
+export type BusinessCardPanelSelection = 'AUTO' | 'LEFT' | 'RIGHT' | 'FULL';
+
+export interface BusinessCardPanel {
+  id: 'LEFT' | 'RIGHT' | 'FULL';
+  kind: BusinessCardPanelKind;
+  x0: number;
+  y0: number;
+  x1: number;
+  y1: number;
+  score: number;
+  contactScore: number;
+  promoScore: number;
+}
+
+export interface BusinessCardPanelImageSignal {
+  separatorX?: number | null;
+  separatorConfidence?: number;
+  aspectRatio?: number;
+}
+
+export interface BusinessCardPanelAnalysis {
+  layout: 'SINGLE_FACE' | 'DUAL_PANEL';
+  selection: BusinessCardPanelSelection;
+  separatorX: number | null;
+  separatorConfidence: number;
+  contactPanelId: BusinessCardPanel['id'];
+  promoPanelId: BusinessCardPanel['id'] | null;
+  panels: BusinessCardPanel[];
+  reason: string[];
+}
+
+export interface BusinessCardFieldSource {
+  field: keyof BusinessCardFields;
+  panelId: BusinessCardPanel['id'];
+  boxIds: string[];
+  confidence: number;
 }
 
 export type BusinessCardFieldCandidate = {
@@ -94,6 +134,8 @@ export type BusinessCardOcrEvidence = {
   passes?: BusinessCardOcrPassSummary[];
   selectedPassId?: string;
   captureQuality?: BusinessCardCaptureQuality;
+  panelAnalysis?: BusinessCardPanelAnalysis;
+  fieldSources?: Partial<Record<keyof BusinessCardFields, BusinessCardFieldSource>>;
 };
 
 export type BusinessCardOcrResult = {
@@ -112,6 +154,30 @@ export type BusinessCardOcrResult = {
   evidence?: BusinessCardOcrEvidence;
 };
 
+export function mergeBusinessCardPanelResults(
+  contactResult: BusinessCardOcrResult,
+  promoResult?: BusinessCardOcrResult,
+) {
+  const contact = { ...contactResult.contact };
+  const fieldConfidence = { ...contactResult.fieldConfidence };
+  const selectedCandidateIds = { ...(contactResult.evidence?.selectedCandidateIds ?? {}) };
+  const fieldSources = { ...(contactResult.evidence?.fieldSources ?? {}) };
+
+  for (const field of ['company', 'homepage'] as const) {
+    if (!contact[field] && promoResult?.contact[field]) {
+      contact[field] = promoResult.contact[field];
+      fieldConfidence[field] = promoResult.fieldConfidence[field] ?? null;
+      if (promoResult.evidence?.selectedCandidateIds[field]) {
+        selectedCandidateIds[field] = promoResult.evidence.selectedCandidateIds[field];
+      }
+      if (promoResult.evidence?.fieldSources?.[field]) {
+        fieldSources[field] = promoResult.evidence.fieldSources[field];
+      }
+    }
+  }
+
+  return { contact, fieldConfidence, selectedCandidateIds, fieldSources };
+}
 const emptyContact = (): BusinessCardFields => ({ name: '', company: '', department: '', position: '', mobile: '', telephone: '', fax: '', email: '', homepage: '', address: '' });
 const record = (value: unknown): Record<string, unknown> | null => value !== null && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : null;
 const list = (value: unknown): unknown[] => Array.isArray(value) ? value : [];
@@ -150,8 +216,8 @@ function cleanLine(value: string) {
 
 const COMPANY_PATTERN = /(주식회사|\(주\)|㈜|유한회사|건설|건축|엔지니어링|컨설팅|CON.?COST|VIET\s*QS|CO\.?\b|CORP(?:ORATION)?\.?\b|COMPANY|LTD\.?\b|INC\.?\b|LLC\b|JSC\b|ENGINEERING|CONSTRUCTION|CÔNG\s*TY|CONG\s*TY|CTY\b|TNHH|CỔ\s*PHẦN|CO\s*PHAN)/i;
 const DEPARTMENT_PATTERN = /(본부|센터|사업부|[가-힣A-Za-zÀ-ỹ]+(?:팀|부|실|파트)|department|dept\.?\b|division|team\b|center\b|section\b|phòng(?:\s+[A-Za-zÀ-ỹ]+){0,3}|phong(?:\s+[A-Za-zÀ-ỹ]+){0,3}|ban(?:\s+[A-Za-zÀ-ỹ]+){0,3})/i;
-const POSITION_PATTERN = /(대표이사|대표|부사장|사장|전무|상무|이사|본부장|센터장|실장|팀장|부장|차장|과장|대리|주임|프로|선임|PM\b|general manager|senior manager|project manager|vice president|manager|director|president|engineer|consultant|lead\b|chief|ceo|giám đốc|giam doc|trưởng(?:\s+[A-Za-zÀ-ỹ]+){0,2}|truong(?:\s+[A-Za-zÀ-ỹ]+){0,2}|quản lý|quan ly)/i;
-const CODE_TOKEN_PATTERN = /\b(?:NO|BIM|VER|ID|CODE)[.\-_ ]?\d[A-Z0-9._-]*\b|\b[A-Z]{2,}[._-]\d[A-Z0-9._-]*\b|\b[A-Z]{1,4}\d{2,}\b/gi;
+const POSITION_PATTERN = /(대표이사|대표|부사장|사장|전무|상무|이사|본부장|센터장|실장|팀장|부장|차장|과장|대리|주임|프로|수석|선임|책임|PM\b|general manager|senior manager|project manager|vice president|manager|director|president|engineer|consultant|lead\b|chief|ceo|giám đốc|giam doc|trưởng(?:\s+[A-Za-zÀ-ỹ]+){0,2}|truong(?:\s+[A-Za-zÀ-ỹ]+){0,2}|quản lý|quan ly)/i;
+const CODE_TOKEN_PATTERN = /\b(?:NO|BIM|VER|ID|CODE)[.\-_ ]?\d[A-Z0-9._-]*\b|\b[A-Z]{2,}[._-]\d[A-Z0-9._-]*\b|\b[A-Z]{1,4}\d{2,}\b|\b[A-Z]{2,4}\s*[-_]\s*[A-Z]{2,4}\b|\b[A-Z]{2,4}\.\s*[A-Z]{2,4}\b/gi;
 const LOGO_TOKEN_PATTERN = /^(?:CON\s*[-·]?\s*COST|CONCOST|CON\s*COR|VIET\s*QS|NO\.?\s*1|SINCE\s*\d{4})$/i;
 
 function roundScore(value: number) {
@@ -217,7 +283,24 @@ function isValidHostname(value: string) {
 function isLogoLike(value: string) {
   const cleaned = cleanLine(value);
   return LOGO_TOKEN_PATTERN.test(cleaned)
-    || /^(?:CON|COST|VIET|QS)(?:\s+(?:CON|COST|VIET|QS)){0,2}$/i.test(cleaned);
+    || /^(?:CON|COST|VIET|QS)(?:\s+(?:CON|COST|VIET|QS)){0,2}$/i.test(cleaned)
+    || /^(?:DEMO\s+)?(?:COST|CONSTRUCTION|ENGINEERING|CONSULTING|SOLUTIONS?)$/i.test(cleaned);
+}
+
+function isMarketingStatement(value: string) {
+  const cleaned = cleanLine(value);
+  const serviceTerms = cleaned.match(/(?:견적|수량산출|공사비|검증|클레임|서비스|consulting|service|solution)/gi)?.length ?? 0;
+  return /(?:대한민국\s*)?no\.?\s*1|컨설팅\s*기업|consulting\s+(?:company|leader)|since\s*\d{4}/i.test(cleaned)
+    || serviceTerms >= 2
+    || /\|.*\|/.test(cleaned);
+}
+
+function reconstructSpacedHangulName(value: string) {
+  const tokens = cleanLine(value).split(/\s+/);
+  if (tokens.length < 2 || tokens.length > 5 || !tokens.every((token) => /^[가-힣]{1,2}$/.test(token))) return '';
+  const joined = tokens.join('');
+  if (/(?:본부|센터|사업부|팀|부서|기술|구조|토목|조경|마감)$/.test(joined)) return '';
+  return joined;
 }
 
 function isValidPersonName(value: string) {
@@ -226,7 +309,7 @@ function isValidPersonName(value: string) {
   if (isLogoLike(cleaned) || COMPANY_PATTERN.test(cleaned) || DEPARTMENT_PATTERN.test(cleaned) || POSITION_PATTERN.test(cleaned)) return false;
   const withoutDemo = cleaned.replace(/^\[DEMO\]\s*/i, '');
   if (/^[가-힣]{2,6}(?:\s+[가-힣]{1,8}){0,2}$/.test(withoutDemo)) return true;
-  const words = withoutDemo.split(/\s+/).filter(Boolean);
+  const words = withoutDemo.replace(/,/g, ' ').split(/\s+/).filter(Boolean);
   return words.length >= 2 && words.length <= 5 && words.every((word) => /^[A-Za-zÀ-ỹ][A-Za-zÀ-ỹ'.-]*$/.test(word));
 }
 
@@ -312,14 +395,14 @@ function syntheticBoxes(lines: string[]): BusinessCardOcrBox[] {
 }
 
 function multilineAddress(lines: string[], labeled: { value: string; line: string } | null) {
-  if (!labeled) return lines.find(looksLikeAddress) ?? '';
-  const start = lines.indexOf(labeled.line);
-  const parts = [labeled.value];
+  const start = labeled ? lines.indexOf(labeled.line) : lines.findIndex(looksLikeAddress);
+  if (start < 0) return '';
+  const parts = [labeled?.value ?? lines[start]];
   for (let index = start + 1; index < Math.min(lines.length, start + 3); index += 1) {
     const line = lines[index];
     if (looksLikeContactLine(line) || looksLikeCompany(line) || looksLikeDepartment(line) || looksLikePosition(line)) break;
     if (/^(?:name|company|department|position|mobile|tel|fax|email|web|website)\b/i.test(line)) break;
-    if (/\d|street|road|district|city|province|구\b|로\b|길\b|동\b|호\b|quận|phường|đường/i.test(line)) parts.push(line);
+    if (/\d|street|road|district|city|province|tower|building|floor|\b\d+(?:f|층|호)\b|구\b|로\b|길\b|동\b|호\b|quận|phường|đường/i.test(line)) parts.push(line);
     else break;
   }
   return cleanLine(parts.join(' '));
@@ -364,7 +447,7 @@ function looksLikeDepartment(line: string) {
 }
 
 function looksLikePosition(line: string) {
-  return /(대표이사|대표|부사장|사장|전무|상무|이사|본부장|센터장|실장|팀장|부장|차장|과장|대리|주임|프로|선임|PM\b|매니저|general manager|senior manager|project manager|vice president|manager|director|president|engineer|consultant|lead\b|chief|ceo|giám đốc|giam doc|trưởng|truong|quản lý|quan ly)/i.test(line);
+  return /(대표이사|대표|부사장|사장|전무|상무|이사|본부장|센터장|실장|팀장|부장|차장|과장|대리|주임|프로|수석|선임|책임|PM\b|매니저|general manager|senior manager|project manager|vice president|manager|director|president|engineer|consultant|lead\b|chief|ceo|giám đốc|giam doc|trưởng|truong|quản lý|quan ly)/i.test(line);
 }
 
 function looksLikeAddress(line: string) {
@@ -447,7 +530,9 @@ export function parseBusinessCardTextDetailed(
       .split(/[|·;,]/)
       .at(-1)
       ?.trim() ?? '';
-    return { value: match[0].trim(), line, labelContext };
+    const afterNumber = line.slice((match.index ?? 0) + match[0].length);
+    const extension = afterNumber.match(/(?:\(\d{2,6}\)|\b(?:ext\.?|extension|내선)\s*[:.-]?\s*\d{2,6}\b)/i)?.[0] ?? '';
+    return { value: cleanLine(match[0].trim() + (extension ? ' ' + extension : '')), line, labelContext };
   }));
   const mobileCandidate = phoneCandidates.find(({ value, labelContext }) => /(?:010|01[1-9]|\+?82[\s.-]?10|\+?84[\s.-]?(?:3|5|7|8|9))/.test(value.replace(/[()]/g, '')) || /\b(?:m|mobile|cell|휴대|di động|di dong|đtdd)\b/i.test(labelContext));
   const faxCandidate = phoneCandidates.find(({ labelContext }) => /\b(?:f|fax)\b|팩스/i.test(labelContext));
@@ -474,10 +559,26 @@ export function parseBusinessCardTextDetailed(
   const labeledPosition = labeledValue(lines, 'position|title|직급|직책|chức\\s*vụ|chuc\\s*vu');
   const labeledAddress = labeledValue(lines, 'address|주소|địa\\s*chỉ|dia\\s*chi');
 
-  lines.forEach((line) => {
+  lines.forEach((line, lineIndex) => {
+    const spacedName = reconstructSpacedHangulName(line);
+    if (spacedName) {
+      const englishPair = lines[lineIndex + 1] ?? '';
+      const corroborated = isValidPersonName(englishPair) && /^[A-Za-zÀ-ỹ][A-Za-zÀ-ỹ ,.'-]+$/.test(englishPair);
+      add('name', spacedName, { pattern: 1, label: 0.82, layout: corroborated ? 1 : 0.9, semantic: 1 }, ['SPACED_HANGUL_JOIN', ...(corroborated ? ['ENGLISH_NAME_CORROBORATION'] : [])]);
+    }
+
     const labeled = labeledCompany?.line === line;
     const value = labeled ? labeledCompany.value : line;
-    if (looksLikeCompany(value)) add('company', value, { pattern: 0.98, label: labeled ? 1 : 0.25, semantic: 0.98 }, [labeled ? 'COMPANY_LABEL' : 'COMPANY_SEMANTIC']);
+    if (looksLikeCompany(value)) {
+      const marketing = isMarketingStatement(value);
+      add(
+        'company',
+        value,
+        { pattern: marketing ? 0.08 : 0.98, label: labeled ? 1 : 0.25, semantic: marketing ? 0.05 : 0.98, penalty: marketing ? 0.8 : 0 },
+        [labeled ? 'COMPANY_LABEL' : 'COMPANY_SEMANTIC'],
+        marketing ? 'MARKETING_STATEMENT' : undefined,
+      );
+    }
 
     const labeledDept = labeledDepartment?.line === line;
     const labeledRole = labeledPosition?.line === line;
@@ -539,6 +640,7 @@ export function parseBusinessCardTextDetailed(
   const contact = emptyContact();
   const fieldConfidence: BusinessCardFieldConfidence = {};
   const selectedCandidateIds: Partial<Record<keyof BusinessCardFields, string>> = {};
+  const fieldSources: Partial<Record<keyof BusinessCardFields, BusinessCardFieldSource>> = {};
   const orderedCandidates: BusinessCardFieldCandidate[] = [];
   BUSINESS_CARD_FIELD_KEYS.forEach((field) => {
     const selection = chooseCandidate(candidates.filter((candidate) => candidate.field === field), thresholds[field]);
@@ -550,6 +652,13 @@ export function parseBusinessCardTextDetailed(
     contact[field] = selection.selected.value;
     fieldConfidence[field] = selection.selected.finalScore;
     selectedCandidateIds[field] = selection.selected.id;
+    const sourcePanel = boxes.find((box) => selection.selected?.sourceBoxIds.includes(box.id))?.panelId;
+    fieldSources[field] = {
+      field,
+      panelId: sourcePanel === 'LEFT' || sourcePanel === 'RIGHT' ? sourcePanel : 'FULL',
+      boxIds: selection.selected.sourceBoxIds,
+      confidence: selection.selected.finalScore,
+    };
   });
 
   const warnings: string[] = [];
@@ -574,6 +683,7 @@ export function parseBusinessCardTextDetailed(
       boxes,
       candidates: orderedCandidates,
       selectedCandidateIds,
+      fieldSources,
     },
   };
 }
