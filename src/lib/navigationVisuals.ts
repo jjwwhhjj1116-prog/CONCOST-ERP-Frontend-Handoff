@@ -210,6 +210,9 @@ const exactVisuals: Record<string, NavigationVisual> = {
   'tasks-review': { tone: 'amber', pictogram: 'taskReview' },
   'tasks-done': { tone: 'green', pictogram: 'taskDone' },
 
+  'board-home': { tone: 'orange', pictogram: 'boardCommunity' },
+  'board-manage': { tone: 'indigo', pictogram: 'settingsHome' },
+  'board-trash': { tone: 'rose', pictogram: 'mailTrash' },
   'board-ceo': { tone: 'violet', pictogram: 'boardCeo' },
   'board-notice': { tone: 'orange', pictogram: 'boardNotice' },
   'board-notice-company': { tone: 'orange', pictogram: 'boardNotice' },

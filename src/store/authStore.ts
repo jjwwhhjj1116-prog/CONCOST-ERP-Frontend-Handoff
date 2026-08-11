@@ -84,16 +84,32 @@ const getSessionUserId = () => {
   return window.sessionStorage.getItem(SESSION_USER_ID_KEY);
 };
 
-const synchronizeUserCompanyScope = (user: PersonnelCard | null) => {
+const synchronizeUserCompanyScope = (
+  user: PersonnelCard | null,
+  options: { preserveDemoAdminWorkspace?: boolean } = {},
+) => {
   const companyId = user?.companyId === 'CON_COST' || user?.companyId === 'VIET_QS'
     ? user.companyId
     : null;
-  setApiCompanyId(companyId);
-  if (!companyId) return;
+  if (!companyId) {
+    setApiCompanyId(null);
+    return;
+  }
 
-  useUiStore.getState().setBrandWorkspace(companyId);
+  const canPreserveSelectedWorkspace = Boolean(
+    options.preserveDemoAdminWorkspace
+    && isDemoLocalMode()
+    && user
+    && ['SUPER_ADMIN', 'SYSTEM_ADMIN'].includes(user.role),
+  );
+  const selectedCompanyId = canPreserveSelectedWorkspace
+    ? useUiStore.getState().brandWorkspace
+    : companyId;
+
+  setApiCompanyId(selectedCompanyId);
+  useUiStore.getState().setBrandWorkspace(selectedCompanyId);
   useTranslationStore.getState().updateSettings({
-    uiLanguage: companyId === 'VIET_QS' ? 'vi' : 'ko',
+    uiLanguage: selectedCompanyId === 'VIET_QS' ? 'vi' : 'ko',
   });
 };
 
@@ -294,7 +310,9 @@ export const useAuthStore = create<AuthState>()(
     const sessionUser = sessionUserId
       ? resolvePersonnel({ id: sessionUserId }, state.users)
       : null;
-    synchronizeUserCompanyScope(state.currentUser ?? sessionUser);
+    synchronizeUserCompanyScope(state.currentUser ?? sessionUser, {
+      preserveDemoAdminWorkspace: true,
+    });
     set({
       currentUser: state.currentUser ?? sessionUser,
       isSessionChecking: false,

@@ -30,6 +30,7 @@ The following approved handoff documents are the implementation entry points for
 | 24 | Reading order | `BACKEND_READING_ORDER.md` | Apply baseline, contracts, deltas, drift, then matrix |
 | 25 | Finance ERP redesign | `BACKEND_DELTA_RC3_FINANCE_ERP_BENCHMARK_REDESIGN.md` | Revenue/AR, purchase/AP, settlement, expense, tax, budget, treasury, profitability, close, control, and Excel adapters |
 | 26 | Business card OCR accuracy | `BACKEND_DELTA_RC3_BUSINESS_CARD_OCR_ACCURACY.md` | Structured layout evidence, company/language provider capability, conservative mapping, and server-only credentials |
+| 27 | Operational board | `BACKEND_DELTA_RC3_BOARD_OPERATIONAL_SYSTEM.md` | Company-scoped boards, permissions, post/comment lifecycle, READY files, read receipts, notifications, search, and audit |
 
 ## Immediate Backend Order
 

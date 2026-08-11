@@ -61,3 +61,31 @@ test('workspace switch synchronizes company, locale, and API scope atomically', 
   assert.equal(useTranslationStore.getState().settings.uiLanguage, 'ko');
   assert.equal(getApiCompanyId(), 'CON_COST');
 });
+
+test('demo administrator workspace selection survives session recovery', async () => {
+  const previousMode = process.env.NEXT_PUBLIC_RUNTIME_MODE;
+  process.env.NEXT_PUBLIC_RUNTIME_MODE = 'DEMO_LOCAL';
+
+  try {
+    const admin = useAuthStore.getState().users.find((user) => user.id === 'demo-cc-admin-001');
+    assert.ok(admin);
+
+    useUiStore.getState().setBrandWorkspace('VIET_QS');
+    useAuthStore.setState({
+      currentUser: admin,
+      hasHydrated: true,
+      isSessionReady: false,
+      isSessionChecking: false,
+    });
+
+    await useAuthStore.getState().initializeSession();
+
+    assert.equal(useUiStore.getState().brandWorkspace, 'VIET_QS');
+    assert.equal(useTranslationStore.getState().settings.uiLanguage, 'vi');
+    assert.equal(getApiCompanyId(), 'VIET_QS');
+  } finally {
+    useAuthStore.getState().logout();
+    useAuthStore.setState({ isSessionReady: false, isSessionChecking: false });
+    process.env.NEXT_PUBLIC_RUNTIME_MODE = previousMode;
+  }
+});

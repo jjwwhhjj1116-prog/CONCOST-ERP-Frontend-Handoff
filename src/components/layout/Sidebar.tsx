@@ -31,6 +31,7 @@ import {
   Settings,
   ShieldCheck,
   Sun,
+  Trash2,
   UserRound,
   UsersRound,
 } from 'lucide-react';
@@ -130,7 +131,6 @@ const railNavigation: RailItem[] = [
   { id: 'drive', section: '드라이브', label: '드라이브', href: '/drive', icon: Cloud, roles: allRoles, description: '회사·프로젝트 자료' },
   { id: 'tasks', section: '할일', label: '할일', href: '/tasks/my', icon: CheckSquare2, roles: allRoles, minLevel: 2, description: '내 업무와 마감 항목' },
   { id: 'board', section: '게시판', label: '게시판', href: '/board', icon: MessageSquareText, roles: allRoles, description: '전사·본부별 소식' },
-  { id: 'organization', section: '조직도', label: '조직도', href: '/organization', icon: Network, roles: allRoles, description: '조직과 담당자 검색' },
   { id: 'sales', section: '영업', label: '영업', href: '/sales', icon: Handshake, roles: allRoles, minLevel: 2, description: '고객·기회·견적·계약 통합 관리' },
   { id: 'finance', section: '재무', label: '재무', href: '/finance', icon: Landmark, roles: allRoles, minLevel: 2, description: '매출·매입·자금·결산 통합 관리' },
 ];
@@ -175,6 +175,7 @@ const panelMenus: Record<string, NavigationItem[]> = {
     { id: 'tasks-done', label: '완료한 일', href: '/tasks/my?filter=DONE', roles: allRoles },
   ],
   board: [
+    { id: 'board-home', label: '\uAC8C\uC2DC\uD310 \uD648', href: '/board', icon: MessageSquareText, roles: allRoles },
     { id: 'board-ceo', label: 'CEO 인사말', href: '/board?category=CEO', icon: UserRound, roles: allRoles },
     {
       id: 'board-notice', label: '공지사항', icon: Megaphone, roles: allRoles,
@@ -192,11 +193,9 @@ const panelMenus: Record<string, NavigationItem[]> = {
       ],
     },
     { id: 'board-library', label: '자료실', href: '/board?category=LIBRARY', icon: LibraryBig, roles: allRoles },
-  ],
-  organization: [
-    { id: 'organization-chart', label: '조직도', href: '/organization', icon: Network, roles: allRoles },
-    { id: 'organization-concost', label: 'CON-COST', href: '/organization?company=CON_COST', roles: allRoles },
-    { id: 'organization-vietqs', label: 'VIETQS', href: '/organization?company=VIET_QS', roles: allRoles },
+    { id: 'organization-chart', label: '\uC870\uC9C1\uB3C4', href: '/organization', icon: Network, roles: allRoles },
+    { id: 'board-manage', label: '\uAC8C\uC2DC\uD310 \uAD00\uB9AC', href: '/board/manage', icon: Settings, roles: ['SUPER_ADMIN'] },
+    { id: 'board-trash', label: '\uD734\uC9C0\uD1B5\u00B7\uBCF5\uAD6C', href: '/board/trash', icon: Trash2, roles: ['SUPER_ADMIN'] },
   ],
   sales: [
     { id: 'sales-home', label: '영업 대시보드', href: '/sales', icon: Handshake, roles: allRoles },
@@ -271,7 +270,7 @@ function getActiveRail(pathname: string) {
   if (pathname.startsWith('/drive')) return 'drive';
   if (pathname.startsWith('/tasks')) return 'tasks';
   if (pathname.startsWith('/board')) return 'board';
-  if (pathname.startsWith('/organization')) return 'organization';
+  if (pathname.startsWith('/organization')) return 'board';
   if (pathname.startsWith('/sales')) return 'sales';
   if (pathname.startsWith('/finance')) return 'finance';
   if (pathname.startsWith('/ai-assistant')) return 'ai-assistant';
@@ -353,13 +352,14 @@ export function Sidebar() {
   const visibleRail = railNavigation.filter(
     (item) =>
       canAccessNavigation(item, currentUser.role, accessLevel) &&
+      item.id !== 'organization' &&
       (item.id !== 'finance' || financeAccess.allowed),
   );
   const visibleUtilities = utilityNavigation.filter((item) => canAccessNavigation(item, currentUser.role, accessLevel));
   const activeRail = [...visibleRail, ...visibleUtilities].find((item) => item.id === activeRailId) || visibleRail[0];
   const panelItems = filterEstimateNavigation(panelMenus[activeRail.id] || [], estimateAccess.allowed);
   const mobile = visibleRail.filter((item) =>
-    ['workspace', 'approvals', 'projects', 'calendar', 'tasks'].includes(item.id),
+    ['workspace', 'mail', 'approvals', 'calendar', 'projects', 'board'].includes(item.id),
   );
   const compactWorkspace = pathname === '/';
 
@@ -432,7 +432,7 @@ export function Sidebar() {
         </div>}
       </aside>
 
-      <nav aria-label={copy.mobileNavigation} className="fixed inset-x-3 bottom-3 z-[var(--z-mobile-nav)] grid min-h-[66px] grid-cols-5 rounded-[20px] border border-white/10 bg-[#172554]/95 p-1.5 shadow-[0_18px_42px_rgba(6,15,44,.35)] backdrop-blur-xl xl:hidden">
+      <nav aria-label={copy.mobileNavigation} className="fixed inset-x-3 bottom-3 z-[var(--z-mobile-nav)] grid min-h-[66px] grid-cols-6 rounded-[20px] border border-white/10 bg-[#172554]/95 p-1.5 shadow-[0_18px_42px_rgba(6,15,44,.35)] backdrop-blur-xl xl:hidden">
         {mobile.map((item) => {
           const Icon = item.icon ?? CircleDot;
           const active = item.id === activeRail.id;
