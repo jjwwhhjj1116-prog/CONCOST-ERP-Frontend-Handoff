@@ -29,6 +29,7 @@ import {
   type BusinessCardFieldConfidence,
   type BusinessCardLanguageProfile,
   type BusinessCardOcrResult,
+  type BusinessCardPanelSelection,
 } from '@/lib/businessCardOcr';
 import { executeFrontendMutation, getFrontendModuleBoundary, type FrontendLocale } from '@/lib/frontendDataSource';
 import {
@@ -59,7 +60,7 @@ const copy = {
     steps: ['명함 이미지', 'OCR 검수', '중복 확인', '고객DB 등록'], capture: '명함 이미지', choose: '이미지 선택', manual: 'OCR 없이 직접 입력', replace: '다른 이미지', reset: '초기화',
     demoOcr: 'DEMO OCR SIMULATION · 실제 OCR을 수행하지 않은 직접입력 상태입니다.', localOcr: 'LOCAL OCR · 서버로 이미지가 전송되지 않았습니다.', providerBlocked: 'OCR Provider 또는 Backend Adapter가 준비되지 않아 이미지를 전송하지 않았습니다.', ocrWorking: '명함 이미지를 실제로 인식하고 있습니다.', imageError: 'JPG 또는 PNG 형식의 10MB 이하 이미지만 사용할 수 있습니다.',
     firstRun: '최초 실행 시 한글/영문 인식모델을 불러오는 데 시간이 걸릴 수 있습니다.', languageProfile: '인식 언어', profiles: { AUTO: '자동(회사 기준)', KO_EN: '한국어 + 영어', VI_EN: '베트남어 + 영어', EN: '영어' }, recognize: '다시 인식', cancelOcr: '인식 취소', rotateLeft: '왼쪽 90°', rotateRight: '오른쪽 90°', original: '원본 방향', rawText: '인식 원문 보기', rawHelp: '자동 분류 전 OCR 원문입니다. 디버그 정보와 이미지는 저장하지 않습니다.', lowConfidence: '확인 필요', confidenceLevel: { HIGH: '높음', MEDIUM: '보통', LOW: '낮음', UNKNOWN: '확인 필요' }, uncertain: '자동인식 결과가 불확실합니다. 이미지를 다시 촬영하거나 필드를 직접 수정해 주세요.', retry: '다시 시도', differentImage: '다른 이미지', ocrCancelled: 'OCR 인식을 취소했습니다.', ocrFailed: '이미지를 인식하지 못했습니다. 다시 시도하거나 직접 입력해 주세요.', noText: '인식된 글자가 없습니다. 더 선명한 이미지를 선택해 주세요.', engineFailed: 'OCR 인식모델을 불러오지 못했습니다. 네트워크를 확인한 뒤 다시 시도해 주세요.',
-    review: 'OCR 결과 검수', reviewHelp: '모든 필드는 사람이 직접 수정할 수 있습니다.', next: '다음 단계', previous: '이전 단계', required: '이름 또는 회사 중 하나를 입력하세요.', confidence: '신뢰도', manualValue: '직접입력', captureWarning: '촬영 품질을 확인해 주세요', qaTitle: '관리자 OCR 근거 QA', qaHelp: '선택된 패스, 정규화 bbox, 후보 점수와 탈락 사유입니다. 이 정보와 이미지는 저장되지 않습니다.', selectedPass: '선택 패스', candidate: '후보', rejected: '탈락', score: '점수',
+    review: 'OCR 결과 검수', reviewHelp: '모든 필드는 사람이 직접 수정할 수 있습니다.', panelTitle: '이미지 패널', dualDetected: '양면/2패널 명함으로 감지됨', singleDetected: '단면 명함으로 처리됨', contactFace: '연락처 면', promoFace: '홍보 면', panelOption: { AUTO: '자동', LEFT: '왼쪽 면 인식', RIGHT: '오른쪽 면 인식', FULL: '전체 인식' }, fieldSource: '필드 출처', keyIdentityWarning: '연락처 핵심정보를 확인해 주세요.', next: '다음 단계', previous: '이전 단계', required: '이름 또는 회사 중 하나를 입력하세요.', confidence: '신뢰도', manualValue: '직접입력', captureWarning: '촬영 품질을 확인해 주세요', qaTitle: '관리자 OCR 근거 QA', qaHelp: '선택된 패스, 정규화 bbox, 후보 점수와 탈락 사유입니다. 이 정보와 이미지는 저장되지 않습니다.', selectedPass: '선택 패스', candidate: '후보', rejected: '탈락', score: '점수',
     duplicate: '중복 후보 확인', noDuplicate: '현재 회사 범위에서 중복 후보가 없습니다.', duplicateFound: '이메일·휴대전화·이름과 회사 기준 후보입니다.', newContact: '새 연락처', mergeContact: '기존 연락처에 병합', differentPerson: '동명이인·다른 사람', mergeFields: '병합할 필드', keepExisting: '선택하지 않은 필드와 빈 신규값은 기존값을 유지합니다.',
     register: '고객DB 등록', customer: '연결 고객사', customerRequired: '고객사를 선택하거나 회사명을 입력하세요.', autoCustomer: '회사명으로 고객사를 찾거나 신규 Prospect를 만듭니다.', owner: 'Owner', tags: '태그', memo: '메모', google: 'Google Contacts 단방향 Opt-in', googleHelp: '요청만 기록하며 Provider 연결 전에는 동기화 성공으로 표시하지 않습니다.',
     registering: '등록 중', created: 'Canonical Demo Contact가 생성되었습니다.', merged: '기존 Contact ID를 유지한 채 선택 필드가 병합되었습니다.', backend: 'Server Adapter가 없어 운영 등록이 차단되었습니다.',
@@ -73,7 +74,7 @@ const copy = {
     steps: ['Ảnh danh thiếp', 'Kiểm tra OCR', 'Kiểm tra trùng', 'Đăng ký CRM'], capture: 'Ảnh danh thiếp', choose: 'Chọn ảnh', manual: 'Nhập trực tiếp không OCR', replace: 'Chọn ảnh khác', reset: 'Đặt lại',
     demoOcr: 'DEMO OCR SIMULATION · Chưa thực hiện OCR thật; đang ở chế độ nhập tay.', localOcr: 'LOCAL OCR · Ảnh không được gửi lên máy chủ.', providerBlocked: 'Chưa có OCR Provider hoặc Backend Adapter nên ảnh chưa được gửi.', ocrWorking: 'Đang nhận dạng danh thiếp thật.', imageError: 'Chỉ dùng JPG/PNG tối đa 10MB.',
     firstRun: 'Lần đầu có thể mất thời gian để tải mô hình nhận dạng.', languageProfile: 'Ngôn ngữ OCR', profiles: { AUTO: 'Tự động theo công ty', KO_EN: 'Tiếng Hàn + Anh', VI_EN: 'Tiếng Việt + Anh', EN: 'Tiếng Anh' }, recognize: 'Nhận dạng lại', cancelOcr: 'Hủy OCR', rotateLeft: 'Xoay trái 90°', rotateRight: 'Xoay phải 90°', original: 'Hướng gốc', rawText: 'Xem văn bản OCR', rawHelp: 'Văn bản gốc trước khi phân loại. Không lưu ảnh hay dữ liệu gỡ lỗi.', lowConfidence: 'Cần kiểm tra', confidenceLevel: { HIGH: 'Cao', MEDIUM: 'Trung bình', LOW: 'Thấp', UNKNOWN: 'Cần kiểm tra' }, uncertain: 'Kết quả chưa chắc chắn. Hãy chụp lại hoặc sửa trực tiếp các trường.', retry: 'Thử lại', differentImage: 'Ảnh khác', ocrCancelled: 'Đã hủy nhận dạng OCR.', ocrFailed: 'Không thể nhận dạng ảnh. Hãy thử lại hoặc nhập tay.', noText: 'Không phát hiện chữ. Hãy chọn ảnh rõ hơn.', engineFailed: 'Không thể tải mô hình OCR. Hãy kiểm tra mạng và thử lại.',
-    review: 'Kiểm tra kết quả OCR', reviewHelp: 'Người dùng có thể sửa mọi trường.', next: 'Tiếp theo', previous: 'Quay lại', required: 'Nhập tên hoặc công ty.', confidence: 'Độ tin cậy', manualValue: 'Nhập tay', captureWarning: 'Vui lòng kiểm tra chất lượng ảnh', qaTitle: 'QA bằng chứng OCR cho quản trị viên', qaHelp: 'Pass được chọn, bbox chuẩn hóa, điểm ứng viên và lý do loại. Ảnh và dữ liệu QA không được lưu.', selectedPass: 'Pass đã chọn', candidate: 'Ứng viên', rejected: 'Bị loại', score: 'Điểm',
+    review: 'Kiểm tra kết quả OCR', reviewHelp: 'Người dùng có thể sửa mọi trường.', panelTitle: 'Vùng ảnh', dualDetected: 'Đã phát hiện danh thiếp hai vùng', singleDetected: 'Đang xử lý như danh thiếp một mặt', contactFace: 'Vùng liên hệ', promoFace: 'Vùng quảng bá', panelOption: { AUTO: 'Tự động', LEFT: 'Nhận dạng bên trái', RIGHT: 'Nhận dạng bên phải', FULL: 'Nhận dạng toàn bộ' }, fieldSource: 'Nguồn trường', keyIdentityWarning: 'Vui lòng kiểm tra thông tin liên hệ chính.', next: 'Tiếp theo', previous: 'Quay lại', required: 'Nhập tên hoặc công ty.', confidence: 'Độ tin cậy', manualValue: 'Nhập tay', captureWarning: 'Vui lòng kiểm tra chất lượng ảnh', qaTitle: 'QA bằng chứng OCR cho quản trị viên', qaHelp: 'Pass được chọn, bbox chuẩn hóa, điểm ứng viên và lý do loại. Ảnh và dữ liệu QA không được lưu.', selectedPass: 'Pass đã chọn', candidate: 'Ứng viên', rejected: 'Bị loại', score: 'Điểm',
     duplicate: 'Kiểm tra liên hệ trùng', noDuplicate: 'Không có ứng viên trùng trong công ty hiện tại.', duplicateFound: 'Ứng viên theo email, điện thoại hoặc tên và công ty.', newContact: 'Liên hệ mới', mergeContact: 'Gộp vào liên hệ', differentPerson: 'Người khác', mergeFields: 'Trường cần gộp', keepExisting: 'Trường không chọn và giá trị trống không xóa dữ liệu hiện có.',
     register: 'Đăng ký CRM', customer: 'Khách hàng liên kết', customerRequired: 'Chọn khách hàng hoặc nhập tên công ty.', autoCustomer: 'Tìm hoặc tạo Prospect theo tên công ty.', owner: 'Phụ trách', tags: 'Nhãn', memo: 'Ghi chú', google: 'Opt-in một chiều Google Contacts', googleHelp: 'Chỉ ghi nhận yêu cầu; không báo thành công trước khi có Provider.',
     registering: 'Đang đăng ký', created: 'Đã tạo Canonical Demo Contact.', merged: 'Đã giữ Contact ID và gộp các trường đã chọn.', backend: 'Không có Server Adapter nên đăng ký vận hành bị chặn.',
@@ -87,7 +88,7 @@ const copy = {
     steps: ['Card image', 'OCR review', 'Duplicate review', 'CRM registration'], capture: 'Business card image', choose: 'Choose image', manual: 'Enter without OCR', replace: 'Choose another', reset: 'Reset',
     demoOcr: 'DEMO OCR SIMULATION · Real OCR has not run; this is manual-entry mode.', localOcr: 'LOCAL OCR · The image was not sent to a server.', providerBlocked: 'The image was not sent because the OCR Provider or Backend Adapter is unavailable.', ocrWorking: 'Recognizing the actual business card image.', imageError: 'Use JPG/PNG up to 10MB.',
     firstRun: 'The first run can take longer while recognition models are downloaded.', languageProfile: 'OCR language', profiles: { AUTO: 'Automatic by company', KO_EN: 'Korean + English', VI_EN: 'Vietnamese + English', EN: 'English' }, recognize: 'Recognize again', cancelOcr: 'Cancel OCR', rotateLeft: 'Rotate left 90°', rotateRight: 'Rotate right 90°', original: 'Original orientation', rawText: 'View recognized text', rawHelp: 'Raw OCR text before field classification. Images and debug data are not persisted.', lowConfidence: 'Review needed', confidenceLevel: { HIGH: 'High', MEDIUM: 'Medium', LOW: 'Low', UNKNOWN: 'Review needed' }, uncertain: 'The automatic result is uncertain. Retake the image or edit the fields directly.', retry: 'Try again', differentImage: 'Different image', ocrCancelled: 'OCR recognition was cancelled.', ocrFailed: 'The image could not be recognized. Try again or enter the fields manually.', noText: 'No text was detected. Choose a clearer image.', engineFailed: 'The OCR models could not be loaded. Check the network and try again.',
-    review: 'Review OCR fields', reviewHelp: 'A person can edit every field.', next: 'Next', previous: 'Previous', required: 'Enter a name or company.', confidence: 'Confidence', manualValue: 'Manual', captureWarning: 'Check capture quality', qaTitle: 'Admin OCR evidence QA', qaHelp: 'Selected pass, normalized bounding boxes, candidate scores, and rejection reasons. Images and QA data are not persisted.', selectedPass: 'Selected pass', candidate: 'Candidate', rejected: 'Rejected', score: 'Score',
+    review: 'Review OCR fields', reviewHelp: 'A person can edit every field.', panelTitle: 'Image panels', dualDetected: 'Dual-panel business card detected', singleDetected: 'Processed as a single-face card', contactFace: 'Contact face', promoFace: 'Promo face', panelOption: { AUTO: 'Automatic', LEFT: 'Recognize left', RIGHT: 'Recognize right', FULL: 'Recognize full image' }, fieldSource: 'Field source', keyIdentityWarning: 'Review the key contact information.', next: 'Next', previous: 'Previous', required: 'Enter a name or company.', confidence: 'Confidence', manualValue: 'Manual', captureWarning: 'Check capture quality', qaTitle: 'Admin OCR evidence QA', qaHelp: 'Selected pass, normalized bounding boxes, candidate scores, and rejection reasons. Images and QA data are not persisted.', selectedPass: 'Selected pass', candidate: 'Candidate', rejected: 'Rejected', score: 'Score',
     duplicate: 'Review duplicate candidates', noDuplicate: 'No candidate exists in the current company.', duplicateFound: 'Candidates match email, mobile, or name and company.', newContact: 'New contact', mergeContact: 'Merge with contact', differentPerson: 'Different person', mergeFields: 'Fields to merge', keepExisting: 'Unselected fields and blank incoming values never erase existing data.',
     register: 'Register in CRM', customer: 'Linked customer', customerRequired: 'Select a customer or enter a company name.', autoCustomer: 'Find or create a Prospect from the company name.', owner: 'Owner', tags: 'Tags', memo: 'Memo', google: 'One-way Google Contacts opt-in', googleHelp: 'This records an opt-in only and never reports sync success before a Provider responds.',
     registering: 'Registering', created: 'Canonical Demo Contact was created.', merged: 'The existing Contact ID was preserved and selected fields were merged.', backend: 'Registration is blocked until the Server Adapter is available.',
@@ -129,6 +130,7 @@ export function BusinessCardWorkspace() {
   const [ocrProgress, setOcrProgress] = useState<LocalBusinessCardOcrProgress | null>(null);
   const [languageProfile, setLanguageProfile] = useState<BusinessCardLanguageProfile>(() => defaultBusinessCardLanguageProfile(brandWorkspace));
   const [rotation, setRotation] = useState<0 | 90 | 180 | 270>(0);
+  const [panelSelection, setPanelSelection] = useState<BusinessCardPanelSelection>('AUTO');
   const [reviewState, setReviewState] = useState<ReviewState>('EMPTY');
   const [messageState, setMessage] = useState('');
   const [decision, setDecision] = useState<BusinessCardRegistrationDecision>('NEW_CONTACT');
@@ -168,6 +170,7 @@ export function BusinessCardWorkspace() {
     .filter((candidate) => selectedCandidateIdSet.has(candidate.id))
     .flatMap((candidate) => candidate.sourceBoxIds));
   const captureQuality = ocrResult?.evidence?.captureQuality;
+  const panelAnalysis = ocrResult?.evidence?.panelAnalysis;
   const selectedRotation = selectedOcrPass?.rotation ?? rotation;
   const sidewaysFromCapture = Math.abs(selectedRotation - rotation) % 180 === 90;
   const evidenceAspect = captureQuality
@@ -196,6 +199,7 @@ export function BusinessCardWorkspace() {
     setOcrResult(null);
     setOcrProgress(null);
     setRotation(0);
+    setPanelSelection('AUTO');
     setReviewState('EMPTY');
     setMessage('');
     setResult(null);
@@ -213,7 +217,7 @@ export function BusinessCardWorkspace() {
     ocrAbortRef.current?.abort();
     ocrAbortRef.current = null;
     if (preview) URL.revokeObjectURL(preview);
-    setStep(1); setDraft(emptyContact()); setFile(null); setPreview(''); setConfidence({}); setOcrResult(null); setOcrProgress(null); setRotation(0); setReviewState('EMPTY'); setMessage(''); setDecision('NEW_CONTACT'); setDuplicateContactId(null); setMergeFields([]); setCustomerId(''); setTags(''); setMemo(''); setGoogleOptIn(false); setResult(null);
+    setStep(1); setDraft(emptyContact()); setFile(null); setPreview(''); setConfidence({}); setOcrResult(null); setOcrProgress(null); setRotation(0); setPanelSelection('AUTO'); setReviewState('EMPTY'); setMessage(''); setDecision('NEW_CONTACT'); setDuplicateContactId(null); setMergeFields([]); setCustomerId(''); setTags(''); setMemo(''); setGoogleOptIn(false); setResult(null);
   };
 
   const openManual = () => {
@@ -233,7 +237,7 @@ export function BusinessCardWorkspace() {
     setMessage(t.ocrCancelled);
   };
 
-  const recognizeImage = async (image: File, nextRotation = rotation) => {
+  const recognizeImage = async (image: File, nextRotation = rotation, nextPanelSelection = panelSelection) => {
     const jobId = ocrJobRef.current + 1;
     ocrJobRef.current = jobId;
     ocrAbortRef.current?.abort();
@@ -251,6 +255,7 @@ export function BusinessCardWorkspace() {
           companyId: brandWorkspace,
           languageProfile,
           rotation: nextRotation,
+          panelSelection: nextPanelSelection,
           signal: controller.signal,
           onProgress: (progress) => {
             if (ocrJobRef.current === jobId && !controller.signal.aborted) setOcrProgress(progress);
@@ -296,12 +301,19 @@ export function BusinessCardWorkspace() {
     if (!['image/jpeg', 'image/png'].includes(image.type) || image.size > 10 * 1024 * 1024) { setReviewState('BLOCKED'); setMessage(t.imageError); return; }
     if (preview) URL.revokeObjectURL(preview);
     const objectUrl = URL.createObjectURL(image);
-    setFile(image); setPreview(objectUrl); setDraft(emptyContact()); setConfidence({}); setOcrResult(null); setRotation(0); setResult(null);
-    await recognizeImage(image, 0);
+    setFile(image); setPreview(objectUrl); setDraft(emptyContact()); setConfidence({}); setOcrResult(null); setRotation(0); setPanelSelection('AUTO'); setResult(null);
+    await recognizeImage(image, 0, 'AUTO');
   };
 
   const rotatePreview = (delta: -90 | 90) => {
     setRotation((current) => ((current + delta + 360) % 360) as 0 | 90 | 180 | 270);
+  };
+
+  const selectContactPanel = (selection: BusinessCardPanelSelection) => {
+    setPanelSelection(selection);
+    if (file && canUseLocalBusinessCardOcr(contactBoundary.mode)) {
+      void recognizeImage(file, rotation, selection);
+    }
   };
 
   const continueToDuplicates = () => {
@@ -492,8 +504,35 @@ export function BusinessCardWorkspace() {
               {ocrResult?.engine === 'LOCAL_TESSERACT' ? 'LOCAL OCR' : ocrResult?.engine === 'BACKEND_PROVIDER' ? 'BACKEND OCR' : 'MANUAL INPUT'}
             </span>
           </div>
-          {ocrResult?.warnings.length ? <div role="alert" className="mb-5 rounded-xl border border-amber-300 bg-amber-50 p-4 text-xs font-bold leading-5 text-amber-900"><AlertTriangle className="mr-2 inline h-4 w-4" />{t.uncertain}</div> : null}
+          {ocrResult?.warnings.includes('REVIEW_REQUIRED_KEY_IDENTITY') ? <div role="alert" className="mb-5 rounded-xl border border-amber-400 bg-amber-50 p-4 text-xs font-black leading-5 text-amber-950"><AlertTriangle className="mr-2 inline h-4 w-4" />{t.keyIdentityWarning}</div> : ocrResult?.warnings.length ? <div role="alert" className="mb-5 rounded-xl border border-amber-300 bg-amber-50 p-4 text-xs font-bold leading-5 text-amber-900"><AlertTriangle className="mr-2 inline h-4 w-4" />{t.uncertain}</div> : null}
           {captureQuality?.warnings.length ? <div role="alert" className="mb-5 rounded-xl border border-orange-300 bg-orange-50 p-4 text-xs font-bold leading-5 text-orange-950"><AlertTriangle className="mr-2 inline h-4 w-4" />{t.captureWarning} · {Math.round(captureQuality.score * 100)}%</div> : null}
+          {panelAnalysis && (
+            <section className="mb-5 rounded-xl border border-teal-200 bg-teal-50/70 p-4" aria-label={t.panelTitle}>
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <h3 className="text-xs font-black text-teal-950">{panelAnalysis.layout === 'DUAL_PANEL' ? t.dualDetected : t.singleDetected}</h3>
+                  <p className="mt-1 text-[11px] font-semibold text-teal-800">{t.contactFace}: {panelAnalysis.contactPanelId === 'FULL' ? t.panelOption.FULL : panelAnalysis.contactPanelId === 'LEFT' ? t.panelOption.LEFT : t.panelOption.RIGHT}</p>
+                  {panelAnalysis.promoPanelId && <p className="mt-1 text-[11px] font-semibold text-fuchsia-800">{t.promoFace}: {panelAnalysis.promoPanelId === 'LEFT' ? t.panelOption.LEFT : t.panelOption.RIGHT}</p>}
+                </div>
+                <span className="rounded-full bg-white px-3 py-1 text-[10px] font-black text-teal-800">SEPARATOR {Math.round(panelAnalysis.separatorConfidence * 100)}%</span>
+              </div>
+              {file && canUseLocalBusinessCardOcr(contactBoundary.mode) && (
+                <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4" role="group" aria-label={t.panelTitle}>
+                  {(['AUTO', 'LEFT', 'RIGHT', 'FULL'] as const).map((option) => (
+                    <button
+                      key={option}
+                      type="button"
+                      aria-pressed={panelSelection === option}
+                      onClick={() => selectContactPanel(option)}
+                      className={panelSelection === option ? 'min-h-11 rounded-lg border border-teal-700 bg-teal-700 px-3 text-xs font-black text-white shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500' : 'min-h-11 rounded-lg border border-teal-200 bg-white px-3 text-xs font-black text-teal-800 transition hover:border-teal-500 hover:bg-teal-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500'}
+                    >
+                      {t.panelOption[option]}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </section>
+          )}
           {ocrProgress && (
             <div className="mb-5 rounded-xl border border-sky-200 bg-sky-50 p-4" role="status" aria-live="polite">
               <div className="flex items-center justify-between gap-3 text-xs font-black text-sky-900"><span>{ocrProgress.detail}</span><span>{ocrProgress.percent}%</span></div>
@@ -503,10 +542,11 @@ export function BusinessCardWorkspace() {
           <div className="grid gap-4 sm:grid-cols-2">
             {fields.map(({ key, span }) => {
               const level = getConfidenceLevel(confidence[key]);
+              const fieldSource = ocrResult?.evidence?.fieldSources?.[key];
               return (
                 <label key={key} className={span ? 'sm:col-span-2' : ''}>
                   <span className="mb-1.5 flex flex-wrap items-center justify-between gap-2 text-[11px] font-black text-[var(--color-text-sub)]">
-                    <span>{t.field[key]}</span>
+                    <span className="flex items-center gap-2">{t.field[key]}{canViewOcrQa && fieldSource && <small className="rounded bg-slate-100 px-1.5 py-0.5 text-[9px] text-slate-600">{t.fieldSource}: {fieldSource.panelId}</small>}</span>
                     <span className={`rounded-full px-2 py-1 ${confidenceTone[level]}`}>
                       {confidence[key] !== null && confidence[key] !== undefined ? `${t.confidence} ${Math.round((confidence[key] ?? 0) * 100)}% · ${t.confidenceLevel[level]}` : `${t.lowConfidence} · ${t.confidenceLevel.UNKNOWN}`}
                     </span>
@@ -539,6 +579,16 @@ export function BusinessCardWorkspace() {
                   {preview && ocrResult.evidence.boxes.length > 0 ? (
                     <div className="relative w-full overflow-hidden rounded-lg border border-indigo-200 bg-white" style={{ aspectRatio: String(evidenceAspect) }}>
                       <img src={preview} alt="OCR evidence bounding boxes" className="absolute inset-0 h-full w-full object-contain" style={{ transform: `rotate(${selectedRotation}deg)` }} />
+                      {panelAnalysis?.panels.filter((panel) => panel.id !== 'FULL').map((panel) => (
+                        <span
+                          key={'panel-' + panel.id}
+                          className={panel.kind === 'CONTACT_FACE' ? 'absolute border-2 border-emerald-500 bg-emerald-300/10' : 'absolute border-2 border-fuchsia-500 bg-fuchsia-300/10'}
+                          style={{ left: panel.x0 * 100 + '%', top: '0%', width: (panel.x1 - panel.x0) * 100 + '%', height: '100%' }}
+                        >
+                          <b className={panel.kind === 'CONTACT_FACE' ? 'absolute left-1 top-1 rounded bg-emerald-700 px-1.5 py-1 text-[8px] text-white' : 'absolute left-1 top-1 rounded bg-fuchsia-700 px-1.5 py-1 text-[8px] text-white'}>{panel.kind}</b>
+                        </span>
+                      ))}
+                      {panelAnalysis?.separatorX != null && <span className="absolute inset-y-0 z-10 w-0.5 bg-orange-500" style={{ left: panelAnalysis.separatorX * 100 + '%' }} title="separator" />}
                       {ocrResult.evidence.boxes.filter((box) => box.kind === 'LINE').map((box) => (
                         <span
                           key={box.id}
