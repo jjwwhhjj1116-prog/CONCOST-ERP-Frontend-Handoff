@@ -60,6 +60,26 @@ function bboxGapSeparator(boxes: BusinessCardOcrBox[]) {
   return best;
 }
 
+function panelContentEvidence(boxes: BusinessCardOcrBox[], x0: number, x1: number) {
+  const contained = lineBoxes(boxes).filter((box) => {
+    const center = (box.x0 + box.x1) / 2;
+    return center >= x0 && center <= x1;
+  });
+  const characterCount = contained.reduce((sum, box) => sum + box.text.replace(/\s/g, '').length, 0);
+  const occupiedWidth = contained.length
+    ? Math.max(...contained.map((box) => box.x1)) - Math.min(...contained.map((box) => box.x0))
+    : 0;
+  const averageConfidence = contained.length
+    ? contained.reduce((sum, box) => sum + box.confidence, 0) / contained.length
+    : 0;
+  return {
+    lineCount: contained.length,
+    characterCount,
+    occupiedWidth,
+    averageConfidence,
+    valid: contained.length >= 2 && characterCount >= 6 && occupiedWidth >= 0.08 && averageConfidence >= 0.25,
+  };
+}
 export function detectBusinessCardPanels(
   boxes: BusinessCardOcrBox[],
   imageSignal: BusinessCardPanelImageSignal = {},
@@ -91,13 +111,28 @@ export function detectBusinessCardPanels(
 
   const left = panel('LEFT', 0, separatorX, boxes);
   const right = panel('RIGHT', separatorX, 1, boxes);
-  const leftCount = lineBoxes(boxes).filter((box) => (box.x0 + box.x1) / 2 < separatorX).length;
-  const rightCount = lineBoxes(boxes).filter((box) => (box.x0 + box.x1) / 2 >= separatorX).length;
   const manualPanel = selection === 'LEFT' || selection === 'RIGHT';
   const semanticSplit = Math.max(left.contactScore - left.promoScore, right.contactScore - right.promoScore) > 0.08
     || Math.max(left.promoScore, right.promoScore) > 0.2;
-  const landscapeEvidence = imageSignal.aspectRatio == null || imageSignal.aspectRatio >= 1.35;
-  const dual = manualPanel || (landscapeEvidence && leftCount >= 2 && rightCount >= 2 && separatorConfidence >= 0.35 && semanticSplit);
+  const leftEvidence = panelContentEvidence(boxes, 0, separatorX);
+  const rightEvidence = panelContentEvidence(boxes, separatorX, 1);
+  const bilateralContent = leftEvidence.valid && rightEvidence.valid;
+  const aspectRatio = imageSignal.aspectRatio ?? 1.6;
+  const landscapeEvidence = aspectRatio >= 1.35;
+  const squareCardEvidence = aspectRatio >= 0.82 && aspectRatio < 1.35;
+  const strongSeparatorOverride = squareCardEvidence
+    && bilateralContent
+    && separatorConfidence >= 0.62
+    && (imageSeparator != null || gap.gap >= 0.12);
+  const dual = manualPanel || (
+    bilateralContent
+    && (
+      (landscapeEvidence && separatorConfidence >= 0.35 && semanticSplit)
+      || (strongSeparatorOverride && (semanticSplit || imageSeparator != null))
+    )
+  );
+  if (bilateralContent) reasons.push('BILATERAL_CONTENT_VALID');
+  if (strongSeparatorOverride) reasons.push('STRONG_SEPARATOR_OVERRIDE');
 
   if (!dual) {
     return {

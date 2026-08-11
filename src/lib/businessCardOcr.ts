@@ -54,6 +54,8 @@ export interface BusinessCardOcrBox {
   panelId?: string;
 }
 
+export type BusinessCardOcrBounds = { x0: number; y0: number; x1: number; y1: number };
+
 export type BusinessCardPanelKind = 'CONTACT_FACE' | 'BRAND_PROMO_FACE' | 'UNKNOWN';
 export type BusinessCardPanelSelection = 'AUTO' | 'LEFT' | 'RIGHT' | 'FULL';
 
@@ -116,6 +118,24 @@ export type BusinessCardOcrPassSummary = {
   score: number;
   overallConfidence: number;
   requiredFieldCoverage: number;
+  sourcePanelId?: BusinessCardPanel['id'];
+  crop?: { x0: number; x1: number; width: number; height: number };
+};
+
+export type BusinessCardRoiKind = 'NAME_KO' | 'DEPARTMENT_POSITION' | 'ADDRESS' | 'CONTACT';
+
+export type BusinessCardRoiEvidence = {
+  id: string;
+  kind: BusinessCardRoiKind;
+  bounds: BusinessCardOcrBounds;
+  scale: number;
+  psm: string;
+  languageProfile: string[];
+  text: string;
+  confidence: number;
+  acceptedFields: Array<keyof BusinessCardFields>;
+  sourceBoxIds: string[];
+  rejectedReason?: string;
 };
 
 export type BusinessCardCaptureQuality = {
@@ -135,6 +155,7 @@ export type BusinessCardOcrEvidence = {
   selectedPassId?: string;
   captureQuality?: BusinessCardCaptureQuality;
   panelAnalysis?: BusinessCardPanelAnalysis;
+  rois?: BusinessCardRoiEvidence[];
   fieldSources?: Partial<Record<keyof BusinessCardFields, BusinessCardFieldSource>>;
 };
 

@@ -169,6 +169,8 @@ export function BusinessCardWorkspace() {
   const selectedSourceBoxIds = new Set((ocrResult?.evidence?.candidates ?? [])
     .filter((candidate) => selectedCandidateIdSet.has(candidate.id))
     .flatMap((candidate) => candidate.sourceBoxIds));
+  const roiSourceBoxIds = new Set((ocrResult?.evidence?.rois ?? []).flatMap((roi) => roi.acceptedFields.length ? roi.sourceBoxIds ?? [] : []));
+
   const captureQuality = ocrResult?.evidence?.captureQuality;
   const panelAnalysis = ocrResult?.evidence?.panelAnalysis;
   const selectedRotation = selectedOcrPass?.rotation ?? rotation;
@@ -589,11 +591,19 @@ export function BusinessCardWorkspace() {
                         </span>
                       ))}
                       {panelAnalysis?.separatorX != null && <span className="absolute inset-y-0 z-10 w-0.5 bg-orange-500" style={{ left: panelAnalysis.separatorX * 100 + '%' }} title="separator" />}
+                      {ocrResult.evidence.rois?.map((roi) => (
+                        <span
+                          key={roi.id}
+                          className={roi.acceptedFields.length ? 'absolute z-20 border-2 border-cyan-500 bg-cyan-300/10' : 'absolute z-20 border border-dashed border-amber-500 bg-amber-200/10'}
+                          style={{ left: `${roi.bounds.x0 * 100}%`, top: `${roi.bounds.y0 * 100}%`, width: `${(roi.bounds.x1 - roi.bounds.x0) * 100}%`, height: `${(roi.bounds.y1 - roi.bounds.y0) * 100}%` }}
+                          title={`${roi.kind} · ${roi.psm} · ${Math.round(roi.confidence * 100)}%`}
+                        />
+                      ))}
                       {ocrResult.evidence.boxes.filter((box) => box.kind === 'LINE').map((box) => (
                         <span
                           key={box.id}
                           title={`${box.text} · ${Math.round(box.confidence * 100)}%`}
-                          className={`absolute border ${selectedSourceBoxIds.has(box.id) ? 'border-emerald-500 bg-emerald-300/15' : 'border-indigo-400 bg-indigo-200/10'}`}
+                          className={`absolute border ${selectedSourceBoxIds.has(box.id) || roiSourceBoxIds.has(box.id) ? 'border-emerald-500 bg-emerald-300/15' : 'border-indigo-400 bg-indigo-200/10'}`}
                           style={{ left: `${box.x0 * 100}%`, top: `${box.y0 * 100}%`, width: `${box.width * 100}%`, height: `${box.height * 100}%` }}
                         />
                       ))}
@@ -601,10 +611,17 @@ export function BusinessCardWorkspace() {
                   ) : <div className="grid min-h-36 place-items-center rounded-lg border border-dashed border-indigo-200 bg-white text-[10px] font-bold text-indigo-700">BBOX NOT AVAILABLE</div>}
                   <div className="mt-3 rounded-lg border border-indigo-200 bg-white p-3 text-[10px] font-semibold text-indigo-900">
                     <strong>{t.selectedPass}</strong>: {selectedOcrPass ? `${selectedOcrPass.imageMode} · ${selectedOcrPass.rotation}° · ${Math.round(selectedOcrPass.score * 100)}%` : 'N/A'}
+                    {selectedOcrPass?.sourcePanelId && <p className="mt-1 text-slate-600">panel {selectedOcrPass.sourcePanelId} · crop {selectedOcrPass.crop ? `${selectedOcrPass.crop.x0}-${selectedOcrPass.crop.x1}px / ${selectedOcrPass.crop.width}×${selectedOcrPass.crop.height}px` : 'FULL'}</p>}
                     {ocrResult.evidence.passes?.map((pass) => <p key={pass.id} className={pass.id === selectedOcrPass?.id ? 'mt-1 font-black text-emerald-700' : 'mt-1 text-slate-600'}>{pass.id} · {Math.round(pass.score * 100)}% · coverage {Math.round(pass.requiredFieldCoverage * 100)}%</p>)}
                   </div>
                 </div>
                 <div className="max-h-96 space-y-2 overflow-auto pr-1">
+                  {ocrResult.evidence.rois?.map((roi) => (
+                    <div key={`qa-${roi.id}`} className={roi.acceptedFields.length ? 'rounded-lg border border-cyan-300 bg-cyan-50 p-3 text-[10px] text-cyan-950' : 'rounded-lg border border-amber-200 bg-amber-50 p-3 text-[10px] text-amber-950'}>
+                      <div className="flex items-center justify-between gap-2"><strong>{roi.kind} ROI</strong><span>{roi.psm} · {Math.round(roi.confidence * 100)}%</span></div>
+                      <p className="mt-1 break-words">{roi.acceptedFields.length ? `APPLIED: ${roi.acceptedFields.join(', ')}` : roi.rejectedReason}</p>
+                    </div>
+                  ))}
                   {ocrResult.evidence.candidates.map((candidate) => {
                     const selected = selectedCandidateIdSet.has(candidate.id);
                     return <div key={`${candidate.id}:${candidate.rejectedReason ?? 'accepted'}`} className={`rounded-lg border p-3 text-[10px] ${selected ? 'border-emerald-400 bg-emerald-50 text-emerald-950' : candidate.rejectedReason ? 'border-rose-200 bg-rose-50 text-rose-900' : 'border-slate-200 bg-white text-slate-700'}`}><div className="flex flex-wrap items-center justify-between gap-2"><strong>{t.field[candidate.field]} · {candidate.value}</strong><span>{selected ? 'SELECTED' : candidate.rejectedReason ? t.rejected : t.candidate} · {t.score} {Math.round(candidate.finalScore * 100)}%</span></div><p className="mt-1 break-words">{candidate.rejectedReason || candidate.reason.join(' · ')}</p></div>;

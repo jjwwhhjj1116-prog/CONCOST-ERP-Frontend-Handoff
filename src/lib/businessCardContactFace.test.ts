@@ -157,3 +157,19 @@ test('rejects a demo brand name and accepts comma-form English identity evidence
   assert.equal(result.contact.department.includes('BM.RE'), false);
   assert.ok(result.evidence?.candidates.some((candidate) => candidate.value === 'DEMO COST' && candidate.rejectedReason === 'LOGO_OR_BRAND_TEXT'));
 });
+test('detects a square-ish dual panel only with strong separator and bilateral content', () => {
+  const square = detectBusinessCardPanels(
+    [...contactLeft, ...promoRight],
+    { aspectRatio: 1.04, separatorX: 0.5, separatorConfidence: 0.88 },
+  );
+  assert.equal(square.layout, 'DUAL_PANEL');
+  assert.ok(square.reason.includes('STRONG_SEPARATOR_OVERRIDE'));
+  assert.ok(square.reason.includes('BILATERAL_CONTENT_VALID'));
+
+  const lineOnly = detectBusinessCardPanels(
+    [box('only-left', 'demo.person@example.invalid', 0.08, 0.3, 0.36)],
+    { aspectRatio: 1.02, separatorX: 0.5, separatorConfidence: 0.98 },
+  );
+  assert.equal(lineOnly.layout, 'SINGLE_FACE');
+  assert.equal(lineOnly.reason.includes('STRONG_SEPARATOR_OVERRIDE'), false);
+});
