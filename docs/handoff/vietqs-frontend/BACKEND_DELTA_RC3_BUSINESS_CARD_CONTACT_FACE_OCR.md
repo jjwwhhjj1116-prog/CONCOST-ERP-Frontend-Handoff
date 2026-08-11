@@ -56,6 +56,34 @@ The response also needs separator position/confidence, detection reasons, OCR li
 
 The adapter should normalize provider evidence into name, company, department, specialty, position, mobile, telephone including extension, fax, email, homepage, multiline address, OCR confidence, source boxes, source panel, language, model/provider version, and rejection reasons. Original provider payloads must not be exposed to unauthorized clients.
 
+## Contact Crop and Field ROI Evidence
+
+The server must return the actual source pixels used for recognition as a READY file derivative or authorized transient crop reference. Panel selection evidence includes requested selection (`AUTO`, `LEFT`, `RIGHT`, or `FULL`), actual source panel, normalized crop bounds, source dimensions, crop dimensions, selected pass, and detection reasons. A manual panel override must rerun recognition against that crop; changing only the label is invalid.
+
+Field-specific re-recognition evidence is required for name, department/position, multiline address, and contact lines:
+
+```ts
+type FieldRoiEvidence = {
+  field: 'name' | 'department' | 'position' | 'address' | 'telephone' | 'mobile' | 'fax' | 'email';
+  sourcePanelId: 'LEFT' | 'RIGHT' | 'FULL';
+  normalizedBounds: { x0: number; y0: number; x1: number; y1: number };
+  upscale: 3 | 4;
+  languageProfile: string;
+  segmentationMode: string;
+  previousValue: string | null;
+  candidateValue: string | null;
+  previousScore: number;
+  candidateScore: number;
+  accepted: boolean;
+  rejectionReasons: string[];
+};
+```
+
+A candidate may replace the current field only when its field validator passes and its score is higher. Contact-face-only fields cannot be promoted from a brand/promo crop. Name evidence must support spaced Hangul clustering without inventing a transliteration. Department and position remain separate candidates. Address continuation and telephone extensions preserve their source lines.
+
+## Identity Review State
+
+Identity-bearing fields use `REVIEW_REQUIRED`, `REVIEWED`, or `REJECTED`. OCR completion alone is not identity approval. Contact creation or merge requires a human-reviewed snapshot containing reviewed field values, source evidence versions, reviewer, reviewed timestamp, and revision. Retrying OCR invalidates only affected unapproved candidates and never creates a Contact automatically.
 ## Human Review and Contact OS
 
 OCR never creates or merges a Contact automatically. The existing four-stage flow remains authoritative: image, OCR review, duplicate review, and customer DB registration. Preserve canonical `contactId`, company isolation, field-level merge, revision history, customer 360, opportunity, and mail links.
