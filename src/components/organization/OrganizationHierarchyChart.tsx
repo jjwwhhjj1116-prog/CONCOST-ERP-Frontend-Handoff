@@ -190,11 +190,10 @@ function TreeBranch({
             {node.children.length > 0 && (isExpanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />)}
           </span>
         </button>
-        {members.slice(0, 3).map((membership) => {
+        {members.map((membership) => {
           const person = personnelById.get(membership.personnelId);
           return person ? <PersonRow key={`${membership.personnelId}-${membership.membershipType}`} person={person} membership={membership} copy={copy} /> : null;
         })}
-        {members.length > 3 && <div className="border-t border-black/5 px-3 py-1.5 text-center text-[9px] font-black text-slate-500">+{members.length - 3}</div>}
       </article>
 
       {node.children.length > 0 && isExpanded && (
@@ -223,7 +222,9 @@ function TreeBranch({
 
 export function OrganizationHierarchyChart() {
   const users = useAuthStore((state) => state.users);
+  const currentUser = useAuthStore((state) => state.currentUser);
   const companyId = useUiStore((state) => state.brandWorkspace) as CompanyId;
+  const setBrandWorkspace = useUiStore((state) => state.setBrandWorkspace);
   const language = String(useTranslationStore((state) => state.settings.uiLanguage));
   const locale = language === 'vi' ? 'vi' : language === 'en' ? 'en' : 'ko';
   const copy = COPY[locale];
@@ -246,6 +247,11 @@ export function OrganizationHierarchyChart() {
   const drag = useRef<{ x: number; y: number; left: number; top: number } | null>(null);
 
   const visiblePersonnel = useMemo(() => users.filter((person) => person.companyId === companyId && person.isActive !== false && person.employmentStatus !== 'RESIGNED'), [users, companyId]);
+  const companyPersonnelCounts = useMemo(() => ({
+    CON_COST: users.filter((person) => person.companyId === 'CON_COST' && person.isActive !== false && person.employmentStatus !== 'RESIGNED').length,
+    VIET_QS: users.filter((person) => person.companyId === 'VIET_QS' && person.isActive !== false && person.employmentStatus !== 'RESIGNED').length,
+  }), [users]);
+  const canSwitchCompany = Boolean(currentUser && ['SUPER_ADMIN', 'SYSTEM_ADMIN'].includes(currentUser.role));
   const unassigned = useMemo(() => visiblePersonnel.filter((person) => resolvePersonnelOrganization(person).resolution === 'UNASSIGNED'), [visiblePersonnel]);
   const searchResults = useMemo(() => {
     const normalized = query.trim().toLocaleLowerCase();
@@ -302,6 +308,26 @@ export function OrganizationHierarchyChart() {
           <p className="mt-1 text-sm font-medium text-slate-500">{copy.description}</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          <div className="flex h-10 items-center border border-slate-300 bg-slate-50 p-1" role="group" aria-label="Company organization chart">
+            {(['CON_COST', 'VIET_QS'] as const).map((targetCompanyId) => {
+              const active = companyId === targetCompanyId;
+              const label = targetCompanyId === 'VIET_QS' ? 'VIET QS' : 'CON-COST';
+              return (
+                <button
+                  key={targetCompanyId}
+                  type="button"
+                  onClick={() => setBrandWorkspace(targetCompanyId)}
+                  disabled={!canSwitchCompany && !active}
+                  aria-pressed={active}
+                  title={!canSwitchCompany && !active ? 'Administrator access is required to switch company.' : label}
+                  className={`flex h-8 items-center gap-2 px-3 text-[10px] font-black transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 disabled:cursor-not-allowed disabled:opacity-45 ${active ? targetCompanyId === 'VIET_QS' ? 'bg-[#0871bd] text-white shadow-sm' : 'bg-[#ff6b00] text-white shadow-sm' : 'text-slate-600 hover:bg-white hover:text-slate-950'}`}
+                >
+                  <span>{label}</span>
+                  <span className={`min-w-5 rounded-full px-1.5 py-0.5 text-center text-[9px] ${active ? 'bg-white/20 text-white' : 'bg-white text-slate-500'}`}>{companyPersonnelCounts[targetCompanyId]}</span>
+                </button>
+              );
+            })}
+          </div>
           <div className="relative min-w-[250px] flex-1 lg:w-[330px]">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
             <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={copy.search} className="h-10 w-full border border-slate-300 bg-white pl-9 pr-3 text-sm outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100" />
