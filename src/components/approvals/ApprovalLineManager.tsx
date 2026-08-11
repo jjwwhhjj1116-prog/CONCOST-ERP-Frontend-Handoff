@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import {
   ArrowDown,
   ArrowUp,
@@ -17,6 +17,7 @@ import {
 
 import { ResponsiveDialogShell } from '@/components/ui/ResponsiveDialogShell';
 import { ActionButtonGroup, DangerActionSection, SemanticActionButton } from '@/components/ui/SemanticActionButton';
+import { getOrganizationDescendants, getOrganizationNodes, resolveOrganizationAlias, resolvePersonnelOrganization } from '@/lib/organizationHierarchy';
 import {
   createLineDefinition,
   moveApprovalStep,
@@ -56,6 +57,24 @@ interface Props {
 
 export function ApprovalLineManager({ locale, companyId, currentUser, users, formType, initialSteps, onApply, onClose }: Props) {
   const copy = COPY[locale];
+  const organizationNodes = useMemo(() => getOrganizationNodes(companyId), [companyId]);
+  const normalizeDepartmentId = useCallback((departmentId?: string) => departmentId
+    ? organizationNodes.some((node) => node.id === departmentId)
+      ? departmentId
+      : resolveOrganizationAlias(companyId, departmentId) ?? departmentId
+    : undefined, [companyId, organizationNodes]);
+  const normalizeLineSteps = (steps: ApprovalDocumentLineStep[]) => steps.map((step) => ({
+    ...step,
+    departmentId: normalizeDepartmentId(step.departmentId),
+  }));
+  const currentOrganizationId = useMemo(() => resolvePersonnelOrganization(currentUser).primaryNodeId, [currentUser]);
+  const selectableOrganizations = useMemo(() => organizationNodes.filter((node) => !['COMPANY', 'EXECUTIVE'].includes(node.kind)), [organizationNodes]);
+  const companyUsers = useMemo(() => users.filter((user) => user.companyId === companyId && user.id !== currentUser.id && user.isActive !== false && user.employmentStatus !== 'RESIGNED'), [companyId, currentUser.id, users]);
+  const eligibleUsersForStep = (step: ApprovalDocumentLineStep) => {
+    if (!step.departmentId) return companyUsers;
+    const organizationIds = new Set(getOrganizationDescendants(normalizeDepartmentId(step.departmentId) ?? step.departmentId, true));
+    return companyUsers.filter((user) => organizationIds.has(resolvePersonnelOrganization(user).primaryNodeId));
+  };
   const savedLines = useApprovalStore((state) => state.savedLines);
   const saveLine = useApprovalStore((state) => state.saveLine);
   const deleteLine = useApprovalStore((state) => state.deleteLine);
@@ -66,16 +85,16 @@ export function ApprovalLineManager({ locale, companyId, currentUser, users, for
   const [draft, setDraft] = useState<ApprovalLineDefinition>(() => createLineDefinition({
     companyId,
     ownerId: currentUser.id,
-    departmentId: currentUser.departmentId,
+    departmentId: currentOrganizationId,
     name: formType ? `${formType} 기본 결재선` : '새 결재선',
     formType,
-    steps: initialSteps,
+    steps: normalizeLineSteps(initialSteps),
   }));
 
   const visibleLines = useMemo(() => savedLines
     .filter((line) => line.companyId === companyId)
-    .filter((line) => line.scope === 'COMPANY' || line.scope === 'DEPARTMENT' && line.departmentId === currentUser.departmentId || line.ownerId === currentUser.id)
-    .filter((line) => `${line.name} ${line.formType ?? ''}`.toLowerCase().includes(query.toLowerCase())), [companyId, currentUser.departmentId, currentUser.id, query, savedLines]);
+    .filter((line) => line.scope === 'COMPANY' || line.scope === 'DEPARTMENT' && normalizeDepartmentId(line.departmentId) === currentOrganizationId || line.ownerId === currentUser.id)
+    .filter((line) => `${line.name} ${line.formType ?? ''}`.toLowerCase().includes(query.toLowerCase())), [companyId, currentOrganizationId, currentUser.id, normalizeDepartmentId, query, savedLines]);
 
   const updateStep = (stepId: string, updates: Partial<ApprovalDocumentLineStep>) => setDraft((current) => ({
     ...current,
@@ -115,7 +134,7 @@ export function ApprovalLineManager({ locale, companyId, currentUser, users, for
     setMessage(`${copy.save}: ${draft.name}`);
   };
 
-  const selectLine = (line: ApprovalLineDefinition) => setDraft({ ...line, steps: line.steps.map((step) => ({ ...step })) });
+  const selectLine = (line: ApprovalLineDefinition) => setDraft({ ...line, steps: normalizeLineSteps(line.steps) });
 
   return (
     <ResponsiveDialogShell
@@ -126,7 +145,7 @@ export function ApprovalLineManager({ locale, companyId, currentUser, users, for
     >
       <div className="grid min-w-0 gap-5 lg:grid-cols-[300px_minmax(0,1fr)]">
         <aside className="min-w-0 border border-[var(--color-border)] bg-[var(--cc-surface-2)] p-3">
-          <div className="flex items-center justify-between gap-2"><h3 className="text-xs font-black">{copy.saved}</h3><SemanticActionButton size="sm" variant="primary" icon={<Plus className="h-3.5 w-3.5" />} tooltip={copy.newLine} onClick={() => setDraft(createLineDefinition({ companyId, ownerId: currentUser.id, departmentId: currentUser.departmentId, name: '새 결재선', formType, steps: initialSteps }))}>{copy.newLine}</SemanticActionButton></div>
+          <div className="flex items-center justify-between gap-2"><h3 className="text-xs font-black">{copy.saved}</h3><SemanticActionButton size="sm" variant="primary" icon={<Plus className="h-3.5 w-3.5" />} tooltip={copy.newLine} onClick={() => setDraft(createLineDefinition({ companyId, ownerId: currentUser.id, departmentId: currentOrganizationId, name: '새 결재선', formType, steps: normalizeLineSteps(initialSteps) }))}>{copy.newLine}</SemanticActionButton></div>
           <label className="mt-3 flex min-h-10 items-center gap-2 border border-[var(--color-border)] bg-[var(--color-surface)] px-3"><Search className="h-4 w-4 text-[var(--color-text-sub)]" /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={copy.search} className="min-w-0 flex-1 bg-transparent text-xs outline-none" /></label>
           <div className="mt-3 max-h-[58vh] space-y-2 overflow-y-auto">
             {visibleLines.length === 0 ? <p className="p-4 text-center text-xs font-semibold text-[var(--color-text-sub)]">{copy.empty}</p> : visibleLines.map((line) => <button key={line.id} type="button" onClick={() => selectLine(line)} className={`w-full border p-3 text-left ${draft.id === line.id ? 'border-[var(--color-primary)] bg-orange-50 dark:bg-orange-950/20' : 'border-[var(--color-border)] bg-[var(--color-surface)] hover:border-orange-300'}`}><span className="flex items-center justify-between gap-2"><strong className="truncate text-xs">{line.name}</strong>{line.isDefault && <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-500" />}</span><small className="mt-1 block text-[9px] text-[var(--color-text-sub)]">{line.scope} · {line.steps.length} STEP · v{line.version} · {line.usageCount}</small></button>)}
@@ -138,7 +157,7 @@ export function ApprovalLineManager({ locale, companyId, currentUser, users, for
             <label className="text-[10px] font-black">{copy.scope}<select value={draft.scope} onChange={(event) => setDraft((current) => ({ ...current, scope: event.target.value as ApprovalLineDefinition['scope'] }))} className="mt-1 min-h-10 w-full border border-[var(--color-border)] bg-[var(--color-surface)] px-2 text-xs"><option value="PERSONAL">PERSONAL</option><option value="DEPARTMENT">DEPARTMENT</option><option value="COMPANY">COMPANY</option></select></label>
             <label className="text-[10px] font-black sm:col-span-2">{copy.name}<input value={draft.name} onChange={(event) => setDraft((current) => ({ ...current, name: event.target.value }))} className="mt-1 min-h-10 w-full border border-[var(--color-border)] bg-[var(--color-surface)] px-3 text-xs" /></label>
             <label className="text-[10px] font-black">{copy.form}<select value={draft.formType ?? ''} onChange={(event) => setDraft((current) => ({ ...current, formType: event.target.value as ApprovalRequestType || undefined }))} className="mt-1 min-h-10 w-full border border-[var(--color-border)] bg-[var(--color-surface)] px-2 text-xs"><option value="">ALL</option><option value="LEAVE_REQUEST">LEAVE_REQUEST</option><option value="EXPENSE_APPROVAL">EXPENSE_APPROVAL</option><option value="PURCHASE_APPROVAL">PURCHASE_APPROVAL</option><option value="BUSINESS_TRIP">BUSINESS_TRIP</option><option value="GENERAL_APPROVAL">GENERAL_APPROVAL</option></select></label>
-            <div className="sm:col-span-2 xl:col-span-4 flex flex-wrap items-center gap-2 text-[10px] font-bold text-[var(--color-text-sub)]"><span>{copy.steps} {draft.steps.length}</span><span>{copy.author} {draft.ownerId}</span><span>{copy.usage} {draft.usageCount}</span><span>{copy.version} {draft.version}</span><ActionButtonGroup label="저장 결재선 관리" className="ml-auto"><SemanticActionButton size="sm" variant="duplicate" icon={<Copy className="h-3 w-3" />} tooltip={copy.copy} onClick={() => { const id = copyLine(draft.id, currentUser.id); if (id) setMessage(copy.copy); }} disabled={!savedLines.some((line) => line.id === draft.id)} disabledReason="저장된 결재선만 복사할 수 있습니다.">{copy.copy}</SemanticActionButton><SemanticActionButton size="sm" variant="view" icon={<Star className="h-3 w-3" />} tooltip={copy.setDefault} onClick={() => setDefaultLine(draft.id, currentUser.id)} disabled={!savedLines.some((line) => line.id === draft.id)} disabledReason="결재선을 먼저 저장해 주세요.">{copy.setDefault}</SemanticActionButton><DangerActionSection><SemanticActionButton size="sm" variant="danger" icon={<Trash2 className="h-3 w-3" />} tooltip={copy.remove} onClick={() => { if (deleteLine(draft.id, currentUser.id)) setDraft(createLineDefinition({ companyId, ownerId: currentUser.id, name: '새 결재선', formType, steps: initialSteps })); else setMessage(copy.warning); }} disabled={!savedLines.some((line) => line.id === draft.id)} disabledReason="저장된 결재선만 삭제할 수 있습니다.">{copy.remove}</SemanticActionButton></DangerActionSection></ActionButtonGroup></div>
+            <div className="sm:col-span-2 xl:col-span-4 flex flex-wrap items-center gap-2 text-[10px] font-bold text-[var(--color-text-sub)]"><span>{copy.steps} {draft.steps.length}</span><span>{copy.author} {draft.ownerId}</span><span>{copy.usage} {draft.usageCount}</span><span>{copy.version} {draft.version}</span><ActionButtonGroup label="저장 결재선 관리" className="ml-auto"><SemanticActionButton size="sm" variant="duplicate" icon={<Copy className="h-3 w-3" />} tooltip={copy.copy} onClick={() => { const id = copyLine(draft.id, currentUser.id); if (id) setMessage(copy.copy); }} disabled={!savedLines.some((line) => line.id === draft.id)} disabledReason="저장된 결재선만 복사할 수 있습니다.">{copy.copy}</SemanticActionButton><SemanticActionButton size="sm" variant="view" icon={<Star className="h-3 w-3" />} tooltip={copy.setDefault} onClick={() => setDefaultLine(draft.id, currentUser.id)} disabled={!savedLines.some((line) => line.id === draft.id)} disabledReason="결재선을 먼저 저장해 주세요.">{copy.setDefault}</SemanticActionButton><DangerActionSection><SemanticActionButton size="sm" variant="danger" icon={<Trash2 className="h-3 w-3" />} tooltip={copy.remove} onClick={() => { if (deleteLine(draft.id, currentUser.id)) setDraft(createLineDefinition({ companyId, ownerId: currentUser.id, name: '새 결재선', formType, steps: normalizeLineSteps(initialSteps) })); else setMessage(copy.warning); }} disabled={!savedLines.some((line) => line.id === draft.id)} disabledReason="저장된 결재선만 삭제할 수 있습니다.">{copy.remove}</SemanticActionButton></DangerActionSection></ActionButtonGroup></div>
           </div>
 
           <div className="flex items-center justify-between"><h3 className="flex items-center gap-2 text-sm font-black"><UsersRound className="h-4 w-4 text-[var(--color-primary)]" />{copy.steps}</h3><SemanticActionButton size="sm" variant="add-resource" icon={<Plus className="h-3.5 w-3.5" />} tooltip={copy.addStep} onClick={addStep}>{copy.addStep}</SemanticActionButton></div>
@@ -147,8 +166,8 @@ export function ApprovalLineManager({ locale, companyId, currentUser, users, for
               <div className="grid min-w-0 gap-2 md:grid-cols-2 xl:grid-cols-[52px_130px_minmax(130px,1fr)_minmax(160px,1.3fr)_110px_120px_90px]">
                 <div className="flex h-10 items-center justify-center rounded-lg bg-slate-100 font-mono text-xs font-black text-slate-700">{String(index + 1).padStart(2, '0')}</div>
                 <select aria-label={copy.kind} value={step.kind ?? 'APPROVAL'} onChange={(event) => updateStep(step.id, { kind: event.target.value as ApprovalDocumentLineStep['kind'], label: event.target.selectedOptions[0]?.text ?? step.label })} className="min-h-10 min-w-0 border border-[var(--color-border)] bg-[var(--color-surface)] px-2 text-xs"><option value="APPROVAL">결재</option><option value="FINAL_APPROVAL">전결</option><option value="AGREEMENT">합의</option><option value="COOPERATION">협조</option><option value="REFERENCE">참조</option></select>
-                <select aria-label={copy.department} value={step.departmentId ?? ''} onChange={(event) => updateStep(step.id, { departmentId: event.target.value })} className="min-h-10 min-w-0 border border-[var(--color-border)] bg-[var(--color-surface)] px-2 text-xs"><option value="">{copy.department}</option>{[...new Map(users.filter((user) => user.companyId === companyId).map((user) => [user.departmentId, user.departmentName ?? user.departmentId])).entries()].map(([id, name]) => <option key={id} value={id}>{name}</option>)}</select>
-                <select aria-label={copy.personRole} value={step.approverId ? `USER:${step.approverId}` : step.approverRole ? `ROLE:${step.approverRole}` : ''} onChange={(event) => { const [kind, value] = event.target.value.split(':'); updateStep(step.id, kind === 'USER' ? { approverId: value, approverRole: undefined } : { approverId: undefined, approverRole: value as Role }); }} className="min-h-10 min-w-0 border border-[var(--color-border)] bg-[var(--color-surface)] px-2 text-xs"><option value="">{copy.personRole}</option><optgroup label="Role">{ROLES.map((role) => <option key={role} value={`ROLE:${role}`}>{role}</option>)}</optgroup><optgroup label="Person">{users.filter((user) => user.companyId === companyId && user.id !== currentUser.id).map((user) => <option key={user.id} value={`USER:${user.id}`}>{user.displayName || user.name || user.id}</option>)}</optgroup></select>
+                <select aria-label={copy.department} value={step.departmentId ?? ''} onChange={(event) => updateStep(step.id, { departmentId: event.target.value, approverId: undefined })} className="min-h-10 min-w-0 border border-[var(--color-border)] bg-[var(--color-surface)] px-2 text-xs"><option value="">{copy.department}</option>{selectableOrganizations.map((node) => <option key={node.id} value={node.id}>{node.displayOrderCode} · {node.name}</option>)}</select>
+                <select aria-label={copy.personRole} value={step.approverId ? `USER:${step.approverId}` : step.approverRole ? `ROLE:${step.approverRole}` : ''} onChange={(event) => { const [kind, value] = event.target.value.split(':'); updateStep(step.id, kind === 'USER' ? { approverId: value, approverRole: undefined } : { approverId: undefined, approverRole: value as Role }); }} className="min-h-10 min-w-0 border border-[var(--color-border)] bg-[var(--color-surface)] px-2 text-xs"><option value="">{copy.personRole}</option><optgroup label="Role">{ROLES.map((role) => <option key={role} value={`ROLE:${role}`}>{role}</option>)}</optgroup><optgroup label="Person">{eligibleUsersForStep(step).map((user) => <option key={user.id} value={`USER:${user.id}`}>{user.displayName || user.name || user.id}</option>)}</optgroup></select>
                 <input aria-label={copy.position} value={step.positionTitle ?? ''} onChange={(event) => updateStep(step.id, { positionTitle: event.target.value })} placeholder={copy.position} className="min-h-10 min-w-0 border border-[var(--color-border)] px-2 text-xs" />
                 <select aria-label={copy.mode} value={step.executionMode ?? 'SEQUENTIAL'} onChange={(event) => updateStep(step.id, { executionMode: event.target.value as ApprovalDocumentLineStep['executionMode'] })} className="min-h-10 min-w-0 border border-[var(--color-border)] bg-[var(--color-surface)] px-2 text-xs"><option value="SEQUENTIAL">SEQUENTIAL</option><option value="PARALLEL_ALL">PARALLEL_ALL</option><option value="REFERENCE_ONLY">REFERENCE_ONLY</option></select>
                 <input aria-label={copy.group} value={step.groupId ?? ''} onChange={(event) => updateStep(step.id, { groupId: event.target.value })} placeholder={copy.group} className="min-h-10 min-w-0 border border-[var(--color-border)] px-2 text-xs" />

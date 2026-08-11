@@ -2,6 +2,12 @@ import { getRuntimeExecutionMode, type RuntimeExecutionMode } from '@/lib/runtim
 import type { AccessGrade, PersonnelCard } from '@/types/models';
 
 export const MANAGEMENT_SUPPORT_ORGANIZATION_ID = 'MANAGEMENT_SUPPORT';
+export const MANAGEMENT_SUPPORT_ORGANIZATION_IDS = new Set([
+  MANAGEMENT_SUPPORT_ORGANIZATION_ID,
+  'CC_MGMT_SUPPORT_HQ',
+  'VQS_MGMT_SUPPORT',
+  'VQS_ADMIN',
+]);
 export const FINANCE_CAPABILITY = 'FINANCE_ACCESS';
 
 export type AccessDecision = {
@@ -70,13 +76,13 @@ export function hasActiveManagementSupportMembership(
   if (user.organizationMemberships?.length) {
     return user.organizationMemberships.some(
       (membership) =>
-        membership.organizationId === MANAGEMENT_SUPPORT_ORGANIZATION_ID &&
+        MANAGEMENT_SUPPORT_ORGANIZATION_IDS.has(membership.organizationId) &&
         membership.status === 'ACTIVE',
     );
   }
 
   return (
-    user.departmentId === MANAGEMENT_SUPPORT_ORGANIZATION_ID &&
+    MANAGEMENT_SUPPORT_ORGANIZATION_IDS.has(user.departmentId) &&
     user.employmentStatus === 'ACTIVE'
   );
 }

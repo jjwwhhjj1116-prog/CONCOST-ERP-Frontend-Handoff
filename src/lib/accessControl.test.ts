@@ -107,3 +107,27 @@ test('estimate access is limited to approved grades in demo and backend capabili
   assert.equal(evaluateEstimateAccess(person({ role: 'SYSTEM_ADMIN' }), 'PRODUCTION_SERVER').allowed, false);
   assert.equal(evaluateEstimateAccess(person({ role: 'WORKER', capabilities: ['FINANCE_ACCESS'] }), 'PRODUCTION_SERVER').allowed, true);
 });
+
+test('canonical CON-COST and Viet QS management support memberships retain finance eligibility', () => {
+  assert.equal(
+    hasActiveManagementSupportMembership(person({
+      companyId: 'CON_COST',
+      organizationMemberships: [{ organizationId: 'CC_MGMT_SUPPORT_HQ', status: 'ACTIVE', membershipType: 'PRIMARY' }],
+    })),
+    true,
+  );
+  assert.equal(
+    hasActiveManagementSupportMembership(person({
+      companyId: 'VIET_QS',
+      organizationMemberships: [{ organizationId: 'VQS_ADMIN', status: 'ACTIVE', membershipType: 'PRIMARY' }],
+    })),
+    true,
+  );
+  assert.equal(
+    evaluateFinanceAccess(person({
+      companyId: 'VIET_QS',
+      organizationMemberships: [{ organizationId: 'VQS_ADMIN', status: 'ACTIVE', membershipType: 'PRIMARY' }],
+    }), 'DEMO_LOCAL').allowed,
+    true,
+  );
+});
