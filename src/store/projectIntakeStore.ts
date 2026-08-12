@@ -14,6 +14,7 @@ import { getProjectIntakePersistenceMode } from '@/lib/runtimeExecutionMode';
 import { buildEstimatePipelineDbInput } from '@/lib/estimatePipelineDatabase';
 import { completeExecutionAssignments } from '@/lib/projectExecutionUnits';
 import { buildAcceptedIntakeRevision } from '@/lib/projectIntakeRevision';
+import { buildCustomerProjectRelationshipPlan } from '@/lib/customerProjectRelationship';
 import { getEligibleProjectPersonnel } from '@/lib/projectStaffing';
 import { allocateAnnualProjectNo } from '@/lib/projectNumber';
 import { useEstimateDatabaseStore } from '@/store/estimateDatabaseStore';
@@ -24,6 +25,7 @@ import { useNotificationStore } from '@/store/notificationStore';
 import { useAuditStore } from '@/store/auditStore';
 import { useUiStore } from '@/store/uiStore';
 import { useAuthStore } from '@/store/authStore';
+import { useBusinessOperationsStore } from '@/store/businessOperationsStore';
 import {
   Project,
   ProjectIntake,
@@ -83,6 +85,31 @@ const upsertLocalPipelineRecord = async (
     }),
     actorId,
   );
+};
+
+const buildLocalCustomerProjectRelationshipPlan = (
+  intake: ProjectIntake,
+  project: Project,
+  actorId: string,
+  occurredAt: string,
+) => {
+  const companyId = selectedCompanyId();
+  if (project.companyId !== companyId) {
+    throw new Error('CUSTOMER_PROJECT_RELATIONSHIP_COMPANY_MISMATCH');
+  }
+  const operations = useBusinessOperationsStore.getState();
+  const plan = buildCustomerProjectRelationshipPlan({
+    companyId,
+    intake,
+    project,
+    customers: operations.customers,
+    contacts: operations.contacts,
+    relationships: operations.customerProjectRelationships,
+    candidates: operations.customerProjectLinkCandidates,
+    actorId,
+    occurredAt,
+  });
+  return plan;
 };
 
 const localPermissions = (intake: ProjectIntake, actor: IntakeActor) => {
@@ -410,6 +437,10 @@ export const useProjectIntakeStore = create<ProjectIntakeState>()(persist((set, 
     const existingProject = useProjectStore.getState().projects.find((project) => project.id === current.projectId);
     if (current.status === 'ACCEPTED') {
       if (!existingProject) throw new Error('수주 완료된 접수의 canonical Project를 찾을 수 없습니다.');
+      if (get().persistenceMode === 'LOCAL_DEMO') {
+        const relationshipPlan = buildLocalCustomerProjectRelationshipPlan(current, existingProject, actor.id, now());
+        useBusinessOperationsStore.getState().applyCustomerProjectRelationshipPlan(relationshipPlan);
+      }
       return completionFromProject(current, { ...existingProject, projectNo: existingProject.projectNo || current.projectNo }, true);
     }
     validateSecretReferences(draft.secretReferences);
@@ -524,6 +555,7 @@ export const useProjectIntakeStore = create<ProjectIntakeState>()(persist((set, 
       idempotent: false,
     };
     assertCompletionPostconditions(result);
+    const relationshipPlan = buildLocalCustomerProjectRelationshipPlan(updated, completedProject, actor.id, timestamp);
 
     useEstimateRequestStore.setState((state) => ({
       requests: state.requests.map((request) => request.id === current.estimateRequestId
@@ -551,6 +583,7 @@ export const useProjectIntakeStore = create<ProjectIntakeState>()(persist((set, 
     projectStore.replaceProjects(projectStore.projects.map((project) => project.id === completedProject.id ? completedProject : project));
     set((state) => ({ intakes: replace(state.intakes, updated) }));
     await useProjectPmScheduleStore.getState().sync(actor);
+    useBusinessOperationsStore.getState().applyCustomerProjectRelationshipPlan(relationshipPlan);
     useNotificationStore.getState().addNotification({
       userId: actor.id,
       type: 'PROJECT_ASSIGNED',
@@ -565,7 +598,7 @@ export const useProjectIntakeStore = create<ProjectIntakeState>()(persist((set, 
       action: 'UPDATE',
       entityType: 'PROJECT_INTAKE',
       entityId: updated.id,
-      message: `Project intake completed for canonical project ${completedProject.id}; units=${executionAssignments.map((item) => item.unitId).join(',')}; startDateStatus=${startDateStatus}.`,
+      message: `Project intake completed for canonical project ${completedProject.id}; units=${executionAssignments.map((item) => item.unitId).join(',')}; startDateStatus=${startDateStatus}; customerRelationshipsCreated=${relationshipPlan.createdRelationshipIds.length}; customerRelationshipReviews=${relationshipPlan.candidates.filter((candidate) => candidate.status === 'REVIEW_REQUIRED').length}.`,
     });
     return result;
   },
@@ -600,11 +633,13 @@ export const useProjectIntakeStore = create<ProjectIntakeState>()(persist((set, 
       revisedAt: timestamp,
       historyId: newId('project-intake-history'),
     });
+    const relationshipPlan = buildLocalCustomerProjectRelationshipPlan(result.intake, result.project, actor.id, timestamp);
 
     await upsertLocalPipelineRecord(result.intake, result.intake.draft!, result.intake.status, actor.id, timestamp);
     projectStore.replaceProjects(projectStore.projects.map((project) => project.id === result.project.id ? result.project : project));
     set((state) => ({ intakes: replace(state.intakes, hydrateLocal(result.intake, actor)) }));
     await useProjectPmScheduleStore.getState().sync(actor);
+    useBusinessOperationsStore.getState().applyCustomerProjectRelationshipPlan(relationshipPlan);
     notifyAcceptedRevision(result, actor.id, reason);
     useAuditStore.getState().addLog({
       actorId: actor.id,
@@ -621,7 +656,7 @@ export const useProjectIntakeStore = create<ProjectIntakeState>()(persist((set, 
         assignedUnitIds: result.project.assignedUnitIds || [],
         primaryUnitId: result.project.primaryUnitId || null,
       }),
-      message: `Accepted project intake revision ${result.revision}; reason=${reason.trim()}; actor=${actor.id}; timestamp=${timestamp}; changed=${result.changedFields.join(',')}.`,
+      message: `Accepted project intake revision ${result.revision}; reason=${reason.trim()}; actor=${actor.id}; timestamp=${timestamp}; changed=${result.changedFields.join(',')}; customerRelationshipsUpdated=${relationshipPlan.updatedRelationshipIds.length}; customerRelationshipsDeactivated=${relationshipPlan.deactivatedRelationshipIds.length}.`,
     });
     return result;
   },

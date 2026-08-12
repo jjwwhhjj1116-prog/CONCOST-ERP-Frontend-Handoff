@@ -29,6 +29,7 @@ const VI_SHELL_TEXT: Record<string, string> = {
   '전사·본부별 소식': 'Tin tức công ty và đơn vị',
   '조직과 담당자 검색': 'Tìm tổ chức và người phụ trách',
   '고객·기회·견적·계약 통합 관리': 'Quản lý khách hàng, cơ hội, báo giá và hợp đồng',
+  '고객·담당자·프로젝트 이력 통합 관리': 'Quản lý tích hợp khách hàng, liên hệ và lịch sử dự án',
   '매출·매입·자금·결산 통합 관리': 'Quản lý doanh thu, mua hàng, quỹ và quyết toán',
   '업무 검색과 문서 작성 지원': 'Hỗ trợ tìm kiếm công việc và soạn tài liệu',
   '개인 환경과 워크스페이스 설정': 'Cài đặt cá nhân và workspace',

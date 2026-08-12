@@ -32,7 +32,19 @@ import {
   type SalesStage,
   mergeBusinessCardContact,
 } from '@/lib/businessOperations';
+import type {
+  CustomerProjectLinkCandidate,
+  CustomerProjectRelationship,
+  CustomerProjectRelationshipPlan,
+} from '@/lib/customerProjectRelationship';
+import { linkCustomerProjectCandidateToContact } from '@/lib/customerProjectRelationship';
 import type { CompanyId } from '@/types/models';
+import {
+  customerProjectHistoryContacts,
+  customerProjectHistoryCustomers,
+  customerProjectHistoryLinkCandidates,
+  customerProjectHistoryRelationships,
+} from '@/data/customerProjectHistorySeed';
 
 interface BusinessOperationsState {
   customers: SalesCustomer[];
@@ -40,6 +52,9 @@ interface BusinessOperationsState {
   businessCards: BusinessCardRecord[];
   activities: SalesActivity[];
   sales: SalesOpportunity[];
+  customerProjectRelationships: CustomerProjectRelationship[];
+  customerProjectLinkCandidates: CustomerProjectLinkCandidate[];
+  customerProjectRelationshipSchemaVersion: 1;
   finance: FinanceEntry[];
   closingItems: FinanceClosingItem[];
   createCustomer: (companyId: CompanyId, input: SalesCustomerInput, actorId: string) => string;
@@ -53,6 +68,12 @@ interface BusinessOperationsState {
   transitionSales: (id: string, nextStage: SalesStage, actorId: string) => void;
   linkEstimateRequest: (id: string, estimateRequestId: string, actorId: string) => void;
   archiveSales: (id: string, actorId: string) => void;
+  applyCustomerProjectRelationshipPlan: (plan: CustomerProjectRelationshipPlan) => void;
+  setCustomerProjectLinkCandidateStatus: (
+    id: string,
+    status: CustomerProjectLinkCandidate['status'],
+  ) => void;
+  linkCustomerProjectCandidate: (id: string, contactId: string, actorId: string) => void;
   createFinance: (companyId: CompanyId, input: FinanceEntryInput, actorId: string) => string;
   updateFinance: (id: string, input: FinanceEntryInput, actorId: string) => void;
   transitionFinance: (id: string, nextStatus: FinanceStatus, actorId: string) => void;
@@ -68,11 +89,14 @@ const customerNo = (companyId: CompanyId, count: number) => `${companyId === 'VI
 const documentNo = (companyId: CompanyId, count: number) => `FIN-${companyId === 'VIET_QS' ? 'VN-' : ''}${new Date().getFullYear()}-${String(count + 1).padStart(3, '0')}`;
 
 export const useBusinessOperationsStore = create<BusinessOperationsState>((set, get) => ({
-  customers: initialSalesCustomers,
-  contacts: initialSalesContacts,
+  customers: [...initialSalesCustomers, ...customerProjectHistoryCustomers],
+  contacts: [...initialSalesContacts, ...customerProjectHistoryContacts],
   businessCards: [],
   activities: initialSalesActivities,
   sales: initialSalesOpportunities,
+  customerProjectRelationships: customerProjectHistoryRelationships,
+  customerProjectLinkCandidates: customerProjectHistoryLinkCandidates,
+  customerProjectRelationshipSchemaVersion: 1,
   finance: initialFinanceEntries,
   closingItems: initialFinanceClosingItems,
   createCustomer: (companyId, input, actorId) => {
@@ -279,6 +303,29 @@ export const useBusinessOperationsStore = create<BusinessOperationsState>((set, 
     const archivedAt = now(); const revision = record.revision + 1;
     return { ...record, archivedAt, updatedAt: archivedAt, revision, audit: [createAuditEntry('SALES_ARCHIVED', actorId, revision, record, { archivedAt }, archivedAt), ...record.audit] };
   }) })),
+  applyCustomerProjectRelationshipPlan: (plan) => set({
+    customerProjectRelationships: plan.relationships,
+    customerProjectLinkCandidates: plan.candidates,
+  }),
+  setCustomerProjectLinkCandidateStatus: (id, status) => set((state) => ({
+    customerProjectLinkCandidates: state.customerProjectLinkCandidates.map((candidate) => (
+      candidate.id === id
+        ? { ...candidate, status, updatedAt: now() }
+        : candidate
+    )),
+  })),
+  linkCustomerProjectCandidate: (id, contactId, actorId) => set((state) => {
+    const candidate = state.customerProjectLinkCandidates.find((item) => item.id === id);
+    const contact = state.contacts.find((item) => item.id === contactId && !item.archivedAt);
+    if (!candidate || !contact) throw new Error('CUSTOMER_PROJECT_CANDIDATE_NOT_FOUND');
+    const customer = state.customers.find((item) => item.id === contact.customerId && !item.archivedAt);
+    if (!customer) throw new Error('CUSTOMER_PROJECT_CANDIDATE_CUSTOMER_NOT_FOUND');
+    const result = linkCustomerProjectCandidateToContact({ candidate, contact, customer, relationships: state.customerProjectRelationships, actorId, occurredAt: now() });
+    return {
+      customerProjectRelationships: result.relationships,
+      customerProjectLinkCandidates: state.customerProjectLinkCandidates.map((item) => item.id === id ? result.candidate : item),
+    };
+  }),
   createFinance: (companyId, input, actorId) => {
     const id = nextId('finance'); const createdAt = now();
     const record: FinanceEntry = { ...input, id, companyId, documentNo: input.documentNo || documentNo(companyId, get().finance.filter((item) => item.companyId === companyId).length), evidence: input.evidence ?? [], evidenceStatus: input.evidenceStatus ?? 'MISSING', revision: 1, createdAt, updatedAt: createdAt, archivedAt: null, audit: [createAuditEntry('FINANCE_CREATED', actorId, 1, null, input, createdAt)] };

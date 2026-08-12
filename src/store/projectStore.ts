@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { Project, ProjectStatus, PostDeliveryWorkRequest, RevisionRequest } from '@/types/models';
 import { fullProjects } from '@/data/fullScheduleSeed';
+import { customerProjectHistoryProjects } from '@/data/customerProjectHistorySeed';
 import { useAuthStore } from '@/store/authStore';
 import { useNotificationStore } from '@/store/notificationStore';
 import { useAuditStore } from '@/store/auditStore';
@@ -40,7 +41,7 @@ const initialRevisionRequests: RevisionRequest[] = [
 ];
 
 export const useProjectStore = create<ProjectState>()(persist((set, get) => ({
-  projects: [],
+  projects: customerProjectHistoryProjects,
   postDeliveryWorkRequests: [],
   revisionRequests: initialRevisionRequests,
   
@@ -290,5 +291,5 @@ export const useProjectStore = create<ProjectState>()(persist((set, get) => ({
   },
 
   replaceProjects: (projects) => set({ projects }),
-  resetProjects: () => set({ projects: [], postDeliveryWorkRequests: [], revisionRequests: [] })
+  resetProjects: () => set({ projects: customerProjectHistoryProjects, postDeliveryWorkRequests: [], revisionRequests: [] })
 }), { name: 'project-storage' }));

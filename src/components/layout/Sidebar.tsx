@@ -131,7 +131,7 @@ const railNavigation: RailItem[] = [
   { id: 'drive', section: '드라이브', label: '드라이브', href: '/drive', icon: Cloud, roles: allRoles, description: '회사·프로젝트 자료' },
   { id: 'tasks', section: '할일', label: '할일', href: '/tasks/my', icon: CheckSquare2, roles: allRoles, minLevel: 2, description: '내 업무와 마감 항목' },
   { id: 'board', section: '게시판', label: '게시판', href: '/board', icon: MessageSquareText, roles: allRoles, description: '전사·본부별 소식' },
-  { id: 'sales', section: '영업', label: '영업', href: '/sales', icon: Handshake, roles: allRoles, minLevel: 2, description: '고객·기회·견적·계약 통합 관리' },
+  { id: 'sales', section: '영업', label: '영업', href: '/sales', icon: Handshake, roles: allRoles, minLevel: 2, description: '고객·담당자·프로젝트 이력 통합 관리' },
   { id: 'finance', section: '재무', label: '재무', href: '/finance', icon: Landmark, roles: allRoles, minLevel: 2, description: '매출·매입·자금·결산 통합 관리' },
 ];
 
@@ -200,13 +200,9 @@ const panelMenus: Record<string, NavigationItem[]> = {
   sales: [
     { id: 'sales-home', label: '영업 대시보드', href: '/sales', icon: Handshake, roles: allRoles },
     { id: 'sales-customers', label: '고객·주소록', href: '/sales?view=CUSTOMERS', roles: allRoles },
-    { id: 'sales-pipeline', label: '리드·영업기회', href: '/sales?view=PIPELINE', roles: allRoles },
-    { id: 'sales-quotes', label: '견적·제안', href: '/sales?view=QUOTES', roles: allRoles },
-    { id: 'sales-contracts', label: '계약·수주', href: '/sales?view=CONTRACTS', roles: allRoles },
     { id: 'sales-business-cards', label: '명함 자동등록', href: '/sales/business-cards', roles: allRoles },
     { id: 'sales-business-card-inbox', label: '명함 수신함', href: '/sales/business-cards/inbox', icon: LibraryBig, roles: allRoles },
     { id: 'sales-business-card-capture', label: '모바일 명함 촬영', href: '/mobile/business-cards/capture', icon: Camera, roles: allRoles },
-    { id: 'sales-activities', label: '영업활동·후속조치', href: '/sales?view=ACTIVITIES', roles: allRoles },
   ],
   finance: [
     { id: 'finance-home', label: '재무 대시보드', href: '/finance', icon: Landmark, roles: allRoles },

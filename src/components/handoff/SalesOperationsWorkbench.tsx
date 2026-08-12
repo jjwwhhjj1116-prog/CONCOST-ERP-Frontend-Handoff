@@ -2,157 +2,255 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import {
-  Archive, ArrowRight, CalendarDays, Check, CircleDollarSign, Download, FilePlus2,
-  History, Mail, Merge, MessageSquareText, Pencil, Plus, Search, Sheet, Target,
-  TrendingUp, Upload, UsersRound,
-} from 'lucide-react';
-import { type ElementType, type FormEvent, useMemo, useRef, useState } from 'react';
+import { AlertTriangle, Download, Plus, Search, Upload } from 'lucide-react';
+import { type FormEvent, type ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 
 import { HandoffLanguageToggle } from '@/components/handoff/HandoffLanguageToggle';
 import { RuntimeCapabilityPanel } from '@/components/handoff/RuntimeCapabilityPanel';
+import { CustomerDirectoryWorkbench, type CustomerDetailTab } from '@/components/handoff/sales/CustomerDirectoryWorkbench';
+import { CustomerProjectLinkReview } from '@/components/handoff/sales/CustomerProjectLinkReview';
+import { CustomerRelationshipDashboard } from '@/components/handoff/sales/CustomerRelationshipDashboard';
+import { salesCustomerCopy } from '@/components/handoff/sales/salesCustomerCopy';
 import { useHandoffLocale } from '@/components/handoff/useHandoffLocale';
 import { DetailDrawer } from '@/components/ui/DetailDrawer';
 import { ActionButtonGroup, SemanticActionButton } from '@/components/ui/SemanticActionButton';
 import {
-  companyActivities, companyContacts, companyCustomers, companySales, nextSalesStages,
-  summarizeSales, type SalesActivityInput, type SalesActivityType, type SalesContactInput,
-  type SalesCustomerInput, type SalesOpportunity, type SalesOpportunityInput, type SalesStage,
+  companyActivities,
+  companyContacts,
+  companyCustomers,
+  companySales,
+  type SalesContactInput,
+  type SalesCustomerInput,
 } from '@/lib/businessOperations';
 import { exportContactWorkbook, previewContactImport, type ContactImportRow } from '@/lib/businessWorkbook';
+import { buildCustomerProjectProjection, type CustomerProjectFilter } from '@/lib/customerProjectProjection';
+import { legacySalesDestination, visibleCustomerProjectRelationships } from '@/lib/customerProjectRelationship';
 import { executeFrontendMutation, getFrontendModuleBoundary } from '@/lib/frontendDataSource';
 import { useAuthStore } from '@/store/authStore';
+import { useAuditStore } from '@/store/auditStore';
 import { useBusinessOperationsStore } from '@/store/businessOperationsStore';
+import { useProjectStore } from '@/store/projectStore';
 import { useUiStore } from '@/store/uiStore';
+import { resolveAccessGrade } from '@/lib/accessControl';
 
-type SalesView = 'PIPELINE' | 'CUSTOMERS' | 'CONTACTS';
-type DrawerMode = 'OPPORTUNITY_CREATE' | 'OPPORTUNITY_EDIT' | 'CUSTOMER_CREATE' | 'CONTACT_CREATE' | 'ACTIVITY_CREATE' | 'IMPORT' | null;
+type DrawerMode = 'CUSTOMER_CREATE' | 'CONTACT_CREATE' | 'IMPORT' | null;
+type MainView = 'DASHBOARD' | 'CUSTOMERS';
 
-const stageLabels: Record<SalesStage, Record<'ko' | 'vi' | 'en', string>> = {
-  LEAD: { ko: '신규 리드', vi: 'Đầu mối mới', en: 'New lead' }, QUALIFIED: { ko: '유효성 확인', vi: 'Đã xác minh', en: 'Qualified' },
-  PROPOSAL: { ko: '제안', vi: 'Đề xuất', en: 'Proposal' }, NEGOTIATION: { ko: '협상', vi: 'Đàm phán', en: 'Negotiation' },
-  WON: { ko: '수주', vi: 'Thành công', en: 'Won' }, LOST: { ko: '실주', vi: 'Thất bại', en: 'Lost' },
-};
-const activityLabels: Record<SalesActivityType, Record<'ko' | 'vi' | 'en', string>> = {
-  CALL: { ko: '통화', vi: 'Cuộc gọi', en: 'Call' }, MEETING: { ko: '미팅', vi: 'Cuộc họp', en: 'Meeting' },
-  MAIL: { ko: '메일', vi: 'Email', en: 'Mail' }, MEMO: { ko: '메모', vi: 'Ghi chú', en: 'Memo' }, TASK: { ko: '할 일', vi: 'Công việc', en: 'Task' },
-};
-
-const copy = {
-  ko: { title: '영업 운영센터', description: '명함부터 고객·담당자·영업기회·견적·수주까지 하나의 계보로 관리합니다.', pipeline: '영업기회 Pipeline', customers: '고객 360', contacts: 'Contact Directory', addOpportunity: '영업기회 등록', addCustomer: '고객 등록', addContact: '담당자 등록', addActivity: '활동 기록', search: '고객·담당자·기회 검색', active: '진행 기회', value: 'Pipeline 금액', weighted: '가중 예상금액', won: '수주', selected: '선택됨', empty: '조건에 맞는 데이터가 없습니다.', edit: '수정', save: '저장', cancel: '취소', archive: '보관', estimate: '견적 의뢰 연결', activity: '활동 Timeline', next: '다음 단계', customer: '고객·거래처', contact: '담당자', owner: 'Owner', probability: '확률', close: '예상 수주일', nextAction: '다음 행동', amount: '예상금액', audit: '변경이력', duplicate: '중복 검토', resolve: '중복 아님', merge: '병합 요청', businessCard: '명함 OCR', import: 'Excel/CSV 불러오기', export: '내보내기', confirmImport: '검토 후 반영', demo: 'DEMO_LOCAL 입력은 현재 세션의 시뮬레이션이며 서버 CRM에 저장되지 않습니다.', backend: 'Server Adapter 연결 전에는 운영 저장이 차단됩니다.', calendar: '일정 만들기', task: '할 일 만들기', mail: '메일 Draft', noTransition: '가능한 다음 단계가 없습니다.', importReady: '가져오기 Preview를 확인해 주세요.', importBlocked: '오류를 해결하기 전에는 반영할 수 없습니다.' },
-  vi: { title: 'Trung tâm vận hành kinh doanh', description: 'Quản lý danh thiếp, khách hàng, liên hệ, cơ hội, báo giá và hợp đồng theo một chuỗi.', pipeline: 'Pipeline cơ hội', customers: 'Khách hàng 360', contacts: 'Danh bạ liên hệ', addOpportunity: 'Thêm cơ hội', addCustomer: 'Thêm khách hàng', addContact: 'Thêm liên hệ', addActivity: 'Ghi hoạt động', search: 'Tìm khách hàng, liên hệ, cơ hội', active: 'Cơ hội mở', value: 'Giá trị Pipeline', weighted: 'Giá trị có trọng số', won: 'Thành công', selected: 'Đã chọn', empty: 'Không có dữ liệu phù hợp.', edit: 'Chỉnh sửa', save: 'Lưu', cancel: 'Hủy', archive: 'Lưu trữ', estimate: 'Liên kết yêu cầu báo giá', activity: 'Dòng thời gian hoạt động', next: 'Bước tiếp theo', customer: 'Khách hàng', contact: 'Liên hệ', owner: 'Phụ trách', probability: 'Xác suất', close: 'Ngày dự kiến', nextAction: 'Hành động tiếp theo', amount: 'Giá trị dự kiến', audit: 'Lịch sử', duplicate: 'Kiểm tra trùng', resolve: 'Không trùng', merge: 'Yêu cầu gộp', businessCard: 'OCR danh thiếp', import: 'Nhập Excel/CSV', export: 'Xuất', confirmImport: 'Xác nhận nhập', demo: 'DEMO_LOCAL chỉ mô phỏng trong phiên hiện tại và không lưu lên CRM máy chủ.', backend: 'Lưu vận hành bị chặn cho đến khi kết nối Server Adapter.', calendar: 'Tạo lịch', task: 'Tạo công việc', mail: 'Bản nháp email', noTransition: 'Không có bước tiếp theo.', importReady: 'Vui lòng kiểm tra bản xem trước.', importBlocked: 'Không thể nhập cho đến khi sửa lỗi.' },
-  en: { title: 'Sales operations center', description: 'Manage business cards, customers, contacts, opportunities, estimates, and wins in one lineage.', pipeline: 'Opportunity pipeline', customers: 'Customer 360', contacts: 'Contact directory', addOpportunity: 'Add opportunity', addCustomer: 'Add customer', addContact: 'Add contact', addActivity: 'Log activity', search: 'Search customer, contact, opportunity', active: 'Open opportunities', value: 'Pipeline value', weighted: 'Weighted value', won: 'Won', selected: 'Selected', empty: 'No matching data.', edit: 'Edit', save: 'Save', cancel: 'Cancel', archive: 'Archive', estimate: 'Link estimate request', activity: 'Activity timeline', next: 'Next stage', customer: 'Customer', contact: 'Contact', owner: 'Owner', probability: 'Probability', close: 'Expected close', nextAction: 'Next action', amount: 'Expected value', audit: 'History', duplicate: 'Duplicate review', resolve: 'Not duplicate', merge: 'Request merge', businessCard: 'Business card OCR', import: 'Import Excel/CSV', export: 'Export', confirmImport: 'Confirm import', demo: 'DEMO_LOCAL changes are session simulations and are not saved to the server CRM.', backend: 'Operational saves are blocked until the Server Adapter is connected.', calendar: 'Create event', task: 'Create task', mail: 'Mail draft', noTransition: 'No next stage is available.', importReady: 'Review the import preview.', importBlocked: 'Resolve errors before importing.' },
-} as const;
-
-const money = (value: number, locale: 'ko' | 'vi' | 'en') => new Intl.NumberFormat(locale === 'ko' ? 'ko-KR' : locale === 'vi' ? 'vi-VN' : 'en-US', { maximumFractionDigits: 0 }).format(value);
-const inputClass = 'min-h-11 w-full rounded-lg border border-[var(--color-border-strong)] bg-[var(--color-surface)] px-3 py-2 text-sm font-semibold outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]';
-const today = () => new Date().toISOString().slice(0, 10);
-
-const opportunityForm = (): SalesOpportunityInput => ({ opportunityName: '', customerId: '', contactId: null, customerName: '', contactRole: '', expectedValue: 0, probability: 30, stage: 'LEAD', expectedCloseDate: today(), nextAction: '', ownerId: '', estimateRequestId: null, projectId: null });
-const customerForm = (): SalesCustomerInput => ({ name: '', industry: '', ownerId: '', status: 'PROSPECT', note: '' });
-const contactForm = (): SalesContactInput => ({ customerId: '', name: '', department: '', position: '', email: '', phone: '', source: 'MANUAL', sourceBusinessCardId: null, lastContactAt: null });
-const activityForm = (): SalesActivityInput => ({ customerId: '', opportunityId: null, contactId: null, type: 'CALL', status: 'DONE', title: '', detail: '', happenedAt: new Date().toISOString(), ownerId: '' });
+const inputClass = 'min-h-11 w-full border border-[var(--color-border-strong)] bg-[var(--color-surface)] px-3 py-2 text-sm font-semibold outline-none focus-visible:ring-2 focus-visible:ring-[#eb6300]';
+const emptyCustomer = (): SalesCustomerInput => ({ name: '', industry: '', ownerId: '', status: 'PROSPECT', note: '' });
+const emptyContact = (): SalesContactInput => ({ customerId: '', name: '', department: '', position: '', email: '', phone: '', source: 'MANUAL', sourceBusinessCardId: null, lastContactAt: null });
 
 export function SalesOperationsWorkbench() {
-  const { locale, setLocale } = useHandoffLocale(); const t = copy[locale];
-  const companyId = useUiStore((state) => state.brandWorkspace); const currentUser = useAuthStore((state) => state.currentUser); const actorId = currentUser?.id ?? 'demo-sales-operator';
-  const store = useBusinessOperationsStore();
-  const customers = useMemo(() => companyCustomers(store.customers, companyId), [companyId, store.customers]);
-  const contacts = useMemo(() => companyContacts(store.contacts, companyId), [companyId, store.contacts]);
-  const opportunities = useMemo(() => companySales(store.sales, companyId), [companyId, store.sales]);
-  const activities = useMemo(() => companyActivities(store.activities, companyId), [companyId, store.activities]);
+  const { locale, setLocale } = useHandoffLocale();
+  const t = salesCustomerCopy[locale];
+  const companyId = useUiStore((state) => state.brandWorkspace);
+  const currentUser = useAuthStore((state) => state.currentUser);
+  const personnel = useAuthStore((state) => state.users);
+  const business = useBusinessOperationsStore();
+  const projects = useProjectStore((state) => state.projects);
   const boundary = getFrontendModuleBoundary('SALES', { locale, adapterReady: false });
-  const searchParams = useSearchParams(); const pathname = usePathname(); const router = useRouter();
-  const requestedView = searchParams.get('salesView') ?? searchParams.get('view');
-  const view: SalesView = requestedView === 'CUSTOMERS' || requestedView === 'CONTACTS' ? requestedView : 'PIPELINE';
-  const [query, setQuery] = useState('');
-  const [drawer, setDrawer] = useState<DrawerMode>(view === 'PIPELINE' && searchParams.get('new') === '1' ? 'OPPORTUNITY_CREATE' : null); const [message, setMessage] = useState(''); const fileRef = useRef<HTMLInputElement>(null);
-  const [opForm, setOpForm] = useState<SalesOpportunityInput>(() => {
-    const customerId = searchParams.get('customerId') ?? '';
-    return {
-      ...opportunityForm(),
-      customerId,
-      customerName: customers.find((item) => item.id === customerId)?.name ?? '',
-      contactId: searchParams.get('contactId'),
-      ownerId: actorId,
-    };
-  }); const [custForm, setCustForm] = useState<SalesCustomerInput>(customerForm);
-  const [personForm, setPersonForm] = useState<SalesContactInput>(contactForm); const [actForm, setActForm] = useState<SalesActivityInput>(activityForm);
-  const [importRows, setImportRows] = useState<ContactImportRow[]>([]); const [importErrors, setImportErrors] = useState<string[]>([]);
-  const summary = useMemo(() => summarizeSales(opportunities), [opportunities]);
-  const selectedId = searchParams.get('recordId');
-  const selectedOpportunity = opportunities.find((item) => item.id === selectedId) ?? opportunities[0] ?? null;
-  const selectedCustomer = customers.find((item) => item.id === searchParams.get('customerId')) ?? customers.find((item) => item.id === selectedOpportunity?.customerId) ?? customers[0] ?? null;
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
+  const router = useRouter();
+  const fileRef = useRef<HTMLInputElement>(null);
+  const actorId = currentUser?.id ?? 'demo-sales-operator';
+  const requestedView = (searchParams.get('salesView') ?? searchParams.get('view') ?? '').toUpperCase();
+  const isLegacyView = ['PIPELINE', 'OPPORTUNITIES', 'QUOTES', 'CONTRACTS', 'ACTIVITIES'].includes(requestedView);
+  const view: MainView = ['CUSTOMERS', 'CONTACTS', 'ACTIVITIES'].includes(requestedView) ? 'CUSTOMERS' : 'DASHBOARD';
+  const rawTab = (searchParams.get('tab') ?? '').toUpperCase();
+  const tab: CustomerDetailTab = rawTab === 'CONTACTS' || requestedView === 'CONTACTS'
+    ? 'CONTACTS'
+    : rawTab === 'PROJECTS'
+      ? 'PROJECTS'
+      : rawTab === 'CARDS'
+        ? 'CARDS'
+        : rawTab === 'AUDIT' || rawTab === 'TIMELINE' || requestedView === 'ACTIVITIES'
+          ? 'AUDIT'
+          : 'BASIC';
+  const requestedFilter = (searchParams.get('filter') ?? 'ALL').toUpperCase();
+  const filter: CustomerProjectFilter = ['ALL', 'ACTIVE_PROJECTS', 'NEW_THIS_YEAR', 'RECENTLY_COMPLETED', 'LINK_REVIEW', 'BUSINESS_CARD_REVIEW', 'STALE_CUSTOMERS'].includes(requestedFilter)
+    ? requestedFilter as CustomerProjectFilter
+    : 'ALL';
+  const query = searchParams.get('q') ?? '';
+  const selectedId = searchParams.get('customerId');
+  const selectedContactId = searchParams.get('contactId');
+  const [drawer, setDrawer] = useState<DrawerMode>(null);
+  const [customerForm, setCustomerForm] = useState<SalesCustomerInput>(emptyCustomer);
+  const [contactForm, setContactForm] = useState<SalesContactInput>(emptyContact);
+  const [importRows, setImportRows] = useState<ContactImportRow[]>([]);
+  const [importErrors, setImportErrors] = useState<string[]>([]);
+  const [message, setMessage] = useState('');
+  const canExport = boundary.mode === 'DEMO_LOCAL'
+    && Boolean(currentUser && ['ADMIN', 'GRADE_1'].includes(resolveAccessGrade(currentUser)));
 
-  const setUrl = (changes: Record<string, string | null>) => { const next = new URLSearchParams(searchParams.toString()); Object.entries(changes).forEach(([key, value]) => value ? next.set(key, value) : next.delete(key)); router.replace(`${pathname}?${next.toString()}`, { scroll: false }); };
-  const switchView = (next: SalesView) => setUrl({ salesView: next });
-  const run = async <T,>(simulate: () => T) => { const result = await executeFrontendMutation(boundary, { simulate }); setMessage(result.message); return result; };
+  const customers = useMemo(() => companyCustomers(business.customers, companyId), [business.customers, companyId]);
+  const contacts = useMemo(() => companyContacts(business.contacts, companyId), [business.contacts, companyId]);
+  const activities = useMemo(() => companyActivities(business.activities, companyId), [business.activities, companyId]);
+  const legacyOpportunities = useMemo(() => companySales(business.sales, companyId), [business.sales, companyId]);
+  const visibleRelationshipPairs = useMemo(() => currentUser
+    ? visibleCustomerProjectRelationships(
+      business.customerProjectRelationships,
+      projects,
+      companyId,
+      currentUser,
+    )
+    : [], [business.customerProjectRelationships, companyId, currentUser, projects]);
+  const visibleRelationships = useMemo(() => visibleRelationshipPairs.map((item) => item.relationship), [visibleRelationshipPairs]);
+  const visibleProjectIds = useMemo(() => new Set(visibleRelationships.map((item) => item.projectId)), [visibleRelationships]);
+  const visibleProjects = useMemo(() => projects.filter((project) => visibleProjectIds.has(project.id)), [projects, visibleProjectIds]);
+  const scopedLinkCandidates = useMemo(() => business.customerProjectLinkCandidates.filter((candidate) => candidate.companyId === companyId), [business.customerProjectLinkCandidates, companyId]);
+  const projection = useMemo(() => buildCustomerProjectProjection({
+    customers,
+    contacts,
+    projects: visibleProjects,
+    relationships: visibleRelationships,
+    candidates: scopedLinkCandidates,
+    activities,
+    businessCards: business.businessCards,
+    personnel,
+    companyId,
+    query,
+    filter,
+    locale,
+  }), [activities, business.businessCards, companyId, contacts, customers, filter, locale, personnel, query, scopedLinkCandidates, visibleProjects, visibleRelationships]);
 
-  const openOpportunity = (record?: SalesOpportunity) => { setOpForm(record ? { opportunityName: record.opportunityName, customerId: record.customerId, contactId: record.contactId, customerName: record.customerName, contactRole: record.contactRole, expectedValue: record.expectedValue, probability: record.probability, stage: record.stage, expectedCloseDate: record.expectedCloseDate, nextAction: record.nextAction, ownerId: record.ownerId, estimateRequestId: record.estimateRequestId, projectId: record.projectId } : { ...opportunityForm(), ownerId: actorId, customerId: selectedCustomer?.id ?? '', customerName: selectedCustomer?.name ?? '' }); setDrawer(record ? 'OPPORTUNITY_EDIT' : 'OPPORTUNITY_CREATE'); };
-  const submitOpportunity = async (event: FormEvent) => { event.preventDefault(); const customer = customers.find((item) => item.id === opForm.customerId); const contact = contacts.find((item) => item.id === opForm.contactId); const payload = { ...opForm, customerName: customer?.name ?? opForm.customerName, contactRole: contact ? `${contact.department} ${contact.position}`.trim() : opForm.contactRole, ownerId: opForm.ownerId || actorId }; const result = await run(() => drawer === 'OPPORTUNITY_EDIT' && selectedOpportunity ? (store.updateSales(selectedOpportunity.id, payload, actorId), selectedOpportunity.id) : store.createSales(companyId, payload, actorId)); if (result.kind !== 'BLOCKED') { setDrawer(null); setUrl({ recordId: result.data }); } };
-  const submitCustomer = async (event: FormEvent) => { event.preventDefault(); const result = await run(() => store.createCustomer(companyId, { ...custForm, ownerId: custForm.ownerId || actorId }, actorId)); if (result.kind !== 'BLOCKED') { setDrawer(null); setUrl({ customerId: result.data }); switchView('CUSTOMERS'); } };
-  const submitContact = async (event: FormEvent) => { event.preventDefault(); const result = await run(() => store.createContact(companyId, personForm, actorId)); if (result.kind !== 'BLOCKED') { setDrawer(null); switchView('CONTACTS'); } };
-  const submitActivity = async (event: FormEvent) => { event.preventDefault(); const result = await run(() => store.createActivity(companyId, { ...actForm, ownerId: actorId }, actorId)); if (result.kind !== 'BLOCKED') setDrawer(null); };
-  const advance = async (record: SalesOpportunity, stage: SalesStage) => { await run(() => store.transitionSales(record.id, stage, actorId)); };
-  const archive = async (record: SalesOpportunity) => { const result = await run(() => store.archiveSales(record.id, actorId)); if (result.kind !== 'BLOCKED') setUrl({ recordId: null }); };
-  const importFile = async (file?: File) => { if (!file) return; try { const preview = await previewContactImport(file); setImportRows(preview.rows); setImportErrors(preview.errors); setDrawer('IMPORT'); } catch (error) { setImportRows([]); setImportErrors([error instanceof Error ? error.message : 'IMPORT_FAILED']); setDrawer('IMPORT'); } };
-  const confirmImport = async () => { if (importErrors.length) return; const result = await run(() => { importRows.forEach((row) => { const customer = useBusinessOperationsStore.getState().customers.find((item) => item.companyId === companyId && item.name.toLowerCase() === row.customerName.toLowerCase()); let customerId = customer?.id; if (!customerId) customerId = useBusinessOperationsStore.getState().createCustomer(companyId, { name: row.customerName, industry: '', ownerId: actorId, status: 'PROSPECT', note: 'Imported from reviewed workbook' }, actorId); useBusinessOperationsStore.getState().createContact(companyId, { customerId, name: row.name, department: row.department, position: row.position, email: row.email, phone: row.phone, source: 'IMPORT', sourceBusinessCardId: null, lastContactAt: null }, actorId); }); return importRows.length; }); if (result.kind !== 'BLOCKED') { setDrawer(null); setImportRows([]); switchView('CONTACTS'); } };
+  const setUrl = (changes: Record<string, string | null>) => {
+    const next = new URLSearchParams(searchParams.toString());
+    Object.entries(changes).forEach(([key, value]) => value ? next.set(key, value) : next.delete(key));
+    const suffix = next.toString();
+    router.replace(suffix ? `${pathname}?${suffix}` : pathname, { scroll: false });
+  };
 
-  const filteredOpportunities = opportunities.filter((item) => `${item.opportunityName} ${item.customerName}`.toLowerCase().includes(query.toLowerCase()));
-  const filteredCustomers = customers.filter((item) => item.name.toLowerCase().includes(query.toLowerCase()));
-  const filteredContacts = contacts.filter((item) => `${item.name} ${item.email} ${item.phone}`.toLowerCase().includes(query.toLowerCase()));
+  useEffect(() => {
+    if (!['PIPELINE', 'OPPORTUNITIES'].includes(requestedView) || searchParams.get('new') !== '1') return;
+    const next = new URLSearchParams();
+    const customerId = searchParams.get('customerId');
+    const contactId = searchParams.get('contactId');
+    if (customerId) next.set('customerId', customerId);
+    if (contactId) next.set('contactId', contactId);
+    next.set('new', '1');
+    router.replace(`/projects/estimate-requests?${next.toString()}`);
+  }, [requestedView, router, searchParams]);
+  const openDirectory = (nextFilter: CustomerProjectFilter = 'ALL') => setUrl({ view: 'CUSTOMERS', salesView: null, filter: nextFilter, customerId: null, tab: null });
+  const run = async <T,>(simulate: () => T) => {
+    const result = await executeFrontendMutation(boundary, { simulate });
+    setMessage(result.message);
+    return result;
+  };
+  const submitCustomer = async (event: FormEvent) => {
+    event.preventDefault();
+    const result = await run(() => business.createCustomer(companyId, { ...customerForm, ownerId: customerForm.ownerId || actorId }, actorId));
+    if (result.kind !== 'BLOCKED') {
+      setDrawer(null);
+      setCustomerForm(emptyCustomer());
+      setUrl({ view: 'CUSTOMERS', salesView: null, customerId: result.data, tab: 'BASIC' });
+    }
+  };
+  const submitContact = async (event: FormEvent) => {
+    event.preventDefault();
+    const result = await run(() => business.createContact(companyId, contactForm, actorId));
+    if (result.kind !== 'BLOCKED') {
+      setDrawer(null);
+      setContactForm(emptyContact());
+      setUrl({ view: 'CUSTOMERS', salesView: null, customerId: contactForm.customerId, tab: 'CONTACTS' });
+    }
+  };
+  const importFile = async (file?: File) => {
+    if (!file) return;
+    try {
+      const preview = await previewContactImport(file);
+      setImportRows(preview.rows);
+      setImportErrors(preview.errors);
+    } catch (error) {
+      setImportRows([]);
+      setImportErrors([error instanceof Error ? error.message : 'IMPORT_FAILED']);
+    }
+    setDrawer('IMPORT');
+  };
+  const confirmImport = async () => {
+    if (importErrors.length) return;
+    const result = await run(() => {
+      importRows.forEach((row) => {
+        const current = useBusinessOperationsStore.getState();
+        let customerId = current.customers.find((item) => item.companyId === companyId && !item.archivedAt && item.name.toLocaleLowerCase() === row.customerName.toLocaleLowerCase())?.id;
+        if (!customerId) customerId = current.createCustomer(companyId, { name: row.customerName, industry: '', ownerId: actorId, status: 'PROSPECT', note: 'Reviewed contact import' }, actorId);
+        useBusinessOperationsStore.getState().createContact(companyId, { customerId, name: row.name, department: row.department, position: row.position, email: row.email, phone: row.phone, source: 'IMPORT', sourceBusinessCardId: null, lastContactAt: null }, actorId);
+      });
+      return importRows.length;
+    });
+    if (result.kind !== 'BLOCKED') {
+      setDrawer(null);
+      setImportRows([]);
+      setMessage(t.imported);
+      openDirectory();
+    }
+  };
+  const exportContacts = async () => {
+    await exportContactWorkbook(contacts, customers, 'XLSX');
+    useAuditStore.getState().addLog({
+      actorId,
+      action: 'EXPORT',
+      entityType: 'SALES_CONTACT_DIRECTORY',
+      entityId: companyId,
+      message: `Company-scoped contact directory exported; contacts=${contacts.length}; projectsIncluded=false.`,
+    });
+  };
+  const linkCandidate = async (candidateId: string, contactId: string) => {
+    await run(() => business.linkCustomerProjectCandidate(candidateId, contactId, actorId));
+  };
+  const updateCandidateStatus = async (candidateId: string, status: Parameters<typeof business.setCustomerProjectLinkCandidateStatus>[1]) => {
+    await run(() => business.setCustomerProjectLinkCandidateStatus(candidateId, status));
+  };
+
+  const legacyNotice = isLegacyView ? legacyNoticeFor(requestedView, locale) : null;
+  const legacyTarget = isLegacyView ? legacySalesDestination(requestedView) : null;
 
   return <section className="space-y-5 pb-10">
-    <header className="rounded-2xl border border-emerald-200 bg-[linear-gradient(120deg,#0d4c4a,#137a69)] p-6 text-white shadow-[var(--cc-shadow-2)] sm:p-7">
-      <div className="flex flex-wrap items-start justify-between gap-5"><div><p className="text-[10px] font-black tracking-[.18em] text-emerald-200">SALES OPERATIONS · {companyId}</p><h1 className="mt-2 text-2xl font-black sm:text-3xl">{t.title}</h1><p className="mt-2 max-w-3xl text-sm font-semibold leading-6 text-white/75">{t.description}</p></div><HandoffLanguageToggle locale={locale} onChange={setLocale} /></div>
-      <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4"><Kpi icon={Target} label={t.active} value={summary.activeCount} /><Kpi icon={CircleDollarSign} label={t.value} value={money(summary.pipelineValue, locale)} /><Kpi icon={TrendingUp} label={t.weighted} value={money(summary.weightedValue, locale)} /><Kpi icon={Check} label={t.won} value={summary.wonCount} /></div>
+    <header className="border border-emerald-800 bg-[linear-gradient(120deg,#0d4c4a,#146f65_62%,#245083)] p-6 text-white shadow-[var(--cc-shadow-2)] sm:p-7">
+      <div className="flex flex-wrap items-start justify-between gap-5"><div><p className="text-[10px] font-black tracking-[.18em] text-emerald-200">CUSTOMER RELATIONSHIP & PROJECT HISTORY · {companyId}</p><h1 className="mt-2 text-2xl font-black sm:text-3xl">{t.title}</h1><p className="mt-2 max-w-3xl text-sm font-semibold leading-6 text-white/80">{t.description}</p></div><HandoffLanguageToggle locale={locale} onChange={setLocale} /></div>
     </header>
     <RuntimeCapabilityPanel boundary={boundary} />
-    <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-[var(--cc-shadow-1)]">
-      <div className="flex flex-wrap items-center justify-between gap-3"><div role="tablist" className="flex flex-wrap gap-2">{(['PIPELINE','CUSTOMERS','CONTACTS'] as SalesView[]).map((item) => <button key={item} role="tab" aria-selected={view === item} onClick={() => switchView(item)} className={`min-h-11 rounded-lg border px-4 text-sm font-black transition focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] ${view === item ? 'border-emerald-700 bg-emerald-50 text-emerald-800 shadow-sm' : 'border-[var(--color-border)] hover:bg-[var(--cc-surface-2)]'}`}>{item === 'PIPELINE' ? t.pipeline : item === 'CUSTOMERS' ? t.customers : t.contacts}</button>)}</div><ActionButtonGroup label="Sales actions"><SemanticActionButton variant="primary" icon={<Plus className="h-4 w-4" />} onClick={() => view === 'PIPELINE' ? openOpportunity() : view === 'CUSTOMERS' ? (setCustForm({ ...customerForm(), ownerId: actorId }), setDrawer('CUSTOMER_CREATE')) : (setPersonForm({ ...contactForm(), customerId: selectedCustomer?.id ?? '' }), setDrawer('CONTACT_CREATE'))}>{view === 'PIPELINE' ? t.addOpportunity : view === 'CUSTOMERS' ? t.addCustomer : t.addContact}</SemanticActionButton>{view === 'CONTACTS' && <><SemanticActionButton variant="document" icon={<Upload className="h-4 w-4" />} onClick={() => fileRef.current?.click()}>{t.import}</SemanticActionButton><SemanticActionButton variant="document" icon={<Download className="h-4 w-4" />} onClick={() => void exportContactWorkbook(contacts, customers, 'XLSX')}>{t.export}</SemanticActionButton><input ref={fileRef} type="file" accept=".xlsx,.csv" className="sr-only" onChange={(event) => void importFile(event.target.files?.[0])} /></>}</ActionButtonGroup></div>
-      <label className="mt-4 flex min-h-11 items-center gap-2 rounded-lg border border-[var(--color-border)] bg-[var(--cc-surface-2)] px-3"><Search className="h-4 w-4 text-[var(--color-text-sub)]" /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={t.search} className="w-full bg-transparent text-sm font-semibold outline-none" /></label>
-      {message && <p role="status" className="mt-3 rounded-lg border border-sky-200 bg-sky-50 px-3 py-2 text-xs font-bold text-sky-900">{message}</p>}
+    {legacyNotice && legacyTarget && <div role="status" className="flex flex-wrap items-center gap-3 border border-amber-300 bg-amber-50 p-4 text-amber-950"><AlertTriangle className="h-5 w-5 shrink-0" /><p className="min-w-0 flex-1 text-sm font-bold">{legacyNotice}</p><Link href={legacyTarget.href} className="inline-flex min-h-10 items-center bg-amber-900 px-3 text-xs font-black text-white hover:bg-amber-950">{t.goCanonical}</Link></div>}
+    <div className="border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-[var(--cc-shadow-1)]">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div role="tablist" className="flex gap-2"><button role="tab" aria-selected={view === 'DASHBOARD'} onClick={() => setUrl({ view: null, salesView: null, customerId: null, tab: null, filter: null })} className={tabClass(view === 'DASHBOARD')}>{t.dashboard}</button><button role="tab" aria-selected={view === 'CUSTOMERS'} onClick={() => openDirectory()} className={tabClass(view === 'CUSTOMERS')}>{t.customers}</button></div>
+        <ActionButtonGroup label="Customer actions">
+          <SemanticActionButton variant="primary" icon={<Plus className="h-4 w-4" />} onClick={() => { setCustomerForm({ ...emptyCustomer(), ownerId: actorId }); setDrawer('CUSTOMER_CREATE'); }}>{t.addCustomer}</SemanticActionButton>
+          <SemanticActionButton variant="add-resource" icon={<Plus className="h-4 w-4" />} onClick={() => { setContactForm({ ...emptyContact(), customerId: selectedId ?? projection.rows[0]?.customer.id ?? '' }); setDrawer('CONTACT_CREATE'); }}>{t.addContact}</SemanticActionButton>
+          <SemanticActionButton variant="document" icon={<Upload className="h-4 w-4" />} onClick={() => fileRef.current?.click()}>{t.import}</SemanticActionButton>
+          {canExport && <SemanticActionButton variant="document" icon={<Download className="h-4 w-4" />} onClick={() => void exportContacts()}>{t.export}</SemanticActionButton>}
+          <input ref={fileRef} type="file" accept=".xlsx,.csv" className="sr-only" onChange={(event) => void importFile(event.target.files?.[0])} />
+        </ActionButtonGroup>
+      </div>
+      {view === 'CUSTOMERS' && <label className="mt-4 flex min-h-11 items-center gap-2 border border-[var(--color-border)] bg-[var(--cc-surface-2)] px-3"><Search className="h-4 w-4 text-[var(--color-text-sub)]" /><span className="sr-only">{t.search}</span><input value={query} onChange={(event) => setUrl({ q: event.target.value || null })} placeholder={t.search} className="w-full bg-transparent text-sm font-semibold outline-none" /></label>}
     </div>
+    {message && <p role="status" className="border border-sky-200 bg-sky-50 px-4 py-3 text-sm font-bold text-sky-900">{message}</p>}
+    {view === 'DASHBOARD'
+      ? <CustomerRelationshipDashboard locale={locale} projection={buildCustomerProjectProjection({ customers, contacts, projects: visibleProjects, relationships: visibleRelationships, candidates: scopedLinkCandidates, activities, businessCards: business.businessCards, personnel, companyId, locale })} onFilter={openDirectory} />
+      : <div className="space-y-5">
+          {filter === 'LINK_REVIEW' && <CustomerProjectLinkReview locale={locale} candidates={scopedLinkCandidates} customers={customers} contacts={contacts} onLink={(candidateId, contactId) => void linkCandidate(candidateId, contactId)} onStatus={(candidateId, status) => void updateCandidateStatus(candidateId, status)} />}
+          <CustomerDirectoryWorkbench locale={locale} rows={projection.rows} selectedId={selectedId} selectedContactId={selectedContactId} tab={tab} legacyActivities={activities} legacyOpportunities={legacyOpportunities} onSelect={(customerId) => setUrl({ customerId, contactId: null, tab: null })} onTab={(nextTab) => setUrl({ tab: nextTab, contactId: nextTab === 'PROJECTS' || nextTab === 'CONTACTS' ? selectedContactId : null })} onClearContactFilter={() => setUrl({ contactId: null })} />
+        </div>}
 
-    {view === 'PIPELINE' && <PipelineView entries={filteredOpportunities} locale={locale} selectedId={selectedOpportunity?.id ?? ''} onSelect={(id) => setUrl({ recordId: id })} onEdit={openOpportunity} onAdvance={advance} t={t} />}
-    {view === 'PIPELINE' && selectedOpportunity && <OpportunityDetail record={selectedOpportunity} locale={locale} contacts={contacts} activities={activities.filter((item) => item.opportunityId === selectedOpportunity.id)} t={t} onEdit={() => openOpportunity(selectedOpportunity)} onArchive={() => void archive(selectedOpportunity)} onAddActivity={() => { setActForm({ ...activityForm(), customerId: selectedOpportunity.customerId, opportunityId: selectedOpportunity.id, contactId: selectedOpportunity.contactId, ownerId: actorId }); setDrawer('ACTIVITY_CREATE'); }} />}
-    {view === 'CUSTOMERS' && <CustomerView customers={filteredCustomers} contacts={contacts} opportunities={opportunities} activities={activities} selectedId={selectedCustomer?.id ?? ''} locale={locale} t={t} onSelect={(id) => setUrl({ customerId: id })} onAddActivity={(customerId) => { setActForm({ ...activityForm(), customerId, ownerId: actorId }); setDrawer('ACTIVITY_CREATE'); }} />}
-    {view === 'CONTACTS' && <ContactView contacts={filteredContacts} customers={customers} selectedId={searchParams.get('contactId')} t={t} onResolve={(id, status) => void run(() => store.resolveContactDuplicate(id, status, actorId))} onArchive={(id) => void run(() => store.archiveContact(id, actorId))} />}
-
-    <DetailDrawer open={drawer !== null} title={drawerTitle(drawer, t)} description={boundary.isSimulation ? t.demo : t.backend} canEdit onClose={() => setDrawer(null)} footer={drawer === 'IMPORT' ? <ActionButtonGroup label="Import" className="justify-end"><SemanticActionButton variant="neutral" onClick={() => setDrawer(null)}>{t.cancel}</SemanticActionButton><SemanticActionButton variant="save" disabled={Boolean(importErrors.length || !importRows.length)} disabledReason={importErrors.length ? t.importBlocked : t.importReady} onClick={() => void confirmImport()}>{t.confirmImport}</SemanticActionButton></ActionButtonGroup> : <ActionButtonGroup label="Save" className="justify-end"><SemanticActionButton variant="neutral" onClick={() => setDrawer(null)}>{t.cancel}</SemanticActionButton><SemanticActionButton variant="save" type="submit" form="sales-operation-form">{t.save}</SemanticActionButton></ActionButtonGroup>}>
-      {drawer === 'IMPORT' ? <ImportPreview rows={importRows} errors={importErrors} /> : drawer?.startsWith('OPPORTUNITY') ? <OpportunityForm value={opForm} customers={customers} contacts={contacts.filter((item) => item.customerId === opForm.customerId)} locale={locale} onChange={setOpForm} onSubmit={submitOpportunity} /> : drawer === 'CUSTOMER_CREATE' ? <CustomerForm value={custForm} onChange={setCustForm} onSubmit={submitCustomer} /> : drawer === 'CONTACT_CREATE' ? <ContactForm value={personForm} customers={customers} onChange={setPersonForm} onSubmit={submitContact} /> : drawer === 'ACTIVITY_CREATE' ? <ActivityForm value={actForm} contacts={contacts.filter((item) => item.customerId === actForm.customerId)} locale={locale} onChange={setActForm} onSubmit={submitActivity} /> : null}
+    <DetailDrawer open={drawer === 'CUSTOMER_CREATE'} title={t.addCustomer} canEdit onClose={() => setDrawer(null)} footer={<DrawerFooter save={t.save} cancel={t.cancel} form="customer-create-form" onCancel={() => setDrawer(null)} />}>
+      <form id="customer-create-form" onSubmit={(event) => void submitCustomer(event)} className="space-y-4"><Field label={t.name}><input required autoFocus className={inputClass} value={customerForm.name} onChange={(event) => setCustomerForm({ ...customerForm, name: event.target.value })} /></Field><Field label={t.industry}><input className={inputClass} value={customerForm.industry} onChange={(event) => setCustomerForm({ ...customerForm, industry: event.target.value })} /></Field><Field label={t.note}><textarea className={`${inputClass} min-h-28`} value={customerForm.note} onChange={(event) => setCustomerForm({ ...customerForm, note: event.target.value })} /></Field></form>
+    </DetailDrawer>
+    <DetailDrawer open={drawer === 'CONTACT_CREATE'} title={t.addContact} canEdit onClose={() => setDrawer(null)} footer={<DrawerFooter save={t.save} cancel={t.cancel} form="contact-create-form" onCancel={() => setDrawer(null)} />}>
+      <form id="contact-create-form" onSubmit={(event) => void submitContact(event)} className="space-y-4"><Field label={t.customer}><select required className={inputClass} value={contactForm.customerId} onChange={(event) => setContactForm({ ...contactForm, customerId: event.target.value })}><option value="">-</option>{customers.map((customer) => <option key={customer.id} value={customer.id}>{customer.name}</option>)}</select></Field><Field label={t.name}><input required autoFocus className={inputClass} value={contactForm.name} onChange={(event) => setContactForm({ ...contactForm, name: event.target.value })} /></Field><div className="grid gap-4 sm:grid-cols-2"><Field label={t.department}><input className={inputClass} value={contactForm.department} onChange={(event) => setContactForm({ ...contactForm, department: event.target.value })} /></Field><Field label={t.position}><input className={inputClass} value={contactForm.position} onChange={(event) => setContactForm({ ...contactForm, position: event.target.value })} /></Field></div><Field label={t.email}><input type="email" className={inputClass} value={contactForm.email} onChange={(event) => setContactForm({ ...contactForm, email: event.target.value })} /></Field><Field label={t.phone}><input className={inputClass} value={contactForm.phone} onChange={(event) => setContactForm({ ...contactForm, phone: event.target.value })} /></Field></form>
+    </DetailDrawer>
+    <DetailDrawer open={drawer === 'IMPORT'} title={t.import} canEdit onClose={() => setDrawer(null)} footer={<div className="flex justify-end gap-2"><button type="button" onClick={() => setDrawer(null)} className="min-h-10 border border-[var(--color-border-strong)] px-4 text-xs font-black">{t.cancel}</button><button type="button" disabled={Boolean(importErrors.length)} onClick={() => void confirmImport()} className="min-h-10 bg-[#eb6300] px-4 text-xs font-black text-white disabled:cursor-not-allowed disabled:bg-slate-300">{t.save}</button></div>}>
+      <div className="space-y-3">{importErrors.map((error) => <p key={error} className="border border-rose-200 bg-rose-50 p-3 text-xs font-bold text-rose-900">{error}</p>)}{importRows.map((row, index) => <div key={`${row.email}-${index}`} className="border border-[var(--color-border)] p-3 text-xs"><strong>{row.name}</strong><p className="mt-1 text-[var(--color-text-sub)]">{row.customerName} · {row.email}</p></div>)}</div>
     </DetailDrawer>
   </section>;
 }
 
-function Kpi({ icon: Icon, label, value }: { icon: ElementType; label: string; value: string | number }) { return <article className="rounded-xl border border-white/15 bg-white/[.08] p-4"><Icon className="h-4 w-4 text-emerald-200" /><p className="mt-3 text-[10px] font-black text-white/65">{label}</p><strong className="mt-1 block text-xl font-black">{value}</strong></article>; }
-
-function PipelineView({ entries, locale, selectedId, onSelect, onEdit, onAdvance, t }: { entries: SalesOpportunity[]; locale: 'ko' | 'vi' | 'en'; selectedId: string; onSelect: (id: string) => void; onEdit: (record: SalesOpportunity) => void; onAdvance: (record: SalesOpportunity, stage: SalesStage) => void; t: typeof copy.ko | typeof copy.vi | typeof copy.en }) {
-  const stages: SalesStage[] = ['LEAD','QUALIFIED','PROPOSAL','NEGOTIATION','WON','LOST'];
-  return <div className="cc-scrollbar overflow-x-auto pb-2"><div className="grid min-w-[1180px] grid-cols-6 gap-3">{stages.map((stage) => <section key={stage} className="rounded-2xl border border-[var(--color-border)] bg-[var(--cc-surface-2)] p-3"><header className="mb-3 flex items-center justify-between"><strong className="text-xs font-black">{stageLabels[stage][locale]}</strong><span className="rounded-full bg-[var(--color-surface)] px-2 py-1 text-[10px] font-black">{entries.filter((item) => item.stage === stage).length}</span></header><div className="space-y-3">{entries.filter((item) => item.stage === stage).map((record) => <article key={record.id} tabIndex={0} onClick={() => onSelect(record.id)} onKeyDown={(event) => { if (event.key === 'Enter') onSelect(record.id); }} className={`cursor-pointer rounded-xl border bg-[var(--color-surface)] p-3 transition hover:-translate-y-0.5 hover:shadow-md focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] ${selectedId === record.id ? 'border-emerald-600 shadow-md ring-1 ring-emerald-500' : 'border-[var(--color-border)]'}`}><div className="flex items-start justify-between gap-2"><strong className="text-xs font-black leading-5">{record.opportunityName}</strong>{selectedId === record.id && <span className="rounded-full bg-emerald-100 px-2 py-1 text-[9px] font-black text-emerald-800">{t.selected}</span>}</div><p className="mt-1 truncate text-[10px] font-bold text-[var(--color-text-sub)]">{record.customerName}</p><p className="mt-3 text-sm font-black">{money(record.expectedValue, locale)}</p><div className="mt-2 h-1.5 overflow-hidden rounded-full bg-slate-100"><div className="h-full bg-emerald-600" style={{ width: `${record.probability}%` }} /></div><div className="mt-3 flex items-center justify-between"><button className="text-[10px] font-black text-blue-700 hover:underline" onClick={(event) => { event.stopPropagation(); onEdit(record); }}>{t.edit}</button>{nextSalesStages(record.stage)[0] && <button className="text-[10px] font-black text-emerald-700 hover:underline" onClick={(event) => { event.stopPropagation(); onAdvance(record, nextSalesStages(record.stage)[0]); }}>{stageLabels[nextSalesStages(record.stage)[0]][locale]} →</button>}</div></article>)}</div></section>)}</div></div>;
+function legacyNoticeFor(view: string, locale: 'ko' | 'vi' | 'en') {
+  const t = salesCustomerCopy[locale];
+  if (view === 'PIPELINE' || view === 'OPPORTUNITIES') return t.legacyPipeline;
+  if (view === 'QUOTES') return t.legacyQuotes;
+  if (view === 'CONTRACTS') return t.legacyContracts;
+  return t.legacyActivities;
 }
-
-function OpportunityDetail({ record, locale, contacts, activities, t, onEdit, onArchive, onAddActivity }: { record: SalesOpportunity; locale: 'ko' | 'vi' | 'en'; contacts: ReturnType<typeof companyContacts>; activities: ReturnType<typeof companyActivities>; t: typeof copy.ko | typeof copy.vi | typeof copy.en; onEdit: () => void; onArchive: () => void; onAddActivity: () => void }) {
-  const contact = contacts.find((item) => item.id === record.contactId);
-  return <section className="grid gap-4 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-[var(--cc-shadow-1)] lg:grid-cols-[minmax(0,1fr)_360px] sm:p-6"><div><div className="flex flex-wrap items-start justify-between gap-3"><div><p className="text-[10px] font-black tracking-[.16em] text-emerald-700">OPPORTUNITY DETAIL</p><h2 className="mt-1 text-xl font-black">{record.opportunityName}</h2><p className="mt-1 text-sm font-semibold text-[var(--color-text-sub)]">{record.customerName} · {contact?.name ?? record.contactRole}</p></div><ActionButtonGroup label="Opportunity"><SemanticActionButton size="sm" variant="edit" icon={<Pencil className="h-4 w-4" />} onClick={onEdit}>{t.edit}</SemanticActionButton><SemanticActionButton size="sm" variant="archive" icon={<Archive className="h-4 w-4" />} onClick={onArchive}>{t.archive}</SemanticActionButton></ActionButtonGroup></div><dl className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4"><Info icon={CircleDollarSign} label={t.amount} value={money(record.expectedValue, locale)} /><Info icon={TrendingUp} label={t.probability} value={`${record.probability}%`} /><Info icon={CalendarDays} label={t.close} value={record.expectedCloseDate} /><Info icon={ArrowRight} label={t.nextAction} value={record.nextAction || '-'} /></dl><div className="mt-5 flex flex-wrap gap-2"><LinkButton href={`/projects/estimate-requests?sourceOpportunityId=${encodeURIComponent(record.id)}&customerId=${encodeURIComponent(record.customerId)}`} icon={FilePlus2} label={t.estimate} tone="document" /><LinkButton href={`/mail?compose=1&opportunityId=${encodeURIComponent(record.id)}`} icon={Mail} label={t.mail} tone="view" /><LinkButton href={`/calendar?new=1&opportunityId=${encodeURIComponent(record.id)}`} icon={CalendarDays} label={t.calendar} tone="view" /><LinkButton href={`/tasks/my?new=1&opportunityId=${encodeURIComponent(record.id)}`} icon={Check} label={t.task} tone="view" /><SemanticActionButton variant="add-resource" size="sm" icon={<Plus className="h-4 w-4" />} onClick={onAddActivity}>{t.addActivity}</SemanticActionButton></div></div><Timeline activities={activities} locale={locale} t={t} /></section>;
-}
-
-function CustomerView({ customers, contacts, opportunities, activities, selectedId, locale, t, onSelect, onAddActivity }: { customers: ReturnType<typeof companyCustomers>; contacts: ReturnType<typeof companyContacts>; opportunities: SalesOpportunity[]; activities: ReturnType<typeof companyActivities>; selectedId: string; locale: 'ko' | 'vi' | 'en'; t: typeof copy.ko | typeof copy.vi | typeof copy.en; onSelect: (id: string) => void; onAddActivity: (id: string) => void }) {
-  const selected = customers.find((item) => item.id === selectedId) ?? customers[0];
-  return <div className="grid gap-4 lg:grid-cols-[340px_minmax(0,1fr)]"><section className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-3 shadow-[var(--cc-shadow-1)]">{customers.length ? customers.map((customer) => <button key={customer.id} onClick={() => onSelect(customer.id)} className={`mb-2 w-full rounded-xl border p-4 text-left transition hover:border-emerald-400 hover:shadow-sm focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] ${selected?.id === customer.id ? 'border-emerald-600 bg-emerald-50' : 'border-[var(--color-border)]'}`}><span className="flex justify-between gap-2"><strong className="text-sm font-black">{customer.name}</strong><span className="text-[9px] font-black text-emerald-700">{customer.customerNo}</span></span><span className="mt-2 block text-xs font-semibold text-[var(--color-text-sub)]">{customer.industry || '-'} · {customer.status}</span></button>) : <Empty text={t.empty} />}</section>{selected && <section className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-[var(--cc-shadow-1)] sm:p-6"><div className="flex flex-wrap items-start justify-between gap-3"><div><p className="text-[10px] font-black tracking-[.16em] text-emerald-700">CUSTOMER 360</p><h2 className="mt-1 text-2xl font-black">{selected.name}</h2><p className="mt-1 text-xs font-semibold text-[var(--color-text-sub)]">{selected.customerNo} · {selected.industry}</p></div><SemanticActionButton variant="add-resource" size="sm" icon={<MessageSquareText className="h-4 w-4" />} onClick={() => onAddActivity(selected.id)}>{t.addActivity}</SemanticActionButton></div><div className="mt-5 grid gap-3 sm:grid-cols-3"><Info icon={UsersRound} label={t.contacts} value={String(contacts.filter((item) => item.customerId === selected.id).length)} /><Info icon={Target} label={t.pipeline} value={String(opportunities.filter((item) => item.customerId === selected.id).length)} /><Info icon={CircleDollarSign} label={t.value} value={money(opportunities.filter((item) => item.customerId === selected.id).reduce((sum, item) => sum + item.expectedValue, 0), locale)} /></div><div className="mt-5 grid gap-5 xl:grid-cols-2"><div><h3 className="text-sm font-black">{t.contacts}</h3><div className="mt-3 space-y-2">{contacts.filter((item) => item.customerId === selected.id).map((contact) => <article key={contact.id} className="rounded-xl border border-[var(--color-border)] p-3"><strong className="text-xs font-black">{contact.name}</strong><p className="mt-1 text-[10px] font-semibold text-[var(--color-text-sub)]">{contact.department} {contact.position}</p><p className="mt-2 break-all text-[10px] text-[var(--color-text-sub)]">{contact.email || contact.phone}</p></article>)}</div></div><Timeline activities={activities.filter((item) => item.customerId === selected.id)} locale={locale} t={t} /></div></section>}</div>;
-}
-
-function ContactView({ contacts, customers, selectedId, t, onResolve, onArchive }: { contacts: ReturnType<typeof companyContacts>; customers: ReturnType<typeof companyCustomers>; selectedId: string | null; t: typeof copy.ko | typeof copy.vi | typeof copy.en; onResolve: (id: string, status: 'CLEAR' | 'MERGED') => void; onArchive: (id: string) => void }) { return <section className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-[var(--cc-shadow-1)]"><div className="mb-4 flex flex-wrap items-center justify-between gap-3"><div><h2 className="text-lg font-black">{t.contacts}</h2><p className="mt-1 text-xs font-semibold text-[var(--color-text-sub)]">Business Card → Human Review → Canonical Contact → Customer 360</p></div><Link href="/sales/business-cards" className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-cyan-600 bg-cyan-50 px-3 text-xs font-black text-cyan-800 hover:bg-cyan-100"><Sheet className="h-4 w-4" />{t.businessCard}</Link></div><div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">{contacts.length ? contacts.map((contact) => <article id={`contact-${contact.id}`} key={contact.id} className={`rounded-xl border p-4 transition hover:-translate-y-px hover:shadow-md ${selectedId === contact.id ? 'border-orange-500 bg-orange-50 ring-2 ring-orange-100' : contact.duplicateStatus === 'REVIEW_REQUIRED' ? 'border-amber-300 bg-amber-50/60' : 'border-[var(--color-border)]'}`}><div className="flex items-start justify-between gap-2"><div><strong className="text-sm font-black">{contact.name}</strong><p className="mt-1 text-[10px] font-bold text-[var(--color-text-sub)]">{(customers.find((item) => item.id === contact.customerId)?.name ?? contact.companyName) || '-'}</p></div><span className={`rounded-full px-2 py-1 text-[9px] font-black ${contact.source === 'BUSINESS_CARD_OCR' ? 'bg-cyan-100 text-cyan-800' : 'bg-slate-100 text-slate-700'}`}>{contact.source}</span></div><p className="mt-3 break-all text-xs font-semibold text-[var(--color-text-sub)]">{contact.email || contact.mobile || contact.phone || '-'}</p>{contact.tags.length > 0 && <div className="mt-3 flex flex-wrap gap-1">{contact.tags.map((tag) => <span key={tag} className="rounded-full bg-violet-50 px-2 py-1 text-[9px] font-black text-violet-700">{tag}</span>)}</div>}<div className="mt-4 flex flex-wrap gap-2"><Link href={`/sales?salesView=CUSTOMERS&customerId=${encodeURIComponent(contact.customerId)}`} className="inline-flex min-h-9 items-center rounded-lg border border-blue-200 bg-blue-50 px-3 text-[10px] font-black text-blue-800 hover:bg-blue-100">Customer 360</Link><Link href={`/mail?compose=1&contactId=${encodeURIComponent(contact.id)}`} className="inline-flex min-h-9 items-center rounded-lg border border-teal-200 bg-teal-50 px-3 text-[10px] font-black text-teal-800 hover:bg-teal-100">Mail</Link><SemanticActionButton size="sm" variant="archive" onClick={() => onArchive(contact.id)}>{t.archive}</SemanticActionButton></div>{contact.duplicateStatus === 'REVIEW_REQUIRED' && <div className="mt-4 border-t border-amber-200 pt-3"><p className="mb-2 text-[10px] font-black text-amber-800"><Merge className="mr-1 inline h-3.5 w-3.5" />{t.duplicate}</p><ActionButtonGroup label={t.duplicate}><SemanticActionButton size="sm" variant="success" onClick={() => onResolve(contact.id, 'CLEAR')}>{t.resolve}</SemanticActionButton><SemanticActionButton size="sm" variant="duplicate" onClick={() => onResolve(contact.id, 'MERGED')}>{t.merge}</SemanticActionButton></ActionButtonGroup></div>}</article>) : <Empty text={t.empty} />}</div></section>; }
-
-function Timeline({ activities, locale, t }: { activities: ReturnType<typeof companyActivities>; locale: 'ko' | 'vi' | 'en'; t: typeof copy.ko | typeof copy.vi | typeof copy.en }) { return <aside><h3 className="flex items-center gap-2 text-sm font-black"><History className="h-4 w-4 text-indigo-700" />{t.activity}</h3><ol className="mt-3 space-y-3">{activities.length ? activities.slice(0, 8).map((activity) => <li key={activity.id} className="relative border-l-2 border-indigo-200 pl-4"><span className="absolute -left-[5px] top-1 h-2 w-2 rounded-full bg-indigo-600" /><strong className="text-xs font-black">{activity.title}</strong><p className="mt-1 text-[10px] font-bold text-indigo-700">{activityLabels[activity.type][locale]} · {new Date(activity.happenedAt).toLocaleString()}</p><p className="mt-1 text-[10px] leading-4 text-[var(--color-text-sub)]">{activity.detail}</p></li>) : <Empty text={t.empty} />}</ol></aside>; }
-
-function OpportunityForm({ value, customers, contacts, locale, onChange, onSubmit }: { value: SalesOpportunityInput; customers: ReturnType<typeof companyCustomers>; contacts: ReturnType<typeof companyContacts>; locale: 'ko' | 'vi' | 'en'; onChange: (value: SalesOpportunityInput) => void; onSubmit: (event: FormEvent) => void }) { return <form id="sales-operation-form" onSubmit={onSubmit} className="grid gap-4 sm:grid-cols-2"><Field label="Opportunity" wide><input autoFocus required value={value.opportunityName} onChange={(event) => onChange({ ...value, opportunityName: event.target.value })} className={inputClass} /></Field><Field label="Customer"><select required value={value.customerId} onChange={(event) => { const customer = customers.find((item) => item.id === event.target.value); onChange({ ...value, customerId: event.target.value, customerName: customer?.name ?? '', contactId: null }); }} className={inputClass}><option value="">-</option>{customers.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></Field><Field label="Contact"><select value={value.contactId ?? ''} onChange={(event) => onChange({ ...value, contactId: event.target.value || null })} className={inputClass}><option value="">-</option>{contacts.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></Field><Field label="Expected value"><input type="number" min="0" required value={value.expectedValue || ''} onChange={(event) => onChange({ ...value, expectedValue: Number(event.target.value) })} className={inputClass} /></Field><Field label="Probability"><input type="number" min="0" max="100" value={value.probability} onChange={(event) => onChange({ ...value, probability: Number(event.target.value) })} className={inputClass} /></Field><Field label="Expected close"><input type="date" required value={value.expectedCloseDate} onChange={(event) => onChange({ ...value, expectedCloseDate: event.target.value })} className={inputClass} /></Field><Field label="Stage"><select value={value.stage} onChange={(event) => onChange({ ...value, stage: event.target.value as SalesStage })} className={inputClass}>{(Object.keys(stageLabels) as SalesStage[]).map((stage) => <option key={stage} value={stage}>{stageLabels[stage][locale]}</option>)}</select></Field><Field label="Next action" wide><textarea value={value.nextAction} onChange={(event) => onChange({ ...value, nextAction: event.target.value })} className={`${inputClass} min-h-24`} /></Field></form>; }
-function CustomerForm({ value, onChange, onSubmit }: { value: SalesCustomerInput; onChange: (value: SalesCustomerInput) => void; onSubmit: (event: FormEvent) => void }) { return <form id="sales-operation-form" onSubmit={onSubmit} className="grid gap-4"><Field label="Customer"><input autoFocus required value={value.name} onChange={(event) => onChange({ ...value, name: event.target.value })} className={inputClass} /></Field><Field label="Industry"><input value={value.industry} onChange={(event) => onChange({ ...value, industry: event.target.value })} className={inputClass} /></Field><Field label="Status"><select value={value.status} onChange={(event) => onChange({ ...value, status: event.target.value as SalesCustomerInput['status'] })} className={inputClass}><option value="PROSPECT">PROSPECT</option><option value="ACTIVE">ACTIVE</option><option value="INACTIVE">INACTIVE</option></select></Field><Field label="Note"><textarea value={value.note} onChange={(event) => onChange({ ...value, note: event.target.value })} className={`${inputClass} min-h-24`} /></Field></form>; }
-function ContactForm({ value, customers, onChange, onSubmit }: { value: SalesContactInput; customers: ReturnType<typeof companyCustomers>; onChange: (value: SalesContactInput) => void; onSubmit: (event: FormEvent) => void }) { return <form id="sales-operation-form" onSubmit={onSubmit} className="grid gap-4 sm:grid-cols-2"><Field label="Customer" wide><select required value={value.customerId} onChange={(event) => onChange({ ...value, customerId: event.target.value })} className={inputClass}><option value="">-</option>{customers.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></Field><Field label="Name"><input autoFocus required value={value.name} onChange={(event) => onChange({ ...value, name: event.target.value })} className={inputClass} /></Field><Field label="Department"><input value={value.department} onChange={(event) => onChange({ ...value, department: event.target.value })} className={inputClass} /></Field><Field label="Position"><input value={value.position} onChange={(event) => onChange({ ...value, position: event.target.value })} className={inputClass} /></Field><Field label="Email"><input type="email" value={value.email} onChange={(event) => onChange({ ...value, email: event.target.value })} className={inputClass} /></Field><Field label="Phone"><input value={value.phone} onChange={(event) => onChange({ ...value, phone: event.target.value })} className={inputClass} /></Field></form>; }
-function ActivityForm({ value, contacts, locale, onChange, onSubmit }: { value: SalesActivityInput; contacts: ReturnType<typeof companyContacts>; locale: 'ko' | 'vi' | 'en'; onChange: (value: SalesActivityInput) => void; onSubmit: (event: FormEvent) => void }) { return <form id="sales-operation-form" onSubmit={onSubmit} className="grid gap-4"><Field label="Type"><select value={value.type} onChange={(event) => onChange({ ...value, type: event.target.value as SalesActivityType })} className={inputClass}>{(Object.keys(activityLabels) as SalesActivityType[]).map((type) => <option key={type} value={type}>{activityLabels[type][locale]}</option>)}</select></Field><Field label="Contact"><select value={value.contactId ?? ''} onChange={(event) => onChange({ ...value, contactId: event.target.value || null })} className={inputClass}><option value="">-</option>{contacts.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></Field><Field label="Title"><input autoFocus required value={value.title} onChange={(event) => onChange({ ...value, title: event.target.value })} className={inputClass} /></Field><Field label="Detail"><textarea value={value.detail} onChange={(event) => onChange({ ...value, detail: event.target.value })} className={`${inputClass} min-h-28`} /></Field></form>; }
-function ImportPreview({ rows, errors }: { rows: ContactImportRow[]; errors: string[] }) { return <div><div className={`rounded-lg border p-3 text-xs font-bold ${errors.length ? 'border-red-200 bg-red-50 text-red-800' : 'border-emerald-200 bg-emerald-50 text-emerald-800'}`}>{errors.length ? errors.join(' · ') : `${rows.length} rows ready for review`}</div><div className="mt-4 overflow-x-auto"><table className="min-w-full text-left text-xs"><thead><tr>{['Customer','Name','Department','Position','Email','Phone'].map((item) => <th key={item} className="border-b p-2 font-black">{item}</th>)}</tr></thead><tbody>{rows.slice(0, 20).map((row, index) => <tr key={`${row.email}-${index}`} className="hover:bg-[var(--cc-surface-2)]"><td className="p-2">{row.customerName}</td><td className="p-2">{row.name}</td><td className="p-2">{row.department}</td><td className="p-2">{row.position}</td><td className="p-2">{row.email}</td><td className="p-2">{row.phone}</td></tr>)}</tbody></table></div></div>; }
-function Info({ icon: Icon, label, value }: { icon: ElementType; label: string; value: string }) { return <div className="rounded-xl border border-[var(--color-border)] bg-[var(--cc-surface-2)] p-3"><dt className="flex items-center gap-2 text-[10px] font-black text-[var(--color-text-sub)]"><Icon className="h-3.5 w-3.5 text-emerald-700" />{label}</dt><dd className="mt-2 break-words text-sm font-black">{value}</dd></div>; }
-function Field({ label, wide = false, children }: { label: string; wide?: boolean; children: React.ReactNode }) { return <label className={`text-xs font-black text-[var(--color-text-sub)] ${wide ? 'sm:col-span-2' : ''}`}>{label}<span className="mt-1 block">{children}</span></label>; }
-function Empty({ text }: { text: string }) { return <div className="col-span-full grid min-h-28 place-items-center rounded-xl border border-dashed border-[var(--color-border)] text-xs font-bold text-[var(--color-text-sub)]">{text}</div>; }
-function LinkButton({ href, icon: Icon, label, tone }: { href: string; icon: ElementType; label: string; tone: 'document' | 'view' }) { return <Link href={href} className={`inline-flex min-h-10 items-center gap-2 rounded-lg border px-3 text-xs font-black transition hover:-translate-y-px focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] ${tone === 'document' ? 'border-teal-600 bg-teal-50 text-teal-800' : 'border-indigo-700 bg-indigo-50 text-indigo-800'}`}><Icon className="h-4 w-4" />{label}</Link>; }
-function drawerTitle(drawer: DrawerMode, t: typeof copy.ko | typeof copy.vi | typeof copy.en) { if (drawer === 'OPPORTUNITY_CREATE') return t.addOpportunity; if (drawer === 'OPPORTUNITY_EDIT') return t.edit; if (drawer === 'CUSTOMER_CREATE') return t.addCustomer; if (drawer === 'CONTACT_CREATE') return t.addContact; if (drawer === 'ACTIVITY_CREATE') return t.addActivity; return t.import; }
+function tabClass(active: boolean) { return `min-h-11 border px-4 text-sm font-black transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#eb6300] ${active ? 'border-[#eb6300] bg-[#fff3e9] text-[#c95000] shadow-sm' : 'border-[var(--color-border)] hover:border-[#efb183] hover:bg-[#fff9f4]'}`; }
+function Field({ label, children }: { label: string; children: ReactNode }) { return <label className="block"><span className="mb-2 block text-xs font-black">{label}</span>{children}</label>; }
+function DrawerFooter({ save, cancel, form, onCancel }: { save: string; cancel: string; form: string; onCancel: () => void }) { return <div className="flex justify-end gap-2"><button type="button" onClick={onCancel} className="min-h-10 border border-[var(--color-border-strong)] px-4 text-xs font-black">{cancel}</button><button type="submit" form={form} className="min-h-10 bg-[#eb6300] px-4 text-xs font-black text-white hover:bg-[#c95000]">{save}</button></div>; }
