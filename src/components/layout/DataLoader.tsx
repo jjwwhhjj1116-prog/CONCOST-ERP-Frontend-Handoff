@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import { useAuthStore } from '@/store/authStore';
-import { useProjectStore } from '@/store/projectStore';
+import { mergeCustomerProjectHistorySeeds, useProjectStore } from '@/store/projectStore';
 import { useTaskStore } from '@/store/taskStore';
 import { useScheduleStore } from '@/store/scheduleStore';
 import { useSettingStore } from '@/store/settingStore';
@@ -59,12 +59,12 @@ export function DataLoader() {
       const persisted = useProjectStore.getState().projects.filter(
         project => project.source === 'ESTIMATE_REQUEST'
       );
-      return [
+      return mergeCustomerProjectHistorySeeds([
         ...baseProjects,
         ...persisted.filter(
           localProject => !baseProjects.some(project => project.id === localProject.id)
         ),
-      ];
+      ]);
     };
 
     switch (dataSourceMode) {
