@@ -311,4 +311,12 @@ export const useProjectStore = create<ProjectState>()(persist((set, get) => ({
       projects: mergeCustomerProjectHistorySeeds(state.projects),
     };
   },
+  merge: (persistedState, currentState) => {
+    const state = (persistedState ?? {}) as Partial<ProjectState>;
+    return {
+      ...currentState,
+      ...state,
+      projects: mergeCustomerProjectHistorySeeds(state.projects),
+    };
+  },
 }));
