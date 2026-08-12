@@ -27,6 +27,15 @@ interface ProjectState {
   resetProjects: () => void;
 }
 
+export const mergeCustomerProjectHistorySeeds = (projects: Project[] | undefined): Project[] => {
+  const current = Array.isArray(projects) ? projects : [];
+  const existingIds = new Set(current.map((project) => project.id));
+  return [
+    ...current,
+    ...customerProjectHistoryProjects.filter((project) => !existingIds.has(project.id)),
+  ];
+};
+
 const initialRevisionRequests: RevisionRequest[] = [
   {
     id: 'rev_1',
@@ -292,4 +301,14 @@ export const useProjectStore = create<ProjectState>()(persist((set, get) => ({
 
   replaceProjects: (projects) => set({ projects }),
   resetProjects: () => set({ projects: customerProjectHistoryProjects, postDeliveryWorkRequests: [], revisionRequests: [] })
-}), { name: 'project-storage' }));
+}), {
+  name: 'project-storage',
+  version: 2,
+  migrate: (persistedState) => {
+    const state = (persistedState ?? {}) as Partial<ProjectState>;
+    return {
+      ...state,
+      projects: mergeCustomerProjectHistorySeeds(state.projects),
+    };
+  },
+}));
