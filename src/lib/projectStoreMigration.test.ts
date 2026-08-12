@@ -27,3 +27,24 @@ test('project persistence migration is idempotent', () => {
 
   assert.deepEqual(twice, once);
 });
+
+test('project persistence migration refreshes only stale synthetic relationship fixtures', () => {
+  const staleSeed = {
+    ...customerProjectHistoryProjects[0],
+    publicationStatus: 'DRAFT',
+    title: 'Stale synthetic project',
+  } satisfies Project;
+  const userProject = {
+    ...customerProjectHistoryProjects[0],
+    id: 'user-project-preserved',
+    title: 'User project remains untouched',
+  } satisfies Project;
+
+  const migrated = mergeCustomerProjectHistorySeeds([staleSeed, userProject]);
+
+  assert.deepEqual(
+    migrated.find((project) => project.id === staleSeed.id),
+    customerProjectHistoryProjects[0],
+  );
+  assert.equal(migrated.find((project) => project.id === userProject.id), userProject);
+});

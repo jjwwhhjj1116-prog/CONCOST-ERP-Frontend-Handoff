@@ -29,9 +29,11 @@ interface ProjectState {
 
 export const mergeCustomerProjectHistorySeeds = (projects: Project[] | undefined): Project[] => {
   const current = Array.isArray(projects) ? projects : [];
-  const existingIds = new Set(current.map((project) => project.id));
+  const seedById = new Map(customerProjectHistoryProjects.map((project) => [project.id, project]));
+  const merged = current.map((project) => seedById.get(project.id) ?? project);
+  const existingIds = new Set(merged.map((project) => project.id));
   return [
-    ...current,
+    ...merged,
     ...customerProjectHistoryProjects.filter((project) => !existingIds.has(project.id)),
   ];
 };
