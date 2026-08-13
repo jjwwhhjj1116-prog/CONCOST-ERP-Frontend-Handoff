@@ -54,7 +54,8 @@ mapping in `src/lib/frontendDataSource.ts` is a subset used by this handoff.
 | Approval | `/approvals` | `ApprovalWorkspace` |
 | Mail | `/mail` | `MailWorkspace` |
 | Business Card | `/sales/business-cards` | `BusinessCardWorkspace` |
-| AI Assistant | `/ai-assistant` | `AiMeetingWorkspace` |
+| AI Assistant | `/ai-assistant` | `AssistantWorkspace` conversational assistant |
+| AI meeting notes | `/ai-assistant/tools/meeting-notes` | Existing `AiMeetingWorkspace` |
 | Calendar | `/calendar` | `ModuleHandoffPanel` integration |
 | Task | `/tasks/my` | `ModuleHandoffPanel` integration |
 | Notification | `/notifications` | `ModuleHandoffPanel` integration |

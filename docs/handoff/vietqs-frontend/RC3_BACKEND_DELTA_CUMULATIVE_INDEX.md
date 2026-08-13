@@ -32,6 +32,7 @@ The following approved handoff documents are the implementation entry points for
 | 26 | Business card OCR accuracy | `BACKEND_DELTA_RC3_BUSINESS_CARD_OCR_ACCURACY.md` | Structured layout evidence, company/language provider capability, conservative mapping, and server-only credentials |
 | 27 | Operational board | `BACKEND_DELTA_RC3_BOARD_OPERATIONAL_SYSTEM.md` | Company-scoped boards, permissions, post/comment lifecycle, READY files, read receipts, notifications, search, and audit |
 | 28 | Customer project relationship | `BACKEND_DELTA_RC3_CUSTOMER_PROJECT_RELATIONSHIP.md` | Canonical Customer/Contact resolution, Accepted Intake association transaction, revisions, permission-scoped search, review candidates, audit, and outbox |
+| 29 | Conversational AI assistant | `BACKEND_DELTA_RC3_AI_ASSISTANT_CONVERSATION_RAG.md` | Company-scoped threads, permission-first retrieval, citations, provider routing, and confirmed action candidates |
 
 ## Immediate Backend Order
 
