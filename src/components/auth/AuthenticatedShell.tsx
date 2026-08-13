@@ -11,6 +11,7 @@ import { SessionManager } from './SessionManager';
 import { DataLoader } from '@/components/layout/DataLoader';
 import { evaluateFinanceAccess } from '@/lib/accessControl';
 import { shouldNavigateBackFromUndoShortcut } from '@/lib/historyShortcut';
+import { GlobalAiAssistant } from '@/features/assistant/GlobalAiAssistant';
 
 const isEditableTarget = (target: EventTarget | null) => {
   if (!(target instanceof HTMLElement)) return false;
@@ -95,6 +96,7 @@ export function AuthenticatedShell({ children }: { children: React.ReactNode }) 
           </main>
         </div>
       </div>
+      <GlobalAiAssistant />
     </>
   );
 }

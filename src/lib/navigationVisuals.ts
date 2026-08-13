@@ -247,6 +247,9 @@ const exactVisuals: Record<string, NavigationVisual> = {
   'finance-closing': { tone: 'slate', pictogram: 'closing' },
 
   'ai-assistant-home': { tone: 'violet', pictogram: 'aiAssistant' },
+  'ai-assistant-history': { tone: 'blue', pictogram: 'mailStorage' },
+  'ai-assistant-meeting': { tone: 'violet', pictogram: 'meetingMinutes' },
+  'ai-assistant-help': { tone: 'teal', pictogram: 'projectQuestion' },
   'settings-home': { tone: 'slate', pictogram: 'settingsHome' },
   'settings-profile': { tone: 'pink', pictogram: 'aiProfile' },
   'settings-translation': { tone: 'blue', pictogram: 'translation' },

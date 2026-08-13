@@ -17,13 +17,16 @@ import {
   FileCheck2,
   FolderKanban,
   Handshake,
+  History,
   Home,
   Landmark,
   LibraryBig,
   LockKeyhole,
   Mail,
   MessageSquareText,
+  MessageCirclePlus,
   Megaphone,
+  Mic2,
   MoonStar,
   Network,
   NotebookPen,
@@ -136,7 +139,7 @@ const railNavigation: RailItem[] = [
 ];
 
 const utilityNavigation: RailItem[] = [
-  { id: 'ai-assistant', section: 'AI챗봇', label: 'AI챗봇', href: '/ai-assistant', icon: Bot, roles: allRoles, description: '업무 검색과 문서 작성 지원' },
+  { id: 'ai-assistant', section: 'AI 도우미', label: 'AI 도우미', href: '/ai-assistant', icon: Bot, roles: allRoles, description: '업무 검색·정리와 다음 행동 지원' },
   { id: 'settings', section: '설정', label: '설정', href: '/settings', icon: Settings, roles: allRoles, description: '개인 환경과 워크스페이스 설정' },
   { id: 'admin-settings', section: '관리자설정', label: '관리자설정', href: '/settings/permissions', icon: ShieldCheck, roles: ['SUPER_ADMIN', 'SYSTEM_ADMIN'], description: '인력·권한·데이터 운영 관리' },
 ];
@@ -215,7 +218,10 @@ const panelMenus: Record<string, NavigationItem[]> = {
     { id: 'finance-closing', label: '결산·보고서', href: '/finance?view=CLOSING', roles: allRoles },
   ],
   'ai-assistant': [
-    { id: 'ai-assistant-home', label: 'AI 챗봇', href: '/ai-assistant', icon: Bot, roles: allRoles },
+    { id: 'ai-assistant-home', label: '새 대화', href: '/ai-assistant', icon: MessageCirclePlus, roles: allRoles },
+    { id: 'ai-assistant-history', label: '최근 대화', href: '/ai-assistant?view=HISTORY', icon: History, roles: allRoles },
+    { id: 'ai-assistant-meeting', label: '회의록·녹취 정리', href: '/ai-assistant/tools/meeting-notes', icon: Mic2, roles: allRoles },
+    { id: 'ai-assistant-help', label: 'AI 사용안내', href: '/ai-assistant?view=HELP', icon: CircleHelp, roles: allRoles },
   ],
   settings: [
     { id: 'settings-home', label: '개인 설정', href: '/settings', icon: Settings, roles: allRoles },

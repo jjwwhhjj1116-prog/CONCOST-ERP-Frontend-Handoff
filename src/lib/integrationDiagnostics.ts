@@ -37,7 +37,11 @@ export type IntegrationCapabilityId =
   | 'SALES'
   | 'FINANCE'
   | 'CLAIM'
-  | 'AI';
+  | 'AI_ASSISTANT_CHAT'
+  | 'AI_ASSISTANT_RAG'
+  | 'AI_ASSISTANT_ACTIONS'
+  | 'AI_MEETING_NOTES'
+  | 'AI_STT';
 
 export type IntegrationErrorCode =
   | 'RUNTIME_MODE_INVALID'
@@ -362,20 +366,11 @@ export const buildCapabilityRegistry = (
         currentHealth: environment.claimAiHealth,
       }),
     ),
-    capability(
-      'AI',
-      'M7',
-      'AI and STT',
-      'AI adapter',
-      'AI/STT provider',
-      capabilityState({
-        mode: environment.mode,
-        adapterReady: environment.aiAdapterReady,
-        providerRequired: true,
-        providerReady: environment.aiProviderReady,
-        currentHealth: environment.claimAiHealth,
-      }),
-    ),
+    capability('AI_ASSISTANT_CHAT', 'M7', 'AI Assistant chat', 'Assistant conversation adapter', 'AI provider', capabilityState({ mode: environment.mode, adapterReady: environment.aiAdapterReady, providerRequired: true, providerReady: environment.aiProviderReady, currentHealth: environment.claimAiHealth })),
+    capability('AI_ASSISTANT_RAG', 'M7', 'AI permission-aware retrieval', 'Assistant RAG adapter', 'Private/Public AI routing', capabilityState({ mode: environment.mode, adapterReady: environment.aiAdapterReady, providerRequired: true, providerReady: environment.aiProviderReady, currentHealth: environment.claimAiHealth })),
+    capability('AI_ASSISTANT_ACTIONS', 'M7', 'AI action candidates', 'Assistant action adapter', 'Not required', capabilityState({ mode: environment.mode, adapterReady: environment.aiAdapterReady, currentHealth: environment.claimAiHealth })),
+    capability('AI_MEETING_NOTES', 'M7', 'AI meeting notes', 'Meeting notes adapter', 'AI provider', capabilityState({ mode: environment.mode, adapterReady: environment.aiAdapterReady, providerRequired: true, providerReady: environment.aiProviderReady, currentHealth: environment.claimAiHealth })),
+    capability('AI_STT', 'M7', 'AI speech to text', 'STT job adapter', 'STT provider', capabilityState({ mode: environment.mode, adapterReady: environment.aiAdapterReady, providerRequired: true, providerReady: environment.aiProviderReady, currentHealth: environment.claimAiHealth })),
   ];
 };
 
@@ -391,7 +386,7 @@ const milestoneDefinitions: Array<{
   { id: 'M4', label: 'Approval / Mail', capabilityIds: ['APPROVAL', 'MAIL'] },
   { id: 'M5', label: 'Business Card / Contact', capabilityIds: ['BUSINESS_CARD_CONTACT'] },
   { id: 'M6', label: 'Sales / Finance', capabilityIds: ['SALES', 'FINANCE'] },
-  { id: 'M7', label: 'Claim / AI', capabilityIds: ['CLAIM', 'AI'] },
+  { id: 'M7', label: 'Claim / AI', capabilityIds: ['CLAIM', 'AI_ASSISTANT_CHAT', 'AI_ASSISTANT_RAG', 'AI_ASSISTANT_ACTIONS', 'AI_MEETING_NOTES', 'AI_STT'] },
 ];
 
 export const buildSmokeMilestones = (
