@@ -41,6 +41,7 @@ import {
 } from 'react';
 
 import { HandoffLanguageToggle } from '@/components/handoff/HandoffLanguageToggle';
+import { FinanceHelpExperience } from '@/components/handoff/FinanceHelpExperience';
 import { RuntimeCapabilityPanel } from '@/components/handoff/RuntimeCapabilityPanel';
 import { useHandoffLocale } from '@/components/handoff/useHandoffLocale';
 import { DetailDrawer } from '@/components/ui/DetailDrawer';
@@ -531,11 +532,22 @@ export function FinanceOperationsWorkbench() {
         t={t}
         onLocale={setLocale}
         onView={switchView}
+        guideControls={(
+          <FinanceHelpExperience
+            locale={locale}
+            companyId={companyId}
+            userId={actorId}
+            currentView={view}
+            onViewChange={switchView}
+          />
+        )}
       />
-      <RuntimeCapabilityPanel boundary={boundary} />
-      <p className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-xs font-bold leading-5 text-amber-950">
-        {t.demo}
-      </p>
+      <div data-finance-guide="safety" className="space-y-3">
+        <RuntimeCapabilityPanel boundary={boundary} />
+        <p className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-xs font-bold leading-5 text-amber-950">
+          {t.demo}
+        </p>
+      </div>
       <FinanceNavigation view={view} t={t} onChange={switchView} />
       <FinanceToolbar
         view={view}
@@ -566,86 +578,88 @@ export function FinanceOperationsWorkbench() {
       <input ref={importRef} type="file" accept=".xlsx" className="sr-only" onChange={(event) => void readImport(event.target.files?.[0])} />
       {(message || error) && <MessageBanner message={error || message} error={Boolean(error)} />}
 
-      {view === 'DASHBOARD' && (
-        <DashboardView
-          data={scoped}
-          locale={locale}
-          companyId={companyId}
-          t={t}
-          revenueAging={revenueAging}
-          purchaseAging={purchaseAging}
-          onView={switchView}
-        />
-      )}
-      {(view === 'REVENUE' || view === 'PURCHASES') && (
-        <LedgerWorkspace
-          records={filteredLedger.filter((record) => record.kind === (view === 'REVENUE' ? 'REVENUE' : 'PURCHASE'))}
-          selected={selectedLedger}
-          locale={locale}
-          companyId={companyId}
-          t={t}
-          onSelect={(record) => setUrl({ financeView: view, financeId: record.id })}
-          onDetail={(record) => {
-            setUrl({ financeView: view, financeId: record.id });
-            setDrawer('LEDGER_DETAIL');
-          }}
-          onEdit={(record) => {
-            setUrl({ financeView: view, financeId: record.id });
-            openLedger(record.kind, record);
-          }}
-          onSettlement={(record) => {
-            setUrl({ financeView: view, financeId: record.id });
-            setSettlementAmount(financeRemaining(record));
-            setDrawer('SETTLEMENT');
-          }}
-        />
-      )}
-      {view === 'CASHFLOW' && <CashflowView data={scoped} locale={locale} companyId={companyId} t={t} revenueAging={revenueAging} purchaseAging={purchaseAging} />}
-      {view === 'EXPENSES' && <ExpenseView records={scoped.expenses} locale={locale} companyId={companyId} t={t} />}
-      {view === 'TAX' && (
-        <TaxView
-          records={scoped.taxInvoices}
-          locale={locale}
-          companyId={companyId}
-          t={t}
-          providerReady={taxProviderReady}
-          busy={busy}
-          onTransition={(record, next) => void run(() => store.transitionTaxInvoice(companyId, record.id, next, taxProviderReady, actorId))}
-        />
-      )}
-      {view === 'BUDGET' && <BudgetView records={scoped.budgets} locale={locale} companyId={companyId} t={t} />}
-      {view === 'TREASURY' && <TreasuryView data={scoped} locale={locale} companyId={companyId} t={t} providerReady={bankProviderReady} />}
-      {view === 'PROFITABILITY' && (
-        <ProfitabilityView
-          records={profitability}
-          locale={locale}
-          companyId={companyId}
-          t={t}
-          onDetail={(record) => {
-            setUrl({ financeView: 'PROFITABILITY', projectId: record.projectId });
-            setDrawer('PROFIT_DETAIL');
-          }}
-        />
-      )}
-      {view === 'CLOSING' && currentClosing && (
-        <ClosingView
-          period={currentClosing}
-          t={t}
-          busy={busy}
-          onToggle={(itemId) => void run(() => store.toggleClosingChecklist(companyId, currentClosing.id, itemId, actorId))}
-          onTransition={(next) => void run(() => store.transitionClosing(companyId, currentClosing.id, next, actorId))}
-          onReopen={() => setDrawer('REOPEN_CLOSING')}
-        />
-      )}
-      {view === 'CLOSING' && !currentClosing && <EmptyState label={t.noRows} />}
-      {view === 'CONTROLS' && (
-        <ControlsView
-          records={scoped.controls}
-          t={t}
-          busy={busy}
-          onResolve={(record) => void run(() => store.resolveControl(companyId, record.id, actorId))}
-        />
-      )}
+      <div data-finance-guide="workspace" className="min-w-0">
+        {view === 'DASHBOARD' && (
+          <DashboardView
+            data={scoped}
+            locale={locale}
+            companyId={companyId}
+            t={t}
+            revenueAging={revenueAging}
+            purchaseAging={purchaseAging}
+            onView={switchView}
+          />
+        )}
+        {(view === 'REVENUE' || view === 'PURCHASES') && (
+          <LedgerWorkspace
+            records={filteredLedger.filter((record) => record.kind === (view === 'REVENUE' ? 'REVENUE' : 'PURCHASE'))}
+            selected={selectedLedger}
+            locale={locale}
+            companyId={companyId}
+            t={t}
+            onSelect={(record) => setUrl({ financeView: view, financeId: record.id })}
+            onDetail={(record) => {
+              setUrl({ financeView: view, financeId: record.id });
+              setDrawer('LEDGER_DETAIL');
+            }}
+            onEdit={(record) => {
+              setUrl({ financeView: view, financeId: record.id });
+              openLedger(record.kind, record);
+            }}
+            onSettlement={(record) => {
+              setUrl({ financeView: view, financeId: record.id });
+              setSettlementAmount(financeRemaining(record));
+              setDrawer('SETTLEMENT');
+            }}
+          />
+        )}
+        {view === 'CASHFLOW' && <CashflowView data={scoped} locale={locale} companyId={companyId} t={t} revenueAging={revenueAging} purchaseAging={purchaseAging} />}
+        {view === 'EXPENSES' && <ExpenseView records={scoped.expenses} locale={locale} companyId={companyId} t={t} />}
+        {view === 'TAX' && (
+          <TaxView
+            records={scoped.taxInvoices}
+            locale={locale}
+            companyId={companyId}
+            t={t}
+            providerReady={taxProviderReady}
+            busy={busy}
+            onTransition={(record, next) => void run(() => store.transitionTaxInvoice(companyId, record.id, next, taxProviderReady, actorId))}
+          />
+        )}
+        {view === 'BUDGET' && <BudgetView records={scoped.budgets} locale={locale} companyId={companyId} t={t} />}
+        {view === 'TREASURY' && <TreasuryView data={scoped} locale={locale} companyId={companyId} t={t} providerReady={bankProviderReady} />}
+        {view === 'PROFITABILITY' && (
+          <ProfitabilityView
+            records={profitability}
+            locale={locale}
+            companyId={companyId}
+            t={t}
+            onDetail={(record) => {
+              setUrl({ financeView: 'PROFITABILITY', projectId: record.projectId });
+              setDrawer('PROFIT_DETAIL');
+            }}
+          />
+        )}
+        {view === 'CLOSING' && currentClosing && (
+          <ClosingView
+            period={currentClosing}
+            t={t}
+            busy={busy}
+            onToggle={(itemId) => void run(() => store.toggleClosingChecklist(companyId, currentClosing.id, itemId, actorId))}
+            onTransition={(next) => void run(() => store.transitionClosing(companyId, currentClosing.id, next, actorId))}
+            onReopen={() => setDrawer('REOPEN_CLOSING')}
+          />
+        )}
+        {view === 'CLOSING' && !currentClosing && <EmptyState label={t.noRows} />}
+        {view === 'CONTROLS' && (
+          <ControlsView
+            records={scoped.controls}
+            t={t}
+            busy={busy}
+            onResolve={(record) => void run(() => store.resolveControl(companyId, record.id, actorId))}
+          />
+        )}
+      </div>
 
       <DetailDrawer
         open={drawer !== null}
@@ -679,13 +693,14 @@ export function FinanceOperationsWorkbench() {
   );
 }
 
-function FinanceHeader({ companyId, locale, summary, t, onLocale, onView }: {
+function FinanceHeader({ companyId, locale, summary, t, onLocale, onView, guideControls }: {
   companyId: CompanyId;
   locale: Locale;
   summary: ReturnType<typeof summarizeCfoCockpit>;
   t: FinanceCopy;
   onLocale: (locale: Locale) => void;
   onView: (view: FinanceView) => void;
+  guideControls: ReactNode;
 }) {
   const cards: Array<{ label: string; value: string; icon: ElementType; tone: string; view: FinanceView }> = [
     { label: t.views.REVENUE, value: money(summary.revenue, locale, companyId), icon: ArrowUpRight, tone: 'text-emerald-700 bg-emerald-50', view: 'REVENUE' },
@@ -700,7 +715,7 @@ function FinanceHeader({ companyId, locale, summary, t, onLocale, onView }: {
     { label: t.alerts, value: String(summary.alerts), icon: AlertTriangle, tone: 'text-red-700 bg-red-50', view: 'CONTROLS' },
   ];
   return (
-    <header className={`${PANEL_CLASS} overflow-hidden border-t-4 border-t-orange-500`}>
+    <header data-finance-guide="summary" className={`${PANEL_CLASS} overflow-hidden border-t-4 border-t-orange-500`}>
       <div className="flex flex-wrap items-start justify-between gap-4 p-5 sm:p-6">
         <div>
           <p className="text-[10px] font-black tracking-[.14em] text-orange-700">{t.eyebrow}</p>
@@ -711,7 +726,10 @@ function FinanceHeader({ companyId, locale, summary, t, onLocale, onView }: {
             <span className="rounded-full bg-slate-100 px-3 py-1 text-slate-700">AS OF {AS_OF_DATE}</span>
           </div>
         </div>
-        <HandoffLanguageToggle locale={locale} onChange={onLocale} />
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          {guideControls}
+          <HandoffLanguageToggle locale={locale} onChange={onLocale} />
+        </div>
       </div>
       <div className="grid grid-cols-2 border-t border-[var(--color-border)] sm:grid-cols-3 lg:grid-cols-5">
         {cards.map((card) => (
@@ -728,7 +746,7 @@ function FinanceHeader({ companyId, locale, summary, t, onLocale, onView }: {
 
 function FinanceNavigation({ view, t, onChange }: { view: FinanceView; t: FinanceCopy; onChange: (view: FinanceView) => void }) {
   return (
-    <nav aria-label="Finance modules" className={`${PANEL_CLASS} cc-scrollbar overflow-x-auto p-2`}>
+    <nav data-finance-guide="navigation" aria-label="Finance modules" className={`${PANEL_CLASS} cc-scrollbar overflow-x-auto p-2`}>
       <div className="flex min-w-max items-center gap-1">
         {(Object.keys(t.views) as FinanceView[]).map((item) => (
           <button key={item} type="button" onClick={() => onChange(item)} aria-current={view === item ? 'page' : undefined} className={`min-h-11 rounded-lg px-3 text-xs font-black transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 ${view === item ? 'bg-orange-600 text-white shadow-sm' : 'text-[var(--color-text-sub)] hover:bg-orange-50 hover:text-orange-800'}`}>
@@ -754,7 +772,7 @@ function FinanceToolbar({ view, query, statusFilter, t, onQuery, onStatus, onAdd
   const addLabel = view === 'PURCHASES' ? t.addPurchase : view === 'EXPENSES' ? t.addExpense : view === 'BUDGET' ? t.addBudget : view === 'TREASURY' || view === 'CASHFLOW' ? t.addCashPlan : t.addRevenue;
   const addVisible = ['REVENUE', 'PURCHASES', 'CASHFLOW', 'EXPENSES', 'BUDGET', 'TREASURY'].includes(view);
   return (
-    <div className={`${PANEL_CLASS} flex flex-wrap items-center gap-3 p-3`}>
+    <div data-finance-guide="toolbar" className={`${PANEL_CLASS} flex flex-wrap items-center gap-3 p-3`}>
       <label className="flex min-h-11 min-w-0 flex-1 items-center gap-2 rounded-lg border border-[var(--color-border)] bg-[var(--cc-surface-2)] px-3 sm:min-w-80">
         <Search className="h-4 w-4 shrink-0 text-[var(--color-text-sub)]" />
         <input value={query} onChange={(event) => onQuery(event.target.value)} placeholder={t.search} className="min-w-0 flex-1 bg-transparent text-sm font-semibold outline-none" />
