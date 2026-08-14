@@ -10,6 +10,7 @@ import { useTranslationStore } from '@/store/translationStore';
 import { useUiStore } from '@/store/uiStore';
 import { useTranslation } from '@/lib/localization';
 import { getWorkspaceShellCopy, localizeShellText } from '@/lib/workspaceShellLocalization';
+import { isSalesWorkspacePath } from '@/lib/workspaceRouteContext';
 import { BrandLogo } from '@/components/ui/BrandLogo';
 import { useProfilePhotoStore } from '@/store/profilePhotoStore';
 import { NotificationPopover } from './NotificationPopover';
@@ -46,7 +47,7 @@ export function Header() {
   const scopeLabel = currentUser.role === 'SUPER_ADMIN'
     ? localizeShellText('전사', settings.uiLanguage)
     : localizeShellText(currentUser.departmentName || currentUser.teamName || t('header.dept.none'), settings.uiLanguage);
-  const sectionLabel = localizeShellText(pathname.startsWith('/projects') ? '프로젝트' : pathname.startsWith('/schedules') ? '일정 관리' : pathname.startsWith('/approvals') ? '전자결재' : pathname.startsWith('/mail') ? '전자메일' : pathname.startsWith('/tasks') ? '할일' : pathname.startsWith('/drive') ? '드라이브' : pathname.startsWith('/board') || pathname.startsWith('/organization') ? '게시판' : pathname.startsWith('/settings') ? '설정' : 'HOME', settings.uiLanguage);
+  const sectionLabel = localizeShellText(pathname.startsWith('/projects') ? '프로젝트' : pathname.startsWith('/schedules') ? '일정 관리' : pathname.startsWith('/approvals') ? '전자결재' : pathname.startsWith('/mail') ? '전자메일' : pathname.startsWith('/tasks') ? '할일' : pathname.startsWith('/drive') ? '드라이브' : pathname.startsWith('/board') || pathname.startsWith('/organization') ? '게시판' : isSalesWorkspacePath(pathname) ? '영업' : pathname.startsWith('/settings') ? '설정' : 'HOME', settings.uiLanguage);
   const selectWorkspaceLanguage = (language: 'ko' | 'vi') => {
     if (isAdmin) {
       setBrandWorkspace(language === 'vi' ? 'VIET_QS' : 'CON_COST');

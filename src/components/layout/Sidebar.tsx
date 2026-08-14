@@ -48,6 +48,7 @@ import type { Role } from '@/types/models';
 import { canAccessNavigation, getNavigationAccessLevel } from '@/lib/navigationAccess';
 import { evaluateEstimateAccess, evaluateFinanceAccess } from '@/lib/accessControl';
 import { getWorkspaceShellCopy, localizeShellText } from '@/lib/workspaceShellLocalization';
+import { isSalesWorkspacePath } from '@/lib/workspaceRouteContext';
 
 type NavigationItem = {
   id: string;
@@ -273,7 +274,7 @@ function getActiveRail(pathname: string) {
   if (pathname.startsWith('/tasks')) return 'tasks';
   if (pathname.startsWith('/board')) return 'board';
   if (pathname.startsWith('/organization')) return 'board';
-  if (pathname.startsWith('/sales')) return 'sales';
+  if (isSalesWorkspacePath(pathname)) return 'sales';
   if (pathname.startsWith('/finance')) return 'finance';
   if (pathname.startsWith('/ai-assistant')) return 'ai-assistant';
   if (['/settings/permissions', '/settings/personnel', '/settings/workspace', '/settings/data-quality', '/settings/integrations', '/settings/bulk-edit', '/settings/import'].some((path) => pathname.startsWith(path))) return 'admin-settings';
