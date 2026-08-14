@@ -54,3 +54,35 @@ test('finance ERP import reports template drift instead of silently accepting it
   const preview = await previewFinanceErpWorkbook(toArrayBuffer(await workbook.xlsx.writeBuffer()));
   assert.ok(preview.errors.includes('TEMPLATE_MISMATCH:Budget'));
 });
+
+test('finance ERP import accepts project-number matching and marks blank VAT for auto calculation', async () => {
+  const scoped = scopeFinanceErpData(financeErpDemoData, 'CON_COST');
+  const workbook = await buildFinanceErpWorkbook(scoped);
+  const revenue = workbook.getWorksheet('Revenue');
+  assert.ok(revenue);
+  revenue.getCell('B2').value = '';
+  revenue.getCell('K2').value = '';
+
+  const preview = await previewFinanceErpWorkbook(toArrayBuffer(await workbook.xlsx.writeBuffer()));
+  assert.equal(preview.revenue.length, scoped.ledger.filter((record) => record.kind === 'REVENUE').length);
+  assert.equal(preview.revenue[0].projectId, '');
+  assert.equal(preview.revenue[0].vatProvided, false);
+});
+
+test('finance ERP import accepts a revenue-only workbook used by management support', async () => {
+  const scoped = scopeFinanceErpData(financeErpDemoData, 'CON_COST');
+  const workbook = await buildFinanceErpWorkbook(scoped);
+  ['Purchase', 'Cashflow', 'Expense', 'Budget'].forEach((name) => {
+    const sheet = workbook.getWorksheet(name);
+    assert.ok(sheet);
+    workbook.removeWorksheet(sheet.id);
+  });
+
+  const preview = await previewFinanceErpWorkbook(toArrayBuffer(await workbook.xlsx.writeBuffer()));
+  assert.deepEqual(preview.errors, []);
+  assert.ok(preview.revenue.length > 0);
+  assert.deepEqual(preview.purchase, []);
+  assert.deepEqual(preview.cashflow, []);
+  assert.deepEqual(preview.expenses, []);
+  assert.deepEqual(preview.budgets, []);
+});

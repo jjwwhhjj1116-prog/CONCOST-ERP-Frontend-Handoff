@@ -80,6 +80,15 @@ import {
   type FinanceErpImportPreview,
 } from '@/lib/financeErpWorkbook';
 import {
+  bindLedgerRowToProject,
+  buildFinanceImportProject,
+  inferVatMode,
+  reconcileFinanceLedgerRows,
+  vatAmountForMode,
+  type FinanceProjectResolution,
+  type FinanceVatMode,
+} from '@/lib/financeEntry';
+import {
   executeFrontendMutation,
   getFrontendModuleBoundary,
 } from '@/lib/frontendDataSource';
@@ -208,8 +217,8 @@ const COPY: Record<Locale, FinanceCopy> = {
     serverRequired: '운영 저장은 Server Adapter와 FINANCE_ACCESS Capability가 필요합니다.',
     search: 'Project번호, 전표, 거래처, 적요 검색', filter: '필터', import: 'Excel 불러오기', export: 'Excel 내보내기',
     addRevenue: '매출 등록', addPurchase: '매입 등록', addExpense: '경비 등록', addBudget: '예산 등록', addCashPlan: '자금계획 등록', edit: '수정', save: '저장', cancel: '취소', settle: '수금·지급 기록',
-    amount: '금액', supply: '공급가액', vat: 'VAT', total: '합계', balance: '잔액', project: 'Project', counterparty: '거래처', titleField: '적요', documentDate: '증빙일', dueDate: '예정일', status: '상태', source: '원천', evidence: '증빙', approval: '전자결재 Draft', noRows: '조건에 맞는 데이터가 없습니다.',
-    noBankBalance: '실시간 은행잔액을 표시하지 않습니다.', bankProvider: 'Bank Provider 연결·권한 확인 후 실제 잔액을 조회할 수 있습니다.', taxBlocked: '세금계산서 Provider 연결 전에는 발행 요청을 완료할 수 없습니다.', importReady: '검토 후 반영할 행', validationFailed: '가져오기 검증에 실패했습니다.', company: '회사', billingRound: '청구회차', note: '메모', forecast: '예측', inflow: '유입', outflow: '유출', net: '순자금', budget: '예산', actual: '집행', execution: '집행률', managementProfit: '관리손익', margin: '마진율', officialProfitNotice: '운영관리용 추정치이며 공식 법정손익이 아닙니다.', overdue: '연체', providerNotConfigured: 'PROVIDER_NOT_CONFIGURED', closingChecklist: '월마감 Checklist', closingLock: '마감 후 변경 잠금', reopenReason: '재오픈 사유', next: '다음 단계', resolved: '해결됨', resolve: '통제 확인 완료', sourceTrace: '원천 추적', audit: '변경이력', partial: '일부', alerts: '통제 알림', drillDown: '원천 보기', fileReady: 'READY File 참조만 연결', importHint: 'Revenue·Purchase·Cashflow·Expense·Budget 5개 시트를 검증합니다. 수식·매크로는 차단됩니다.', cfoSummary: '핵심 재무지표', aging: '채권·채무 Aging', cashCalendar: '자금 Calendar', all: '전체',
+    amount: '금액', supply: '공급가액', vat: 'VAT', total: '합계', balance: '잔액', project: 'Project', counterparty: '거래처', titleField: '거래 내용(적요)', documentDate: '증빙일', dueDate: '예정일', status: '상태', source: '원천', evidence: '증빙', approval: '전자결재 Draft', noRows: '조건에 맞는 데이터가 없습니다.',
+    noBankBalance: '실시간 은행잔액을 표시하지 않습니다.', bankProvider: 'Bank Provider 연결·권한 확인 후 실제 잔액을 조회할 수 있습니다.', taxBlocked: '세금계산서 Provider 연결 전에는 발행 요청을 완료할 수 없습니다.', importReady: '검토 후 반영할 행', validationFailed: '가져오기 검증에 실패했습니다.', company: '회사', billingRound: '청구회차', note: '메모', forecast: '예측', inflow: '유입', outflow: '유출', net: '순자금', budget: '예산', actual: '집행', execution: '집행률', managementProfit: '관리손익', margin: '마진율', officialProfitNotice: '운영관리용 추정치이며 공식 법정손익이 아닙니다.', overdue: '연체', providerNotConfigured: 'PROVIDER_NOT_CONFIGURED', closingChecklist: '월마감 Checklist', closingLock: '마감 후 변경 잠금', reopenReason: '재오픈 사유', next: '다음 단계', resolved: '해결됨', resolve: '통제 확인 완료', sourceTrace: '원천 추적', audit: '변경이력', partial: '일부', alerts: '통제 알림', drillDown: '원천 보기', fileReady: 'READY File 참조만 연결', importHint: 'Revenue 단일 시트 또는 5개 표준 시트를 검증합니다. 수식·매크로는 차단됩니다.', cfoSummary: '핵심 재무지표', aging: '채권·채무 Aging', cashCalendar: '자금 Calendar', all: '전체',
   },
   vi: {
     eyebrow: 'CON-COST FINANCE ERP · CFO COCKPIT',
@@ -218,7 +227,7 @@ const COPY: Record<Locale, FinanceCopy> = {
     views: { DASHBOARD: 'Bảng điều khiển', REVENUE: 'Doanh thu & phải thu', PURCHASES: 'Mua hàng & phải trả', CASHFLOW: 'Thu & chi', EXPENSES: 'Chi phí & thẻ công ty', TAX: 'Hóa đơn thuế', BUDGET: 'Ngân sách & thực tế', TREASURY: 'Kế hoạch dòng tiền', PROFITABILITY: 'Lợi nhuận dự án', CLOSING: 'Khóa sổ tháng', CONTROLS: 'Kiểm soát nội bộ' },
     demo: 'Đây là dữ liệu tổng hợp DEMO_LOCAL, không phải sổ kế toán, số dư ngân hàng hay kết quả phát hành thật.',
     forbidden: 'Bạn không có quyền truy cập tài chính.', serverRequired: 'Cần Server Adapter và FINANCE_ACCESS để lưu dữ liệu vận hành.',
-    search: 'Tìm mã dự án, chứng từ, đối tác, nội dung', filter: 'Bộ lọc', import: 'Nhập Excel', export: 'Xuất Excel', addRevenue: 'Thêm doanh thu', addPurchase: 'Thêm mua hàng', addExpense: 'Thêm chi phí', addBudget: 'Thêm ngân sách', addCashPlan: 'Thêm kế hoạch tiền', edit: 'Chỉnh sửa', save: 'Lưu', cancel: 'Hủy', settle: 'Ghi nhận thanh toán', amount: 'Số tiền', supply: 'Giá trị trước thuế', vat: 'VAT', total: 'Tổng', balance: 'Còn lại', project: 'Dự án', counterparty: 'Đối tác', titleField: 'Nội dung', documentDate: 'Ngày chứng từ', dueDate: 'Ngày đến hạn', status: 'Trạng thái', source: 'Nguồn', evidence: 'Chứng từ', approval: 'Bản nháp phê duyệt', noRows: 'Không có dữ liệu phù hợp.', noBankBalance: 'Không hiển thị số dư ngân hàng giả.', bankProvider: 'Số dư thật chỉ hiển thị sau khi kết nối Bank Provider và xác minh quyền.', taxBlocked: 'Không thể hoàn tất yêu cầu phát hành trước khi kết nối Provider hóa đơn.', importReady: 'Dòng sẵn sàng nhập', validationFailed: 'Kiểm tra tệp nhập thất bại.', company: 'Công ty', billingRound: 'Đợt thanh toán', note: 'Ghi chú', forecast: 'Dự báo', inflow: 'Tiền vào', outflow: 'Tiền ra', net: 'Dòng tiền ròng', budget: 'Ngân sách', actual: 'Thực tế', execution: 'Tỷ lệ thực hiện', managementProfit: 'Lợi nhuận quản trị', margin: 'Biên lợi nhuận', officialProfitNotice: 'Chỉ là ước tính quản trị, không phải lợi nhuận pháp định.', overdue: 'Quá hạn', providerNotConfigured: 'PROVIDER_NOT_CONFIGURED', closingChecklist: 'Checklist khóa sổ tháng', closingLock: 'Khóa sau khi đóng kỳ', reopenReason: 'Lý do mở lại', next: 'Bước tiếp theo', resolved: 'Đã xử lý', resolve: 'Xác nhận xử lý', sourceTrace: 'Truy vết nguồn', audit: 'Lịch sử thay đổi', partial: 'Một phần', alerts: 'Cảnh báo kiểm soát', drillDown: 'Xem nguồn', fileReady: 'Chỉ liên kết File READY', importHint: 'Kiểm tra 5 sheet Revenue, Purchase, Cashflow, Expense và Budget. Công thức và macro bị chặn.', cfoSummary: 'Chỉ số tài chính chính', aging: 'Tuổi nợ phải thu/trả', cashCalendar: 'Lịch dòng tiền', all: 'Tất cả',
+    search: 'Tìm mã dự án, chứng từ, đối tác, nội dung', filter: 'Bộ lọc', import: 'Nhập Excel', export: 'Xuất Excel', addRevenue: 'Thêm doanh thu', addPurchase: 'Thêm mua hàng', addExpense: 'Thêm chi phí', addBudget: 'Thêm ngân sách', addCashPlan: 'Thêm kế hoạch tiền', edit: 'Chỉnh sửa', save: 'Lưu', cancel: 'Hủy', settle: 'Ghi nhận thanh toán', amount: 'Số tiền', supply: 'Giá trị trước thuế', vat: 'VAT', total: 'Tổng', balance: 'Còn lại', project: 'Dự án', counterparty: 'Đối tác', titleField: 'Nội dung', documentDate: 'Ngày chứng từ', dueDate: 'Ngày đến hạn', status: 'Trạng thái', source: 'Nguồn', evidence: 'Chứng từ', approval: 'Bản nháp phê duyệt', noRows: 'Không có dữ liệu phù hợp.', noBankBalance: 'Không hiển thị số dư ngân hàng giả.', bankProvider: 'Số dư thật chỉ hiển thị sau khi kết nối Bank Provider và xác minh quyền.', taxBlocked: 'Không thể hoàn tất yêu cầu phát hành trước khi kết nối Provider hóa đơn.', importReady: 'Dòng sẵn sàng nhập', validationFailed: 'Kiểm tra tệp nhập thất bại.', company: 'Công ty', billingRound: 'Đợt thanh toán', note: 'Ghi chú', forecast: 'Dự báo', inflow: 'Tiền vào', outflow: 'Tiền ra', net: 'Dòng tiền ròng', budget: 'Ngân sách', actual: 'Thực tế', execution: 'Tỷ lệ thực hiện', managementProfit: 'Lợi nhuận quản trị', margin: 'Biên lợi nhuận', officialProfitNotice: 'Chỉ là ước tính quản trị, không phải lợi nhuận pháp định.', overdue: 'Quá hạn', providerNotConfigured: 'PROVIDER_NOT_CONFIGURED', closingChecklist: 'Checklist khóa sổ tháng', closingLock: 'Khóa sau khi đóng kỳ', reopenReason: 'Lý do mở lại', next: 'Bước tiếp theo', resolved: 'Đã xử lý', resolve: 'Xác nhận xử lý', sourceTrace: 'Truy vết nguồn', audit: 'Lịch sử thay đổi', partial: 'Một phần', alerts: 'Cảnh báo kiểm soát', drillDown: 'Xem nguồn', fileReady: 'Chỉ liên kết File READY', importHint: 'Kiểm tra sheet Revenue riêng hoặc bộ 5 sheet chuẩn. Công thức và macro bị chặn.', cfoSummary: 'Chỉ số tài chính chính', aging: 'Tuổi nợ phải thu/trả', cashCalendar: 'Lịch dòng tiền', all: 'Tất cả',
   },
   en: {
     eyebrow: 'CON-COST FINANCE ERP · CFO COCKPIT',
@@ -227,7 +236,46 @@ const COPY: Record<Locale, FinanceCopy> = {
     views: { DASHBOARD: 'Finance dashboard', REVENUE: 'Revenue & AR', PURCHASES: 'Purchases & AP', CASHFLOW: 'Collections & payments', EXPENSES: 'Expense & cards', TAX: 'Tax invoices', BUDGET: 'Budget & actual', TREASURY: 'Treasury plan', PROFITABILITY: 'Project profitability', CLOSING: 'Monthly close', CONTROLS: 'Internal controls' },
     demo: 'DEMO_LOCAL uses synthetic session data. It is not an operational ledger, live bank balance, or issued tax result.',
     forbidden: 'You do not have finance access.', serverRequired: 'Operational saves require the Server Adapter and FINANCE_ACCESS capability.',
-    search: 'Search project number, document, counterparty, description', filter: 'Filter', import: 'Import Excel', export: 'Export Excel', addRevenue: 'Add revenue', addPurchase: 'Add purchase', addExpense: 'Add expense', addBudget: 'Add budget', addCashPlan: 'Add cash plan', edit: 'Edit', save: 'Save', cancel: 'Cancel', settle: 'Record settlement', amount: 'Amount', supply: 'Supply amount', vat: 'VAT', total: 'Total', balance: 'Balance', project: 'Project', counterparty: 'Counterparty', titleField: 'Description', documentDate: 'Document date', dueDate: 'Due date', status: 'Status', source: 'Source', evidence: 'Evidence', approval: 'Approval draft', noRows: 'No matching data.', noBankBalance: 'No fake bank balance is displayed.', bankProvider: 'Authorized live balances appear only after the Bank Provider is connected.', taxBlocked: 'Tax issuance cannot complete until the provider is connected.', importReady: 'Rows ready to import', validationFailed: 'Import validation failed.', company: 'Company', billingRound: 'Billing round', note: 'Note', forecast: 'Forecast', inflow: 'Inflow', outflow: 'Outflow', net: 'Net cash', budget: 'Budget', actual: 'Actual', execution: 'Execution rate', managementProfit: 'Management profit', margin: 'Margin', officialProfitNotice: 'Operational management estimate, not statutory profit.', overdue: 'Overdue', providerNotConfigured: 'PROVIDER_NOT_CONFIGURED', closingChecklist: 'Monthly close checklist', closingLock: 'Closed-period lock', reopenReason: 'Reopen reason', next: 'Next step', resolved: 'Resolved', resolve: 'Resolve control', sourceTrace: 'Source trace', audit: 'Change history', partial: 'Partial', alerts: 'Control alerts', drillDown: 'View sources', fileReady: 'READY file references only', importHint: 'Validates Revenue, Purchase, Cashflow, Expense, and Budget sheets. Formulas and macros are blocked.', cfoSummary: 'Core finance metrics', aging: 'AR/AP aging', cashCalendar: 'Cash calendar', all: 'All',
+    search: 'Search project number, document, counterparty, description', filter: 'Filter', import: 'Import Excel', export: 'Export Excel', addRevenue: 'Add revenue', addPurchase: 'Add purchase', addExpense: 'Add expense', addBudget: 'Add budget', addCashPlan: 'Add cash plan', edit: 'Edit', save: 'Save', cancel: 'Cancel', settle: 'Record settlement', amount: 'Amount', supply: 'Supply amount', vat: 'VAT', total: 'Total', balance: 'Balance', project: 'Project', counterparty: 'Counterparty', titleField: 'Description', documentDate: 'Document date', dueDate: 'Due date', status: 'Status', source: 'Source', evidence: 'Evidence', approval: 'Approval draft', noRows: 'No matching data.', noBankBalance: 'No fake bank balance is displayed.', bankProvider: 'Authorized live balances appear only after the Bank Provider is connected.', taxBlocked: 'Tax issuance cannot complete until the provider is connected.', importReady: 'Rows ready to import', validationFailed: 'Import validation failed.', company: 'Company', billingRound: 'Billing round', note: 'Note', forecast: 'Forecast', inflow: 'Inflow', outflow: 'Outflow', net: 'Net cash', budget: 'Budget', actual: 'Actual', execution: 'Execution rate', managementProfit: 'Management profit', margin: 'Margin', officialProfitNotice: 'Operational management estimate, not statutory profit.', overdue: 'Overdue', providerNotConfigured: 'PROVIDER_NOT_CONFIGURED', closingChecklist: 'Monthly close checklist', closingLock: 'Closed-period lock', reopenReason: 'Reopen reason', next: 'Next step', resolved: 'Resolved', resolve: 'Resolve control', sourceTrace: 'Source trace', audit: 'Change history', partial: 'Partial', alerts: 'Control alerts', drillDown: 'View sources', fileReady: 'READY file references only', importHint: 'Validates a Revenue-only workbook or all five standard sheets. Formulas and macros are blocked.', cfoSummary: 'Core finance metrics', aging: 'AR/AP aging', cashCalendar: 'Cash calendar', all: 'All',
+  },
+};
+
+const ENTRY_COPY: Record<Locale, {
+  titleHelp: string;
+  autoVat: string;
+  exemptVat: string;
+  manualVat: string;
+  vatHelp: string;
+  payable: string;
+  matched: string;
+  newProject: string;
+  blocked: string;
+  projectImportHelp: string;
+  importAction: string;
+}> = {
+  ko: {
+    titleHelp: '거래 내용을 짧게 적습니다. 예: 1차 기성 청구, 구조검토 용역비, 외주비 지급',
+    autoVat: 'VAT 자동 10%', exemptVat: '면세 0원', manualVat: '직접 입력',
+    vatHelp: '일반 과세는 공급가액의 10%를 자동 계산합니다. 면세 또는 별도 세액만 모드를 바꾸세요.',
+    payable: '공급가액 + VAT', matched: '기존 프로젝트 연결', newProject: '신규 프로젝트 후보', blocked: '확인 필요',
+    projectImportHelp: 'ProjectId를 우선 확인하고, 없으면 같은 회사의 Project번호를 정확히 비교합니다. 프로젝트명만으로 자동 연결하지 않습니다.',
+    importAction: '검토한 프로젝트와 재무자료 일괄 반영',
+  },
+  vi: {
+    titleHelp: 'Mô tả ngắn giao dịch, ví dụ: hóa đơn đợt 1, phí tư vấn kết cấu, thanh toán thuê ngoài.',
+    autoVat: 'VAT tự động 10%', exemptVat: 'Miễn thuế 0', manualVat: 'Nhập thủ công',
+    vatHelp: 'Giao dịch chịu thuế được tính tự động 10% giá trị trước thuế. Chỉ đổi chế độ khi miễn thuế hoặc thuế khác.',
+    payable: 'Trước thuế + VAT', matched: 'Liên kết dự án hiện có', newProject: 'Ứng viên dự án mới', blocked: 'Cần kiểm tra',
+    projectImportHelp: 'Ưu tiên ProjectId; nếu trống, đối chiếu chính xác mã dự án trong cùng công ty. Không nối tự động chỉ bằng tên.',
+    importAction: 'Xác nhận và nhập dự án cùng dữ liệu tài chính',
+  },
+  en: {
+    titleHelp: 'Enter a short transaction description, such as first progress billing, structural review fee, or subcontract payment.',
+    autoVat: 'Auto VAT 10%', exemptVat: 'Tax exempt', manualVat: 'Manual VAT',
+    vatHelp: 'Taxable entries calculate 10% of supply amount automatically. Change mode only for exempt or exceptional tax.',
+    payable: 'Supply + VAT', matched: 'Existing project match', newProject: 'New project candidate', blocked: 'Review required',
+    projectImportHelp: 'ProjectId is checked first; otherwise the exact project number is matched inside the selected company. Project names are never used as an automatic join.',
+    importAction: 'Confirm projects and import finance rows',
   },
 };
 
@@ -343,6 +391,7 @@ export function FinanceOperationsWorkbench() {
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [drawer, setDrawer] = useState<DrawerMode>(null);
   const [ledgerDraft, setLedgerDraft] = useState<FinanceLedgerDraft>(() => emptyLedger('REVENUE'));
+  const [vatMode, setVatMode] = useState<FinanceVatMode>('AUTO_10');
   const [expenseDraft, setExpenseDraft] = useState<FinanceExpenseDraft>(() => emptyExpense());
   const [budgetDraft, setBudgetDraft] = useState<FinanceBudgetDraft>(() => emptyBudget());
   const [cashDraft, setCashDraft] = useState<FinanceCashPlanDraft>(() => emptyCashPlan());
@@ -353,6 +402,7 @@ export function FinanceOperationsWorkbench() {
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const importRef = useRef<HTMLInputElement>(null);
+  const replaceProjects = useProjectStore((state) => state.replaceProjects);
 
   const adapterReady = process.env.NEXT_PUBLIC_FINANCE_ADAPTER_READY === 'true';
   const taxProviderReady = process.env.NEXT_PUBLIC_TAX_PROVIDER_READY === 'true';
@@ -375,6 +425,18 @@ export function FinanceOperationsWorkbench() {
       ? projectRecords.filter((project) => project.companyId === companyId)
       : [],
     [boundary.isSimulation, companyId, projectRecords],
+  );
+  const importResolutions = useMemo(
+    () => importPreview
+      ? reconcileFinanceLedgerRows([...importPreview.revenue, ...importPreview.purchase], projectRecords, companyId)
+      : [],
+    [companyId, importPreview, projectRecords],
+  );
+  const importBlockingReasons = useMemo(
+    () => importResolutions
+      .filter((resolution) => resolution.status === 'BLOCKED')
+      .map((resolution) => `${resolution.row.projectNo || resolution.key}: ${resolution.reason}`),
+    [importResolutions],
   );
   const summary = useMemo(() => summarizeCfoCockpit(scoped), [scoped]);
   const profitability = useMemo(() => financeProjectProfitability(scoped), [scoped]);
@@ -423,6 +485,7 @@ export function FinanceOperationsWorkbench() {
       vatAmount: record.vatAmount,
       note: record.note,
     } : emptyLedger(kind, projects[0]));
+    setVatMode(record ? inferVatMode(record.supplyAmount, record.vatAmount) : 'AUTO_10');
     setDrawer(record ? 'EDIT_LEDGER' : 'CREATE_LEDGER');
   };
 
@@ -488,10 +551,18 @@ export function FinanceOperationsWorkbench() {
   };
 
   const confirmImport = async () => {
-    if (!importPreview || importPreview.errors.length) return;
+    if (!importPreview || importPreview.errors.length || importBlockingReasons.length) return;
     const result = await run(() => {
       const ids: string[] = [];
-      for (const row of [...importPreview.revenue, ...importPreview.purchase]) {
+      const createdProjects = new Map<string, Project>();
+      for (const resolution of importResolutions) {
+        let project = resolution.project;
+        if (resolution.status === 'CREATE_CANDIDATE' && resolution.candidateKey) {
+          project = createdProjects.get(resolution.candidateKey) ?? buildFinanceImportProject(companyId, resolution.row);
+          createdProjects.set(resolution.candidateKey, project);
+        }
+        if (!project) throw new Error(`FINANCE_IMPORT_PROJECT_UNRESOLVED:${resolution.key}`);
+        const row = bindLedgerRowToProject(resolution.row, project);
         const id = store.createLedger(companyId, row, actorId);
         ids.push(id);
         if (row.settledAmount > 0) store.recordSettlement(companyId, id, row.settledAmount, actorId);
@@ -499,6 +570,7 @@ export function FinanceOperationsWorkbench() {
       importPreview.cashflow.forEach((row) => ids.push(store.createCashPlan(companyId, { ...row, projectId: row.projectId || null, sourceId: row.sourceId || null }, actorId)));
       importPreview.expenses.forEach((row) => ids.push(store.createExpense(companyId, { ...row, projectId: row.projectId || null }, actorId)));
       importPreview.budgets.forEach((row) => ids.push(store.createBudget(companyId, row, actorId)));
+      if (createdProjects.size) replaceProjects([...projectRecords, ...createdProjects.values()]);
       return ids;
     });
     if (result && result.kind !== 'BLOCKED') {
@@ -667,14 +739,14 @@ export function FinanceOperationsWorkbench() {
         description={boundary.isSimulation ? t.demo : t.serverRequired}
         canEdit={!['LEDGER_DETAIL', 'PROFIT_DETAIL'].includes(drawer ?? '')}
         onClose={() => setDrawer(null)}
-        footer={<DrawerFooter drawer={drawer} t={t} busy={busy} importPreview={importPreview} onClose={() => setDrawer(null)} onImport={() => void confirmImport()} />}
+        footer={<DrawerFooter drawer={drawer} t={t} busy={busy} importPreview={importPreview} importBlockingReasons={importBlockingReasons} locale={locale} onClose={() => setDrawer(null)} onImport={() => void confirmImport()} />}
       >
-        {(drawer === 'CREATE_LEDGER' || drawer === 'EDIT_LEDGER') && <LedgerForm value={ledgerDraft} projects={projects} t={t} onChange={setLedgerDraft} onSubmit={submitLedger} />}
+        {(drawer === 'CREATE_LEDGER' || drawer === 'EDIT_LEDGER') && <LedgerForm value={ledgerDraft} projects={projects} t={t} locale={locale} vatMode={vatMode} onVatMode={setVatMode} onChange={setLedgerDraft} onSubmit={submitLedger} />}
         {drawer === 'SETTLEMENT' && selectedLedger && <SettlementForm record={selectedLedger} value={settlementAmount} locale={locale} companyId={companyId} t={t} onChange={setSettlementAmount} onSubmit={submitSettlement} />}
         {drawer === 'CREATE_EXPENSE' && <ExpenseForm value={expenseDraft} projects={projects} t={t} onChange={setExpenseDraft} onSubmit={submitExpense} />}
         {drawer === 'CREATE_BUDGET' && <BudgetForm value={budgetDraft} t={t} onChange={setBudgetDraft} onSubmit={submitBudget} />}
         {drawer === 'CREATE_CASH_PLAN' && <CashPlanForm value={cashDraft} projects={projects} t={t} onChange={setCashDraft} onSubmit={submitCashPlan} />}
-        {drawer === 'IMPORT' && <ImportPreview preview={importPreview} t={t} />}
+        {drawer === 'IMPORT' && <ImportPreview preview={importPreview} resolutions={importResolutions} t={t} locale={locale} />}
         {drawer === 'LEDGER_DETAIL' && selectedLedger && <LedgerDetail record={selectedLedger} locale={locale} companyId={companyId} t={t} />}
         {drawer === 'PROFIT_DETAIL' && selectedProfit && <ProfitDetail record={selectedProfit} data={scoped} locale={locale} companyId={companyId} t={t} />}
         {drawer === 'REOPEN_CLOSING' && currentClosing && (
@@ -937,12 +1009,49 @@ function ControlsView({ records, t, busy, onResolve }: { records: FinanceControl
   return <div className="grid gap-3 lg:grid-cols-2">{records.map((record) => <article key={record.id} className={`${PANEL_CLASS} border-l-4 p-5 ${record.severity === 'CRITICAL' ? 'border-l-red-600' : record.severity === 'WARNING' ? 'border-l-amber-500' : 'border-l-sky-500'}`}><div className="flex items-start justify-between gap-3"><div><StatusBadge status={record.severity} /><h2 className="mt-3 text-base font-black">{record.title}</h2><p className="mt-2 text-xs font-semibold leading-5 text-[var(--color-text-sub)]">{record.detail}</p></div>{record.resolved ? <CheckCircle2 className="h-6 w-6 shrink-0 text-emerald-600" /> : <AlertTriangle className="h-6 w-6 shrink-0 text-amber-600" />}</div><div className="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-[var(--color-border)] pt-3"><span className="text-[10px] font-bold text-[var(--color-text-sub)]">{record.controlType} · {record.entityType} · {record.entityId}</span>{!record.resolved && <SemanticActionButton variant="success" size="sm" loading={busy} onClick={() => onResolve(record)}>{t.resolve}</SemanticActionButton>}</div></article>)}</div>;
 }
 
-function LedgerForm({ value, projects, t, onChange, onSubmit }: { value: FinanceLedgerDraft; projects: Project[]; t: FinanceCopy; onChange: (value: FinanceLedgerDraft) => void; onSubmit: (event: FormEvent) => void }) {
+function LedgerForm({ value, projects, t, locale, vatMode, onVatMode, onChange, onSubmit }: { value: FinanceLedgerDraft; projects: Project[]; t: FinanceCopy; locale: Locale; vatMode: FinanceVatMode; onVatMode: (mode: FinanceVatMode) => void; onChange: (value: FinanceLedgerDraft) => void; onSubmit: (event: FormEvent) => void }) {
+  const entry = ENTRY_COPY[locale];
   const chooseProject = (projectId: string) => {
     const project = projects.find((item) => item.id === projectId);
     onChange({ ...value, projectId, projectNo: project?.projectNo ?? '', projectName: project?.title ?? '', counterparty: value.counterparty || project?.clientName || '' });
   };
-  return <form id="finance-ledger-form" onSubmit={onSubmit} className="grid gap-4 sm:grid-cols-2"><Field label={t.project} wide><select required value={value.projectId} onChange={(event) => chooseProject(event.target.value)} className={INPUT_CLASS}><option value="">-</option>{projects.map((project) => <option key={project.id} value={project.id}>{project.projectNo ?? '-'} · {project.title}</option>)}</select></Field><Field label={t.titleField} wide><input autoFocus required value={value.title} onChange={(event) => onChange({ ...value, title: event.target.value })} className={INPUT_CLASS} /></Field><Field label={t.counterparty}><input required value={value.counterparty} onChange={(event) => onChange({ ...value, counterparty: event.target.value })} className={INPUT_CLASS} /></Field><Field label={t.billingRound}><input type="number" min="1" required value={value.billingRound} onChange={(event) => onChange({ ...value, billingRound: Number(event.target.value) })} className={INPUT_CLASS} /></Field><Field label={t.documentDate}><input type="date" required value={value.documentDate} onChange={(event) => onChange({ ...value, documentDate: event.target.value })} className={INPUT_CLASS} /></Field><Field label={t.dueDate}><input type="date" required value={value.dueDate} onChange={(event) => onChange({ ...value, dueDate: event.target.value })} className={INPUT_CLASS} /></Field><Field label={t.supply}><input type="number" min="0" required value={value.supplyAmount || ''} onChange={(event) => onChange({ ...value, supplyAmount: Number(event.target.value) })} className={INPUT_CLASS} /></Field><Field label={t.vat}><input type="number" min="0" required value={value.vatAmount || ''} onChange={(event) => onChange({ ...value, vatAmount: Number(event.target.value) })} className={INPUT_CLASS} /></Field><Field label={t.note} wide><textarea value={value.note} onChange={(event) => onChange({ ...value, note: event.target.value })} className={`${INPUT_CLASS} min-h-24`} /></Field></form>;
+  const changeSupply = (supplyAmount: number) => onChange({
+    ...value,
+    supplyAmount,
+    vatAmount: vatAmountForMode(supplyAmount, vatMode, value.vatAmount),
+  });
+  const changeVatMode = (mode: FinanceVatMode) => {
+    onVatMode(mode);
+    onChange({ ...value, vatAmount: vatAmountForMode(value.supplyAmount, mode, value.vatAmount) });
+  };
+  const totalAmount = value.supplyAmount + value.vatAmount;
+
+  return (
+    <form id="finance-ledger-form" onSubmit={onSubmit} className="grid gap-4 sm:grid-cols-2">
+      <Field label={t.project} wide><select required value={value.projectId} onChange={(event) => chooseProject(event.target.value)} className={INPUT_CLASS}><option value="">-</option>{projects.map((project) => <option key={project.id} value={project.id}>{project.projectNo ?? '-'} · {project.title}</option>)}</select></Field>
+      <Field label={t.titleField} wide>
+        <input autoFocus required value={value.title} onChange={(event) => onChange({ ...value, title: event.target.value })} placeholder={locale === 'ko' ? '예: 1차 기성 청구' : undefined} className={INPUT_CLASS} />
+        <span className="mt-2 block text-[11px] font-semibold leading-4 text-[var(--color-text-sub)]">{entry.titleHelp}</span>
+      </Field>
+      <Field label={t.counterparty}><input required value={value.counterparty} onChange={(event) => onChange({ ...value, counterparty: event.target.value })} className={INPUT_CLASS} /></Field>
+      <Field label={t.billingRound}><input type="number" min="1" required value={value.billingRound} onChange={(event) => onChange({ ...value, billingRound: Number(event.target.value) })} className={INPUT_CLASS} /></Field>
+      <Field label={t.documentDate}><input type="date" required value={value.documentDate} onChange={(event) => onChange({ ...value, documentDate: event.target.value })} className={INPUT_CLASS} /></Field>
+      <Field label={t.dueDate}><input type="date" required value={value.dueDate} onChange={(event) => onChange({ ...value, dueDate: event.target.value })} className={INPUT_CLASS} /></Field>
+      <Field label={t.supply}><input type="number" min="0" required value={value.supplyAmount || ''} onChange={(event) => changeSupply(Number(event.target.value))} className={INPUT_CLASS} /></Field>
+      <Field label={t.vat}><input type="number" min="0" required readOnly={vatMode !== 'MANUAL'} value={value.vatAmount} onChange={(event) => onChange({ ...value, vatAmount: Number(event.target.value) })} className={`${INPUT_CLASS} ${vatMode !== 'MANUAL' ? 'cursor-not-allowed bg-sky-50 text-sky-900' : ''}`} /></Field>
+      <fieldset className="sm:col-span-2">
+        <legend className="text-xs font-black text-[var(--color-text-sub)]">VAT</legend>
+        <div className="mt-2 grid grid-cols-3 gap-2" role="radiogroup" aria-label="VAT calculation mode">
+          {([['AUTO_10', entry.autoVat], ['EXEMPT', entry.exemptVat], ['MANUAL', entry.manualVat]] as [FinanceVatMode, string][]).map(([mode, label]) => (
+            <button key={mode} type="button" role="radio" aria-checked={vatMode === mode} onClick={() => changeVatMode(mode)} className={`min-h-11 rounded-lg border px-2 text-xs font-black transition focus-visible:ring-2 focus-visible:ring-orange-500 ${vatMode === mode ? 'border-orange-500 bg-orange-50 text-orange-800 shadow-sm' : 'border-[var(--color-border)] bg-[var(--color-surface)] hover:border-orange-300 hover:bg-orange-50/60'}`}>{label}</button>
+          ))}
+        </div>
+        <p className="mt-2 text-[11px] font-semibold leading-4 text-[var(--color-text-sub)]">{entry.vatHelp}</p>
+      </fieldset>
+      <div className="sm:col-span-2 rounded-lg border border-emerald-200 bg-emerald-50 p-4"><span className="text-[10px] font-black text-emerald-800">{entry.payable}</span><strong className="mt-1 block text-xl font-black text-emerald-950">{new Intl.NumberFormat(locale === 'ko' ? 'ko-KR' : locale === 'vi' ? 'vi-VN' : 'en-US').format(totalAmount)}</strong></div>
+      <Field label={t.note} wide><textarea value={value.note} onChange={(event) => onChange({ ...value, note: event.target.value })} className={`${INPUT_CLASS} min-h-24`} /></Field>
+    </form>
+  );
 }
 
 function SettlementForm({ record, value, locale, companyId, t, onChange, onSubmit }: { record: FinanceLedgerRecord; value: number; locale: Locale; companyId: CompanyId; t: FinanceCopy; onChange: (value: number) => void; onSubmit: (event: FormEvent) => void }) {
@@ -962,10 +1071,14 @@ function CashPlanForm({ value, projects, t, onChange, onSubmit }: { value: Finan
   return <form id="finance-cash-plan-form" onSubmit={onSubmit} className="grid gap-4 sm:grid-cols-2"><Field label={t.project} wide><select value={value.projectId ?? ''} onChange={(event) => { const project = projects.find((item) => item.id === event.target.value); onChange({ ...value, projectId: event.target.value || null, projectNo: project?.projectNo ?? '' }); }} className={INPUT_CLASS}><option value="">-</option>{projects.map((project) => <option key={project.id} value={project.id}>{project.projectNo ?? '-'} · {project.title}</option>)}</select></Field><Field label={t.titleField} wide><input autoFocus required value={value.title} onChange={(event) => onChange({ ...value, title: event.target.value })} className={INPUT_CLASS} /></Field><Field label="Direction"><select value={value.direction} onChange={(event) => onChange({ ...value, direction: event.target.value as FinanceCashPlanDraft['direction'] })} className={INPUT_CLASS}><option value="IN">IN</option><option value="OUT">OUT</option></select></Field><Field label={t.dueDate}><input type="date" required value={value.plannedDate} onChange={(event) => onChange({ ...value, plannedDate: event.target.value })} className={INPUT_CLASS} /></Field><Field label={t.amount}><input type="number" min="0" required value={value.amount || ''} onChange={(event) => onChange({ ...value, amount: Number(event.target.value) })} className={INPUT_CLASS} /></Field><Field label="Source"><select value={value.sourceType} onChange={(event) => onChange({ ...value, sourceType: event.target.value as FinanceCashPlanDraft['sourceType'] })} className={INPUT_CLASS}>{['REVENUE', 'PURCHASE', 'EXPENSE', 'FIXED_COST', 'MANUAL'].map((item) => <option key={item}>{item}</option>)}</select></Field></form>;
 }
 
-function ImportPreview({ preview, t }: { preview: FinanceErpImportPreview | null; t: FinanceCopy }) {
+function ImportPreview({ preview, resolutions, t, locale }: { preview: FinanceErpImportPreview | null; resolutions: FinanceProjectResolution[]; t: FinanceCopy; locale: Locale }) {
   if (!preview) return <EmptyState label={t.importHint} />;
+  const entry = ENTRY_COPY[locale];
   const counts = [{ label: 'Revenue', value: preview.revenue.length }, { label: 'Purchase', value: preview.purchase.length }, { label: 'Cashflow', value: preview.cashflow.length }, { label: 'Expense', value: preview.expenses.length }, { label: 'Budget', value: preview.budgets.length }];
-  return <div><p className="rounded-lg border border-sky-200 bg-sky-50 p-4 text-xs font-bold leading-5 text-sky-950">{t.importHint}</p><div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-5">{counts.map((item) => <Info key={item.label} label={item.label} value={String(item.value)} />)}</div><div className={`mt-4 rounded-lg border p-4 text-xs font-bold ${preview.errors.length ? 'border-red-200 bg-red-50 text-red-900' : 'border-emerald-200 bg-emerald-50 text-emerald-900'}`}>{preview.errors.length ? `${t.validationFailed}: ${preview.errors.join(' · ')}` : `${t.importReady}: ${counts.reduce((sum, item) => sum + item.value, 0)}`}</div></div>;
+  const matched = resolutions.filter((item) => item.status === 'MATCHED_ID' || item.status === 'MATCHED_NO').length;
+  const candidates = new Set(resolutions.filter((item) => item.status === 'CREATE_CANDIDATE').map((item) => item.candidateKey)).size;
+  const blocked = resolutions.filter((item) => item.status === 'BLOCKED').length;
+  return <div className="space-y-4"><p className="rounded-lg border border-sky-200 bg-sky-50 p-4 text-xs font-bold leading-5 text-sky-950">{t.importHint}<br />{entry.projectImportHelp}</p><div className="grid grid-cols-2 gap-2 sm:grid-cols-5">{counts.map((item) => <Info key={item.label} label={item.label} value={String(item.value)} />)}</div><div className="grid grid-cols-3 gap-2"><Info label={entry.matched} value={String(matched)} /><Info label={entry.newProject} value={String(candidates)} /><Info label={entry.blocked} value={String(blocked)} /></div>{resolutions.length > 0 && <div className="cc-scrollbar max-h-72 overflow-auto rounded-lg border border-[var(--color-border)]"><table className="w-full min-w-[640px] text-left text-xs"><thead className="sticky top-0 bg-[var(--cc-surface-2)]"><tr><th className="px-3 py-3">Type</th><th className="px-3 py-3">Project No</th><th className="px-3 py-3">Project</th><th className="px-3 py-3">Result</th></tr></thead><tbody>{resolutions.map((resolution) => { const label = resolution.status === 'CREATE_CANDIDATE' ? entry.newProject : resolution.status === 'BLOCKED' ? entry.blocked : entry.matched; return <tr key={resolution.key} className="border-t border-[var(--color-border)] hover:bg-orange-50/60"><td className="px-3 py-3 font-black">{resolution.row.kind}</td><td className="px-3 py-3 font-black">{resolution.row.projectNo || '-'}</td><td className="px-3 py-3">{resolution.project?.title ?? resolution.row.projectName}</td><td className="px-3 py-3"><StatusBadge status={label} />{resolution.reason && <span className="ml-2 text-[10px] font-bold text-red-700">{resolution.reason}</span>}</td></tr>; })}</tbody></table></div>}<div className={`rounded-lg border p-4 text-xs font-bold ${preview.errors.length || blocked ? 'border-red-200 bg-red-50 text-red-900' : 'border-emerald-200 bg-emerald-50 text-emerald-900'}`}>{preview.errors.length ? `${t.validationFailed}: ${preview.errors.join(' · ')}` : blocked ? `${t.validationFailed}: ${blocked}` : `${t.importReady}: ${counts.reduce((sum, item) => sum + item.value, 0)} · ${entry.importAction}`}</div></div>;
 }
 
 function LedgerDetail({ record, locale, companyId, t }: { record: FinanceLedgerRecord; locale: Locale; companyId: CompanyId; t: FinanceCopy }) {
@@ -977,10 +1090,11 @@ function ProfitDetail({ record, data, locale, companyId, t }: { record: FinanceP
   return <div className="space-y-4"><p className="rounded-lg border border-teal-200 bg-teal-50 p-4 text-xs font-bold text-teal-950">{t.officialProfitNotice}</p><dl className="grid grid-cols-2 gap-2"><Info label={t.project} value={`${record.projectNo} · ${record.projectName}`} /><Info label={t.margin} value={percent(record.marginRate)} /><Info label={t.managementProfit} value={money(record.managementProfit, locale, companyId)} /><Info label={t.balance} value={money(record.receivable - record.payable, locale, companyId)} /></dl><section><h3 className="text-sm font-black">{t.sourceTrace}</h3><div className="mt-3 space-y-2">{sources.map((source) => <article key={source.id} className="rounded-lg border border-[var(--color-border)] p-3"><div className="flex items-center justify-between gap-3"><strong className="text-xs font-black">{'documentNo' in source ? source.documentNo : source.expenseNo}</strong><span className="text-xs font-black">{money('totalAmount' in source ? source.totalAmount : source.amount, locale, companyId)}</span></div><p className="mt-1 text-[10px] font-semibold text-[var(--color-text-sub)]">{source.id} · revision {source.revision}</p></article>)}</div></section></div>;
 }
 
-function DrawerFooter({ drawer, t, busy, importPreview, onClose, onImport }: { drawer: DrawerMode; t: FinanceCopy; busy: boolean; importPreview: FinanceErpImportPreview | null; onClose: () => void; onImport: () => void }) {
+function DrawerFooter({ drawer, t, busy, importPreview, importBlockingReasons, locale, onClose, onImport }: { drawer: DrawerMode; t: FinanceCopy; busy: boolean; importPreview: FinanceErpImportPreview | null; importBlockingReasons: string[]; locale: Locale; onClose: () => void; onImport: () => void }) {
   if (drawer === 'LEDGER_DETAIL' || drawer === 'PROFIT_DETAIL') return <SemanticActionButton variant="neutral" className="w-full" onClick={onClose}>{t.cancel}</SemanticActionButton>;
   const form = drawer === 'CREATE_LEDGER' || drawer === 'EDIT_LEDGER' ? 'finance-ledger-form' : drawer === 'SETTLEMENT' ? 'finance-settlement-form' : drawer === 'CREATE_EXPENSE' ? 'finance-expense-form' : drawer === 'CREATE_BUDGET' ? 'finance-budget-form' : drawer === 'CREATE_CASH_PLAN' ? 'finance-cash-plan-form' : drawer === 'REOPEN_CLOSING' ? 'finance-reopen-form' : undefined;
-  return <ActionButtonGroup label="Finance drawer actions" className="justify-end"><SemanticActionButton variant="neutral" onClick={onClose}>{t.cancel}</SemanticActionButton>{drawer === 'IMPORT' ? <SemanticActionButton variant="save" loading={busy} disabled={!importPreview || Boolean(importPreview.errors.length)} disabledReason={importPreview?.errors.join(' · ') || 'Preview required'} onClick={onImport}>{t.save}</SemanticActionButton> : form ? <SemanticActionButton variant="save" type="submit" form={form} loading={busy}>{drawer === 'SETTLEMENT' ? t.settle : t.save}</SemanticActionButton> : null}</ActionButtonGroup>;
+  const importErrors = [...(importPreview?.errors ?? []), ...importBlockingReasons];
+  return <ActionButtonGroup label="Finance drawer actions" className="justify-end"><SemanticActionButton variant="neutral" onClick={onClose}>{t.cancel}</SemanticActionButton>{drawer === 'IMPORT' ? <SemanticActionButton variant="save" loading={busy} disabled={!importPreview || Boolean(importErrors.length)} disabledReason={importErrors.join(' · ') || 'Preview required'} onClick={onImport}>{ENTRY_COPY[locale].importAction}</SemanticActionButton> : form ? <SemanticActionButton variant="save" type="submit" form={form} loading={busy}>{drawer === 'SETTLEMENT' ? t.settle : t.save}</SemanticActionButton> : null}</ActionButtonGroup>;
 }
 
 function drawerTitle(drawer: DrawerMode, t: FinanceCopy) {

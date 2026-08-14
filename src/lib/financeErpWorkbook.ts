@@ -24,6 +24,7 @@ export interface FinanceLedgerWorkbookRow {
   dueDate: string;
   supplyAmount: number;
   vatAmount: number;
+  vatProvided: boolean;
   settledAmount: number;
   note: string;
 }
@@ -218,7 +219,7 @@ const readLedger = (sheet: ExcelJS.Worksheet | undefined, kind: FinanceLedgerKin
   const rows: FinanceLedgerWorkbookRow[] = [];
   sheet.eachRow((row, rowNumber) => {
     if (rowNumber === 1) return;
-    if (!row.values || !row.getCell(2).value) return;
+    if (!row.values || (!row.getCell(2).value && !row.getCell(3).value)) return;
     rows.push({
       kind,
       projectId: text(row.getCell(2).value),
@@ -231,6 +232,7 @@ const readLedger = (sheet: ExcelJS.Worksheet | undefined, kind: FinanceLedgerKin
       dueDate: text(row.getCell(9).value),
       supplyAmount: number(row.getCell(10).value),
       vatAmount: number(row.getCell(11).value),
+      vatProvided: text(row.getCell(11).value) !== '',
       settledAmount: number(row.getCell(12).value),
       note: text(row.getCell(13).value),
     });
@@ -247,12 +249,15 @@ export async function previewFinanceErpWorkbook(buffer: ArrayBuffer): Promise<Fi
   const cashSheet = workbook.getWorksheet('Cashflow');
   const expenseSheet = workbook.getWorksheet('Expense');
   const budgetSheet = workbook.getWorksheet('Budget');
+  const revenueOnly = Boolean(revenueSheet && !purchaseSheet && !cashSheet && !expenseSheet && !budgetSheet);
 
   validateHeader(revenueSheet, ledgerHeaders, errors);
-  validateHeader(purchaseSheet, ledgerHeaders, errors);
-  validateHeader(cashSheet, cashHeaders, errors);
-  validateHeader(expenseSheet, expenseHeaders, errors);
-  validateHeader(budgetSheet, budgetHeaders, errors);
+  if (!revenueOnly) {
+    validateHeader(purchaseSheet, ledgerHeaders, errors);
+    validateHeader(cashSheet, cashHeaders, errors);
+    validateHeader(expenseSheet, expenseHeaders, errors);
+    validateHeader(budgetSheet, budgetHeaders, errors);
+  }
   [revenueSheet, purchaseSheet, cashSheet, expenseSheet, budgetSheet].forEach((sheet) => {
     errors.push(...formulaErrors(sheet));
   });
