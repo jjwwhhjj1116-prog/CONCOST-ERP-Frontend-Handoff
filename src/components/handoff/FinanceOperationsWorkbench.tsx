@@ -42,6 +42,7 @@ import {
 
 import { HandoffLanguageToggle } from '@/components/handoff/HandoffLanguageToggle';
 import { FinanceHelpExperience } from '@/components/handoff/FinanceHelpExperience';
+import { FinanceAccountingWorkbench } from '@/components/handoff/FinanceAccountingWorkbench';
 import { RuntimeCapabilityPanel } from '@/components/handoff/RuntimeCapabilityPanel';
 import { useHandoffLocale } from '@/components/handoff/useHandoffLocale';
 import { DetailDrawer } from '@/components/ui/DetailDrawer';
@@ -116,6 +117,7 @@ type FinanceView =
   | 'BUDGET'
   | 'TREASURY'
   | 'PROFITABILITY'
+  | 'ACCOUNTING'
   | 'CLOSING'
   | 'CONTROLS';
 type DrawerMode =
@@ -211,7 +213,7 @@ const COPY: Record<Locale, FinanceCopy> = {
     eyebrow: 'CON-COST FINANCE ERP · CFO COCKPIT',
     title: '재무 운영센터',
     description: 'Project 수주부터 청구·수금·매입·경비·예산·자금·월마감까지 원천과 승인 이력을 연결합니다.',
-    views: { DASHBOARD: '재무 대시보드', REVENUE: '매출·채권', PURCHASES: '매입·채무', CASHFLOW: '수금·지급', EXPENSES: '경비·법인카드', TAX: '세금계산서', BUDGET: '예산·실적', TREASURY: '자금계획', PROFITABILITY: 'Project 손익', CLOSING: '월 결산', CONTROLS: '내부통제' },
+    views: { DASHBOARD: '재무 대시보드', REVENUE: '매출·채권', PURCHASES: '매입·채무', CASHFLOW: '수금·지급', EXPENSES: '경비·법인카드', TAX: '세금계산서', BUDGET: '예산·실적', TREASURY: '자금계획', PROFITABILITY: 'Project 손익', ACCOUNTING: '회계·전표', CLOSING: '월 결산', CONTROLS: '내부통제' },
     demo: 'DEMO_LOCAL 합성 데이터입니다. 실제 장부·은행잔액·세금계산서 발행 결과가 아닙니다.',
     forbidden: '재무 접근권한이 없습니다.',
     serverRequired: '운영 저장은 Server Adapter와 FINANCE_ACCESS Capability가 필요합니다.',
@@ -224,7 +226,7 @@ const COPY: Record<Locale, FinanceCopy> = {
     eyebrow: 'CON-COST FINANCE ERP · CFO COCKPIT',
     title: 'Trung tâm vận hành tài chính',
     description: 'Kết nối nguồn dữ liệu và lịch sử phê duyệt từ hợp đồng dự án đến hóa đơn, thu chi, ngân sách, dòng tiền và khóa sổ.',
-    views: { DASHBOARD: 'Bảng điều khiển', REVENUE: 'Doanh thu & phải thu', PURCHASES: 'Mua hàng & phải trả', CASHFLOW: 'Thu & chi', EXPENSES: 'Chi phí & thẻ công ty', TAX: 'Hóa đơn thuế', BUDGET: 'Ngân sách & thực tế', TREASURY: 'Kế hoạch dòng tiền', PROFITABILITY: 'Lợi nhuận dự án', CLOSING: 'Khóa sổ tháng', CONTROLS: 'Kiểm soát nội bộ' },
+    views: { DASHBOARD: 'Bảng điều khiển', REVENUE: 'Doanh thu & phải thu', PURCHASES: 'Mua hàng & phải trả', CASHFLOW: 'Thu & chi', EXPENSES: 'Chi phí & thẻ công ty', TAX: 'Hóa đơn thuế', BUDGET: 'Ngân sách & thực tế', TREASURY: 'Kế hoạch dòng tiền', PROFITABILITY: 'Lợi nhuận dự án', ACCOUNTING: 'Kế toán & bút toán', CLOSING: 'Khóa sổ tháng', CONTROLS: 'Kiểm soát nội bộ' },
     demo: 'Đây là dữ liệu tổng hợp DEMO_LOCAL, không phải sổ kế toán, số dư ngân hàng hay kết quả phát hành thật.',
     forbidden: 'Bạn không có quyền truy cập tài chính.', serverRequired: 'Cần Server Adapter và FINANCE_ACCESS để lưu dữ liệu vận hành.',
     search: 'Tìm mã dự án, chứng từ, đối tác, nội dung', filter: 'Bộ lọc', import: 'Nhập Excel', export: 'Xuất Excel', addRevenue: 'Thêm doanh thu', addPurchase: 'Thêm mua hàng', addExpense: 'Thêm chi phí', addBudget: 'Thêm ngân sách', addCashPlan: 'Thêm kế hoạch tiền', edit: 'Chỉnh sửa', save: 'Lưu', cancel: 'Hủy', settle: 'Ghi nhận thanh toán', amount: 'Số tiền', supply: 'Giá trị trước thuế', vat: 'VAT', total: 'Tổng', balance: 'Còn lại', project: 'Dự án', counterparty: 'Đối tác', titleField: 'Nội dung', documentDate: 'Ngày chứng từ', dueDate: 'Ngày đến hạn', status: 'Trạng thái', source: 'Nguồn', evidence: 'Chứng từ', approval: 'Bản nháp phê duyệt', noRows: 'Không có dữ liệu phù hợp.', noBankBalance: 'Không hiển thị số dư ngân hàng giả.', bankProvider: 'Số dư thật chỉ hiển thị sau khi kết nối Bank Provider và xác minh quyền.', taxBlocked: 'Không thể hoàn tất yêu cầu phát hành trước khi kết nối Provider hóa đơn.', importReady: 'Dòng sẵn sàng nhập', validationFailed: 'Kiểm tra tệp nhập thất bại.', company: 'Công ty', billingRound: 'Đợt thanh toán', note: 'Ghi chú', forecast: 'Dự báo', inflow: 'Tiền vào', outflow: 'Tiền ra', net: 'Dòng tiền ròng', budget: 'Ngân sách', actual: 'Thực tế', execution: 'Tỷ lệ thực hiện', managementProfit: 'Lợi nhuận quản trị', margin: 'Biên lợi nhuận', officialProfitNotice: 'Chỉ là ước tính quản trị, không phải lợi nhuận pháp định.', overdue: 'Quá hạn', providerNotConfigured: 'PROVIDER_NOT_CONFIGURED', closingChecklist: 'Checklist khóa sổ tháng', closingLock: 'Khóa sau khi đóng kỳ', reopenReason: 'Lý do mở lại', next: 'Bước tiếp theo', resolved: 'Đã xử lý', resolve: 'Xác nhận xử lý', sourceTrace: 'Truy vết nguồn', audit: 'Lịch sử thay đổi', partial: 'Một phần', alerts: 'Cảnh báo kiểm soát', drillDown: 'Xem nguồn', fileReady: 'Chỉ liên kết File READY', importHint: 'Kiểm tra sheet Revenue riêng hoặc bộ 5 sheet chuẩn. Công thức và macro bị chặn.', cfoSummary: 'Chỉ số tài chính chính', aging: 'Tuổi nợ phải thu/trả', cashCalendar: 'Lịch dòng tiền', all: 'Tất cả',
@@ -233,7 +235,7 @@ const COPY: Record<Locale, FinanceCopy> = {
     eyebrow: 'CON-COST FINANCE ERP · CFO COCKPIT',
     title: 'Finance operations center',
     description: 'Connect source and approval history from project award through billing, collection, purchasing, expenses, budget, treasury, and close.',
-    views: { DASHBOARD: 'Finance dashboard', REVENUE: 'Revenue & AR', PURCHASES: 'Purchases & AP', CASHFLOW: 'Collections & payments', EXPENSES: 'Expense & cards', TAX: 'Tax invoices', BUDGET: 'Budget & actual', TREASURY: 'Treasury plan', PROFITABILITY: 'Project profitability', CLOSING: 'Monthly close', CONTROLS: 'Internal controls' },
+    views: { DASHBOARD: 'Finance dashboard', REVENUE: 'Revenue & AR', PURCHASES: 'Purchases & AP', CASHFLOW: 'Collections & payments', EXPENSES: 'Expense & cards', TAX: 'Tax invoices', BUDGET: 'Budget & actual', TREASURY: 'Treasury plan', PROFITABILITY: 'Project profitability', ACCOUNTING: 'Accounting & journals', CLOSING: 'Monthly close', CONTROLS: 'Internal controls' },
     demo: 'DEMO_LOCAL uses synthetic session data. It is not an operational ledger, live bank balance, or issued tax result.',
     forbidden: 'You do not have finance access.', serverRequired: 'Operational saves require the Server Adapter and FINANCE_ACCESS capability.',
     search: 'Search project number, document, counterparty, description', filter: 'Filter', import: 'Import Excel', export: 'Export Excel', addRevenue: 'Add revenue', addPurchase: 'Add purchase', addExpense: 'Add expense', addBudget: 'Add budget', addCashPlan: 'Add cash plan', edit: 'Edit', save: 'Save', cancel: 'Cancel', settle: 'Record settlement', amount: 'Amount', supply: 'Supply amount', vat: 'VAT', total: 'Total', balance: 'Balance', project: 'Project', counterparty: 'Counterparty', titleField: 'Description', documentDate: 'Document date', dueDate: 'Due date', status: 'Status', source: 'Source', evidence: 'Evidence', approval: 'Approval draft', noRows: 'No matching data.', noBankBalance: 'No fake bank balance is displayed.', bankProvider: 'Authorized live balances appear only after the Bank Provider is connected.', taxBlocked: 'Tax issuance cannot complete until the provider is connected.', importReady: 'Rows ready to import', validationFailed: 'Import validation failed.', company: 'Company', billingRound: 'Billing round', note: 'Note', forecast: 'Forecast', inflow: 'Inflow', outflow: 'Outflow', net: 'Net cash', budget: 'Budget', actual: 'Actual', execution: 'Execution rate', managementProfit: 'Management profit', margin: 'Margin', officialProfitNotice: 'Operational management estimate, not statutory profit.', overdue: 'Overdue', providerNotConfigured: 'PROVIDER_NOT_CONFIGURED', closingChecklist: 'Monthly close checklist', closingLock: 'Closed-period lock', reopenReason: 'Reopen reason', next: 'Next step', resolved: 'Resolved', resolve: 'Resolve control', sourceTrace: 'Source trace', audit: 'Change history', partial: 'Partial', alerts: 'Control alerts', drillDown: 'View sources', fileReady: 'READY file references only', importHint: 'Validates a Revenue-only workbook or all five standard sheets. Formulas and macros are blocked.', cfoSummary: 'Core finance metrics', aging: 'AR/AP aging', cashCalendar: 'Cash calendar', all: 'All',
@@ -308,12 +310,13 @@ const viewAlias: Record<string, FinanceView> = {
   EXPENSES: 'EXPENSES',
   TREASURY: 'TREASURY',
   CLOSING: 'CLOSING',
+  ACCOUNTING: 'ACCOUNTING',
 };
 
 const normalizeView = (value: string | null): FinanceView => {
   if (!value) return 'DASHBOARD';
   if (value in viewAlias) return viewAlias[value];
-  return (['DASHBOARD', 'REVENUE', 'PURCHASES', 'CASHFLOW', 'EXPENSES', 'TAX', 'BUDGET', 'TREASURY', 'PROFITABILITY', 'CLOSING', 'CONTROLS'] as FinanceView[]).includes(value as FinanceView)
+  return (['DASHBOARD', 'REVENUE', 'PURCHASES', 'CASHFLOW', 'EXPENSES', 'TAX', 'BUDGET', 'TREASURY', 'PROFITABILITY', 'ACCOUNTING', 'CLOSING', 'CONTROLS'] as FinanceView[]).includes(value as FinanceView)
     ? value as FinanceView
     : 'DASHBOARD';
 };
@@ -601,6 +604,7 @@ export function FinanceOperationsWorkbench() {
         companyId={companyId}
         locale={locale}
         summary={summary}
+        showMetrics={boundary.isSimulation}
         t={t}
         onLocale={setLocale}
         onView={switchView}
@@ -616,12 +620,14 @@ export function FinanceOperationsWorkbench() {
       />
       <div data-finance-guide="safety" className="space-y-3">
         <RuntimeCapabilityPanel boundary={boundary} />
-        <p className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-xs font-bold leading-5 text-amber-950">
-          {t.demo}
-        </p>
+        {boundary.isSimulation && (
+          <p className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-xs font-bold leading-5 text-amber-950">
+            {t.demo}
+          </p>
+        )}
       </div>
       <FinanceNavigation view={view} t={t} onChange={switchView} />
-      <FinanceToolbar
+      {view !== 'ACCOUNTING' && <FinanceToolbar
         view={view}
         query={query}
         statusFilter={statusFilter}
@@ -646,7 +652,7 @@ export function FinanceOperationsWorkbench() {
           await exportFinanceErpWorkbook(scoped);
           return true;
         })}
-      />
+      />}
       <input ref={importRef} type="file" accept=".xlsx" className="sr-only" onChange={(event) => void readImport(event.target.files?.[0])} />
       {(message || error) && <MessageBanner message={error || message} error={Boolean(error)} />}
 
@@ -712,6 +718,14 @@ export function FinanceOperationsWorkbench() {
             }}
           />
         )}
+        {view === 'ACCOUNTING' && (
+          <FinanceAccountingWorkbench
+            companyId={companyId}
+            locale={locale}
+            isSimulation={boundary.isSimulation}
+            adapterReady={adapterReady}
+          />
+        )}
         {view === 'CLOSING' && currentClosing && (
           <ClosingView
             period={currentClosing}
@@ -765,16 +779,18 @@ export function FinanceOperationsWorkbench() {
   );
 }
 
-function FinanceHeader({ companyId, locale, summary, t, onLocale, onView, guideControls }: {
+function FinanceHeader({ companyId, locale, summary, showMetrics, t, onLocale, onView, guideControls }: {
   companyId: CompanyId;
   locale: Locale;
   summary: ReturnType<typeof summarizeCfoCockpit>;
+  showMetrics: boolean;
   t: FinanceCopy;
   onLocale: (locale: Locale) => void;
   onView: (view: FinanceView) => void;
   guideControls: ReactNode;
 }) {
-  const cards: Array<{ label: string; value: string; icon: ElementType; tone: string; view: FinanceView }> = [
+  const unavailable = '—';
+  const baseCards: Array<{ label: string; value: string; icon: ElementType; tone: string; view: FinanceView }> = [
     { label: t.views.REVENUE, value: money(summary.revenue, locale, companyId), icon: ArrowUpRight, tone: 'text-emerald-700 bg-emerald-50', view: 'REVENUE' },
     { label: t.views.PURCHASES, value: money(summary.purchase, locale, companyId), icon: ArrowDownRight, tone: 'text-rose-700 bg-rose-50', view: 'PURCHASES' },
     { label: t.views.CASHFLOW, value: money(summary.collectionDue, locale, companyId), icon: Banknote, tone: 'text-sky-700 bg-sky-50', view: 'CASHFLOW' },
@@ -786,6 +802,10 @@ function FinanceHeader({ companyId, locale, summary, t, onLocale, onView, guideC
     { label: t.views.CLOSING, value: percent(summary.closingProgress), icon: BookOpenCheck, tone: 'text-blue-700 bg-blue-50', view: 'CLOSING' },
     { label: t.alerts, value: String(summary.alerts), icon: AlertTriangle, tone: 'text-red-700 bg-red-50', view: 'CONTROLS' },
   ];
+  const cards = baseCards.map((card) => ({
+    ...card,
+    value: showMetrics ? card.value : unavailable,
+  }));
   return (
     <header data-finance-guide="summary" className={`${PANEL_CLASS} overflow-hidden border-t-4 border-t-orange-500`}>
       <div className="flex flex-wrap items-start justify-between gap-4 p-5 sm:p-6">

@@ -15,8 +15,9 @@ test('finance guide has complete and ordered content for every locale', () => {
     assert.equal(content.steps[0]?.id, 'summary');
     assert.equal(content.steps.at(-1)?.id, 'help');
     assert.equal(new Set(content.steps.map((step) => step.id)).size, content.steps.length);
-    assert.equal(content.workflows.length, 6);
-    assert.equal(content.glossary.length, 8);
+    assert.equal(content.workflows.length, 7);
+    assert.equal(content.glossary.length, 9);
+    assert.ok(content.workflows.some((workflow) => workflow.view === 'ACCOUNTING'));
     assert.ok(content.steps.every((step) => step.title && step.description && step.checklist.length));
   }
 });

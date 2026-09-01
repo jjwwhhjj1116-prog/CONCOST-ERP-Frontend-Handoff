@@ -10,6 +10,7 @@ export type FinanceGuideView =
   | 'BUDGET'
   | 'TREASURY'
   | 'PROFITABILITY'
+  | 'ACCOUNTING'
   | 'CLOSING'
   | 'CONTROLS';
 
@@ -108,6 +109,7 @@ const CONTENT: Record<FinanceGuideLocale, FinanceGuideContent> = {
       { id: 'record-expense', view: 'EXPENSES', title: '카드·영수증 경비 등록', description: '경비와 증빙, 결재를 연결합니다.', steps: ['경비 등록을 누릅니다.', '수단·Project·비용분류를 고릅니다.', 'READY 증빙과 결재 Draft를 확인합니다.'] },
       { id: 'check-cash', view: 'CASHFLOW', title: '수금·지급 일정 확인', description: '다가오는 돈의 흐름과 연체를 확인합니다.', steps: ['예정일 순으로 봅니다.', 'Aging이 큰 항목을 확인합니다.', '처리 결과를 원장에 기록합니다.'] },
       { id: 'manage-budget', view: 'BUDGET', title: '예산과 실적 비교', description: '부서·Project 예산 초과를 미리 확인합니다.', steps: ['예산 범위를 선택합니다.', '집행·승인대기·예상을 비교합니다.', 'WARN·BLOCK 사유를 확인합니다.'] },
+      { id: 'review-accounting', view: 'ACCOUNTING', title: '전표와 계정과목 확인', description: '승인된 업무자료가 어떤 차변·대변으로 연결되는지 확인합니다.', steps: ['회사와 계정과목 버전을 확인합니다.', '차변·대변 합계가 같은지 확인합니다.', 'POSTED 전표는 직접 수정하지 않고 역분개·정정 절차를 사용합니다.'] },
       { id: 'monthly-close', view: 'CLOSING', title: '월 결산 진행', description: '월말 확인과 잠금을 순서대로 진행합니다.', steps: ['체크리스트를 모두 확인합니다.', '검토 상태를 거쳐 마감합니다.', '재오픈은 사유와 감사이력을 남깁니다.'] },
     ],
     glossary: [
@@ -118,6 +120,7 @@ const CONTENT: Record<FinanceGuideLocale, FinanceGuideContent> = {
       { term: 'VAT', meaning: '부가가치세' },
       { term: 'Aging', meaning: '받거나 줄 날짜가 얼마나 지났는지 나눈 표' },
       { term: '관리손익', meaning: '업무 관리를 위한 예상 이익이며 법정 손익은 아님' },
+      { term: '전표', meaning: '한 거래의 차변과 대변을 같은 금액으로 기록한 회계 묶음' },
       { term: '결산', meaning: '한 달의 기록이 빠짐없는지 확인하고 잠그는 일' },
     ],
   },
@@ -144,10 +147,11 @@ const CONTENT: Record<FinanceGuideLocale, FinanceGuideContent> = {
       { id: 'record-expense', view: 'EXPENSES', title: 'Ghi thẻ và hóa đơn', description: 'Liên kết chi phí, chứng từ và phê duyệt.', steps: ['Nhấn Thêm chi phí.', 'Chọn phương thức, dự án và loại chi phí.', 'Kiểm tra file READY và bản nháp phê duyệt.'] },
       { id: 'check-cash', view: 'CASHFLOW', title: 'Kiểm tra lịch thu chi', description: 'Xem dòng tiền sắp tới và quá hạn.', steps: ['Xem theo ngày dự kiến.', 'Kiểm tra khoản có tuổi nợ cao.', 'Ghi kết quả vào sổ.'] },
       { id: 'manage-budget', view: 'BUDGET', title: 'So sánh ngân sách và thực tế', description: 'Phát hiện sớm vượt ngân sách.', steps: ['Chọn phạm vi ngân sách.', 'So sánh thực tế, chờ duyệt và dự báo.', 'Kiểm tra lý do WARN/BLOCK.'] },
+      { id: 'review-accounting', view: 'ACCOUNTING', title: 'Kiểm tra tài khoản và bút toán', description: 'Kiểm tra cách chứng từ đã duyệt tạo thành các dòng Nợ và Có.', steps: ['Kiểm tra công ty và phiên bản hệ thống tài khoản.', 'Xác nhận tổng Nợ bằng tổng Có.', 'Không sửa trực tiếp bút toán POSTED; dùng đảo hoặc điều chỉnh.'] },
       { id: 'monthly-close', view: 'CLOSING', title: 'Khóa sổ tháng', description: 'Kiểm tra và khóa kỳ theo thứ tự.', steps: ['Hoàn thành checklist.', 'Chuyển qua review và đóng kỳ.', 'Mở lại phải có lý do và audit.'] },
     ],
     glossary: [
-      { term: 'Doanh thu', meaning: 'Số tiền khách hàng phải trả cho công ty' }, { term: 'Mua hàng', meaning: 'Số tiền công ty phải trả cho nhà cung cấp' }, { term: 'Phải thu', meaning: 'Tiền chưa nhận được' }, { term: 'Phải trả', meaning: 'Tiền chưa thanh toán' }, { term: 'VAT', meaning: 'Thuế giá trị gia tăng' }, { term: 'Aging', meaning: 'Bảng chia khoản nợ theo số ngày quá hạn' }, { term: 'Lợi nhuận quản trị', meaning: 'Ước tính để quản lý, không phải lợi nhuận pháp định' }, { term: 'Khóa sổ', meaning: 'Kiểm tra và khóa dữ liệu của một tháng' },
+      { term: 'Doanh thu', meaning: 'Số tiền khách hàng phải trả cho công ty' }, { term: 'Mua hàng', meaning: 'Số tiền công ty phải trả cho nhà cung cấp' }, { term: 'Phải thu', meaning: 'Tiền chưa nhận được' }, { term: 'Phải trả', meaning: 'Tiền chưa thanh toán' }, { term: 'VAT', meaning: 'Thuế giá trị gia tăng' }, { term: 'Aging', meaning: 'Bảng chia khoản nợ theo số ngày quá hạn' }, { term: 'Lợi nhuận quản trị', meaning: 'Ước tính để quản lý, không phải lợi nhuận pháp định' }, { term: 'Bút toán', meaning: 'Một nhóm dòng Nợ và Có có tổng bằng nhau cho một giao dịch' }, { term: 'Khóa sổ', meaning: 'Kiểm tra và khóa dữ liệu của một tháng' },
     ],
   },
   en: {
@@ -173,10 +177,11 @@ const CONTENT: Record<FinanceGuideLocale, FinanceGuideContent> = {
       { id: 'record-expense', view: 'EXPENSES', title: 'Record cards and receipts', description: 'Link spending, evidence, and approval.', steps: ['Select Add expense.', 'Choose method, project, and category.', 'Check READY evidence and approval draft.'] },
       { id: 'check-cash', view: 'CASHFLOW', title: 'Check collection and payment dates', description: 'Review upcoming cash movement and overdue items.', steps: ['Sort by planned date.', 'Review older aging buckets.', 'Record the outcome in the ledger.'] },
       { id: 'manage-budget', view: 'BUDGET', title: 'Compare budget and actual', description: 'Find overspending early.', steps: ['Choose the budget scope.', 'Compare actual, committed, and forecast.', 'Review WARN/BLOCK reasons.'] },
+      { id: 'review-accounting', view: 'ACCOUNTING', title: 'Review accounts and journals', description: 'Inspect how approved source records map to debit and credit lines.', steps: ['Check the company and chart version.', 'Confirm debit equals credit.', 'Never edit a POSTED journal directly; use reversal and correction.'] },
       { id: 'monthly-close', view: 'CLOSING', title: 'Run monthly close', description: 'Check and lock the month in order.', steps: ['Complete every checklist item.', 'Move through review and close.', 'Reopen only with a reason and audit.'] },
     ],
     glossary: [
-      { term: 'Revenue', meaning: 'Money a customer owes the company' }, { term: 'Purchase', meaning: 'Money the company owes a supplier' }, { term: 'Receivable', meaning: 'Money not yet collected' }, { term: 'Payable', meaning: 'Money not yet paid' }, { term: 'VAT', meaning: 'Value-added tax' }, { term: 'Aging', meaning: 'A table grouping balances by overdue days' }, { term: 'Management profit', meaning: 'An operating estimate, not statutory profit' }, { term: 'Close', meaning: 'Check and lock one month of records' },
+      { term: 'Revenue', meaning: 'Money a customer owes the company' }, { term: 'Purchase', meaning: 'Money the company owes a supplier' }, { term: 'Receivable', meaning: 'Money not yet collected' }, { term: 'Payable', meaning: 'Money not yet paid' }, { term: 'VAT', meaning: 'Value-added tax' }, { term: 'Aging', meaning: 'A table grouping balances by overdue days' }, { term: 'Management profit', meaning: 'An operating estimate, not statutory profit' }, { term: 'Journal', meaning: 'A balanced set of debit and credit lines for one accounting event' }, { term: 'Close', meaning: 'Check and lock one month of records' },
     ],
   },
 };
