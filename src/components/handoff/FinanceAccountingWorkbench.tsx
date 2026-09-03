@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import {
   AlertTriangle,
   Ban,
@@ -42,78 +42,7 @@ export interface FinanceAccountingWorkbenchProps {
   adapterReady: boolean;
 }
 
-interface Copy {
-  eyebrow: string;
-  title: string;
-  description: string;
-  demoBadge: string;
-  demoNotice: string;
-  serverBadge: string;
-  adapterReady: string;
-  backendRequired: string;
-  backendBlockedTitle: string;
-  backendBlockedBody: string;
-  projectionEmptyTitle: string;
-  projectionEmptyBody: string;
-  scopeUnavailableTitle: string;
-  scopeUnavailableBody: string;
-  coa: string;
-  coaDescription: string;
-  version: string;
-  status: string;
-  effective: string;
-  accounts: string;
-  postingAccounts: string;
-  accountCode: string;
-  accountName: string;
-  accountType: string;
-  normalBalance: string;
-  taxTarget: string;
-  journalList: string;
-  journalListDescription: string;
-  noJournals: string;
-  journalDetail: string;
-  selectJournal: string;
-  source: string;
-  project: string;
-  approval: string;
-  posting: string;
-  balanced: string;
-  debit: string;
-  credit: string;
-  descriptionLabel: string;
-  total: string;
-  postingReadiness: string;
-  postingReadinessDescription: string;
-  companyScope: string;
-  approvalComplete: string;
-  periodOpen: string;
-  balancedJournal: string;
-  idempotency: string;
-  sourceLineage: string;
-  ready: string;
-  blocked: string;
-  postingAction: string;
-  postingDisabledDemo: string;
-  postingDisabledServer: string;
-  immutableTitle: string;
-  immutableBody: string;
-  reversalTitle: string;
-  reversalBody: string;
-  period: string;
-  fiscalYear: string;
-  periodNumber: string;
-  range: string;
-  revision: string;
-  noOperationalData: string;
-  yes: string;
-  no: string;
-  group: string;
-  postingAccount: string;
-  notApplicable: string;
-}
-
-const COPY: Record<Locale, Copy> = {
+const COPY = {
   ko: {
     eyebrow: 'FINANCE ACCOUNTING READINESS',
     title: '회계 처리 준비도',
@@ -234,6 +163,8 @@ const COPY: Record<Locale, Copy> = {
   },
 };
 
+type Copy = (typeof COPY)['ko'];
+
 const PANEL = 'min-w-0 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] shadow-[0_10px_24px_rgba(15,23,42,.06)]';
 
 const accountTypeTone: Record<AccountCode['accountType'], string> = {
@@ -295,16 +226,16 @@ function SectionHeading({ icon: Icon, title, description }: { icon: typeof Scale
 }
 
 export function FinanceAccountingWorkbench({ companyId, locale, isSimulation, adapterReady }: FinanceAccountingWorkbenchProps) {
-  const t = COPY[locale];
+  const t: Copy = COPY[locale];
   const hasScopedDemo = isSimulation && companyId === syntheticKoreanDemoChartOfAccounts.companyId;
-  const accounts = useMemo(() => hasScopedDemo ? syntheticKoreanDemoChartOfAccounts.accounts : [], [hasScopedDemo]);
-  const journals = useMemo(() => hasScopedDemo ? syntheticKoreanDemoJournals.filter((journal) => journal.companyId === companyId) : [], [companyId, hasScopedDemo]);
+  const accounts = hasScopedDemo ? syntheticKoreanDemoChartOfAccounts.accounts : [];
+  const journals = hasScopedDemo ? syntheticKoreanDemoJournals.filter((journal) => journal.companyId === companyId) : [];
   const period = hasScopedDemo && syntheticKoreanDemoAccountingPeriod.companyId === companyId ? syntheticKoreanDemoAccountingPeriod : null;
   const [selectedJournalId, setSelectedJournalId] = useState<string>(journals[0]?.id ?? '');
   const selectedJournal = journals.find((journal) => journal.id === selectedJournalId) ?? journals[0] ?? null;
 
-  const accountByCode = useMemo(() => new Map(accounts.map((account) => [account.code, account])), [accounts]);
-  const accountTree = useMemo(() => accounts.filter((account) => account.parentCode === null).map((root) => ({ root, children: accounts.filter((account) => account.parentCode === root.code) })), [accounts]);
+  const accountByCode = new Map(accounts.map((account) => [account.code, account]));
+  const accountTree = accounts.filter((account) => account.parentCode === null).map((root) => ({ root, children: accounts.filter((account) => account.parentCode === root.code) }));
   const journalValidation = selectedJournal ? validateJournal(selectedJournal) : null;
   const runtimeBlocked = !isSimulation && !adapterReady;
   const runtimeMessage = runtimeBlocked

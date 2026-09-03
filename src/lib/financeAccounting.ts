@@ -306,10 +306,7 @@ export function evaluatePostingRequest(
     issues.push(issue('IDEMPOTENCY_DUPLICATE', 'postingRequest.idempotencyKey'));
   }
 
-  const uniqueIssues = issues.filter((current, index, source) => (
-    source.findIndex((candidate) => candidate.code === current.code && candidate.path === current.path) === index
-  ));
-  return Object.freeze({ allowed: uniqueIssues.length === 0, issues: Object.freeze(uniqueIssues) });
+  return Object.freeze({ allowed: issues.length === 0, issues: Object.freeze(issues) });
 }
 
 export function assertPostingAllowed(
@@ -331,32 +328,17 @@ export const assertJournalEditable = (journal: JournalHeader) => {
   }
 };
 
-const freezeDimensions = (dimensions: AccountingDimensions) => Object.freeze({ ...dimensions });
-const freezeSource = (source: SourceDocumentLineage) => Object.freeze({ ...source });
-const freezeLine = (line: JournalLine): Readonly<JournalLine> => Object.freeze({
-  ...line,
-  dimensions: freezeDimensions(line.dimensions),
-});
-
 export const freezeJournal = (journal: JournalHeader): Readonly<JournalHeader> => Object.freeze({
   ...journal,
-  source: freezeSource(journal.source),
-  dimensions: freezeDimensions(journal.dimensions),
-  lines: Object.freeze(journal.lines.map((line) => freezeLine(line))),
+  source: Object.freeze({ ...journal.source }),
+  dimensions: Object.freeze({ ...journal.dimensions }),
+  lines: Object.freeze(journal.lines.map((line) => Object.freeze({
+    ...line,
+    dimensions: Object.freeze({ ...line.dimensions }),
+  }))),
 });
 
-export interface JournalLineDraft {
-  readonly id: string;
-  readonly lineNo: number;
-  readonly chartOfAccountsId: string;
-  readonly chartVersion: number;
-  readonly accountCode: string;
-  readonly debitKrw: KrwAmount;
-  readonly creditKrw: KrwAmount;
-  readonly dimensions: Readonly<AccountingDimensions>;
-  readonly description: string;
-  readonly sourceReferenceId: string | null;
-}
+export type JournalLineDraft = Omit<JournalLine, 'journalId' | 'companyId'>;
 
 export interface ReplacementJournalInput {
   readonly id: string;
@@ -378,23 +360,12 @@ const totalLines = (lines: readonly Pick<JournalLine, 'debitKrw' | 'creditKrw'>[
   { debitKrw: 0, creditKrw: 0 },
 );
 
-export function createReversalJournal(
+function replacementJournal(
   original: JournalHeader,
   input: Omit<ReplacementJournalInput, 'lines'>,
+  lines: readonly JournalLine[],
+  kind: 'REVERSAL' | 'CORRECTION',
 ): Readonly<JournalHeader> {
-  if (original.postingState !== 'POSTED') {
-    throw new AccountingDomainError('SOURCE_JOURNAL_NOT_POSTED');
-  }
-
-  const lines = original.lines.map<JournalLine>((line) => ({
-    ...line,
-    id: `${input.id}-line-${line.lineNo}`,
-    journalId: input.id,
-    debitKrw: line.creditKrw,
-    creditKrw: line.debitKrw,
-    description: '원전표 역분개',
-    sourceReferenceId: line.id,
-  }));
   const totals = totalLines(lines);
   return freezeJournal({
     id: input.id,
@@ -408,22 +379,41 @@ export function createReversalJournal(
     idempotencyKey: input.idempotencyKey,
     source: {
       companyId: original.companyId,
-      documentType: 'JOURNAL_REVERSAL',
+      documentType: `JOURNAL_${kind}`,
       documentId: original.id,
       documentRevision: original.revision,
-      eventId: `reversal-${original.id}-${input.id}`,
+      eventId: `${kind.toLowerCase()}-${original.id}-${input.id}`,
     },
     dimensions: original.dimensions,
     totalDebitKrw: totals.debitKrw,
     totalCreditKrw: totals.creditKrw,
     lines,
     revision: 1,
-    reversalOfJournalId: original.id,
-    correctionOfJournalId: null,
+    reversalOfJournalId: kind === 'REVERSAL' ? original.id : null,
+    correctionOfJournalId: kind === 'CORRECTION' ? original.id : null,
     reasonCode: input.reasonCode,
     createdBy: input.createdBy,
     createdAt: input.createdAt,
   });
+}
+
+export function createReversalJournal(
+  original: JournalHeader,
+  input: Omit<ReplacementJournalInput, 'lines'>,
+): Readonly<JournalHeader> {
+  if (original.postingState !== 'POSTED') {
+    throw new AccountingDomainError('SOURCE_JOURNAL_NOT_POSTED');
+  }
+  const lines = original.lines.map<JournalLine>((line) => ({
+    ...line,
+    id: `${input.id}-line-${line.lineNo}`,
+    journalId: input.id,
+    debitKrw: line.creditKrw,
+    creditKrw: line.debitKrw,
+    description: '원전표 역분개',
+    sourceReferenceId: line.id,
+  }));
+  return replacementJournal(original, input, lines, 'REVERSAL');
 }
 
 export function createCorrectionJournal(
@@ -438,35 +428,7 @@ export function createCorrectionJournal(
     journalId: input.id,
     companyId: original.companyId,
   }));
-  const totals = totalLines(lines);
-  const correction = freezeJournal({
-    id: input.id,
-    companyId: original.companyId,
-    journalNo: input.journalNo,
-    accountingPeriodId: input.accountingPeriodId,
-    postingDate: input.postingDate,
-    currency: 'KRW',
-    approvalState: 'DRAFT',
-    postingState: 'NOT_POSTED',
-    idempotencyKey: input.idempotencyKey,
-    source: {
-      companyId: original.companyId,
-      documentType: 'JOURNAL_CORRECTION',
-      documentId: original.id,
-      documentRevision: original.revision,
-      eventId: `correction-${original.id}-${input.id}`,
-    },
-    dimensions: original.dimensions,
-    totalDebitKrw: totals.debitKrw,
-    totalCreditKrw: totals.creditKrw,
-    lines,
-    revision: 1,
-    reversalOfJournalId: null,
-    correctionOfJournalId: original.id,
-    reasonCode: input.reasonCode,
-    createdBy: input.createdBy,
-    createdAt: input.createdAt,
-  });
+  const correction = replacementJournal(original, input, lines, 'CORRECTION');
   const validation = validateJournal(correction);
   if (!validation.valid) {
     const first = validation.issues[0];

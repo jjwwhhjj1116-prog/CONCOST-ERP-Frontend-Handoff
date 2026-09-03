@@ -113,6 +113,7 @@ test('posting is blocked until approval, ready state, and open period all pass',
   assert.ok(result.issues.some((item) => item.code === 'APPROVAL_REQUIRED'));
   assert.ok(result.issues.some((item) => item.code === 'POSTING_STATE_NOT_READY'));
   assert.ok(result.issues.some((item) => item.code === 'ACCOUNTING_PERIOD_NOT_OPEN'));
+  assert.equal(new Set(result.issues.map(({ code, path }) => `${code}:${path}`)).size, result.issues.length);
   assert.throws(
     () => assertPostingAllowed(postingRequest({ approvalState: 'PENDING' }), readyJournal(), syntheticKoreanDemoAccountingPeriod),
     (error) => error instanceof AccountingDomainError && error.code === 'APPROVAL_REQUIRED',
@@ -144,6 +145,15 @@ test('posted journal stays immutable and reversal swaps debit and credit into a 
   });
 
   assert.equal(reversal.reversalOfJournalId, posted.id);
+  assert.equal(reversal.correctionOfJournalId, null);
+  assert.deepEqual(reversal.source, {
+    companyId: posted.companyId,
+    documentType: 'JOURNAL_REVERSAL',
+    documentId: posted.id,
+    documentRevision: posted.revision,
+    eventId: `reversal-${posted.id}-${reversal.id}`,
+  });
+  assert.equal(reversal.reasonCode, 'DEMO_CORRECTION_REQUIRED');
   assert.equal(reversal.approvalState, 'DRAFT');
   assert.equal(reversal.postingState, 'NOT_POSTED');
   assert.equal(reversal.lines[0].debitKrw, posted.lines[0].creditKrw);
@@ -151,6 +161,10 @@ test('posted journal stays immutable and reversal swaps debit and credit into a 
   assert.equal(validateJournal(reversal).valid, true);
   assert.equal(Object.isFrozen(reversal), true);
   assert.equal(Object.isFrozen(reversal.lines[0]), true);
+  assert.ok([reversal.source, reversal.dimensions, reversal.lines, reversal.lines[0].dimensions].every(Object.isFrozen));
+  assert.notEqual(reversal.source, posted.source);
+  assert.notEqual(reversal.dimensions, posted.dimensions);
+  assert.notEqual(reversal.lines[0].dimensions, posted.lines[0].dimensions);
   assert.equal(posted.postingState, 'POSTED');
 });
 
@@ -172,9 +186,35 @@ test('correction creates a balanced draft without changing the posted source', (
   });
 
   assert.equal(correction.correctionOfJournalId, posted.id);
+  assert.equal(correction.reversalOfJournalId, null);
+  assert.deepEqual(correction.source, {
+    companyId: posted.companyId,
+    documentType: 'JOURNAL_CORRECTION',
+    documentId: posted.id,
+    documentRevision: posted.revision,
+    eventId: `correction-${posted.id}-${correction.id}`,
+  });
+  assert.equal(correction.reasonCode, 'DEMO_AMOUNT_CORRECTION');
   assert.equal(correction.postingState, 'NOT_POSTED');
   assert.equal(validateJournal(correction).valid, true);
   assert.equal(posted.totalDebitKrw, 1_100_000);
+});
+
+test('replacement journals retain posted-source and balanced-correction guards', () => {
+  const input = {
+    id: 'demo-replacement-001', journalNo: 'DEMO-JN-REPLACEMENT-001',
+    accountingPeriodId: posted.accountingPeriodId, postingDate: '2026-08-11',
+    idempotencyKey: 'demo-replacement-001', reasonCode: 'DEMO_CORRECTION',
+    createdBy: posted.createdBy, createdAt: posted.createdAt, lines: posted.lines,
+  };
+  for (const create of [createReversalJournal, createCorrectionJournal]) {
+    assert.throws(() => create(readyJournal(), input), {
+      name: 'AccountingDomainError', code: 'SOURCE_JOURNAL_NOT_POSTED',
+    });
+  }
+  assert.throws(() => createCorrectionJournal(posted, { ...input, lines: [posted.lines[0]] }), {
+    name: 'AccountingDomainError', code: 'UNBALANCED_JOURNAL',
+  });
 });
 
 test('idempotency duplicate detection is company scoped and ignores the same request identity', () => {
